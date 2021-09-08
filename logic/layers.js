@@ -22,6 +22,10 @@ export class CellOutlineLayer {
     Example: ...!X<prefix>*<modifier1>*<modifier2>*<param1>.<param2>.<last-param>.<layer-data>!...
      */
 
+    /* defaultRenderOrder determines what order layers are rendered *by default*. Users are allowed to reorder layers according to their needs. Smaller numbers are inserted into the layer array below larger ones. Sometimes render order is not enough to handle all rendering issues, e.g. ColorLayer might be drawn above CellOutlineLayer and has to deal with smaller cells around the edge of the grid (because the grid edge uses a thicker line). In this case, use occlusion tests. */
+    // TODO: Always draw the thicker grid edges such that cells always have the same size. This helps with layers like ColorLayer, except maybe it doesn't matter at all... I will have a query system to get things like the largest circle or square possible in a cell/point, so I could simply have another for getting the cell outline as an svg path and simply avoid this whole issue. I'll probably do both and have cells be the same size as well as adding the cell outline query.
+    defaultRenderOrder = 2;
+
     /* This is always a string. */
     encoderPrefix = "o";
     encode(grid, settings) {}
@@ -34,10 +38,11 @@ export class SelectionLayer {
     controls = "onePoint";
     latticePoints = ["center"];
 
+    defaultRenderOrder = 9;
     encoderPrefix = "S";
 }
 
-export class BackgroundColorLayer {
+export class ColorLayer {
     hidden = false;
     controls = "onePoint";
     latticePoints = ["center"];
@@ -46,6 +51,7 @@ export class BackgroundColorLayer {
         this.id = Symbol();
     }
 
+    defaultRenderOrder = 1;
     encoderPrefix = "c";
 }
 

@@ -2,6 +2,7 @@
 
 export class PuzzleManager {
     settings;
+    // TODO: Also store default render layers 1-9 so that if a user reorders some layers, new layers still are inserted in a reasonable spot according to their defaultRenderOrder
     layers = [];
     grid;
     blitter;
