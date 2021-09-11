@@ -4,15 +4,31 @@ export class PuzzleManager {
     settings;
     // TODO: Also store default render layers 1-9 so that if a user reorders some layers, new layers still are inserted in a reasonable spot according to their defaultRenderOrder
     layers = [];
+    ctx;
     grid;
     blitter;
+
+    constructor(canvas) {
+        this.settings = new Settings();
+        this.grid = new SquareGrid(this.settings, { width: 10, height: 10 });
+
+        const { width, height } = this.grid.getCanvasRequirements();
+        canvas.width = width;
+        canvas.height = height;
+
+        this.ctx = canvas.getContext("2d");
+    }
 }
 
 /* The main reason this class is necessary is to automatically change defaults stored in localStorage for that seamless experience */
-export class Settings {}
+export class Settings {
+    cellSize = 20;
+    border = 15;
+}
 
 export class SquareGrid {
-    constructor(params) {
+    constructor(settings, params) {
+        this.settings = settings;
         this.width = params.width;
         this.height = params.height;
 
@@ -21,11 +37,23 @@ export class SquareGrid {
         /* For now, a simple array of object metadata that I might want to search by */
         this.objectIndex = [];
     }
+    getCanvasRequirements() {
+        return {
+            width:
+                this.width * (this.settings.cellSize + 1) +
+                2 * this.settings.border,
+            height:
+                this.height * (this.settings.cellSize + 1) +
+                2 * this.settings.border,
+        };
+    }
     encode(settings) {
         // Delegate encoding to each layer or preset
+        // TODO: this should actually just be the PuzzleManager's job
     }
     decode(settings) {
         // Delegate decoding to each layer or preset
+        // TODO: this should actually just be the PuzzleManager's job
     }
     // E.g. getObjects({ point: "x=0,y=0", latticeType: "center", layerId: myLayerId, objectId: myObjectId })
     // Any and all parameters are optional. Multiple params are AND'ed, not OR'ed.
