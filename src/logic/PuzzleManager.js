@@ -12,7 +12,7 @@ export class PuzzleManager {
 
     constructor(canvas) {
         this.settings = new Settings();
-        this.grid = new SquareGrid(this.settings, { width: 3, height: 3 });
+        this.grid = new SquareGrid(this.settings, { width: 10, height: 10 });
 
         const { width, height } = this.grid.getCanvasRequirements();
         canvas.width = width;
@@ -27,7 +27,7 @@ export class PuzzleManager {
 
 /* The main reason this class is necessary is to automatically change defaults stored in localStorage for that seamless experience */
 export class Settings {
-    cellSize = 20;
+    cellSize = 30;
     border = 15;
 }
 
@@ -53,11 +53,9 @@ export class SquareGrid {
     getCanvasRequirements() {
         return {
             width:
-                this.width * (this.settings.cellSize + 1) +
-                2 * this.settings.border,
+                this.width * this.settings.cellSize + 2 * this.settings.border,
             height:
-                this.height * (this.settings.cellSize + 1) +
-                2 * this.settings.border,
+                this.height * this.settings.cellSize + 2 * this.settings.border,
         };
     }
     encode(settings) {
@@ -97,63 +95,131 @@ export class SquareGrid {
         return Array(...ids).map((id) => this.objects[id]);
     }
 
-    getPoints({ referencePoints, selection, batch = false }) {
-        // TODO: handle values out of range (a cell outside the boundaries)
-        selection = this.parseSelection(selection);
+    getPoints({ referencePoints, selection: startingSelections }) {
+        // TODO: blacklist checked items and flatten finalResult
+        const selections = this.parseSelection(startingSelections);
+        const finalResult = {};
 
-        if (!referencePoints) {
-            // TODO: reduce to one value (instead of array) and optionally flatten the nested object to an array of values
-            return Object.keys(selection).map((pointType) =>
-                this.getPoints({
-                    referencePoints: this.getAllPoints(pointType),
-                    selection: selection[pointType],
-                    batch: true,
-                })
-            );
+        const inProgress = [];
+        for (let selection of selections) {
+            inProgress.push({
+                points: referencePoints,
+                selection,
+                result: finalResult,
+            });
         }
 
-        const result = {};
-        for (let p of referencePoints) {
-            if (typeof p !== "string") {
-                // TODO: handle more than 1 layer deep
-                throw Error("Not implemented");
-            }
-            result[p] = result[p] ?? {};
+        while (inProgress.length) {
+            const { points, selection, result } = inProgress.pop();
+            const [pointType, nextPointType] = selection;
 
-            switch (this.pointType(p)) {
-                case POINT_TYPES.CELL:
-                    for (let type in selection) {
-                        if (
-                            selection[type] === true &&
-                            type === POINT_TYPES.EDGE
-                        ) {
-                            let [x, y] = p.split(",");
-                            x = parseInt(x);
-                            y = parseInt(y);
-                            result[p][POINT_TYPES.EDGE] = [
-                                x + "v" + y,
-                                x + 1 + "v" + y,
-                                x + "h" + y,
-                                x + "h" + (y + 1),
-                            ];
-                        }
+            result[pointType] = result[pointType] ?? {};
+            if (nextPointType === false) {
+                for (let p of points) {
+                    result[pointType][p] = "skip";
+                }
+            } else if (nextPointType === true) {
+                for (let p of points) {
+                    result[pointType][p] = null;
+                }
+            } else if (
+                nextPointType === "cellStraight" ||
+                nextPointType === "cornerStraight"
+            ) {
+                console.log(
+                    "Not implemented. Requires doing two layers at once!"
+                );
+            } else {
+                const relevantPoints = points
+                    ? points.filter((p) => this.pointType(p) === pointType)
+                    : this.getAllPoints(pointType);
+
+                for (let p of relevantPoints) {
+                    if (result[pointType][p] === "skip") {
+                        continue;
                     }
-                    break;
-                case POINT_TYPES.EDGE:
-                    break;
-                case POINT_TYPES.CORNER:
-                    break;
-                default:
-                    throw Error("Unknown selection");
+
+                    const nextPoints = [];
+                    if (pointType === POINT_TYPES.CELL) {
+                        let [x, y] = p.split(",");
+                        x = parseInt(x);
+                        y = parseInt(y);
+                        if (nextPointType === POINT_TYPES.EDGE) {
+                            // prettier-ignore
+                            nextPoints.push(
+                                x       + "v" + y,
+                                (x + 1) + "v" + y,
+                                x       + "h" + y,
+                                x       + "h" + (y + 1),
+                            );
+                        } else if (nextPointType === POINT_TYPES.CORNER) {
+                            // prettier-ignore
+                            nextPoints.push(
+                                x       + "c" + y,
+                                (x + 1) + "c" + y,
+                                x       + "c" + (y + 1),
+                                (x + 1) + "c" + (y + 1),
+                            );
+                        } else {
+                            console.log("your face");
+                        }
+                    } else if (pointType === POINT_TYPES.EDGE) {
+                        let [, x, edgeType, y] = p.match(/^(\d+)([vh])(\d+)$/);
+                        x = parseInt(x);
+                        y = parseInt(y);
+                        if (nextPointType === POINT_TYPES.CELL) {
+                            nextPoints.push(
+                                x + "," + y,
+                                // prettier-ignore
+                                edgeType === "v"
+                                    ? (x - 1) + "," + y
+                                    : x       + "," + (y - 1)
+                            );
+                        } else if (nextPointType === POINT_TYPES.CORNER) {
+                            nextPoints.push(
+                                x + "c" + y,
+                                // prettier-ignore
+                                edgeType === "v"
+                                    ? x       + "c" + (y + 1)
+                                    : (x + 1) + "c" + y
+                            );
+                        } else {
+                            console.log("your face");
+                        }
+                    } else {
+                        throw Error("Not implemented...");
+                    }
+                    result[pointType][p] = result[pointType][p] ?? {};
+                    inProgress.push({
+                        points: nextPoints,
+                        selection: selection.slice(1),
+                        result: result[pointType][p],
+                    });
+                }
             }
         }
-        return result;
+
+        const todoList = [finalResult];
+        while (todoList.length) {
+            const todo = todoList.pop();
+            for (let key in todo) {
+                if (todo[key] === false) {
+                    delete todo[key];
+                } else if (todo[key] === null) {
+                    todo[key] = true;
+                } else {
+                    todoList.push(todo[key]);
+                }
+            }
+        }
+
+        return finalResult;
     }
 
     pointType(point) {
         if (point.match(/^\d+,\d+$/)) {
             return POINT_TYPES.CELL;
-        } else if (point.match(/^\d+e\d+$/)) {
+        } else if (point.match(/^\d+[vh]\d+$/)) {
             return POINT_TYPES.EDGE;
         } else if (point.match(/^\d+c\d+$/)) {
             return POINT_TYPES.CORNER;
@@ -176,9 +242,67 @@ export class SquareGrid {
         }
     }
 
-    // TODO
     parseSelection(selection) {
-        return selection;
+        if (Array.isArray(selection)) {
+            // TODO: check that the unparsed array is valid
+            return selection;
+        }
+        const final = [];
+        const recurse = (sel, path = []) => {
+            for (let key in sel) {
+                if (sel[key] === true) {
+                    final.splice(0, 0, [...path, key, true]);
+                } else if (sel[key] === false) {
+                    final.push([...path, key, false]);
+                } else {
+                    recurse(sel[key], [...path, key]);
+                }
+            }
+        };
+        recurse(selection);
+        return final;
+    }
+
+    translatePoint(point) {
+        if (
+            typeof point !== "string" &&
+            typeof point.x === "number" &&
+            typeof point.y === "number"
+        ) {
+            return point;
+        }
+
+        let x, y, edgeType;
+        const { cellSize, border } = this.settings;
+        const halfCell = Math.floor(cellSize / 2);
+        switch (this.pointType(point)) {
+            case POINT_TYPES.CELL:
+                [x, y] = point.split(",");
+                return {
+                    x: x * cellSize + halfCell + border,
+                    y: y * cellSize + halfCell + border,
+                };
+            case POINT_TYPES.EDGE:
+                [, x, edgeType, y] = point.match(/^(\d+)([vh])(\d+)$/);
+                return {
+                    x:
+                        x * cellSize +
+                        border +
+                        (edgeType === "v" ? halfCell : 0),
+                    y:
+                        y * cellSize +
+                        border +
+                        (edgeType === "h" ? halfCell : 0),
+                };
+            case POINT_TYPES.CORNER:
+                [x, y] = point.split("c");
+                return {
+                    x: x * cellSize + border,
+                    y: y * cellSize + border,
+                };
+            default:
+                console.log("You suck!");
+        }
     }
 }
 
@@ -186,7 +310,19 @@ export class SquareGrid {
 // Also, this will eventually manage things like OcclusionTests
 export class MasterBlitter {
     blitters = {
-        // line: lineBlitter
+        line: {
+            blit: ({ ctx, settings, blits, translator }) => {
+                ctx.lineWidth = 2;
+                ctx.fillStyle = blits[0].color;
+                for (let blit of blits) {
+                    const start = translator(blit.start);
+                    const end = translator(blit.end);
+                    ctx.moveTo(start.x, start.y);
+                    ctx.lineTo(end.x, end.y);
+                }
+                ctx.stroke();
+            },
+        },
     };
 
     constructor(ctx, grid) {
@@ -213,10 +349,11 @@ export class MasterBlitter {
             );
             for (let blitIndex = 0; blitIndex < maxBlitCount; blitIndex++) {
                 // TODO: This is not entirely correct. It needs to group blits by blitter type first
-                const currentBlitter = this.blitters[objects[0].blits.blitter];
+                const currentBlitter =
+                    this.blitters[objects[0].blits[0].blitter];
                 if (!currentBlitter) {
                     console.log(
-                        "NONEXISTANT blitter:",
+                        "NONEXISTANT blitter: ",
                         objects[0].blits[0].blitter
                     );
                     return;
@@ -229,9 +366,13 @@ export class MasterBlitter {
                     }
                     relevantBlits.push(object.blits[blitIndex]);
                 }
-                currentBlitter.blit(this.ctx, this.settings, relevantBlits);
+                currentBlitter.blit({
+                    ctx: this.ctx,
+                    settings: this.settings,
+                    blits: relevantBlits,
+                    translator: this.grid.translatePoint.bind(this.grid),
+                });
             }
-            console.log(objects);
         }
     }
 
