@@ -242,8 +242,8 @@ export class SquareGrid {
             case POINT_TYPES.CELL:
                 [x, y] = point.split(",");
                 return {
-                    x: x * cellSize + halfCell + border,
-                    y: y * cellSize + halfCell + border,
+                    x: x * cellSize + halfCell + border + 0.5,
+                    y: y * cellSize + halfCell + border + 0.5,
                 };
             case POINT_TYPES.EDGE:
                 [, x, edgeType, y] = point.match(/^(\d+)([vh])(\d+)$/);
@@ -251,17 +251,19 @@ export class SquareGrid {
                     x:
                         x * cellSize +
                         border +
-                        (edgeType === "v" ? halfCell : 0),
+                        (edgeType === "v" ? halfCell : 0) +
+                        0.5,
                     y:
                         y * cellSize +
                         border +
-                        (edgeType === "h" ? halfCell : 0),
+                        (edgeType === "h" ? halfCell : 0) +
+                        0.5,
                 };
             case POINT_TYPES.CORNER:
                 [x, y] = point.split("c");
                 return {
-                    x: x * cellSize + border,
-                    y: y * cellSize + border,
+                    x: x * cellSize + border + 0.5,
+                    y: y * cellSize + border + 0.5,
                 };
             default:
                 console.log("You suck!");

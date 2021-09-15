@@ -49,33 +49,47 @@ export class CellOutlineLayer {
             }
             for (let edge in cells[cell].edge) {
                 /* If a cell does not share an edge with another cell, use a thick line. */
-                if (!useThickEdges[edge]) {
-                    useThickEdges[edge] = true;
-                } else {
+                if (useThickEdges[edge]) {
                     useThickEdges[edge] = false;
+                } else {
+                    useThickEdges[edge] = true;
                 }
             }
         }
 
-        const objects = [];
+        const result = {
+            objects: [],
+            blitGroups: [
+                {
+                    blitter: "line",
+                    blits: [],
+                    params: { strokeStyle: "black", lineWidth: 1 },
+                },
+                {
+                    blitter: "line",
+                    blits: [],
+                    // Definitely way too thick, but it works for demonstration purposes
+                    params: { strokeStyle: "black", lineWidth: 15 },
+                },
+            ],
+        };
         for (let cellKey in cells) {
-            objects.push({
-                position: cellKey,
-                blits: Object.keys(cells[cellKey].edge).map((edgeKey) => {
-                    const edge = cells[cellKey].edge[edgeKey];
-                    const [start, end] = Object.keys(edge.corner);
-                    return {
-                        blitter: "line",
-                        // TODO: handle offset if line is thick
-                        start,
-                        end,
-                        color: "black",
-                        thickness: useThickEdges[edge] ? 3 : 1,
-                    };
-                }),
-            });
+            result.objects.push({ position: cellKey });
+            const thin = [],
+                thick = [];
+            for (let edgeKey in cells[cellKey].edge) {
+                const edge = cells[cellKey].edge[edgeKey];
+                const points = Object.keys(edge.corner);
+                if (useThickEdges[edgeKey]) {
+                    thick.push(points);
+                } else {
+                    thin.push(points);
+                }
+            }
+            result.blitGroups[0].blits.push(thin);
+            result.blitGroups[1].blits.push(thick);
         }
-        return objects;
+        return result;
     }
 }
 
@@ -89,7 +103,7 @@ export class SelectionLayer {
     encoderPrefix = "S";
     getObjectsWithBlits(grid, settings, change) {
         // TODO
-        return [];
+        return { objects: [], blitGroups: [] };
     }
 }
 

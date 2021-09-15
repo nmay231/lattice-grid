@@ -4,15 +4,16 @@
 export class MasterBlitter {
     blitters = {
         line: {
-            blit: ({ ctx, settings, blits, translator }) => {
-                ctx.lineWidth = 2;
-                ctx.fillStyle = blits[0].color;
-                for (let blit of blits) {
-                    const start = translator(blit.start);
-                    const end = translator(blit.end);
-                    ctx.moveTo(start.x, start.y);
-                    ctx.lineTo(end.x, end.y);
+            blit: ({ ctx, blits, params }) => {
+                ctx.beginPath();
+                ctx.lineWidth = params.lineWidth ?? 1;
+                ctx.strokeStyle = params.strokeStyle ?? "black";
+                ctx.lineCap = params.lineCap ?? "round";
+                for (let [start, end] of blits) {
+                    ctx.moveTo(start.x + 0, start.y + 0);
+                    ctx.lineTo(end.x + 0, end.y + 0);
                 }
+                ctx.closePath();
                 ctx.stroke();
             },
         },
@@ -28,41 +29,39 @@ export class MasterBlitter {
         this.ctx.clearRect(0, 0, this.ctx.width, this.ctx.height);
         for (let layer of layers) {
             // TODO: occlusion stuff needs to happen after
-            let objects = layer.getObjectsWithBlits(
+            let { objects, blitGroups } = layer.getObjectsWithBlits(
                 this.grid,
                 settings,
                 change
             );
-            // TODO: This will actually require knowledge of other layers sometimes
+            // TODO: This will actually require data from other layers sometimes
             objects = this.occlusionStuff(objects);
 
-            const maxBlitCount = Math.max(
-                ...objects.map(({ blits }) => blits.length)
-            );
-            for (let blitIndex = 0; blitIndex < maxBlitCount; blitIndex++) {
-                // TODO: This is not entirely correct. It needs to group blits by blitter type first
-                const currentBlitter =
-                    this.blitters[objects[0].blits[0].blitter];
-                if (!currentBlitter) {
+            for (let { blitter, blits, params } of blitGroups) {
+                if (!this.blitters[blitter]) {
+                    // TODO
                     console.log(
                         "NONEXISTANT blitter: ",
                         objects[0].blits[0].blitter
                     );
-                    return;
+                    continue;
                 }
 
-                const relevantBlits = [];
-                for (let object of objects) {
-                    if (blitIndex >= object.blits.length) {
-                        continue;
-                    }
-                    relevantBlits.push(object.blits[blitIndex]);
-                }
-                currentBlitter.blit({
+                blits = blits
+                    .map((blitsOfObject) =>
+                        blitsOfObject.map((pointsOfBlit) =>
+                            pointsOfBlit.map(
+                                this.grid.translatePoint.bind(this.grid)
+                            )
+                        )
+                    )
+                    .flat(1);
+
+                this.blitters[blitter].blit({
                     ctx: this.ctx,
                     settings: this.settings,
-                    blits: relevantBlits,
-                    translator: this.grid.translatePoint.bind(this.grid),
+                    blits,
+                    params,
                 });
             }
         }
