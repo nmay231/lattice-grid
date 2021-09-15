@@ -134,35 +134,25 @@ export class SquareGrid {
                     x = parseInt(x);
                     y = parseInt(y);
 
-                    const downRight = x + "," + y,
-                        downLeft = x - 1 + "," + y,
-                        upLeft = x - 1 + "," + (y - 1),
-                        upRight = x + "," + (y - 1);
-                    let preX = x,
-                        preY = y;
+                    const SE = importantPoints.indexOf(x + "," + y) > -1,
+                        SW = importantPoints.indexOf(x - 1 + "," + y) > -1,
+                        NW =
+                            importantPoints.indexOf(x - 1 + "," + (y - 1)) > -1,
+                        NE = importantPoints.indexOf(x + "," + (y - 1)) > -1;
+
+                    let dx, dy;
+                    if (SE && !NE) {
+                        [dx, dy] = [1, 0];
+                    } else if (SW && !NW) {
+                        [dx, dy] = [0, 1];
+                    } else if (NW && !NE) {
+                        [dx, dy] = [-1, 0];
+                    } else {
+                        [dx, dy] = [0, -1];
+                    }
 
                     const { border: borderPadding, cellSize } = this.settings;
                     let offsetLoop = [];
-
-                    if (
-                        importantPoints.indexOf(downRight) > -1 &&
-                        importantPoints.indexOf(upRight) === -1
-                    ) {
-                        x += 1;
-                    } else if (
-                        importantPoints.indexOf(downLeft) > -1 &&
-                        importantPoints.indexOf(downRight) === -1
-                    ) {
-                        y += 1;
-                    } else if (
-                        importantPoints.indexOf(upLeft) > -1 &&
-                        importantPoints.indexOf(downLeft) === -1
-                    ) {
-                        x -= 1;
-                    } else {
-                        y -= 1;
-                    }
-
                     const rotate =
                         offset >= 0
                             ? (dx, dy) => [dy, -dx]
@@ -170,45 +160,52 @@ export class SquareGrid {
                     let startingCorner = null;
 
                     while (true) {
-                        let dx = preX - x,
-                            dy = preY - y;
-                        let i, nextCorner;
-                        for (i = 0; i < 4; i++) {
+                        const corner = x + "c" + y;
+                        let i, nextCorner, nextX, nextY;
+                        for (i = 0; i < 3; i++) {
                             [dx, dy] = rotate(dx, dy);
-                            nextCorner = x + dx + "c" + (y + dy);
+                            nextX = x + dx;
+                            nextY = y + dy;
+                            nextCorner = nextX + "c" + nextY;
                             if (nextCorner in cornerCounts) {
                                 break;
                             }
                         }
 
-                        if (i < 4) {
-                            [preX, preY, x, y] = [x, y, x + dx, y + dy];
+                        if (i !== 3) {
+                            // Add the next point to the shrinkwrap
+                            [dx, dy] = rotate(dx, dy);
+                            offsetLoop.push({
+                                x: borderPadding + x * cellSize - offset * dx,
+                                y: borderPadding + y * cellSize - offset * dy,
+                            });
                         }
 
-                        // Add the next point to the shrinkwrap
-                        [dx, dy] = rotate(dx, dy);
-                        offsetLoop.push({
-                            x: borderPadding + x * cellSize + offset * dx,
-                            y: borderPadding + y * cellSize + offset * dy,
-                        });
                         // If in a corner or on an elbow, shorten or length the previous line segment, respectively
-                        if (i !== 1) {
-                            const lastPoint = offsetLoop[offsetLoop.length - 2];
-                            lastPoint.x += offset * dx;
-                            lastPoint.y += offset * dy;
+                        if (i !== 1 && offsetLoop.length > 1) {
+                            const lastPoint = offsetLoop[offsetLoop.length - 1];
+                            const [offsetX, offsetY] = rotate(dx, dy);
+                            lastPoint.x -= offset * offsetX;
+                            lastPoint.y -= offset * offsetY;
                         }
 
-                        // Prevent double counting, except on a corner that's part of two loops
-                        if (i === 0 && cornerCounts[nextCorner] === 2) {
-                            cornerCounts[nextCorner] -= 1;
-                        } else if (startingCorner === null) {
-                            startingCorner = nextCorner;
-                        } else if (cornerCounts[nextCorner]) {
-                            delete cornerCounts[nextCorner];
-                        } else if (startingCorner === nextCorner) {
+                        if (startingCorner === null) {
+                            startingCorner = corner;
+                        } else if (corner === startingCorner) {
+                            offsetLoop.splice(0, 1, offsetLoop.pop());
                             result.shrinkwrap.push(offsetLoop);
                             break;
+                        } else if (
+                            i === 0 &&
+                            x - dx + "c" + (y - dy) in cornerCounts
+                        ) {
+                            // Prevent double counting, except on a corner that's part of two loops
+                            cornerCounts[nextCorner] -= 1;
+                        } else if (cornerCounts[nextCorner]) {
+                            delete cornerCounts[nextCorner];
                         }
+                        [dx, dy] = [x - nextX, y - nextY];
+                        [x, y] = [nextX, nextY];
                     }
                 }
             } else {

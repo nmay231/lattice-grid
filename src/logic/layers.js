@@ -37,21 +37,9 @@ export class CellOutlineLayer {
             // selection: { cell: { edge: { corner: true } } },
             selection: {
                 cell: { edge: { stem: true, points: true } },
-                shrinkwrap: { stem: true, offset: -7 },
+                shrinkwrap: { stem: true, offset: -2 },
             },
-            referencePoints: [
-                "0,0",
-                "0,1",
-                "0,2",
-                "1,0",
-                "1,1",
-                "1,2",
-                "2,0",
-                "2,1",
-                "2,2",
-            ],
         });
-        console.log(cells, shrinkwrap);
         const excluded = new Set(
             grid
                 .getObjects({ layerId: this.id })
@@ -95,7 +83,7 @@ export class CellOutlineLayer {
             }
         }
         for (let loop of shrinkwrap) {
-            for (let index in loop.slice(0, 15)) {
+            for (let index in loop) {
                 blitGroups[1].blits.push([
                     loop[index],
                     loop[(1 * index + 1) % loop.length],
