@@ -36,8 +36,8 @@ export class CellOutlineLayer {
         const { cell: cells, shrinkwrap } = grid.getPoints({
             // selection: { cell: { edge: { corner: true } } },
             selection: {
-                cell: { edge: { stem: true, points: true } },
-                shrinkwrap: { stem: true, offset: -2 },
+                cell: { edge: { self: { points: true } } },
+                shrinkwrap: { self: { offset: -2 } },
             },
         });
         const excluded = new Set(

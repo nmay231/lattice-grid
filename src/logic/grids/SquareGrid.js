@@ -240,12 +240,10 @@ export class SquareGrid {
                                 x + "c" + (y + 1),
                                 (x + 1) + "c" + (y + 1)
                             );
-                        } else if (nextPointType.stem === true) {
+                        } else if (typeof nextPointType !== "string") {
                             result[pointType][p] = result[pointType][p] ?? {};
                             for (let key in nextPointType) {
-                                if (key === "stem") {
-                                    continue;
-                                } else if (key === "points") {
+                                if (key === "points") {
                                     result[pointType][p].points = {
                                         x: borderPadding + x * cellSize,
                                         y: borderPadding + y * cellSize,
@@ -276,12 +274,10 @@ export class SquareGrid {
                                     ? x + "c" + (y + 1)
                                     : (x + 1) + "c" + y
                             );
-                        } else if (nextPointType.stem === true) {
+                        } else if (typeof nextPointType !== "string") {
                             result[pointType][p] = result[pointType][p] ?? {};
                             for (let key in nextPointType) {
-                                if (key === "stem") {
-                                    continue;
-                                } else if (key === "points") {
+                                if (key === "points") {
                                     result[pointType][p].points = [
                                         {
                                             x: borderPadding + x * cellSize,
@@ -368,14 +364,10 @@ export class SquareGrid {
         const final = [];
         const recurse = (sel, path = []) => {
             for (let key in sel) {
-                // TODO: better way of allowing object stems without having to blacklist every possible property
-                if (key === "stem" || key === "points") {
-                    continue;
+                if (key === "self") {
+                    final.splice(0, 0, [...path, sel[key]]);
                 } else if (sel[key] === true) {
                     final.splice(0, 0, [...path, key, true]);
-                } else if (sel[key].stem === true) {
-                    final.splice(0, 0, [...path, key, sel[key]]);
-                    recurse(sel[key], [...path, key]);
                 } else if (sel[key] === false) {
                     final.push([...path, key, false]);
                 } else {
