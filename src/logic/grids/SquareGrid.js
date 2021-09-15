@@ -9,9 +9,30 @@ export class SquareGrid {
         this.y0 = 0;
 
         /* Maps objectId to object */
-        this.objects = {};
+        this.objects = {
+            "2,5": { objectId: "2,5" },
+            "5,5": { objectId: "5,5" },
+            // "6,5": { objectId: "6,5" },
+            "5,6": { objectId: "5,6" },
+            "6,6": { objectId: "6,6" },
+            "6,7": { objectId: "6,7" },
+            "9,9": { objectId: "9,9" },
+            "9,6": { objectId: "9,6" },
+            "8,6": { objectId: "8,6" },
+        };
         /* For now, a simple array of object metadata that I might want to search by */
-        this.objectIndex = [];
+        this.objectIndex = [
+            { layerId: "CellOutlineLayer", objectId: "2,5" },
+            { layerId: "CellOutlineLayer", objectId: "5,5" },
+            // { layerId: "CellOutlineLayer", objectId: "6,5" },
+            { layerId: "CellOutlineLayer", objectId: "5,6" },
+            { layerId: "CellOutlineLayer", objectId: "6,6" },
+            { layerId: "CellOutlineLayer", objectId: "6,7" },
+            { layerId: "CellOutlineLayer", objectId: "9,9" },
+            { layerId: "CellOutlineLayer", objectId: "9,6" },
+            // TODO: I don't yet account for single cells that separate two groups of hidden cells
+            { layerId: "CellOutlineLayer", objectId: "8,6" },
+        ];
     }
     getCanvasRequirements() {
         return {
@@ -58,16 +79,21 @@ export class SquareGrid {
         return Array(...ids).map((id) => this.objects[id]);
     }
 
-    getPoints({ referencePoints, selection: startingSelections }) {
+    getPoints({
+        points: referencePoints,
+        selection: startingSelections,
+        blacklist,
+    }) {
         // TODO: blacklist checked items and flatten finalResult
         const selections = this.parseSelection(startingSelections);
         const finalResult = {};
 
+        blacklist = blacklist ?? [];
         const inProgress = [];
         for (let selection of selections) {
             inProgress.push({
-                points: referencePoints,
                 selection,
+                points: referencePoints,
                 result: finalResult,
             });
         }
@@ -75,6 +101,9 @@ export class SquareGrid {
         while (inProgress.length) {
             const { points, selection, result } = inProgress.pop();
             const [pointType, nextPointType] = selection;
+            if (points) {
+                blacklist.push(...points);
+            }
 
             result[pointType] = result[pointType] ?? {};
             if (nextPointType === false) {
@@ -93,11 +122,13 @@ export class SquareGrid {
                     "Not implemented. Requires doing two layers at once!"
                 );
             } else if (pointType === "shrinkwrap") {
-                const importantPoints = points
-                    ? points.filter(
-                          (p) => this.pointType(p) === POINT_TYPES.CELL
-                      )
-                    : this.getAllPoints(POINT_TYPES.CELL);
+                const importantPoints = (
+                    points
+                        ? points.filter(
+                              (p) => this.pointType(p) === POINT_TYPES.CELL
+                          )
+                        : this.getAllPoints(POINT_TYPES.CELL)
+                ).filter((p) => blacklist.indexOf(p) === -1);
                 if (!importantPoints.length) {
                     continue;
                 }
@@ -158,7 +189,7 @@ export class SquareGrid {
                             ? (dx, dy) => [dy, -dx]
                             : (dx, dy) => [-dy, dx];
                     let startingCorner = null;
-
+                    //
                     while (true) {
                         const corner = x + "c" + y;
                         let i, nextCorner, nextX, nextY;
@@ -185,24 +216,24 @@ export class SquareGrid {
                         if (i !== 1 && offsetLoop.length > 1) {
                             const lastPoint = offsetLoop[offsetLoop.length - 1];
                             const [offsetX, offsetY] = rotate(dx, dy);
-                            lastPoint.x -= offset * offsetX;
-                            lastPoint.y -= offset * offsetY;
+                            lastPoint.x += (i < 1 ? -1 : 1) * offset * offsetX;
+                            lastPoint.y += (i < 1 ? -1 : 1) * offset * offsetY;
                         }
 
                         if (startingCorner === null) {
                             startingCorner = corner;
-                        } else if (corner === startingCorner) {
-                            offsetLoop.splice(0, 1, offsetLoop.pop());
-                            result.shrinkwrap.push(offsetLoop);
-                            break;
                         } else if (
                             i === 0 &&
-                            x - dx + "c" + (y - dy) in cornerCounts
+                            cornerCounts[x - dx + "c" + (y - dy)] === 2
                         ) {
                             // Prevent double counting, except on a corner that's part of two loops
                             cornerCounts[nextCorner] -= 1;
                         } else if (cornerCounts[nextCorner]) {
                             delete cornerCounts[nextCorner];
+                        } else if (corner === startingCorner) {
+                            offsetLoop.splice(0, 1, offsetLoop.pop());
+                            result.shrinkwrap.push(offsetLoop);
+                            break;
                         }
                         [dx, dy] = [x - nextX, y - nextY];
                         [x, y] = [nextX, nextY];
@@ -211,7 +242,9 @@ export class SquareGrid {
             } else {
                 const importantPoints = points
                     ? points.filter((p) => this.pointType(p) === pointType)
-                    : this.getAllPoints(pointType);
+                    : this.getAllPoints(pointType).filter(
+                          (p) => blacklist.indexOf(p) === -1
+                      );
 
                 for (let p of importantPoints) {
                     if (result[pointType][p] === "skip") {
@@ -305,7 +338,9 @@ export class SquareGrid {
                     }
                     result[pointType][p] = result[pointType][p] ?? {};
                     inProgress.push({
-                        points: nextPoints,
+                        points: nextPoints.filter(
+                            (p) => blacklist.indexOf(p) === -1
+                        ),
                         selection: selection.slice(1),
                         result: result[pointType][p],
                     });
