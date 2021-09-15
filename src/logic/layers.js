@@ -33,9 +33,25 @@ export class CellOutlineLayer {
 
     /* The main purpose of this function is to return all objects of the layer decomposed into individual "blits". Blits are simply ways to decompose objects into drawable parts. For example, a sudoku arrow is made of a circle and multiple lines marking the arrow's path and tip. For some layers, it might not make sense to try to use existing blitters, e.g. for a goats and sheep puzzle. In this case, a layer and a corresponding blitter must be added. Note: this function does not simply return an array of blits for a good reason. Blits are grouped by their respective object so that filters/modifiers/occlusionTests can change how objects are displayed, e.g. by hiding them, changing their color, offsetting them slightly, adding other blits to the object to make them more prominent, etc. After all these modifications are made, the blits are put into an array and finally drawn to the screen! Unfortunately, it's not as simple as that because there is a fair amount of ambiguity about what order they are drawn to the screen. Going back to sudoku arrows, let's say we want the path of arrow A to run under the circle of A (by drawing the path first), but it should be drawn on top of the circle of B. This is all hypothetical, but it is similar to the problem how to install circular dependencies in library packaging. For now, each object stored its blits in an array and for each object the blits in array position 0 are drawn, then position 1, etc. This might change in the future or have a method to change this behaviour. Eventually, I want to have this return diffs/changes of all the objects for optimization, but that requires the whole chain of operations to account for diffs and I'm not ready for that. */
     getObjectsWithBlits(grid, settings, change) {
-        const cells = grid.getPoints({
-            selection: { cell: { edge: { corner: true } } },
-        }).cell;
+        const { cell: cells, shrinkwrap } = grid.getPoints({
+            // selection: { cell: { edge: { corner: true } } },
+            selection: {
+                cell: { edge: { stem: true, points: true } },
+                shrinkwrap: { stem: true, offset: -7 },
+            },
+            referencePoints: [
+                "0,0",
+                "0,1",
+                "0,2",
+                "1,0",
+                "1,1",
+                "1,2",
+                "2,0",
+                "2,1",
+                "2,2",
+            ],
+        });
+        console.log(cells, shrinkwrap);
         const excluded = new Set(
             grid
                 .getObjects({ layerId: this.id })
@@ -57,39 +73,36 @@ export class CellOutlineLayer {
             }
         }
 
-        const result = {
-            objects: [],
-            blitGroups: [
-                {
-                    blitter: "line",
-                    blits: [],
-                    params: { strokeStyle: "black", lineWidth: 1 },
-                },
-                {
-                    blitter: "line",
-                    blits: [],
-                    // Definitely way too thick, but it works for demonstration purposes
-                    params: { strokeStyle: "black", lineWidth: 15 },
-                },
-            ],
-        };
+        const blitGroups = [
+            {
+                blitter: "line",
+                blits: [],
+                params: { strokeStyle: "black", lineWidth: 1 },
+            },
+            {
+                blitter: "line",
+                blits: [],
+                // Definitely way too thick, but it works for demonstration purposes
+                params: { strokeStyle: "black", lineWidth: 4 },
+            },
+        ];
         for (let cellKey in cells) {
-            result.objects.push({ position: cellKey });
-            const thin = [],
-                thick = [];
             for (let edgeKey in cells[cellKey].edge) {
-                const edge = cells[cellKey].edge[edgeKey];
-                const points = Object.keys(edge.corner);
-                if (useThickEdges[edgeKey]) {
-                    thick.push(points);
-                } else {
-                    thin.push(points);
+                const { points } = cells[cellKey].edge[edgeKey];
+                if (!useThickEdges[edgeKey]) {
+                    blitGroups[0].blits.push(points);
                 }
             }
-            result.blitGroups[0].blits.push(thin);
-            result.blitGroups[1].blits.push(thick);
         }
-        return result;
+        for (let loop of shrinkwrap) {
+            for (let index in loop.slice(0, 15)) {
+                blitGroups[1].blits.push([
+                    loop[index],
+                    loop[(1 * index + 1) % loop.length],
+                ]);
+            }
+        }
+        return blitGroups;
     }
 }
 
@@ -103,7 +116,7 @@ export class SelectionLayer {
     encoderPrefix = "S";
     getObjectsWithBlits(grid, settings, change) {
         // TODO
-        return { objects: [], blitGroups: [] };
+        return [];
     }
 }
 

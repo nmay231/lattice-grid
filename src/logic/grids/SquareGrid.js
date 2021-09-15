@@ -92,17 +92,137 @@ export class SquareGrid {
                 console.log(
                     "Not implemented. Requires doing two layers at once!"
                 );
+            } else if (pointType === "shrinkwrap") {
+                const importantPoints = points
+                    ? points.filter(
+                          (p) => this.pointType(p) === POINT_TYPES.CELL
+                      )
+                    : this.getAllPoints(POINT_TYPES.CELL);
+                if (!importantPoints.length) {
+                    continue;
+                }
+                result.shrinkwrap = [];
+                const offset = nextPointType.offset ?? 0;
+
+                const cornerCounts = {};
+                for (let p of importantPoints) {
+                    let [x, y] = p.split(",");
+                    x = parseInt(x);
+                    y = parseInt(y);
+                    // prettier-ignore
+                    const corners = [
+                        x + "c" + y,
+                        (x + 1) + "c" + y,
+                        x + "c" + (y + 1),
+                        (x + 1) + "c" + (y + 1),
+                    ];
+                    for (let c of corners) {
+                        cornerCounts[c] = (cornerCounts[c] ?? 0) + 1;
+                        if (cornerCounts[c] === 4) {
+                            delete cornerCounts[c];
+                        }
+                    }
+                }
+
+                while (true) {
+                    const c0 = Object.keys(cornerCounts)[0];
+                    if (!c0) {
+                        break;
+                    }
+
+                    let [x, y] = c0.split("c");
+                    x = parseInt(x);
+                    y = parseInt(y);
+
+                    const downRight = x + "," + y,
+                        downLeft = x - 1 + "," + y,
+                        upLeft = x - 1 + "," + (y - 1),
+                        upRight = x + "," + (y - 1);
+                    let preX = x,
+                        preY = y;
+
+                    const { border: borderPadding, cellSize } = this.settings;
+                    let offsetLoop = [];
+
+                    if (
+                        importantPoints.indexOf(downRight) > -1 &&
+                        importantPoints.indexOf(upRight) === -1
+                    ) {
+                        x += 1;
+                    } else if (
+                        importantPoints.indexOf(downLeft) > -1 &&
+                        importantPoints.indexOf(downRight) === -1
+                    ) {
+                        y += 1;
+                    } else if (
+                        importantPoints.indexOf(upLeft) > -1 &&
+                        importantPoints.indexOf(downLeft) === -1
+                    ) {
+                        x -= 1;
+                    } else {
+                        y -= 1;
+                    }
+
+                    const rotate =
+                        offset >= 0
+                            ? (dx, dy) => [dy, -dx]
+                            : (dx, dy) => [-dy, dx];
+                    let startingCorner = null;
+
+                    while (true) {
+                        let dx = preX - x,
+                            dy = preY - y;
+                        let i, nextCorner;
+                        for (i = 0; i < 4; i++) {
+                            [dx, dy] = rotate(dx, dy);
+                            nextCorner = x + dx + "c" + (y + dy);
+                            if (nextCorner in cornerCounts) {
+                                break;
+                            }
+                        }
+
+                        if (i < 4) {
+                            [preX, preY, x, y] = [x, y, x + dx, y + dy];
+                        }
+
+                        // Add the next point to the shrinkwrap
+                        [dx, dy] = rotate(dx, dy);
+                        offsetLoop.push({
+                            x: borderPadding + x * cellSize + offset * dx,
+                            y: borderPadding + y * cellSize + offset * dy,
+                        });
+                        // If in a corner or on an elbow, shorten or length the previous line segment, respectively
+                        if (i !== 1) {
+                            const lastPoint = offsetLoop[offsetLoop.length - 2];
+                            lastPoint.x += offset * dx;
+                            lastPoint.y += offset * dy;
+                        }
+
+                        // Prevent double counting, except on a corner that's part of two loops
+                        if (i === 0 && cornerCounts[nextCorner] === 2) {
+                            cornerCounts[nextCorner] -= 1;
+                        } else if (startingCorner === null) {
+                            startingCorner = nextCorner;
+                        } else if (cornerCounts[nextCorner]) {
+                            delete cornerCounts[nextCorner];
+                        } else if (startingCorner === nextCorner) {
+                            result.shrinkwrap.push(offsetLoop);
+                            break;
+                        }
+                    }
+                }
             } else {
-                const relevantPoints = points
+                const importantPoints = points
                     ? points.filter((p) => this.pointType(p) === pointType)
                     : this.getAllPoints(pointType);
 
-                for (let p of relevantPoints) {
+                for (let p of importantPoints) {
                     if (result[pointType][p] === "skip") {
                         continue;
                     }
 
                     const nextPoints = [];
+                    const { border: borderPadding, cellSize } = this.settings;
                     if (pointType === POINT_TYPES.CELL) {
                         let [x, y] = p.split(",");
                         x = parseInt(x);
@@ -123,6 +243,19 @@ export class SquareGrid {
                                 x + "c" + (y + 1),
                                 (x + 1) + "c" + (y + 1)
                             );
+                        } else if (nextPointType.stem === true) {
+                            result[pointType][p] = result[pointType][p] ?? {};
+                            for (let key in nextPointType) {
+                                if (key === "stem") {
+                                    continue;
+                                } else if (key === "points") {
+                                    result[pointType][p].points = {
+                                        x: borderPadding + x * cellSize,
+                                        y: borderPadding + y * cellSize,
+                                    };
+                                }
+                            }
+                            continue;
                         } else {
                             console.log("your face");
                         }
@@ -146,6 +279,31 @@ export class SquareGrid {
                                     ? x + "c" + (y + 1)
                                     : (x + 1) + "c" + y
                             );
+                        } else if (nextPointType.stem === true) {
+                            result[pointType][p] = result[pointType][p] ?? {};
+                            for (let key in nextPointType) {
+                                if (key === "stem") {
+                                    continue;
+                                } else if (key === "points") {
+                                    result[pointType][p].points = [
+                                        {
+                                            x: borderPadding + x * cellSize,
+                                            y: borderPadding + y * cellSize,
+                                        },
+                                        {
+                                            x:
+                                                borderPadding +
+                                                (x + (edgeType === "h")) *
+                                                    cellSize,
+                                            y:
+                                                borderPadding +
+                                                (y + (edgeType === "v")) *
+                                                    cellSize,
+                                        },
+                                    ];
+                                }
+                            }
+                            continue;
                         } else {
                             console.log("your face");
                         }
@@ -213,8 +371,14 @@ export class SquareGrid {
         const final = [];
         const recurse = (sel, path = []) => {
             for (let key in sel) {
-                if (sel[key] === true) {
+                // TODO: better way of allowing object stems without having to blacklist every possible property
+                if (key === "stem" || key === "points") {
+                    continue;
+                } else if (sel[key] === true) {
                     final.splice(0, 0, [...path, key, true]);
+                } else if (sel[key].stem === true) {
+                    final.splice(0, 0, [...path, key, sel[key]]);
+                    recurse(sel[key], [...path, key]);
                 } else if (sel[key] === false) {
                     final.push([...path, key, false]);
                 } else {
