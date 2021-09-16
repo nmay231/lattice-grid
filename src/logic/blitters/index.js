@@ -3,6 +3,7 @@
 
 export class MasterBlitter {
     blitters = {
+        // TODO: Move these to their own file(s)
         line: {
             blit: ({ ctx, blits, params }) => {
                 ctx.beginPath();
@@ -15,6 +16,14 @@ export class MasterBlitter {
                 }
                 ctx.closePath();
                 ctx.stroke();
+            },
+        },
+        svgPath: {
+            blit: ({ ctx, blits, params }) => {
+                ctx.fillStyle = params?.fillStyle || "black";
+                for (let svg of blits) {
+                    ctx.fill(new Path2D(svg));
+                }
             },
         },
     };

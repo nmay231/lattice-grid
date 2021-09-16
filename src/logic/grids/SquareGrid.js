@@ -69,9 +69,11 @@ export class SquareGrid {
             this.objectIndex
                 .filter(
                     (object) =>
-                        (point ?? point === object.point) &&
-                        (latticeType ?? latticeType === object.latticeType) &&
-                        (layerId ?? layerId === object.layerId)
+                        (point ? point === object.point : true) &&
+                        (latticeType
+                            ? latticeType === object.latticeType
+                            : true) &&
+                        (layerId ? layerId === object.layerId : true)
                 )
                 .map(({ objectId: id }) => id)
         );
@@ -278,9 +280,22 @@ export class SquareGrid {
                             for (let key in nextPointType) {
                                 if (key === "points") {
                                     result[pointType][p].points = {
-                                        x: borderPadding + x * cellSize,
-                                        y: borderPadding + y * cellSize,
+                                        x:
+                                            borderPadding +
+                                            x * (cellSize + 0.5) +
+                                            0.5,
+                                        y:
+                                            borderPadding +
+                                            y * (cellSize + 0.5) +
+                                            0.5,
                                     };
+                                } else if (key === "svgOutline") {
+                                    const svgPath = `M${
+                                        borderPadding + x * cellSize + 1
+                                    } ${borderPadding + y * cellSize + 1}h${
+                                        cellSize - 2
+                                    }v${cellSize - 2}h${2 - cellSize}Z`;
+                                    result[pointType][p].svgOutline = svgPath;
                                 }
                             }
                             continue;
@@ -348,21 +363,44 @@ export class SquareGrid {
             }
         }
 
-        const todoList = [finalResult];
-        while (todoList.length) {
-            const todo = todoList.pop();
-            for (let key in todo) {
-                if (todo[key] === false) {
-                    delete todo[key];
-                } else if (todo[key] === null) {
-                    todo[key] = true;
-                } else {
-                    todoList.push(todo[key]);
-                }
-            }
-        }
+        // const todoList = [finalResult];
+        // while (todoList.length) {
+        //     const todo = todoList.pop();
+        //     for (let key in todo) {
+        //         if (todo[key] === false) {
+        //             delete todo[key];
+        //         } else if (todo[key] === null) {
+        //             todo[key] = true;
+        //         } else {
+        //             todoList.push(todo[key]);
+        //         }
+        //     }
+        // }
 
         return finalResult;
+    }
+
+    parseSelection(selection) {
+        if (Array.isArray(selection)) {
+            // TODO: check that the unparsed array is valid
+            return selection;
+        }
+        const final = [];
+        const recurse = (sel, path = []) => {
+            for (let key in sel) {
+                if (key === "self") {
+                    final.splice(0, 0, [...path, sel[key]]);
+                } else if (sel[key] === true) {
+                    final.splice(0, 0, [...path, key, true]);
+                } else if (sel[key] === false) {
+                    final.push([...path, key, false]);
+                } else {
+                    recurse(sel[key], [...path, key]);
+                }
+            }
+        };
+        recurse(selection);
+        return final;
     }
 
     pointType(point) {
@@ -389,29 +427,6 @@ export class SquareGrid {
         } else {
             throw Error("Not implemented yet: " + type);
         }
-    }
-
-    parseSelection(selection) {
-        if (Array.isArray(selection)) {
-            // TODO: check that the unparsed array is valid
-            return selection;
-        }
-        const final = [];
-        const recurse = (sel, path = []) => {
-            for (let key in sel) {
-                if (key === "self") {
-                    final.splice(0, 0, [...path, sel[key]]);
-                } else if (sel[key] === true) {
-                    final.splice(0, 0, [...path, key, true]);
-                } else if (sel[key] === false) {
-                    final.push([...path, key, false]);
-                } else {
-                    recurse(sel[key], [...path, key]);
-                }
-            }
-        };
-        recurse(selection);
-        return final;
     }
 
     translatePoint(point) {

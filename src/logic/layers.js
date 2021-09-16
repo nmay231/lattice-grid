@@ -89,7 +89,6 @@ export class CellOutlineLayer {
                 }
             }
         }
-        console.log(shrinkwrap);
         for (let loop of shrinkwrap) {
             for (let index in loop) {
                 blitGroups[1].blits.push([
@@ -120,13 +119,27 @@ export class ColorLayer {
     hidden = false;
     controls = "onePoint";
     latticePoints = ["center"];
-
-    constructor() {
-        this.id = Symbol();
-    }
+    id = Symbol();
 
     defaultRenderOrder = 1;
     encoderPrefix = "c";
+
+    getBlits(grid, settings, change) {
+        const points = grid
+            .getObjects({ layerId: this.id })
+            .map(({ points }) => points[0]);
+        const { cell: cells } = grid.getPoints({
+            selection: { cell: { self: { svgOutline: true } } },
+            points,
+        });
+        return [
+            {
+                blitter: "svgPath",
+                params: { fillStyle: "blue" },
+                blits: Object.keys(cells).map((key) => cells[key].svgOutline),
+            },
+        ];
+    }
 }
 
 /* The following classes are only there to see what capabilities I expect of latticePoints */
