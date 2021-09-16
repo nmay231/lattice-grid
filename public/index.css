@@ -6,19 +6,3 @@ body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
-
-code {
-    font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
-        monospace;
-}
-
-#main-container {
-    width: 100vw;
-    height: 100vh;
-    display: flex;
-}
-
-canvas {
-    border: 2px solid black;
-    margin: auto;
-}
