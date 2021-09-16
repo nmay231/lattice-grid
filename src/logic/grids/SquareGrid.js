@@ -76,7 +76,7 @@ export class SquareGrid {
                 .map(({ objectId: id }) => id)
         );
 
-        return Array(...ids).map((id) => this.objects[id]);
+        return [...ids].map((id) => this.objects[id]);
     }
 
     getPoints({

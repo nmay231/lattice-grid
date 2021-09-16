@@ -29,11 +29,7 @@ export class MasterBlitter {
         this.ctx.clearRect(0, 0, this.ctx.width, this.ctx.height);
         for (let layer of layers) {
             // TODO: occlusion stuff needs to happen after
-            let blitGroups = layer.getObjectsWithBlits(
-                this.grid,
-                settings,
-                change
-            );
+            let blitGroups = layer.getBlits(this.grid, settings, change);
             // This would be wrong because any changes to objects by occlusion/constraint stuff should happen between user input and object storage, not between loading from storage and blitting to the canvas.
             // objects = this.occlusionStuff(objects);
 
