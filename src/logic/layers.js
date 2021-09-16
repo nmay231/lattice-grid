@@ -2,7 +2,7 @@ export class CellOutlineLayer {
     /* Prevents objects from being placed in the same spot. Set to a symbol to allow multiple instances of this layer per grid or to a string to prevent it. */
     id = "CellOutlineLayer";
     /* A human readable string describing the layer with a short phrase. */
-    displayName;
+    displayName = "Cell Outline";
 
     // TODO: rename controls and latticePoints to something more sensical
 
@@ -103,6 +103,7 @@ export class CellOutlineLayer {
 
 export class SelectionLayer {
     id = "SelectionLayer";
+    displayName = "Selections";
     hidden = true;
     controls = "onePoint";
     latticePoints = ["center"];
@@ -120,6 +121,7 @@ export class ColorLayer {
     controls = "onePoint";
     latticePoints = ["center"];
     id = Symbol();
+    displayName = "Color";
 
     defaultRenderOrder = 1;
     encoderPrefix = "c";
