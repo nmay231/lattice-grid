@@ -25,6 +25,9 @@ export class PuzzleManager {
         this.blitter = new MasterBlitter(this.ctx, this.grid);
         this.blitter.blitToCanvas(this.layers, this.settings, {});
     }
+
+    // TODO
+    updateScreen() {}
 }
 
 /* The main reason this class is necessary is to automatically change defaults stored in localStorage for that seamless experience */

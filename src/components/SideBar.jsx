@@ -1,8 +1,7 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { SortableItem } from "./SortableItem";
 import {
     DndContext,
-    closestCenter,
     useSensors,
     useSensor,
     PointerSensor,
@@ -14,6 +13,7 @@ import {
     verticalListSortingStrategy,
     sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
+import { availableLayers } from "../logic/layers";
 
 export const SideBar = ({ puzzle }) => {
     const [items, setItems] = useState(
@@ -25,9 +25,9 @@ export const SideBar = ({ puzzle }) => {
             coordinateGetter: sortableKeyboardCoordinates,
         })
     );
+    const selectRef = useRef();
 
     const handleDragEnd = ({ active, over }) => {
-        console.log(active, over);
         if (active.id !== over?.id) {
             setItems((items) => {
                 const oldIndex = items.indexOf(active.id);
@@ -35,32 +35,60 @@ export const SideBar = ({ puzzle }) => {
                 puzzle.layers = [
                     ...arrayMove(puzzle.layers, oldIndex, newIndex),
                 ];
-                // TODO: Maybe have another function other than a general purpose "update" since I might draw in layers?
-                // puzzle.update()
+                puzzle.updateScreen();
 
                 return arrayMove(items, oldIndex, newIndex);
             });
         }
     };
-    console.log(puzzle.layers);
 
+    const handleAddNewLayer = () => {
+        const newLayer = availableLayers[selectRef.current.selectedIndex];
+        if (newLayer?.unique && items.indexOf(newLayer.displayName) > -1) {
+            // TODO: disable the option in the select element to make this easier on the user
+            return;
+        }
+        puzzle.layers.push(new newLayer());
+        puzzle.updateScreen();
+        setItems(puzzle.layers.map(({ displayName }) => displayName));
+    };
+
+    const handleDelete = (index) => () => {
+        setItems(items.filter((_, i) => index !== i));
+        puzzle.layers.splice(index, 1);
+        puzzle.updateScreen();
+    };
+
+    // TODO: Handle layer options? Or should that just be listed after the layer list?
     // TODO: The side bar will have more than just this, move this mess to another file
     return (
         <div>
             <div>
                 <h1>Layers</h1>
-                <DndContext
-                    sensors={sensors}
-                    collisionDetection={closestCenter}
-                    onDragEnd={handleDragEnd}
-                >
+                <div>
+                    <label htmlFor="newLayer">Add new layer</label>
+                    <select name="NewLayer" ref={selectRef}>
+                        {availableLayers.map((layerInit) => (
+                            <option
+                                value={layerInit.displayName}
+                                key={layerInit.displayName}
+                            >
+                                {layerInit.displayName}
+                            </option>
+                        ))}
+                    </select>
+                    <button onPointerDown={handleAddNewLayer}>Add</button>
+                </div>
+                <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
                     <SortableContext
                         items={items}
                         strategy={verticalListSortingStrategy}
                     >
-                        {items.map((item) => (
+                        {items.map((item, index) => (
+                            // TODO: duplicate keys is a HUGE issue
                             <SortableItem key={item} id={item}>
-                                {item}
+                                <p>{item}</p>
+                                <div onPointerDown={handleDelete(index)}>D</div>
                             </SortableItem>
                         ))}
                     </SortableContext>

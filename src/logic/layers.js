@@ -1,7 +1,9 @@
 export class CellOutlineLayer {
-    id = "CellOutlineLayer";
+    static displayName = "Cell Outline";
+    static unique = true;
     displayName = "Cell Outline";
 
+    id = "CellOutlineLayer";
     controls = "onePoint";
     latticePoints = ["center"];
     drawMultiple = true;
@@ -79,8 +81,12 @@ export class CellOutlineLayer {
 }
 
 export class SelectionLayer {
-    id = "SelectionLayer";
+    static displayName = "Selections";
+    static unique = true;
+
     displayName = "Selections";
+
+    id = "SelectionLayer";
     hidden = true;
     controls = "onePoint";
     latticePoints = ["center"];
@@ -94,11 +100,13 @@ export class SelectionLayer {
 }
 
 export class ColorLayer {
+    static displayName = "Color";
+    displayName = "Color";
+
+    id = Symbol();
     hidden = false;
     controls = "onePoint";
     latticePoints = ["center"];
-    id = Symbol();
-    displayName = "Color";
 
     defaultRenderOrder = 1;
     encoderPrefix = "c";
@@ -120,6 +128,8 @@ export class ColorLayer {
         ];
     }
 }
+
+export const availableLayers = [CellOutlineLayer, ColorLayer, SelectionLayer];
 
 /* The following classes are only there to see what capabilities I expect of latticePoints */
 export class MazeWallLayer {
