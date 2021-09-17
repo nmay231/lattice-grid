@@ -81,6 +81,102 @@ export class SquareGrid {
         return [...ids].map((id) => this.objects[id]);
     }
 
+    // nearest({to: {x, y}, intersection: IntersectionType, blacklist?: Points[], pointTypes: PointType[]})
+    // nearest({to: {x, y}, intersection: IntersectionType, blacklist?: Points[], points: Points[]})
+    // TODO: Consider expanding IntersectionType to allow nearest on first click without regard to distance (e.g. with a Voroni diagram)
+    // TODO: Consider renaming `intersection` to `distanceMetric` or something like that.
+    /* This function finds the nearest point(s) to a click/tap that satisfies certain conditions. The first example selects any point in the grid of the specified pointType(s), while the second only selects points from the provided list. If points are not close enough to be selected or if the closest one is in the blacklist, this will return null. Arguments `to` and `intersection` are always required. `to` is the raw x,y coordinates from the canvas. `intersection` is "polygon" or "ellipse" which basically, as an example, determines whether you can "squeeze" between two orthogonally adjacent cells to reach a cell diagonally. "polygon" (e.g. using a square trigger) does not allow diagonal selecting while "ellipse" (e.g. using a circle trigger) does. Another issue is if you want to select an adjacent edge OR corner from a cell, the polygon/ellipse has to be slightly smaller. So, if there are more than one pointType in the combination of blacklist and pointTypes/points, the polygon/ellipse is automatically shrunk by half. You might be thinking that for the second API, the `blacklist` argument is unnecessary. You might be right, but I can't prove that to myself atm... Actually, I might have just proved it by the previous statement (multi-pointType shrinks the selection polygon/ellipse). */
+    nearest({ to, intersection, blacklist = [], pointTypes, points }) {
+        if (!!pointTypes?.length === !!points?.length) {
+            throw Error(
+                "Either both of pointTypes and points were missing/empty or both" +
+                    `were provided: pointTypes=${pointTypes}, points=${points}`
+            );
+        }
+
+        const allPointTypes = new Set([
+            ...blacklist,
+            ...pointTypes,
+            ...points.map(this.pointType),
+        ]);
+
+        let getDistance;
+        if (intersection === "ellipse") {
+            // Euclidean distance
+            getDistance = ({ x: x1, y: y1 }, { x: x2, y: y2 }) =>
+                Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+        } else if (intersection === "polygon") {
+            // Manhattan distance
+            getDistance = ({ x: x1, y: y1 }, { x: x2, y: y2 }) =>
+                Math.abs(x2 - x1) + Math.abs(y2 - y1);
+        } else {
+            // The "You're-silly" distance
+            throw Error(`Unexpected intersection=${intersection}`);
+        }
+
+        const { cellSize, border: borderPadding } = this.settings;
+        const minimumDistance = cellSize / (allPointTypes.size === 1 ? 2 : 4);
+
+        const x = (to.x - borderPadding) / cellSize,
+            y = (to.y - borderPadding) / cellSize;
+        let nearbyPoints = [];
+        for (let type in allPointTypes) {
+            if (type === "cell") {
+                const cellX = Math.round(x + 0.5),
+                    cellY = Math.round(y + 0.5);
+                nearbyPoints.push({
+                    point: `${x},${y}`,
+                    distance: getDistance({ x, y }, { x: cellX, y: cellY }),
+                });
+                break;
+            } else if (type === "corner") {
+                const nearX = Math.round(x),
+                    nearY = Math.round(y);
+                nearbyPoints.push({
+                    point: `${x}c${y}`,
+                    distance: getDistance({ x, y }, { x: nearX, y: nearY }),
+                });
+                break;
+            } else if (type === "edge") {
+                const nearestEdges = {
+                    v: { x: Math.round(x), y: Math.round(y + 0.5) },
+                    h: { x: Math.round(x + 0.5), y: Math.round(y) },
+                };
+                for (let edgeType in nearestEdges) {
+                    const { x: nearX, y: nearY } = nearestEdges[edgeType];
+                    nearbyPoints.push({
+                        point: `${x},${y}`,
+                        distance: getDistance({ x, y }, { x: nearX, y: nearY }),
+                    });
+                    break;
+                }
+            } else {
+                throw Error(`Unexpected pointType=${type}`);
+            }
+        }
+
+        if (pointTypes?.length) {
+            for (let { point, distance } of nearbyPoints) {
+                if (distance < minimumDistance) {
+                    return point;
+                }
+            }
+            return null;
+        } else if (points?.length) {
+            for (let { point, distance } of nearbyPoints) {
+                if (
+                    distance < minimumDistance &&
+                    point in points &&
+                    !(point in blacklist)
+                ) {
+                    return point;
+                }
+            }
+            return null;
+        }
+    }
+
+    // TODO: This could be really simplified if I just used a planar graph. I doubt it costs much memory, and it makes everyone's lives easier...
     getPoints({
         points: referencePoints,
         selection: startingSelections,
