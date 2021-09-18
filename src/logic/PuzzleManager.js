@@ -11,11 +11,13 @@ export class PuzzleManager {
     ctx;
     grid;
     blitter;
+    eventListeners;
 
     constructor(canvas) {
         this.settings = new Settings();
         this.grid = new SquareGrid(this.settings, { width: 10, height: 10 });
 
+        // TODO: Account for window width/height when getting these values
         const { width, height } = this.grid.getCanvasRequirements();
         canvas.width = width;
         canvas.height = height;
@@ -24,7 +26,60 @@ export class PuzzleManager {
         this.ctx = canvas.getContext("2d");
         this.blitter = new MasterBlitter(this.ctx, this.grid);
         this.blitter.blitToCanvas(this.layers, this.settings, {});
+
+        this.eventListeners = {
+            onPointerDown: this.onPointerDown.bind(this),
+            // onPointerUp: this.onPointerUp.bind(this),
+            // onPointerMove: this.onPointerMove.bind(this),
+        };
     }
+
+    onPointerDown(event) {
+        const {
+            buttons,
+            target: canvas,
+            clientX,
+            clientY,
+            // ctrlKey,
+            // altKey,
+            // shiftKey,
+        } = event;
+        const { offsetLeft, offsetTop } = canvas;
+        let x = clientX - offsetLeft,
+            y = clientY - offsetTop;
+
+        const options = [
+            { intersection: "polygon", pointTypes: ["cell"] },
+            { intersection: "ellipse", pointTypes: ["cell"] },
+            { intersection: "polygon", pointTypes: ["corner"] },
+            { intersection: "ellipse", pointTypes: ["corner"] },
+            // { intersection: "polygon", pointTypes: ["edge"] },
+            // { intersection: "ellipse", pointTypes: ["edge"] },
+        ];
+        if (buttons)
+            console.log(
+                ...options.map(
+                    ({ intersection, pointTypes }) =>
+                        intersection +
+                        ":" +
+                        pointTypes +
+                        ":" +
+                        this.grid.nearest({
+                            to: { x, y },
+                            intersection,
+                            pointTypes,
+                        })
+                )
+            );
+
+        event.preventDefault();
+    }
+    // onPointerUp(event) {
+    //     console.log(event);
+    // }
+    // onPointerMove(event) {
+    //     const {button, clientX, clientY} = event;
+    // }
 
     // TODO
     updateScreen() {}
@@ -32,7 +87,9 @@ export class PuzzleManager {
 
 /* The main reason this class is necessary is to automatically change defaults stored in localStorage for that seamless experience */
 export class Settings {
-    cellSize = 30;
+    cellSize = 50;
+    // TODO: rename to borderPadding
+    // TODO: use this to add 0.5 to every value to account for silly canvas adjustments
     border = 15;
 }
 

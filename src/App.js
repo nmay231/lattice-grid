@@ -14,27 +14,18 @@ export const App = () => {
     return (
         <div className={styles.mainContainer}>
             <div className={styles.canvasContainer}>
-                <canvas className={styles.canvas} ref={canvas}></canvas>
+                <canvas
+                    className={styles.canvas}
+                    ref={canvas}
+                    /* Is this a security vulnerability? I don't know. I don't case right now */
+                    {...puzzle?.eventListeners}
+                ></canvas>
             </div>
 
             <div className={styles.divider}></div>
             <div className={styles.sideBar}>
                 {puzzle && <SideBar puzzle={puzzle} />}
             </div>
-            {/* <div className={styles.sideBar}>
-                <div className={styles.sideBarItemHandle}></div>
-
-                <div className={styles.sideBarItem}>
-                    <p>Layers</p>
-                    <ol>
-                        <li></li>
-                    </ol>
-                </div>
-                <div className={styles.sideBarItem}>
-                    <div className={styles.sideBarItemHandle}></div>
-                    <p>test item</p>
-                </div>
-            </div> */}
         </div>
     );
 };

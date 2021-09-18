@@ -96,60 +96,52 @@ export class SquareGrid {
 
         const allPointTypes = new Set([
             ...blacklist,
-            ...pointTypes,
-            ...points.map(this.pointType),
+            ...(pointTypes ?? []),
+            ...(points ?? []).map(this.pointType),
         ]);
 
         let getDistance;
         if (intersection === "ellipse") {
-            // Euclidean distance
-            getDistance = ({ x: x1, y: y1 }, { x: x2, y: y2 }) =>
-                Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
-        } else if (intersection === "polygon") {
             // Manhattan distance
             getDistance = ({ x: x1, y: y1 }, { x: x2, y: y2 }) =>
                 Math.abs(x2 - x1) + Math.abs(y2 - y1);
+        } else if (intersection === "polygon") {
+            // Chebyshev distance
+            getDistance = ({ x: x1, y: y1 }, { x: x2, y: y2 }) =>
+                Math.max(Math.abs(x2 - x1), Math.abs(y2 - y1));
         } else {
             // The "You're-silly" distance
             throw Error(`Unexpected intersection=${intersection}`);
         }
 
         const { cellSize, border: borderPadding } = this.settings;
-        const minimumDistance = cellSize / (allPointTypes.size === 1 ? 2 : 4);
+        const minimumDistance = allPointTypes.size === 1 ? 0.5 : 0.25;
 
         const x = (to.x - borderPadding) / cellSize,
             y = (to.y - borderPadding) / cellSize;
         let nearbyPoints = [];
-        for (let type in allPointTypes) {
+        for (let type of allPointTypes) {
             if (type === "cell") {
-                const cellX = Math.round(x + 0.5),
-                    cellY = Math.round(y + 0.5);
+                const cellX = Math.floor(x),
+                    cellY = Math.floor(y);
                 nearbyPoints.push({
-                    point: `${x},${y}`,
-                    distance: getDistance({ x, y }, { x: cellX, y: cellY }),
+                    point: `${cellX},${cellY}`,
+                    distance: getDistance(
+                        { x, y },
+                        { x: cellX + 0.5, y: cellY + 0.5 }
+                    ),
                 });
                 break;
             } else if (type === "corner") {
-                const nearX = Math.round(x),
-                    nearY = Math.round(y);
+                const cornerX = Math.floor(x + 0.5),
+                    cornerY = Math.floor(y + 0.5);
                 nearbyPoints.push({
-                    point: `${x}c${y}`,
-                    distance: getDistance({ x, y }, { x: nearX, y: nearY }),
+                    point: `${cornerX}c${cornerY}`,
+                    distance: getDistance({ x, y }, { x: cornerX, y: cornerY }),
                 });
                 break;
-            } else if (type === "edge") {
-                const nearestEdges = {
-                    v: { x: Math.round(x), y: Math.round(y + 0.5) },
-                    h: { x: Math.round(x + 0.5), y: Math.round(y) },
-                };
-                for (let edgeType in nearestEdges) {
-                    const { x: nearX, y: nearY } = nearestEdges[edgeType];
-                    nearbyPoints.push({
-                        point: `${x},${y}`,
-                        distance: getDistance({ x, y }, { x: nearX, y: nearY }),
-                    });
-                    break;
-                }
+                // TODO: edges are annoying...
+                // } else if (type === "edge") {
             } else {
                 throw Error(`Unexpected pointType=${type}`);
             }
