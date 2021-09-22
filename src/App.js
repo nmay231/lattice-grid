@@ -3,6 +3,8 @@ import { PuzzleManager } from "./logic/PuzzleManager";
 import styles from "./App.module.css";
 import { SideBar } from "./components/SideBar";
 
+// TODO: I should probably use Redux (or something like it). I just don't want to set that up rn...
+// For example, there will need to be a copy of layers (or layer ids) in Redux, but will PuzzleManager drive Redux or vice versa?
 export const App = () => {
     const canvas = useRef();
     const [puzzle, setPuzzle] = useState(null);

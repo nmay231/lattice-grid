@@ -1,39 +1,17 @@
 import { POINT_TYPES } from "../PuzzleManager";
 
+// TODO: As I finalize APIs, I need to decide what sort of values are going to be passed around (e.g. canvas coords vs grid coords vs point strings)
 export class SquareGrid {
+    onePointLayers = {};
+
     constructor(settings, params) {
         this.settings = settings;
         this.width = params.width;
         this.height = params.height;
         this.x0 = 0;
         this.y0 = 0;
-
-        /* Maps objectId to object */
-        this.objects = {
-            "2,5": { objectId: "2,5" },
-            "5,5": { objectId: "5,5" },
-            // "6,5": { objectId: "6,5" },
-            "5,6": { objectId: "5,6" },
-            "6,6": { objectId: "6,6" },
-            "6,7": { objectId: "6,7" },
-            "9,9": { objectId: "9,9" },
-            "9,6": { objectId: "9,6" },
-            "8,6": { objectId: "8,6" },
-        };
-        /* For now, a simple array of object metadata that I might want to search by */
-        this.objectIndex = [
-            { layerId: "CellOutlineLayer", objectId: "2,5" },
-            { layerId: "CellOutlineLayer", objectId: "5,5" },
-            // { layerId: "CellOutlineLayer", objectId: "6,5" },
-            { layerId: "CellOutlineLayer", objectId: "5,6" },
-            { layerId: "CellOutlineLayer", objectId: "6,6" },
-            { layerId: "CellOutlineLayer", objectId: "6,7" },
-            { layerId: "CellOutlineLayer", objectId: "9,9" },
-            { layerId: "CellOutlineLayer", objectId: "9,6" },
-            // TODO: I don't yet account for single cells that separate two groups of hidden cells
-            { layerId: "CellOutlineLayer", objectId: "8,6" },
-        ];
     }
+
     getCanvasRequirements() {
         return {
             width:
@@ -42,28 +20,87 @@ export class SquareGrid {
                 this.height * this.settings.cellSize + 2 * this.settings.border,
         };
     }
-    encode(settings) {
-        // Delegate encoding to each layer or preset
-        // TODO: this should actually just be the PuzzleManager's job
+
+    addLayer(layer) {
+        if (layer.controls === "onePoint") {
+            const layerData = {};
+            this.onePointLayers[layer.id] = layerData;
+            // TODO: Handle a defaultState that's an object or array
+            const defaultState = layer.defaultState ?? layer.states?.[0];
+            if (defaultState === undefined) {
+                return;
+            }
+
+            for (let pointType of layer.pointTypes) {
+                const points = this.getAllPoints(pointType);
+                for (let p of points) {
+                    layerData[p] = defaultState;
+                }
+            }
+        } else {
+            throw Error(`Layer controls not implemented: ${layer.controls}`);
+        }
     }
-    decode(settings) {
-        // Delegate decoding to each layer or preset
-        // TODO: this should actually just be the PuzzleManager's job
-    }
-    // E.g. getObjects({ point: "x=0,y=0", latticeType: "center", layerId: myLayerId, objectId: myObjectId })
-    // Any and all parameters are optional. Multiple params are AND'ed, not OR'ed.
-    getObjects({
-        point,
-        latticeType,
-        layerId,
-        objectId,
-        includeOutOfBounds = false,
-    }) {
-        // TODO: handle values out of range (a cell outside the boundaries)
-        if (objectId ?? this.objectIndex[objectId]) {
-            return [this.objectIndex[objectId]];
+
+    // TODO: This exact API should be temporary
+    cycleState({ layer, point }) {
+        if (layer.controls !== "onePoint") {
+            throw Error(`Layer controls not supported: ${layer.controls}`);
         }
 
+        if (!(point in this.onePointLayers[layer.id])) {
+            throw Error("your face asdf");
+        }
+
+        const current = this.onePointLayers[layer.id][point];
+        const index = layer.states.indexOf(current);
+        this.onePointLayers[layer.id][point] =
+            layer.states[(index + 1) % layer.states.length];
+    }
+
+    addObject({ layerId, points, object }) {
+        const objectId = Symbol();
+        this.objects[objectId] = { objectId, layerId, points, object };
+        for (let point of points) {
+            this.objectIndex.push({ objectId, layerId, point });
+        }
+    }
+
+    removeObjects({ objectId, replaceWith }) {
+        const allIds = this.objectIndex.map(({ objectId }) => objectId);
+        this.objectIndex.splice(allIds.indexOf(objectId), 1);
+        delete this.objects[objectId];
+        if (replaceWith) {
+            // TODO: This was just shoehorned in...
+            this.addObject(replaceWith);
+        }
+    }
+
+    getObject(objectId) {
+        return this.object[objectId];
+    }
+
+    // E.g. getObjects({ point: "0,0", latticeType: "cell", layerId: myLayerId })
+    // Any and all parameters are optional. Multiple params are AND'ed, not OR'ed.
+    getObjects({ point, latticeType, layerId, includeOutOfBounds = false }) {
+        // TODO: handle values out of range (a cell outside the boundaries)
+        if (layerId in this.onePointLayers) {
+            if (point) {
+                return {
+                    layerId,
+                    point,
+                    state: this.onePointLayers[layerId][point],
+                };
+            } else {
+                return Object.keys(this.onePointLayers[layerId]).map(
+                    (point) => ({
+                        layerId,
+                        point,
+                        state: this.onePointLayers[layerId][point],
+                    })
+                );
+            }
+        }
         // For now, all objects will be stored in a flat array to make things simple. Eventually, I should build an index to make accessing objects a bit faster.
         const ids = new Set(
             this.objectIndex
@@ -169,6 +206,7 @@ export class SquareGrid {
     }
 
     // TODO: This could be really simplified if I just used a planar graph. I doubt it costs much memory, and it makes everyone's lives easier...
+    // TODO: I can also simply pluralize cell->cells, edge->edges, etc. It's simple, and I have to do edgeStraight->edges anyways.
     getPoints({
         points: referencePoints,
         selection: startingSelections,

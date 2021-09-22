@@ -30,14 +30,14 @@ export class MasterBlitter {
 
     constructor(ctx, grid) {
         this.ctx = ctx;
-        this.grid = grid; // TODO: Is this really needed?
+        this.grid = grid;
     }
     /* change is the object being added or removed. It contains information like which layer it belongs to, which point is relevant (position), if it is hidden or invalid, etc. This will help with optimization in the future; do NOT use it now. */
     blitToCanvas(layers, settings, change) {
         // const layer = layers.filter((layer) => layer.id === change.layerId),
-        this.ctx.clearRect(0, 0, this.ctx.width, this.ctx.height);
+        const { width, height } = this.grid.getCanvasRequirements();
+        this.ctx.clearRect(0, 0, width, height);
         for (let layer of layers) {
-            // TODO: occlusion stuff needs to happen after
             let blitGroups = layer.getBlits(this.grid, settings, change);
             // This would be wrong because any changes to objects by occlusion/constraint stuff should happen between user input and object storage, not between loading from storage and blitting to the canvas.
             // objects = this.occlusionStuff(objects);

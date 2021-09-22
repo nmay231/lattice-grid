@@ -35,7 +35,7 @@ export const SideBar = ({ puzzle }) => {
                 puzzle.layers = [
                     ...arrayMove(puzzle.layers, oldIndex, newIndex),
                 ];
-                puzzle.updateScreen();
+                puzzle.redrawScreen();
 
                 return arrayMove(items, oldIndex, newIndex);
             });
@@ -49,14 +49,14 @@ export const SideBar = ({ puzzle }) => {
             return;
         }
         puzzle.layers.push(new newLayer());
-        puzzle.updateScreen();
+        puzzle.redrawScreen();
         setItems(puzzle.layers.map(({ displayName }) => displayName));
     };
 
     const handleDelete = (index) => () => {
         setItems(items.filter((_, i) => index !== i));
         puzzle.layers.splice(index, 1);
-        puzzle.updateScreen();
+        puzzle.redrawScreen();
     };
 
     // TODO: Handle layer options? Or should that just be listed after the layer list?

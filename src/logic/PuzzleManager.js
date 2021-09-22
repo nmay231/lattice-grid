@@ -6,12 +6,16 @@ import { SquareGrid } from "./grids/SquareGrid";
 export class PuzzleManager {
     settings;
     // TODO: Also store default render layers 1-9 so that if a user reorders some layers, new layers still are inserted in a reasonable spot according to their defaultRenderOrder
+    currentLayer;
     layers = [new CellOutlineLayer(), new SelectionLayer()];
     canvas;
     ctx;
     grid;
     blitter;
     eventListeners;
+
+    // TODO: This should not just change to handle multiPoint objects, but also for selecting existing objects
+    currentPoint = null;
 
     constructor(canvas) {
         this.settings = new Settings();
@@ -25,6 +29,7 @@ export class PuzzleManager {
         this.canvas = canvas;
         this.ctx = canvas.getContext("2d");
         this.blitter = new MasterBlitter(this.ctx, this.grid);
+        this.initializeGrid();
         this.blitter.blitToCanvas(this.layers, this.settings, {});
 
         this.eventListeners = {
@@ -32,6 +37,23 @@ export class PuzzleManager {
             // onPointerUp: this.onPointerUp.bind(this),
             // onPointerMove: this.onPointerMove.bind(this),
         };
+
+        // TODO
+        this.currentLayer = this.layers[0];
+    }
+
+    initializeGrid() {
+        for (let layer of this.layers) {
+            this.grid.addLayer(layer);
+        }
+        // TODO: temporary
+        const points = ["2,5", "5,5", "5,6", "6,6", "6,7", "9,9", "9,6", "8,6"];
+        for (let point of points) {
+            this.grid.cycleState({
+                layer: this.layers[0],
+                point,
+            });
+        }
     }
 
     onPointerDown(event) {
@@ -40,6 +62,7 @@ export class PuzzleManager {
             target: canvas,
             clientX,
             clientY,
+            // TODO: I think that unless a layer specifically needs modifier keys, they should be used to pass user input onto the next layer
             // ctrlKey,
             // altKey,
             // shiftKey,
@@ -47,6 +70,25 @@ export class PuzzleManager {
         const { offsetLeft, offsetTop } = canvas;
         let x = clientX - offsetLeft,
             y = clientY - offsetTop;
+
+        const { controls, pointTypes } = this.currentLayer;
+
+        if (controls === "onePoint") {
+            const point = this.grid.nearest({
+                to: { x, y },
+                intersection: "polygon",
+                pointTypes,
+            });
+            if (point === null) {
+                return;
+            }
+
+            this.grid.cycleState({
+                layer: this.currentLayer,
+                point,
+            });
+            this.redrawScreen();
+        }
 
         const options = [
             { intersection: "polygon", pointTypes: ["cell"] },
@@ -82,7 +124,9 @@ export class PuzzleManager {
     // }
 
     // TODO
-    updateScreen() {}
+    redrawScreen() {
+        this.blitter.blitToCanvas(this.layers, this.settings, {});
+    }
 }
 
 /* The main reason this class is necessary is to automatically change defaults stored in localStorage for that seamless experience */
