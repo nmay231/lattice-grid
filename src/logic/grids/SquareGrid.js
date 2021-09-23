@@ -12,6 +12,17 @@ export class SquareGrid {
         this.y0 = 0;
     }
 
+    pointToLattice(point) {
+        const [, x, sep, y] = point.match(/(\d+)([,cvh])(\d+)/);
+        if (sep === ",") {
+            return [2 * x + 1, 2 * y + 1];
+        } else if (sep === "c") {
+            return [2 * x, 2 * y];
+        } else {
+            return [2 * x + (sep === "h"), 2 * y + (sep === "v")];
+        }
+    }
+
     getCanvasRequirements() {
         return {
             width:
@@ -208,20 +219,24 @@ export class SquareGrid {
     // TODO: This could be really simplified if I just used a planar graph. I doubt it costs much memory, and it makes everyone's lives easier...
     // TODO: I can also simply pluralize cell->cells, edge->edges, etc. It's simple, and I have to do edgeStraight->edges anyways.
     getPoints({
-        points: referencePoints,
+        points: startingPoints,
         selection: startingSelections,
         blacklist,
+        addToBlacklist = true,
     }) {
         // TODO: blacklist checked items and flatten finalResult
         const selections = this.parseSelection(startingSelections);
         const finalResult = {};
 
-        blacklist = blacklist ?? [];
+        blacklist =
+            (blacklist && [...blacklist]) ??
+            (addToBlacklist && startingPoints && [...startingPoints]) ??
+            [];
         const inProgress = [];
         for (let selection of selections) {
             inProgress.push({
                 selection,
-                points: referencePoints,
+                points: startingPoints,
                 result: finalResult,
             });
         }
@@ -229,7 +244,7 @@ export class SquareGrid {
         while (inProgress.length) {
             const { points, selection, result } = inProgress.pop();
             const [pointType, nextPointType] = selection;
-            if (points) {
+            if (points && addToBlacklist) {
                 blacklist.push(...points);
             }
 
@@ -250,123 +265,116 @@ export class SquareGrid {
                     "Not implemented. Requires doing two layers at once!"
                 );
             } else if (pointType === "shrinkwrap") {
-                const importantPoints = (
-                    points
-                        ? points.filter(
-                              (p) => this.pointType(p) === POINT_TYPES.CELL
-                          )
-                        : this.getAllPoints(POINT_TYPES.CELL)
-                ).filter((p) => blacklist.indexOf(p) === -1);
-                if (!importantPoints.length) {
-                    continue;
-                }
+                const importantPoints = points
+                    ? points.filter(
+                          (p) => this.pointType(p) === POINT_TYPES.CELL
+                      )
+                    : this.getAllPoints(POINT_TYPES.CELL);
+
                 result.shrinkwrap = [];
+                // Points are converted to strings to allow easy comparison
+                const cells = importantPoints.map((point) =>
+                    this.pointToLattice(point).toString()
+                );
                 const offset = nextPointType.offset ?? 0;
 
-                const cornerCounts = {};
-                for (let p of importantPoints) {
-                    let [x, y] = p.split(",");
-                    x = parseInt(x);
-                    y = parseInt(y);
-                    // prettier-ignore
-                    const corners = [
-                        x + "c" + y,
-                        (x + 1) + "c" + y,
-                        x + "c" + (y + 1),
-                        (x + 1) + "c" + (y + 1),
-                    ];
-                    for (let c of corners) {
-                        cornerCounts[c] = (cornerCounts[c] ?? 0) + 1;
-                        if (cornerCounts[c] === 4) {
-                            delete cornerCounts[c];
-                        }
-                    }
-                }
+                while (cells.length) {
+                    let [dx, dy] = [0, -1];
+                    let current = cells[0].split(",").map((i) => parseInt(i));
+                    let next = current;
+                    let cellAcrossBoundary = (cell) =>
+                        !cells.includes(cell.toString());
 
-                while (true) {
-                    const c0 = Object.keys(cornerCounts)[0];
-                    if (!c0) {
-                        break;
+                    // The current cell HAS to be facing a boundary.
+                    // So, we move in a straight line until we hit one.
+                    while (!cellAcrossBoundary(next)) {
+                        current = next;
+                        next = [current[0] + 2 * dx, current[1] + 2 * dy];
+                    }
+                    // If the offset is negative, we traverse around the outside instead of the inside.
+                    // Otherwise, lines would overlap on touching corners
+                    if (offset < 0) {
+                        cellAcrossBoundary = (cell) =>
+                            cells.includes(cell.toString());
+                        [current, next] = [next, current];
+                        [dx, dy] = [-dx, -dy];
                     }
 
-                    let [x, y] = c0.split("c");
-                    x = parseInt(x);
-                    y = parseInt(y);
+                    let edge = "asdf";
+                    const edgeLoop = [];
 
-                    const SE = importantPoints.indexOf(x + "," + y) > -1,
-                        SW = importantPoints.indexOf(x - 1 + "," + y) > -1,
-                        NW =
-                            importantPoints.indexOf(x - 1 + "," + (y - 1)) > -1,
-                        NE = importantPoints.indexOf(x + "," + (y - 1)) > -1;
+                    // Collect the edges around a contiguous group of cells
+                    while (edge.toString() !== edgeLoop[0]?.toString()) {
+                        next = [current[0] + 2 * dx, current[1] + 2 * dy];
 
-                    let dx, dy;
-                    if (SE && !NE) {
-                        [dx, dy] = [1, 0];
-                    } else if (SW && !NW) {
-                        [dx, dy] = [0, 1];
-                    } else if (NW && !NE) {
-                        [dx, dy] = [-1, 0];
-                    } else {
-                        [dx, dy] = [0, -1];
-                    }
+                        if (cellAcrossBoundary(next)) {
+                            // Add the edge to the loop and rotate clockwise
+                            edge = [current[0] + dx, current[1] + dy];
+                            edgeLoop.push(edge);
+                            [dx, dy] = [-dy, dx];
 
-                    const { border: borderPadding, cellSize } = this.settings;
-                    let offsetLoop = [];
-                    const rotate =
-                        offset >= 0
-                            ? (dx, dy) => [dy, -dx]
-                            : (dx, dy) => [-dy, dx];
-                    let startingCorner = null;
-                    //
-                    while (true) {
-                        const corner = x + "c" + y;
-                        let i, nextCorner, nextX, nextY;
-                        for (i = 0; i < 3; i++) {
-                            [dx, dy] = rotate(dx, dy);
-                            nextX = x + dx;
-                            nextY = y + dy;
-                            nextCorner = nextX + "c" + nextY;
-                            if (nextCorner in cornerCounts) {
-                                break;
+                            if (edgeLoop.length === 1) {
+                                edge = "asdf"; // Prevent a premature stop
                             }
+                        } else {
+                            // Move forward and rotate counter-clockwise
+                            current = next;
+                            [dx, dy] = [dy, -dx];
                         }
+                    }
+                    edgeLoop.pop();
 
-                        if (i !== 3) {
-                            // Add the next point to the shrinkwrap
-                            [dx, dy] = rotate(dx, dy);
-                            offsetLoop.push({
-                                x: borderPadding + x * cellSize - offset * dx,
-                                y: borderPadding + y * cellSize - offset * dy,
-                            });
-                        }
+                    // Convert the edges of the loop to corners and add the offset
+                    const cornerLoop = [];
+                    const { border: borderPadding, cellSize } = this.settings;
+                    const absOffset = Math.abs(offset);
 
-                        // If in a corner or on an elbow, shorten or length the previous line segment, respectively
-                        if (i !== 1 && offsetLoop.length > 1) {
-                            const lastPoint = offsetLoop[offsetLoop.length - 1];
-                            const [offsetX, offsetY] = rotate(dx, dy);
-                            lastPoint.x += (i < 1 ? -1 : 1) * offset * offsetX;
-                            lastPoint.y += (i < 1 ? -1 : 1) * offset * offsetY;
-                        }
+                    for (let index in edgeLoop) {
+                        edge = edgeLoop[index];
+                        const nextEdge =
+                            edgeLoop[(index * 1 + 1) % edgeLoop.length];
 
-                        if (startingCorner === null) {
-                            startingCorner = corner;
-                        } else if (
-                            i === 0 &&
-                            cornerCounts[x - dx + "c" + (y - dy)] === 2
-                        ) {
-                            // Prevent double counting, except on a corner that's part of two loops
-                            cornerCounts[nextCorner] -= 1;
-                        } else if (cornerCounts[nextCorner]) {
-                            delete cornerCounts[nextCorner];
-                        } else if (corner === startingCorner) {
-                            offsetLoop.splice(0, 1, offsetLoop.pop());
-                            result.shrinkwrap.push(offsetLoop);
-                            break;
+                        const corner = [edge[0] + dx, edge[1] + dy];
+                        const offsetCorner = {
+                            x:
+                                borderPadding +
+                                (cellSize * corner[0]) / 2 +
+                                absOffset * -dy,
+                            y:
+                                borderPadding +
+                                (cellSize * corner[1]) / 2 +
+                                absOffset * dx,
+                        };
+
+                        const vectorProjection = [dx ** 2, dy ** 2]; // Needed later
+                        [dx, dy] = [
+                            nextEdge[0] - corner[0],
+                            nextEdge[1] - corner[1],
+                        ];
+                        // If the edges are orthogonal, adjust the corner loop appropriately.
+                        offsetCorner.x += vectorProjection[0] * -dy * absOffset;
+                        offsetCorner.y += vectorProjection[1] * dx * absOffset;
+                        cornerLoop.push(offsetCorner);
+                    }
+                    result.shrinkwrap.push(cornerLoop);
+
+                    // Remove the group of contiguous cells
+                    const start = cells[0].split(",").map((i) => parseInt(i));
+                    const toCheck = [start];
+                    while (toCheck.length) {
+                        const [x, y] = toCheck.pop();
+                        cells.splice(cells.indexOf(x + "," + y), 1);
+
+                        for (let i = 0; i < 4; i++) {
+                            const potential = [x + 2 * dx, y + 2 * dy];
+                            if (cells.includes(potential.toString())) {
+                                toCheck.push(potential);
+                            }
+                            [dx, dy] = [-dy, dx];
                         }
-                        [dx, dy] = [x - nextX, y - nextY];
-                        [x, y] = [nextX, nextY];
                     }
                 }
+                continue;
             } else {
                 const importantPoints = points
                     ? points.filter((p) => this.pointType(p) === pointType)

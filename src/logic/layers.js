@@ -20,7 +20,7 @@ export class CellOutlineLayer {
     // -- Rendering --
     defaultRenderOrder = 2;
     getBlits(grid) {
-        const excluded = grid
+        const points = grid
             .getObjects({ layerId: this.id })
             .filter(({ state }) => !state)
             .map(({ point }) => point);
@@ -29,12 +29,12 @@ export class CellOutlineLayer {
                 cell: { edge: { self: { points: true } } },
                 shrinkwrap: { self: { offset: -1 } },
             },
-            blacklist: [...excluded],
+            blacklist: points,
         });
 
         const useThickEdges = {};
         for (let cell in cells) {
-            if (cell in excluded) {
+            if (cell in points) {
                 continue;
             }
             for (let edge in cells[cell].edge) {
