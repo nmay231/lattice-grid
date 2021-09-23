@@ -269,34 +269,56 @@ export class SquareGrid {
                     ? points.filter(
                           (p) => this.pointType(p) === POINT_TYPES.CELL
                       )
-                    : this.getAllPoints(POINT_TYPES.CELL);
+                    : this.getAllPoints(POINT_TYPES.CELL).filter(
+                          (p) => blacklist.indexOf(p) === -1
+                      );
 
                 result.shrinkwrap = [];
-                // Points are converted to strings to allow easy comparison
-                const cells = importantPoints.map((point) =>
-                    this.pointToLattice(point).toString()
+                let cells = importantPoints.map((point) =>
+                    this.pointToLattice(point)
                 );
                 const offset = nextPointType.offset ?? 0;
 
-                while (cells.length) {
-                    let [dx, dy] = [0, -1];
-                    let current = cells[0].split(",").map((i) => parseInt(i));
-                    let next = current;
+                const edgesLeft = {};
+                let [dx, dy] = [0, -1];
+                for (let cell of cells) {
+                    const [x, y] = cell;
+                    for (let i = 0; i < 4; i++) {
+                        const edge = [x + dx, y + dy].toString();
+                        if (edge in edgesLeft) {
+                            delete edgesLeft[edge];
+                        } else {
+                            edgesLeft[edge] = cell;
+                        }
+                        [dx, dy] = [-dy, dx];
+                    }
+                }
+
+                // Points are converted to strings to allow easy comparison
+                cells = cells.map((cell) => cell.toString());
+
+                while (Object.keys(edgesLeft).length) {
+                    const edgeKey = Object.keys(edgesLeft)[0];
+                    const firstEdge = edgeKey
+                        .split(",")
+                        .map((i) => parseInt(i));
+
+                    let next;
+                    let current = edgesLeft[edgeKey];
+                    [dx, dy] = [
+                        firstEdge[0] - current[0],
+                        firstEdge[1] - current[1],
+                    ];
+
                     let cellAcrossBoundary = (cell) =>
                         !cells.includes(cell.toString());
 
-                    // The current cell HAS to be facing a boundary.
-                    // So, we move in a straight line until we hit one.
-                    while (!cellAcrossBoundary(next)) {
-                        current = next;
-                        next = [current[0] + 2 * dx, current[1] + 2 * dy];
-                    }
                     // If the offset is negative, we traverse around the outside instead of the inside.
                     // Otherwise, lines would overlap on touching corners
                     if (offset < 0) {
                         cellAcrossBoundary = (cell) =>
                             cells.includes(cell.toString());
-                        [current, next] = [next, current];
+                        current = [current[0] + 2 * dx, current[1] + 2 * dy];
                         [dx, dy] = [-dx, -dy];
                     }
 
@@ -355,26 +377,11 @@ export class SquareGrid {
                         offsetCorner.x += vectorProjection[0] * -dy * absOffset;
                         offsetCorner.y += vectorProjection[1] * dx * absOffset;
                         cornerLoop.push(offsetCorner);
+
+                        delete edgesLeft[edge.toString()];
                     }
                     result.shrinkwrap.push(cornerLoop);
-
-                    // Remove the group of contiguous cells
-                    const start = cells[0].split(",").map((i) => parseInt(i));
-                    const toCheck = [start];
-                    while (toCheck.length) {
-                        const [x, y] = toCheck.pop();
-                        cells.splice(cells.indexOf(x + "," + y), 1);
-
-                        for (let i = 0; i < 4; i++) {
-                            const potential = [x + 2 * dx, y + 2 * dy];
-                            if (cells.includes(potential.toString())) {
-                                toCheck.push(potential);
-                            }
-                            [dx, dy] = [-dy, dx];
-                        }
-                    }
                 }
-                continue;
             } else {
                 const importantPoints = points
                     ? points.filter((p) => this.pointType(p) === pointType)
