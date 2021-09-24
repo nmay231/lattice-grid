@@ -46,14 +46,6 @@ export class PuzzleManager {
         for (let layer of this.layers) {
             this.grid.addLayer(layer);
         }
-        // TODO: temporary
-        const points = ["2,5", "5,5", "5,6", "6,6", "6,7", "9,9", "9,6", "8,6"];
-        for (let point of points) {
-            this.grid.cycleState({
-                layer: this.layers[0],
-                point,
-            });
-        }
     }
 
     onPointerDown(event) {
@@ -91,12 +83,12 @@ export class PuzzleManager {
         }
 
         const options = [
-            { intersection: "polygon", pointTypes: ["cell"] },
-            { intersection: "ellipse", pointTypes: ["cell"] },
-            { intersection: "polygon", pointTypes: ["corner"] },
-            { intersection: "ellipse", pointTypes: ["corner"] },
-            // { intersection: "polygon", pointTypes: ["edge"] },
-            // { intersection: "ellipse", pointTypes: ["edge"] },
+            { intersection: "polygon", pointTypes: ["cells"] },
+            { intersection: "ellipse", pointTypes: ["cells"] },
+            { intersection: "polygon", pointTypes: ["corners"] },
+            { intersection: "ellipse", pointTypes: ["corners"] },
+            // { intersection: "polygon", pointTypes: ["edges"] },
+            // { intersection: "ellipse", pointTypes: ["edges"] },
         ];
         if (buttons)
             console.log(
@@ -138,7 +130,7 @@ export class Settings {
 }
 
 export const POINT_TYPES = {
-    CELL: "cell",
-    EDGE: "edge",
-    CORNER: "corner",
+    CELL: "cells",
+    EDGE: "edges",
+    CORNER: "corners",
 };

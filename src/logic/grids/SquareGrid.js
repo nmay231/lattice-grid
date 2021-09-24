@@ -169,7 +169,7 @@ export class SquareGrid {
             y = (to.y - borderPadding) / cellSize;
         let nearbyPoints = [];
         for (let type of allPointTypes) {
-            if (type === "cell") {
+            if (type === "cells") {
                 const cellX = Math.floor(x),
                     cellY = Math.floor(y);
                 nearbyPoints.push({
@@ -180,7 +180,7 @@ export class SquareGrid {
                     ),
                 });
                 break;
-            } else if (type === "corner") {
+            } else if (type === "corners") {
                 const cornerX = Math.floor(x + 0.5),
                     cornerY = Math.floor(y + 0.5);
                 nearbyPoints.push({
@@ -273,115 +273,11 @@ export class SquareGrid {
                           (p) => blacklist.indexOf(p) === -1
                       );
 
-                result.shrinkwrap = [];
                 let cells = importantPoints.map((point) =>
                     this.pointToLattice(point)
                 );
                 const offset = nextPointType.offset ?? 0;
-
-                const edgesLeft = {};
-                let [dx, dy] = [0, -1];
-                for (let cell of cells) {
-                    const [x, y] = cell;
-                    for (let i = 0; i < 4; i++) {
-                        const edge = [x + dx, y + dy].toString();
-                        if (edge in edgesLeft) {
-                            delete edgesLeft[edge];
-                        } else {
-                            edgesLeft[edge] = cell;
-                        }
-                        [dx, dy] = [-dy, dx];
-                    }
-                }
-
-                // Points are converted to strings to allow easy comparison
-                cells = cells.map((cell) => cell.toString());
-
-                while (Object.keys(edgesLeft).length) {
-                    const edgeKey = Object.keys(edgesLeft)[0];
-                    const firstEdge = edgeKey
-                        .split(",")
-                        .map((i) => parseInt(i));
-
-                    let next;
-                    let current = edgesLeft[edgeKey];
-                    [dx, dy] = [
-                        firstEdge[0] - current[0],
-                        firstEdge[1] - current[1],
-                    ];
-
-                    let cellAcrossBoundary = (cell) =>
-                        !cells.includes(cell.toString());
-
-                    // If the offset is negative, we traverse around the outside instead of the inside.
-                    // Otherwise, lines would overlap on touching corners
-                    if (offset < 0) {
-                        cellAcrossBoundary = (cell) =>
-                            cells.includes(cell.toString());
-                        current = [current[0] + 2 * dx, current[1] + 2 * dy];
-                        [dx, dy] = [-dx, -dy];
-                    }
-
-                    let edge = "asdf";
-                    const edgeLoop = [];
-
-                    // Collect the edges around a contiguous group of cells
-                    while (edge.toString() !== edgeLoop[0]?.toString()) {
-                        next = [current[0] + 2 * dx, current[1] + 2 * dy];
-
-                        if (cellAcrossBoundary(next)) {
-                            // Add the edge to the loop and rotate clockwise
-                            edge = [current[0] + dx, current[1] + dy];
-                            edgeLoop.push(edge);
-                            [dx, dy] = [-dy, dx];
-
-                            if (edgeLoop.length === 1) {
-                                edge = "asdf"; // Prevent a premature stop
-                            }
-                        } else {
-                            // Move forward and rotate counter-clockwise
-                            current = next;
-                            [dx, dy] = [dy, -dx];
-                        }
-                    }
-                    edgeLoop.pop();
-
-                    // Convert the edges of the loop to corners and add the offset
-                    const cornerLoop = [];
-                    const { border: borderPadding, cellSize } = this.settings;
-                    const absOffset = Math.abs(offset);
-
-                    for (let index in edgeLoop) {
-                        edge = edgeLoop[index];
-                        const nextEdge =
-                            edgeLoop[(index * 1 + 1) % edgeLoop.length];
-
-                        const corner = [edge[0] + dx, edge[1] + dy];
-                        const offsetCorner = {
-                            x:
-                                borderPadding +
-                                (cellSize * corner[0]) / 2 +
-                                absOffset * -dy,
-                            y:
-                                borderPadding +
-                                (cellSize * corner[1]) / 2 +
-                                absOffset * dx,
-                        };
-
-                        const vectorProjection = [dx ** 2, dy ** 2]; // Needed later
-                        [dx, dy] = [
-                            nextEdge[0] - corner[0],
-                            nextEdge[1] - corner[1],
-                        ];
-                        // If the edges are orthogonal, adjust the corner loop appropriately.
-                        offsetCorner.x += vectorProjection[0] * -dy * absOffset;
-                        offsetCorner.y += vectorProjection[1] * dx * absOffset;
-                        cornerLoop.push(offsetCorner);
-
-                        delete edgesLeft[edge.toString()];
-                    }
-                    result.shrinkwrap.push(cornerLoop);
-                }
+                result.shrinkwrap = this.shrinkwrap({ cells, offset });
             } else {
                 const importantPoints = points
                     ? points.filter((p) => this.pointType(p) === pointType)
@@ -519,6 +415,104 @@ export class SquareGrid {
         // }
 
         return finalResult;
+    }
+
+    shrinkwrap({ cells, offset }) {
+        const result = [];
+
+        const edgesLeft = {};
+        let [dx, dy] = [0, -1];
+        for (let cell of cells) {
+            const [x, y] = cell;
+            for (let i = 0; i < 4; i++) {
+                const edge = [x + dx, y + dy].toString();
+                if (edge in edgesLeft) {
+                    delete edgesLeft[edge];
+                } else {
+                    edgesLeft[edge] = cell;
+                }
+                [dx, dy] = [-dy, dx];
+            }
+        }
+
+        // Points are converted to strings to allow easy comparison
+        cells = cells.map((cell) => cell.toString());
+
+        while (Object.keys(edgesLeft).length) {
+            const edgeKey = Object.keys(edgesLeft)[0];
+            const firstEdge = edgeKey.split(",").map((i) => parseInt(i));
+
+            let next;
+            let current = edgesLeft[edgeKey];
+            [dx, dy] = [firstEdge[0] - current[0], firstEdge[1] - current[1]];
+
+            let cellAcrossBoundary = (cell) => !cells.includes(cell.toString());
+
+            // If the offset is negative, we traverse around the outside instead of the inside.
+            // Otherwise, lines would overlap on touching corners
+            if (offset < 0) {
+                cellAcrossBoundary = (cell) => cells.includes(cell.toString());
+                current = [current[0] + 2 * dx, current[1] + 2 * dy];
+                [dx, dy] = [-dx, -dy];
+            }
+
+            let edge = "asdf";
+            const edgeLoop = [];
+
+            // Collect the edges around a contiguous group of cells
+            while (edge.toString() !== edgeLoop[0]?.toString()) {
+                next = [current[0] + 2 * dx, current[1] + 2 * dy];
+
+                if (cellAcrossBoundary(next)) {
+                    // Add the edge to the loop and rotate clockwise
+                    edge = [current[0] + dx, current[1] + dy];
+                    edgeLoop.push(edge);
+                    [dx, dy] = [-dy, dx];
+
+                    if (edgeLoop.length === 1) {
+                        edge = "asdf"; // Prevent a premature stop
+                    }
+                } else {
+                    // Move forward and rotate counter-clockwise
+                    current = next;
+                    [dx, dy] = [dy, -dx];
+                }
+            }
+            edgeLoop.pop();
+
+            // Convert the edges of the loop to corners and add the offset
+            const cornerLoop = [];
+            const { border: borderPadding, cellSize } = this.settings;
+            const absOffset = Math.abs(offset);
+
+            for (let index in edgeLoop) {
+                edge = edgeLoop[index];
+                const nextEdge = edgeLoop[(index * 1 + 1) % edgeLoop.length];
+
+                const corner = [edge[0] + dx, edge[1] + dy];
+                const offsetCorner = {
+                    x:
+                        borderPadding +
+                        (cellSize * corner[0]) / 2 +
+                        absOffset * -dy,
+                    y:
+                        borderPadding +
+                        (cellSize * corner[1]) / 2 +
+                        absOffset * dx,
+                };
+
+                const vectorProjection = [dx ** 2, dy ** 2]; // Needed later
+                [dx, dy] = [nextEdge[0] - corner[0], nextEdge[1] - corner[1]];
+                // If the edges are orthogonal, adjust the corner loop appropriately.
+                offsetCorner.x += vectorProjection[0] * -dy * absOffset;
+                offsetCorner.y += vectorProjection[1] * dx * absOffset;
+                cornerLoop.push(offsetCorner);
+
+                delete edgesLeft[edge.toString()];
+            }
+            result.push(cornerLoop);
+        }
+        return result;
     }
 
     parseSelection(selection) {

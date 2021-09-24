@@ -7,7 +7,7 @@ export class CellOutlineLayer {
 
     // -- Controls --
     controls = "onePoint";
-    pointTypes = ["cell"];
+    pointTypes = ["cells"];
     states = [true, false];
     drawMultiple = true;
 
@@ -24,9 +24,9 @@ export class CellOutlineLayer {
             .getObjects({ layerId: this.id })
             .filter(({ state }) => !state)
             .map(({ point }) => point);
-        const { cell: cells, shrinkwrap } = grid.getPoints({
+        const { cells, shrinkwrap } = grid.getPoints({
             selection: {
-                cell: { edge: { self: { points: true } } },
+                cells: { edges: { self: { points: true } } },
                 shrinkwrap: { self: { offset: -1 } },
             },
             blacklist: points,
@@ -37,7 +37,7 @@ export class CellOutlineLayer {
             if (cell in points) {
                 continue;
             }
-            for (let edge in cells[cell].edge) {
+            for (let edge in cells[cell].edges) {
                 /* If a cell does not share an edge with another cell, use a thick line. */
                 if (useThickEdges[edge]) {
                     useThickEdges[edge] = false;
@@ -68,8 +68,8 @@ export class CellOutlineLayer {
             },
         ];
         for (let cellKey in cells) {
-            for (let edgeKey in cells[cellKey].edge) {
-                const { points } = cells[cellKey].edge[edgeKey];
+            for (let edgeKey in cells[cellKey].edges) {
+                const { points } = cells[cellKey].edges[edgeKey];
                 if (!useThickEdges[edgeKey]) {
                     blitGroups[0].blits.push(points);
                 }
@@ -96,7 +96,7 @@ export class SelectionLayer {
     id = "SelectionLayer";
     hidden = true;
     controls = "onePoint";
-    pointTypes = ["cell"];
+    pointTypes = ["cells"];
 
     defaultRenderOrder = 9;
     encoderPrefix = "S";
@@ -113,7 +113,7 @@ export class ColorLayer {
     id = Symbol();
     hidden = false;
     controls = "onePoint";
-    pointTypes = ["cell"];
+    pointTypes = ["cells"];
 
     defaultRenderOrder = 1;
     encoderPrefix = "c";
