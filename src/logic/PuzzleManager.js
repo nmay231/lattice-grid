@@ -13,23 +13,28 @@ export class PuzzleManager {
     grid;
     blitter;
     eventListeners;
+    store; // Redux store
+    unsubscribeToStore;
 
     // TODO: This should not just change to handle multiPoint objects, but also for selecting existing objects
     currentPoint = null;
 
-    constructor(canvas) {
-        this.settings = new Settings();
+    constructor(canvas, store) {
+        this.store = store;
+        this.unsubscribeToStore = this.store.subscribe(
+            this.subscribeToStore.bind(this)
+        );
+        this.settings = store.getState().settings;
+
         this.grid = new SquareGrid(this.settings, { width: 10, height: 10 });
-
-        // TODO: Account for window width/height when getting these values
-        const { width, height } = this.grid.getCanvasRequirements();
-        canvas.width = width;
-        canvas.height = height;
-
+        for (let layer of this.layers) {
+            this.grid.addLayer(layer);
+        }
         this.canvas = canvas;
+        this.initializeGrid();
+
         this.ctx = canvas.getContext("2d");
         this.blitter = new MasterBlitter(this.ctx, this.grid);
-        this.initializeGrid();
         this.blitter.blitToCanvas(this.layers, this.settings, {});
 
         this.eventListeners = {
@@ -42,10 +47,22 @@ export class PuzzleManager {
         this.currentLayer = this.layers[0];
     }
 
-    initializeGrid() {
-        for (let layer of this.layers) {
-            this.grid.addLayer(layer);
+    subscribeToStore() {
+        // TODO: This is not fully comprehensive
+        const settings = this.store.getState().settings;
+        const { cellSize, border } = this.settings;
+        this.settings = settings;
+        this.grid.settings = settings;
+        if (cellSize !== settings.cellSize || border !== settings.border) {
+            this.initializeGrid();
+            this.redrawScreen();
         }
+    }
+
+    initializeGrid() {
+        const { width, height } = this.grid.getCanvasRequirements();
+        this.canvas.width = width;
+        this.canvas.height = height;
     }
 
     onPointerDown(event) {
@@ -119,14 +136,6 @@ export class PuzzleManager {
     redrawScreen() {
         this.blitter.blitToCanvas(this.layers, this.settings, {});
     }
-}
-
-/* The main reason this class is necessary is to automatically change defaults stored in localStorage for that seamless experience */
-export class Settings {
-    cellSize = 50;
-    // TODO: rename to borderPadding
-    // TODO: use this to add 0.5 to every value to account for silly canvas adjustments
-    border = 15;
 }
 
 export const POINT_TYPES = {

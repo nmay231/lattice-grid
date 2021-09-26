@@ -2,16 +2,18 @@ import { useEffect, useState, useRef } from "react";
 import { PuzzleManager } from "./logic/PuzzleManager";
 import styles from "./App.module.css";
 import { SideBar } from "./components/SideBar";
+import { useStore, useDispatch } from "react-redux";
+import { setBorderPadding } from "./redux/actions";
 
-// TODO: I should probably use Redux (or something like it). I just don't want to set that up rn...
-// For example, there will need to be a copy of layers (or layer ids) in Redux, but will PuzzleManager drive Redux or vice versa?
 export const App = () => {
     const canvas = useRef();
     const [puzzle, setPuzzle] = useState(null);
+    const store = useStore();
+    const dispatch = useDispatch();
 
     useEffect(() => {
-        setPuzzle(new PuzzleManager(canvas.current));
-    }, []);
+        setPuzzle(new PuzzleManager(canvas.current, store));
+    }, [store]);
 
     return (
         <div className={styles.mainContainer}>
@@ -27,6 +29,9 @@ export const App = () => {
             <div className={styles.divider}></div>
             <div className={styles.sideBar}>
                 {puzzle && <SideBar puzzle={puzzle} />}
+                <button onClick={() => dispatch(setBorderPadding(50))}>
+                    Change padding
+                </button>
             </div>
         </div>
     );
