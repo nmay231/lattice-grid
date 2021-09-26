@@ -51,7 +51,7 @@ export class CellOutlineLayer {
             {
                 blitter: "line",
                 blits: [],
-                params: {
+                style: {
                     stroke: "black",
                     strokeWidth: 1,
                     strokeLinecap: "square",
@@ -60,7 +60,7 @@ export class CellOutlineLayer {
             {
                 blitter: "line",
                 blits: [],
-                params: {
+                style: {
                     stroke: "black",
                     strokeWidth: 10,
                     strokeLinecap: "square",
@@ -130,7 +130,7 @@ export class ColorLayer {
         return [
             {
                 blitter: "svgPath",
-                params: { fillStyle: "blue" },
+                style: { fillStyle: "blue" },
                 blits: Object.keys(cells).map((key) => cells[key].svgOutline),
             },
         ];

@@ -1,6 +1,6 @@
-export const Line = ({ blits, params }) => {
+export const Line = ({ blits, style }) => {
     return (
-        <g style={params}>
+        <g style={style}>
             {blits.map(([start, end], index) => (
                 <line
                     x1={start.x}

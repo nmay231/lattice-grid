@@ -18,15 +18,10 @@ export const SVGCanvas = () => {
             style={{ padding: borderPadding, margin: "auto" }}
             viewBox="0 0 900 900"
         >
-            {blitGroups.map(({ blitter: blitterKey, blits, params }, index) => {
+            {blitGroups.map(({ blitter: blitterKey, blits, style }, index) => {
                 const Blitter = blitters[blitterKey];
                 // TODO: Change this from index
-                // return React.createElement(blitter, {
-                //     blits,
-                //     params,
-                //     key: index,
-                // });
-                return <Blitter blits={blits} params={params} key={index} />;
+                return <Blitter blits={blits} style={style} key={index} />;
             })}
         </svg>
     );
