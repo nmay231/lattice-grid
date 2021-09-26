@@ -27,7 +27,7 @@ export class CellOutlineLayer {
         const { cells, shrinkwrap } = grid.getPoints({
             selection: {
                 cells: { edges: { self: { points: true } } },
-                shrinkwrap: { self: { offset: -1 } },
+                shrinkwrap: { self: { offset: -5 } },
             },
             blacklist: points,
         });
@@ -52,18 +52,18 @@ export class CellOutlineLayer {
                 blitter: "line",
                 blits: [],
                 params: {
-                    strokeStyle: "black",
-                    lineWidth: 1,
-                    lineCap: "square",
+                    stroke: "black",
+                    strokeWidth: 1,
+                    strokeLinecap: "square",
                 },
             },
             {
                 blitter: "line",
                 blits: [],
                 params: {
-                    strokeStyle: "black",
-                    lineWidth: 4,
-                    lineCap: "square",
+                    stroke: "black",
+                    strokeWidth: 10,
+                    strokeLinecap: "square",
                 },
             },
         ];

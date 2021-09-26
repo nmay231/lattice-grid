@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { useStore, useDispatch } from "react-redux";
 
 import styles from "./App.module.css";
+import { SVGCanvas } from "./components/SVGCanvas";
 import { SideBar } from "./components/SideBar";
 import { PuzzleManager } from "./logic/PuzzleManager";
 import { setBorderPadding } from "./redux/actions";
@@ -19,12 +20,12 @@ export const App = () => {
     return (
         <div className={styles.mainContainer}>
             <div className={styles.canvasContainer}>
-                <canvas
+                <SVGCanvas />
+                {/* <canvas
                     className={styles.canvas}
                     ref={canvas}
-                    /* Is this a security vulnerability? I don't know. I don't case right now */
                     {...puzzle?.eventListeners}
-                ></canvas>
+                ></canvas> */}
             </div>
 
             <div className={styles.divider}></div>

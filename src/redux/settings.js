@@ -18,7 +18,6 @@ export const settingsSlice = createSlice({
     },
 });
 
-// Action creators are generated for each case reducer function
 export const { setBorderPadding } = settingsSlice.actions;
 
 export default settingsSlice.reducer;

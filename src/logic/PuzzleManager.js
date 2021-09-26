@@ -30,10 +30,10 @@ export class PuzzleManager {
         for (let layer of this.layers) {
             this.grid.addLayer(layer);
         }
-        this.canvas = canvas;
-        this.initializeGrid();
+        // this.canvas = canvas;
+        // this.initializeGrid();
 
-        this.ctx = canvas.getContext("2d");
+        // this.ctx = canvas.getContext("2d");
         this.blitter = new MasterBlitter(this.ctx, this.grid);
         this.blitter.blitToCanvas(this.layers, this.settings, {});
 
