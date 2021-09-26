@@ -1,7 +1,7 @@
 /* TODO: Convert what's possible to typescript later. It's too annoying to do that now when I just need to iterate quickly. */
-import { CellOutlineLayer, SelectionLayer } from "./layers";
 import { MasterBlitter } from "./blitters";
 import { SquareGrid } from "./grids/SquareGrid";
+import { CellOutlineLayer, SelectionLayer } from "./layers";
 
 export class PuzzleManager {
     settings;

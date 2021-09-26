@@ -1,5 +1,3 @@
-import { useState, useRef } from "react";
-import { SortableItem } from "./SortableItem";
 import {
     DndContext,
     useSensors,
@@ -13,7 +11,10 @@ import {
     verticalListSortingStrategy,
     sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
+import { useState, useRef } from "react";
+
 import { availableLayers } from "../logic/layers";
+import { SortableItem } from "./SortableItem";
 
 export const SideBar = ({ puzzle }) => {
     const [items, setItems] = useState(

@@ -1,8 +1,9 @@
 import { useEffect, useState, useRef } from "react";
-import { PuzzleManager } from "./logic/PuzzleManager";
+import { useStore, useDispatch } from "react-redux";
+
 import styles from "./App.module.css";
 import { SideBar } from "./components/SideBar";
-import { useStore, useDispatch } from "react-redux";
+import { PuzzleManager } from "./logic/PuzzleManager";
 import { setBorderPadding } from "./redux/actions";
 
 export const App = () => {
