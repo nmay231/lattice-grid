@@ -24,11 +24,12 @@ export class SquareGrid {
     }
 
     getCanvasRequirements() {
+        const { cellSize, border } = this.settings;
         return {
-            width:
-                this.width * this.settings.cellSize + 2 * this.settings.border,
-            height:
-                this.height * this.settings.cellSize + 2 * this.settings.border,
+            minX: this.x0 * cellSize - border,
+            minY: this.y0 * cellSize - border,
+            width: this.width * cellSize + 2 * border,
+            height: this.height * cellSize + 2 * border,
         };
     }
 
@@ -162,11 +163,11 @@ export class SquareGrid {
             throw Error(`Unexpected intersection=${intersection}`);
         }
 
-        const { cellSize, border: borderPadding } = this.settings;
+        const { cellSize } = this.settings;
         const minimumDistance = allPointTypes.size === 1 ? 0.5 : 0.25;
 
-        const x = (to.x - borderPadding) / cellSize,
-            y = (to.y - borderPadding) / cellSize;
+        const x = to.x / cellSize,
+            y = to.y / cellSize;
         let nearbyPoints = [];
         for (let type of allPointTypes) {
             if (type === "cells") {
@@ -291,7 +292,7 @@ export class SquareGrid {
                     }
 
                     const nextPoints = [];
-                    const { border: borderPadding, cellSize } = this.settings;
+                    const { cellSize } = this.settings;
                     if (pointType === POINT_TYPES.CELL) {
                         let [x, y] = p.split(",");
                         x = parseInt(x);
@@ -317,21 +318,15 @@ export class SquareGrid {
                             for (let key in nextPointType) {
                                 if (key === "points") {
                                     result[pointType][p].points = {
-                                        x:
-                                            borderPadding +
-                                            x * (cellSize + 0.5) +
-                                            0.5,
-                                        y:
-                                            borderPadding +
-                                            y * (cellSize + 0.5) +
-                                            0.5,
+                                        x: x * (cellSize + 0.5) + 0.5,
+                                        y: y * (cellSize + 0.5) + 0.5,
                                     };
                                 } else if (key === "svgOutline") {
-                                    const svgPath = `M${
-                                        borderPadding + x * cellSize + 1
-                                    } ${borderPadding + y * cellSize + 1}h${
-                                        cellSize - 2
-                                    }v${cellSize - 2}h${2 - cellSize}Z`;
+                                    const svgPath = `M${x * cellSize + 1} ${
+                                        y * cellSize + 1
+                                    }h${cellSize - 2}v${cellSize - 2}h${
+                                        2 - cellSize
+                                    }Z`;
                                     result[pointType][p].svgOutline = svgPath;
                                 }
                             }
@@ -365,18 +360,16 @@ export class SquareGrid {
                                 if (key === "points") {
                                     result[pointType][p].points = [
                                         {
-                                            x: borderPadding + x * cellSize,
-                                            y: borderPadding + y * cellSize,
+                                            x: x * cellSize,
+                                            y: y * cellSize,
                                         },
                                         {
                                             x:
-                                                borderPadding +
                                                 (x + (edgeType === "h")) *
-                                                    cellSize,
+                                                cellSize,
                                             y:
-                                                borderPadding +
                                                 (y + (edgeType === "v")) *
-                                                    cellSize,
+                                                cellSize,
                                         },
                                     ];
                                 }
@@ -482,7 +475,7 @@ export class SquareGrid {
 
             // Convert the edges of the loop to corners and add the offset
             const cornerLoop = [];
-            const { border: borderPadding, cellSize } = this.settings;
+            const { cellSize } = this.settings;
             const absOffset = Math.abs(offset);
 
             for (let index in edgeLoop) {
@@ -491,14 +484,8 @@ export class SquareGrid {
 
                 const corner = [edge[0] + dx, edge[1] + dy];
                 const offsetCorner = {
-                    x:
-                        borderPadding +
-                        (cellSize * corner[0]) / 2 +
-                        absOffset * -dy,
-                    y:
-                        borderPadding +
-                        (cellSize * corner[1]) / 2 +
-                        absOffset * dx,
+                    x: (cellSize * corner[0]) / 2 + absOffset * -dy,
+                    y: (cellSize * corner[1]) / 2 + absOffset * dx,
                 };
 
                 const vectorProjection = [dx ** 2, dy ** 2]; // Needed later
@@ -574,34 +561,26 @@ export class SquareGrid {
         }
 
         let x, y, edgeType;
-        const { cellSize, border } = this.settings;
+        const { cellSize } = this.settings;
         const halfCell = Math.floor(cellSize / 2);
         switch (this.pointType(point)) {
             case POINT_TYPES.CELL:
                 [x, y] = point.split(",");
                 return {
-                    x: x * cellSize + halfCell + border + 0.5,
-                    y: y * cellSize + halfCell + border + 0.5,
+                    x: x * cellSize + halfCell + 0.5,
+                    y: y * cellSize + halfCell + 0.5,
                 };
             case POINT_TYPES.EDGE:
                 [, x, edgeType, y] = point.match(/^(\d+)([vh])(\d+)$/);
                 return {
-                    x:
-                        x * cellSize +
-                        border +
-                        (edgeType === "v" ? halfCell : 0) +
-                        0.5,
-                    y:
-                        y * cellSize +
-                        border +
-                        (edgeType === "h" ? halfCell : 0) +
-                        0.5,
+                    x: x * cellSize + (edgeType === "v" ? halfCell : 0) + 0.5,
+                    y: y * cellSize + (edgeType === "h" ? halfCell : 0) + 0.5,
                 };
             case POINT_TYPES.CORNER:
                 [x, y] = point.split("c");
                 return {
-                    x: x * cellSize + border + 0.5,
-                    y: y * cellSize + border + 0.5,
+                    x: x * cellSize + 0.5,
+                    y: y * cellSize + 0.5,
                 };
             default:
                 console.log("You suck!");

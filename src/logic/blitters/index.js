@@ -5,8 +5,7 @@ import { store } from "../../redux/store";
 // Also, this will eventually manage things like OcclusionTests
 
 export class MasterBlitter {
-    constructor(ctx, grid) {
-        this.ctx = ctx;
+    constructor(grid) {
         this.grid = grid;
     }
     /* change is the object being added or removed. It contains information like which layer it belongs to, which point is relevant (position), if it is hidden or invalid, etc. This will help with optimization in the future; do NOT use it now. */

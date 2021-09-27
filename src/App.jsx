@@ -20,12 +20,7 @@ export const App = () => {
     return (
         <div className={styles.mainContainer}>
             <div className={styles.canvasContainer}>
-                <SVGCanvas />
-                {/* <canvas
-                    className={styles.canvas}
-                    ref={canvas}
-                    {...puzzle?.eventListeners}
-                ></canvas> */}
+                <SVGCanvas screenRef={canvas} />
             </div>
 
             <div className={styles.divider}></div>

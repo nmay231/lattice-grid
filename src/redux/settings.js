@@ -2,8 +2,8 @@ import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
     // TODO: rename to borderPadding
-    border: 15,
-    cellSize: 48,
+    border: 60,
+    cellSize: 60,
     // TODO: After I switch to SVG
     // zoom: 100,
 };

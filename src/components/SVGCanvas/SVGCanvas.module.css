@@ -1,0 +1,8 @@
+.svgContainer {
+    margin: auto;
+}
+
+.svg {
+    overflow: hidden;
+    border: 1px dotted grey;
+}

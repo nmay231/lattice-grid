@@ -1,4 +1,5 @@
 /* TODO: Convert what's possible to typescript later. It's too annoying to do that now when I just need to iterate quickly. */
+import { resizeCanvas } from "../redux/actions";
 import { MasterBlitter } from "./blitters";
 import { SquareGrid } from "./grids/SquareGrid";
 import { CellOutlineLayer, SelectionLayer } from "./layers";
@@ -8,8 +9,6 @@ export class PuzzleManager {
     // TODO: Also store default render layers 1-9 so that if a user reorders some layers, new layers still are inserted in a reasonable spot according to their defaultRenderOrder
     currentLayer;
     layers = [new CellOutlineLayer(), new SelectionLayer()];
-    canvas;
-    ctx;
     grid;
     blitter;
     eventListeners;
@@ -19,7 +18,7 @@ export class PuzzleManager {
     // TODO: This should not just change to handle multiPoint objects, but also for selecting existing objects
     currentPoint = null;
 
-    constructor(canvas, store) {
+    constructor(screen, store) {
         this.store = store;
         this.unsubscribeToStore = this.store.subscribe(
             this.subscribeToStore.bind(this)
@@ -30,11 +29,9 @@ export class PuzzleManager {
         for (let layer of this.layers) {
             this.grid.addLayer(layer);
         }
-        // this.canvas = canvas;
-        // this.initializeGrid();
+        this.resizeCanvas();
 
-        // this.ctx = canvas.getContext("2d");
-        this.blitter = new MasterBlitter(this.ctx, this.grid);
+        this.blitter = new MasterBlitter(this.grid);
         this.blitter.blitToCanvas(this.layers, this.settings, {});
 
         this.eventListeners = {
@@ -47,6 +44,11 @@ export class PuzzleManager {
         this.currentLayer = this.layers[0];
     }
 
+    resizeCanvas() {
+        const requirements = this.grid.getCanvasRequirements();
+        this.store.dispatch(resizeCanvas(requirements));
+    }
+
     subscribeToStore() {
         // TODO: This is not fully comprehensive
         const settings = this.store.getState().settings;
@@ -57,12 +59,6 @@ export class PuzzleManager {
             this.initializeGrid();
             this.redrawScreen();
         }
-    }
-
-    initializeGrid() {
-        const { width, height } = this.grid.getCanvasRequirements();
-        this.canvas.width = width;
-        this.canvas.height = height;
     }
 
     onPointerDown(event) {
