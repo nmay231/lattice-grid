@@ -70,11 +70,11 @@ export class SquareGrid {
             layer.states[(index + 1) % layer.states.length];
     }
 
-    addObject({ layerId, points, object }) {
-        const objectId = Symbol();
-        this.objects[objectId] = { objectId, layerId, points, object };
-        for (let point of points) {
-            this.objectIndex.push({ objectId, layerId, point });
+    // TODO: Remove once object storage is standardized
+    addObjects({ onePoint }) {
+        if (onePoint) {
+            const { layerId, point, state } = onePoint;
+            this.onePointLayers[layerId][point] = state;
         }
     }
 
@@ -144,7 +144,7 @@ export class SquareGrid {
         }
 
         const allPointTypes = new Set([
-            ...blacklist,
+            ...blacklist.map(this.pointType),
             ...(pointTypes ?? []),
             ...(points ?? []).map(this.pointType),
         ]);
