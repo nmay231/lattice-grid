@@ -10,7 +10,7 @@ const blitters = {
     line: Line,
 };
 
-export const SVGCanvas = () => {
+export const SVGCanvas = ({ controls }) => {
     const blitGroups = useSelector((state) => state.blits.groups);
 
     const minX = useSelector((state) => state.puzzle.minX);
@@ -27,6 +27,7 @@ export const SVGCanvas = () => {
             }}
         >
             <svg
+                {...controls.eventListeners}
                 className={styling.svg}
                 viewBox={`${minX} ${minY} ${width} ${height}`}
             >

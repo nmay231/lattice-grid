@@ -1,34 +1,28 @@
-import { useEffect, useState, useRef } from "react";
-import { useStore, useDispatch } from "react-redux";
+import { useEffect, useState } from "react";
+import { useStore } from "react-redux";
 
 import styles from "./App.module.css";
 import { SVGCanvas } from "./components/SVGCanvas";
 import { SideBar } from "./components/SideBar";
 import { PuzzleManager } from "./logic/PuzzleManager";
-import { setBorderPadding } from "./redux/actions";
 
 export const App = () => {
-    const canvas = useRef();
     const [puzzle, setPuzzle] = useState(null);
     const store = useStore();
-    const dispatch = useDispatch();
 
     useEffect(() => {
-        setPuzzle(new PuzzleManager(canvas.current, store));
+        setPuzzle(new PuzzleManager(store));
     }, [store]);
 
     return (
         <div className={styles.mainContainer}>
             <div className={styles.canvasContainer}>
-                <SVGCanvas screenRef={canvas} />
+                {puzzle && <SVGCanvas controls={puzzle.controls} />}
             </div>
 
             <div className={styles.divider}></div>
             <div className={styles.sideBar}>
                 {puzzle && <SideBar puzzle={puzzle} />}
-                <button onClick={() => dispatch(setBorderPadding(50))}>
-                    Change padding
-                </button>
             </div>
         </div>
     );

@@ -1,5 +1,6 @@
 /* TODO: Convert what's possible to typescript later. It's too annoying to do that now when I just need to iterate quickly. */
 import { resizeCanvas } from "../redux/actions";
+import { ControlsManager } from "./ControlsManager";
 import { MasterBlitter } from "./blitters";
 import { SquareGrid } from "./grids/SquareGrid";
 import { CellOutlineLayer, SelectionLayer } from "./layers";
@@ -7,7 +8,6 @@ import { CellOutlineLayer, SelectionLayer } from "./layers";
 export class PuzzleManager {
     settings;
     // TODO: Also store default render layers 1-9 so that if a user reorders some layers, new layers still are inserted in a reasonable spot according to their defaultRenderOrder
-    currentLayer;
     layers = [new CellOutlineLayer(), new SelectionLayer()];
     grid;
     blitter;
@@ -18,7 +18,7 @@ export class PuzzleManager {
     // TODO: This should not just change to handle multiPoint objects, but also for selecting existing objects
     currentPoint = null;
 
-    constructor(screen, store) {
+    constructor(store) {
         this.store = store;
         this.unsubscribeToStore = this.store.subscribe(
             this.subscribeToStore.bind(this)
@@ -34,14 +34,7 @@ export class PuzzleManager {
         this.blitter = new MasterBlitter(this.grid);
         this.blitter.blitToCanvas(this.layers, this.settings, {});
 
-        this.eventListeners = {
-            onPointerDown: this.onPointerDown.bind(this),
-            // onPointerUp: this.onPointerUp.bind(this),
-            // onPointerMove: this.onPointerMove.bind(this),
-        };
-
-        // TODO
-        this.currentLayer = this.layers[0];
+        this.controls = new ControlsManager(this);
     }
 
     resizeCanvas() {
@@ -60,73 +53,6 @@ export class PuzzleManager {
             this.redrawScreen();
         }
     }
-
-    onPointerDown(event) {
-        const {
-            buttons,
-            target: canvas,
-            clientX,
-            clientY,
-            // TODO: I think that unless a layer specifically needs modifier keys, they should be used to pass user input onto the next layer
-            // ctrlKey,
-            // altKey,
-            // shiftKey,
-        } = event;
-        const { offsetLeft, offsetTop } = canvas;
-        let x = clientX - offsetLeft,
-            y = clientY - offsetTop;
-
-        const { controls, pointTypes } = this.currentLayer;
-
-        if (controls === "onePoint") {
-            const point = this.grid.nearest({
-                to: { x, y },
-                intersection: "polygon",
-                pointTypes,
-            });
-            if (point === null) {
-                return;
-            }
-
-            this.grid.cycleState({
-                layer: this.currentLayer,
-                point,
-            });
-            this.redrawScreen();
-        }
-
-        const options = [
-            { intersection: "polygon", pointTypes: ["cells"] },
-            { intersection: "ellipse", pointTypes: ["cells"] },
-            { intersection: "polygon", pointTypes: ["corners"] },
-            { intersection: "ellipse", pointTypes: ["corners"] },
-            // { intersection: "polygon", pointTypes: ["edges"] },
-            // { intersection: "ellipse", pointTypes: ["edges"] },
-        ];
-        if (buttons)
-            console.log(
-                ...options.map(
-                    ({ intersection, pointTypes }) =>
-                        intersection +
-                        ":" +
-                        pointTypes +
-                        ":" +
-                        this.grid.nearest({
-                            to: { x, y },
-                            intersection,
-                            pointTypes,
-                        })
-                )
-            );
-
-        event.preventDefault();
-    }
-    // onPointerUp(event) {
-    //     console.log(event);
-    // }
-    // onPointerMove(event) {
-    //     const {button, clientX, clientY} = event;
-    // }
 
     // TODO
     redrawScreen() {

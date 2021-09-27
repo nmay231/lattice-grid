@@ -6,3 +6,7 @@
     overflow: hidden;
     border: 1px dotted grey;
 }
+
+.svg > * {
+    pointer-events: none;
+}
