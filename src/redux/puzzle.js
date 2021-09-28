@@ -6,6 +6,7 @@ const initialState = {
     width: 0,
     height: 0,
     layers: [],
+    selectedLayer: null,
 };
 
 export const puzzleSlice = createSlice({
@@ -21,11 +22,15 @@ export const puzzleSlice = createSlice({
         },
         addLayer: (state, action) => {
             state.layers.push(action.payload);
+            state.selectedLayer = action.payload.id;
         },
         removeLayer: (state, action) => {
-            state.layers = state.layers.filter(
-                ({ id }) => id !== action.payload
-            );
+            const index = state.layers
+                .map(({ id }) => id)
+                .indexOf(action.payload);
+            state.layers.splice(index, 1);
+            // TODO: the next layer is not necessarily one that can be selected
+            state.selectedLayer = state.layers[index % state.layers.length].id;
         },
     },
 });

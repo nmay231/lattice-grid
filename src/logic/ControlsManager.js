@@ -31,8 +31,9 @@ export class ControlsManager {
     }
 
     getCurrentLayer() {
-        // TODO: Pretend we're accessing the redux store to see which layer we are using
-        return this.puzzle.layers[0];
+        // const currentId = this.puzzle.store.getState().puzzle.selectedLayer;
+        const currentId = "Cell Outline";
+        return this.puzzle.layers[currentId];
     }
 
     resetControls() {
