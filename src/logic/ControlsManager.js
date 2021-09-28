@@ -53,6 +53,8 @@ export class ControlsManager {
         const layer = this.getCurrentLayer();
         const { controls, pointTypes, drawMultiple, id: layerId } = layer;
 
+        this.debugPointerEvent(event, cursor);
+
         if (controls === "onePoint") {
             const point = grid.nearest({
                 to: cursor,
@@ -124,5 +126,32 @@ export class ControlsManager {
 
     onContextMenu(event) {
         event.preventDefault();
+    }
+
+    // TODO: Replace this with automated testing
+    debugPointerEvent(event, cursor) {
+        const options = [
+            { intersection: "polygon", pointTypes: ["cells"] },
+            { intersection: "ellipse", pointTypes: ["cells"] },
+            { intersection: "polygon", pointTypes: ["corners"] },
+            { intersection: "ellipse", pointTypes: ["corners"] },
+            // { intersection: "polygon", pointTypes: ["edges"] },
+            // { intersection: "ellipse", pointTypes: ["edges"] },
+        ];
+        if (event.buttons)
+            console.log(
+                ...options.map(
+                    ({ intersection, pointTypes }) =>
+                        intersection +
+                        ":" +
+                        pointTypes +
+                        ":" +
+                        this.puzzle.grid.nearest({
+                            to: cursor,
+                            intersection,
+                            pointTypes,
+                        })
+                )
+            );
     }
 }
