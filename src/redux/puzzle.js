@@ -5,8 +5,7 @@ const initialState = {
     minY: 0,
     width: 0,
     height: 0,
-    visibleLayers: [],
-    layerModifiers: [],
+    layers: [],
 };
 
 export const puzzleSlice = createSlice({
@@ -20,9 +19,17 @@ export const puzzleSlice = createSlice({
             state.width = width;
             state.height = height;
         },
+        addLayer: (state, action) => {
+            state.layers.push(action.payload);
+        },
+        removeLayer: (state, action) => {
+            state.layers = state.layers.filter(
+                ({ id }) => id !== action.payload
+            );
+        },
     },
 });
 
-export const { resizeCanvas } = puzzleSlice.actions;
+export const { addLayer, removeLayer, resizeCanvas } = puzzleSlice.actions;
 
 export default puzzleSlice.reducer;

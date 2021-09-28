@@ -1,9 +1,8 @@
 export class CellOutlineLayer {
     // -- Identification --
-    static displayName = "Cell Outline";
+    static id = "Cell Outline";
     static unique = true;
-    displayName = "Cell Outline";
-    id = "CellOutlineLayer";
+    hidden = true;
 
     // -- Controls --
     controls = "onePoint";
@@ -88,12 +87,9 @@ export class CellOutlineLayer {
 }
 
 export class SelectionLayer {
-    static displayName = "Selections";
+    static id = "Selections";
     static unique = true;
 
-    displayName = "Selections";
-
-    id = "SelectionLayer";
     hidden = true;
     controls = "onePoint";
     pointTypes = ["cells"];
@@ -107,10 +103,9 @@ export class SelectionLayer {
 }
 
 export class ColorLayer {
-    static displayName = "Color";
-    displayName = "Color";
+    static id = "Background Color";
+    static unique = false;
 
-    id = Symbol();
     hidden = false;
     controls = "onePoint";
     pointTypes = ["cells"];
@@ -137,7 +132,11 @@ export class ColorLayer {
     }
 }
 
-export const availableLayers = [CellOutlineLayer, ColorLayer, SelectionLayer];
+const layers = [CellOutlineLayer, ColorLayer, SelectionLayer];
+export const availableLayers = {};
+for (let layer of layers) {
+    availableLayers[layer.id] = layer;
+}
 
 /* The following classes are only there to see what capabilities I expect of pointTypes */
 export class MazeWallLayer {

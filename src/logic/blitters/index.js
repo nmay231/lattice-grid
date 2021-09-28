@@ -1,4 +1,4 @@
-import { setBlitGroups } from "../../redux/actions";
+import { setBlitGroups } from "../../redux/blits";
 import { store } from "../../redux/store";
 
 /* TODO: Might eventually optimize by storing layers as images and only updating the images that need to be updated. */
@@ -12,7 +12,7 @@ export class MasterBlitter {
     blitToCanvas(layers, settings, change) {
         // const layer = layers.filter((layer) => layer.id === change.layerId),
         const finalBlitGroups = [];
-        for (let layer of layers) {
+        for (let layer of Object.values(layers)) {
             let blitGroups = layer.getBlits(this.grid, settings, change);
             finalBlitGroups.push(...blitGroups);
         }

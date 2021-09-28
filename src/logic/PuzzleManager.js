@@ -1,5 +1,5 @@
 /* TODO: Convert what's possible to typescript later. It's too annoying to do that now when I just need to iterate quickly. */
-import { resizeCanvas } from "../redux/actions";
+import { addLayer, removeLayer, resizeCanvas } from "../redux/puzzle";
 import { ControlsManager } from "./ControlsManager";
 import { MasterBlitter } from "./blitters";
 import { SquareGrid } from "./grids/SquareGrid";
@@ -7,8 +7,7 @@ import { CellOutlineLayer, SelectionLayer } from "./layers";
 
 export class PuzzleManager {
     settings;
-    // TODO: Also store default render layers 1-9 so that if a user reorders some layers, new layers still are inserted in a reasonable spot according to their defaultRenderOrder
-    layers = [new CellOutlineLayer(), new SelectionLayer()];
+    layers = {};
     grid;
     blitter;
     eventListeners;
@@ -26,8 +25,8 @@ export class PuzzleManager {
         this.settings = store.getState().settings;
 
         this.grid = new SquareGrid(this.settings, { width: 10, height: 10 });
-        for (let layer of this.layers) {
-            this.grid.addLayer(layer);
+        for (let layer of [CellOutlineLayer, SelectionLayer]) {
+            this.addLayer(layer);
         }
         this.resizeCanvas();
 
@@ -44,11 +43,10 @@ export class PuzzleManager {
 
     subscribeToStore() {
         // TODO: This is not fully comprehensive
-        const settings = this.store.getState().settings;
-        const { cellSize, border } = this.settings;
-        this.settings = settings;
-        this.grid.settings = settings;
-        if (cellSize !== settings.cellSize || border !== settings.border) {
+        const { settings } = this.store.getState();
+        if (this.settings !== settings) {
+            this.settings = settings;
+            this.grid.settings = settings;
             this.initializeGrid();
             this.redrawScreen();
         }
@@ -57,6 +55,35 @@ export class PuzzleManager {
     // TODO
     redrawScreen() {
         this.blitter.blitToCanvas(this.layers, this.settings, {});
+    }
+
+    addLayer(layerClass) {
+        if (layerClass.unique && layerClass.id in this.layers) {
+            throw Error("Trying to add a duplicate layer!");
+        }
+        const layer = new layerClass();
+        layer.id = layerClass.id;
+
+        let idNumber = 2;
+        while (layer.id in this.layers) {
+            layer.id = layerClass.id + ` (${idNumber})`;
+            idNumber++;
+        }
+        this.layers[layer.id] = layer;
+        this.grid.addLayer(layer);
+
+        // TODO: I temporarily want to show every layer regardless.
+        if (true || !(layer.hidden && layer.unique)) {
+            const { id } = layer;
+            this.store.dispatch(addLayer({ id, hidden: false }));
+        }
+    }
+
+    removeLayer(id) {
+        if (id in this.layers) {
+            delete this.layers[id];
+            this.store.dispatch(removeLayer(id));
+        }
     }
 }
 
