@@ -14,7 +14,7 @@ export class ControlsManager {
         };
     }
 
-    getXY(event, grid, settings) {
+    getXY(event) {
         const { clientX, clientY, target } = event;
         const {
             left,
@@ -22,8 +22,8 @@ export class ControlsManager {
             width: realWidth,
             height: realHeight,
         } = target.getBoundingClientRect();
-        const { width, height } = grid.getCanvasRequirements();
-        const { border } = settings;
+        const { width, height } = this.puzzle.grid.getCanvasRequirements();
+        const { border } = this.puzzle.settings;
         // These transformations convert dom coordinates to svg coords
         let x = (clientX - left) * (height / realHeight) - border,
             y = (clientY - top) * (width / realWidth) - border;
@@ -46,9 +46,9 @@ export class ControlsManager {
         if (!event.isPrimary) {
             return;
         }
-        const { grid, settings } = this.puzzle;
+        const { grid } = this.puzzle;
 
-        const cursor = this.getXY(event, grid, settings);
+        const cursor = this.getXY(event);
 
         const layer = this.getCurrentLayer();
         const { controls, pointTypes, drawMultiple, id: layerId } = layer;
@@ -81,8 +81,8 @@ export class ControlsManager {
         if (!event.isPrimary || !this.currentLayer) {
             return;
         }
-        const { grid, settings } = this.puzzle;
-        const cursor = this.getXY(event, grid, settings);
+        const { grid } = this.puzzle;
+        const cursor = this.getXY(event);
         const { controls, pointTypes, id: layerId } = this.currentLayer;
 
         if (controls === "onePoint") {
