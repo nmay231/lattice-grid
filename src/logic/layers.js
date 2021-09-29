@@ -18,9 +18,9 @@ export class CellOutlineLayer {
 
     // -- Rendering --
     defaultRenderOrder = 2;
-    getBlits(grid) {
-        const points = grid
-            .getObjects({ layerId: this.id })
+    getBlits(grid, storage) {
+        const points = storage
+            .getLayerObjects({ layer: this })
             .filter(({ state }) => !state)
             .map(({ point }) => point);
         const { cells, shrinkwrap } = grid.getPoints({

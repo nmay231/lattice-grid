@@ -1,6 +1,7 @@
 /* TODO: Convert what's possible to typescript later. It's too annoying to do that now when I just need to iterate quickly. */
 import { addLayer, removeLayer, resizeCanvas } from "../redux/puzzle";
 import { ControlsManager } from "./ControlsManager";
+import { StorageManager } from "./StorageManager";
 import { MasterBlitter } from "./blitters";
 import { SquareGrid } from "./grids/SquareGrid";
 import { CellOutlineLayer, SelectionLayer } from "./layers";
@@ -8,6 +9,7 @@ import { CellOutlineLayer, SelectionLayer } from "./layers";
 export class PuzzleManager {
     settings;
     layers = {};
+    storage;
     grid;
     blitter;
     eventListeners;
@@ -25,12 +27,13 @@ export class PuzzleManager {
         this.settings = store.getState().settings;
 
         this.grid = new SquareGrid(this.settings, { width: 10, height: 10 });
+        this.storage = new StorageManager(this);
         for (let layer of [CellOutlineLayer, SelectionLayer]) {
             this.addLayer(layer);
         }
         this.resizeCanvas();
 
-        this.blitter = new MasterBlitter(this.grid);
+        this.blitter = new MasterBlitter(this.grid, this.storage);
         this.blitter.blitToCanvas(this.layers, this.settings, {});
 
         this.controls = new ControlsManager(this);
@@ -70,7 +73,7 @@ export class PuzzleManager {
             idNumber++;
         }
         this.layers[layer.id] = layer;
-        this.grid.addLayer(layer);
+        this.storage.addLayer(layer);
 
         // TODO: I temporarily want to show every layer regardless.
         if (true || !(layer.hidden && layer.unique)) {

@@ -5,15 +5,21 @@ import { store } from "../../redux/store";
 // Also, this will eventually manage things like OcclusionTests
 
 export class MasterBlitter {
-    constructor(grid) {
+    constructor(grid, storage) {
         this.grid = grid;
+        this.storage = storage;
     }
     /* change is the object being added or removed. It contains information like which layer it belongs to, which point is relevant (position), if it is hidden or invalid, etc. This will help with optimization in the future; do NOT use it now. */
     blitToCanvas(layers, settings, change) {
         // const layer = layers.filter((layer) => layer.id === change.layerId),
         const finalBlitGroups = [];
         for (let layer of Object.values(layers)) {
-            let blitGroups = layer.getBlits(this.grid, settings, change);
+            let blitGroups = layer.getBlits(
+                this.grid,
+                this.storage,
+                settings,
+                change
+            );
             finalBlitGroups.push(...blitGroups);
         }
         store.dispatch(setBlitGroups(finalBlitGroups));

@@ -47,12 +47,12 @@ export class ControlsManager {
         if (!event.isPrimary) {
             return;
         }
-        const { grid } = this.puzzle;
+        const { grid, storage } = this.puzzle;
 
         const cursor = this.getXY(event);
 
         const layer = this.getCurrentLayer();
-        const { controls, pointTypes, drawMultiple, id: layerId } = layer;
+        const { controls, pointTypes, drawMultiple } = layer;
 
         this.debugPointerEvent(event, cursor);
 
@@ -71,10 +71,13 @@ export class ControlsManager {
             }
             this.points.push(point);
 
-            grid.cycleState({ layer, point });
+            const currentState = storage.getObject({ layer, point });
+            const states = layer.states;
+            const targetState =
+                states[(states.indexOf(currentState) + 1) % states.length];
 
-            this.targetState = grid.getObjects({ layerId, point }).state;
-            this.puzzle.redrawScreen();
+            this.targetState = targetState;
+            storage.addObject({ layer, points: [point], state: targetState });
         }
     }
 
@@ -84,7 +87,7 @@ export class ControlsManager {
         }
         const { grid } = this.puzzle;
         const cursor = this.getXY(event);
-        const { controls, pointTypes, id: layerId } = this.currentLayer;
+        const { controls, pointTypes } = this.currentLayer;
 
         if (controls === "onePoint") {
             const point = grid.nearest({
@@ -102,10 +105,11 @@ export class ControlsManager {
             }
             this.points.push(point);
 
-            grid.addObjects({
-                onePoint: { layerId, point, state: this.targetState },
+            this.puzzle.storage.addObject({
+                layer: this.currentLayer,
+                points: [point],
+                state: this.targetState,
             });
-            this.puzzle.redrawScreen();
         }
     }
 
@@ -113,7 +117,7 @@ export class ControlsManager {
         if (!event.isPrimary || !this.currentLayer) {
             return;
         }
-        // TODO: multiPoint objects have to be cleaned up here.
+        this.puzzle.storage.finishCurrentObject();
         this.resetControls();
     }
 
@@ -121,7 +125,7 @@ export class ControlsManager {
         if (!event.isPrimary) {
             return;
         }
-        // TODO: multiPoint objects have to be cleaned up here.
+        this.puzzle.storage.finishCurrentObject();
         this.resetControls();
     }
 
