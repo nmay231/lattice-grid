@@ -20,7 +20,10 @@ export class StorageManager {
             const objects = this.onePoint[layer.id];
             return Object.keys(objects).map((point) => ({
                 point,
-                state: objects[point],
+                state:
+                    objects[point] === undefined
+                        ? this.defaultState[layer.id]
+                        : objects[point],
             }));
         }
     }
