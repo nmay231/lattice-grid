@@ -52,17 +52,18 @@ export class CellOutlineLayer {
                 blits: [],
                 style: {
                     stroke: "black",
-                    strokeWidth: 1,
+                    strokeWidth: 2,
                     strokeLinecap: "square",
                 },
             },
             {
-                blitter: "line",
-                blits: [],
+                blitter: "polygon",
+                blits: shrinkwrap.map((loop) => loop.map(({ x, y }) => [x, y])),
                 style: {
                     stroke: "black",
                     strokeWidth: 10,
                     strokeLinecap: "square",
+                    fill: "none",
                 },
             },
         ];
@@ -72,14 +73,6 @@ export class CellOutlineLayer {
                 if (!useThickEdges[edgeKey]) {
                     blitGroups[0].blits.push(points);
                 }
-            }
-        }
-        for (let loop of shrinkwrap) {
-            for (let index in loop) {
-                blitGroups[1].blits.push([
-                    loop[index],
-                    loop[(1 * index + 1) % loop.length],
-                ]);
             }
         }
         return blitGroups;

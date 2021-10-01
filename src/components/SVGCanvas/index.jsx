@@ -2,11 +2,11 @@ import React from "react";
 import { useSelector } from "react-redux";
 
 import { Line } from "./Line";
-import { Polyline } from "./Polyline";
+import { Polygon } from "./Polygon";
 import styling from "./SVGCanvas.module.css";
 
 const blitters = {
-    polyline: Polyline,
+    polygon: Polygon,
     line: Line,
 };
 
