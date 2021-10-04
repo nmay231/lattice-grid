@@ -1,9 +1,9 @@
 import { addLayer, removeLayer, resizeCanvas } from "../redux/puzzle";
-import { ControlsManager } from "./ControlsManager";
-import { StorageManager } from "./StorageManager";
 import { MasterBlitter } from "./blitters";
+import { ControlsManager } from "./ControlsManager";
 import { SquareGrid } from "./grids/SquareGrid";
 import { availableLayers } from "./layers";
+import { StorageManager } from "./StorageManager";
 
 export class PuzzleManager {
     settings;

@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import { useStore } from "react-redux";
-
 import styles from "./App.module.css";
-import { SVGCanvas } from "./components/SVGCanvas";
 import { SideBar } from "./components/SideBar";
+import { SVGCanvas } from "./components/SVGCanvas";
 import { PuzzleManager } from "./logic/PuzzleManager";
 
 export const App = () => {

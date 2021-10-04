@@ -1,19 +1,18 @@
 import {
     DndContext,
-    useSensors,
-    useSensor,
-    PointerSensor,
     KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
 } from "@dnd-kit/core";
 import {
-    SortableContext,
     arrayMove,
-    verticalListSortingStrategy,
+    SortableContext,
     sortableKeyboardCoordinates,
+    verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
-
 import { availableLayers } from "../logic/layers";
 import { addLayer } from "../redux/puzzle";
 import { SortableItem } from "./SortableItem";

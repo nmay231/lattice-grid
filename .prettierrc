@@ -1,6 +1,3 @@
 {
-    "tabWidth": 4,
-    "importOrder": ["^[./]"],
-    "importOrderSeparation": true,
-    "experimentalBabelParserPluginsList": ["jsx", "classProperties"]
+    "tabWidth": 4
 }
