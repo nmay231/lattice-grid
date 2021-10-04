@@ -1,8 +1,8 @@
+import { BackgroundColorLayer } from "./BackgroundColor";
 import { CellOutlineLayer } from "./CellOutline";
-import { ColorLayer } from "./ColorLayer";
-import { SelectionLayer } from "./SelectionLayer";
+import { SelectionLayer } from "./Selection";
 
-const layers = [CellOutlineLayer, ColorLayer, SelectionLayer];
+const layers = [CellOutlineLayer, BackgroundColorLayer, SelectionLayer];
 export const availableLayers = {};
 for (let layer of layers) {
     availableLayers[layer.id] = layer;

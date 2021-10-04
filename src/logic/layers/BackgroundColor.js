@@ -1,4 +1,4 @@
-export class ColorLayer {
+export class BackgroundColorLayer {
     static id = "Background Color";
     static unique = false;
 
