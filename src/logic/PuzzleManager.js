@@ -1,10 +1,9 @@
-/* TODO: Convert what's possible to typescript later. It's too annoying to do that now when I just need to iterate quickly. */
 import { addLayer, removeLayer, resizeCanvas } from "../redux/puzzle";
 import { ControlsManager } from "./ControlsManager";
 import { StorageManager } from "./StorageManager";
 import { MasterBlitter } from "./blitters";
 import { SquareGrid } from "./grids/SquareGrid";
-import { CellOutlineLayer, SelectionLayer } from "./layers";
+import { availableLayers } from "./layers";
 
 export class PuzzleManager {
     settings;
@@ -28,7 +27,11 @@ export class PuzzleManager {
 
         this.grid = new SquareGrid(this.settings, { width: 10, height: 10 });
         this.storage = new StorageManager(this);
-        for (let layer of [CellOutlineLayer, SelectionLayer]) {
+        // TODO: This is temporary since the layers of the puzzle are recovered from localStorage
+        for (let layer of [
+            availableLayers["Cell Outline"],
+            availableLayers["Selections"],
+        ]) {
             this.addLayer(layer);
         }
         this.resizeCanvas();
