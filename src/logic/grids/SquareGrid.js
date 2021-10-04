@@ -45,9 +45,9 @@ export class SquareGrid {
         }
 
         const allPointTypes = new Set([
-            ...blacklist.map(this.stringToGridPoint).map(({ type }) => type),
+            ...blacklist.map(this._stringToGridPoint).map(({ type }) => type),
             ...pointTypes,
-            ...points.map(this.stringToGridPoint).map(({ type }) => type),
+            ...points.map(this._stringToGridPoint).map(({ type }) => type),
         ]);
 
         let getDistance;
@@ -95,7 +95,7 @@ export class SquareGrid {
             .filter(({ distance }) => distance < minimumDistance)
             .map(({ string, distance }) => ({
                 // Get the point type of each
-                point: this.stringToGridPoint(string),
+                point: this._stringToGridPoint(string),
                 string,
                 distance,
             }));
@@ -133,12 +133,12 @@ export class SquareGrid {
         excludePreviousPoints = true,
     }) {
         const finalResult = {};
-        points = points?.length && points.map(this.stringToGridPoint);
+        points = points?.length && points.map(this._stringToGridPoint);
 
         for (let pointType in connections) {
             const justGridPoints =
                 points?.filter(({ type }) => type === pointType) ??
-                this.getAllPoints(pointType).filter(
+                this._getAllPoints(pointType).filter(
                     ({ x, y }) => !blacklist.includes(`${x},${y}`)
                 );
 
@@ -442,7 +442,7 @@ export class SquareGrid {
         return result;
     }
 
-    stringToGridPoint(string) {
+    _stringToGridPoint(string) {
         let [, x, y] = string.match(/^(-?\d+),(-?\d+)$/);
         x = parseInt(x);
         y = parseInt(y);
@@ -457,13 +457,7 @@ export class SquareGrid {
         }
     }
 
-    gridPointsToSVGPoints(gridPoints) {
-        const { cellSize } = this.settings;
-        const halfCell = cellSize / 2;
-        return gridPoints.map(({ x, y }) => [x * halfCell, y * halfCell]);
-    }
-
-    getAllPoints(type) {
+    _getAllPoints(type) {
         if (type === POINT_TYPES.CELL) {
             let arr = [];
             for (let x = this.x0; x < this.x0 + this.width; x += 1) {
