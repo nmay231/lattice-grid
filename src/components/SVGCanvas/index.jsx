@@ -3,10 +3,12 @@ import { useSelector } from "react-redux";
 import { Line } from "./Line";
 import { Polygon } from "./Polygon";
 import styling from "./SVGCanvas.module.css";
+import { Text } from "./Text";
 
 const blitters = {
     polygon: Polygon,
     line: Line,
+    text: Text,
 };
 
 export const SVGCanvas = ({ controls }) => {

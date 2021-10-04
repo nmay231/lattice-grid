@@ -32,7 +32,7 @@ export class ControlsManager {
 
     getCurrentLayer() {
         // const currentId = this.puzzle.store.getState().puzzle.selectedLayer;
-        const currentId = "Cell Outline";
+        const currentId = "Number";
         return this.puzzle.layers[currentId];
     }
 
@@ -53,8 +53,6 @@ export class ControlsManager {
 
         const layer = this.getCurrentLayer();
         const { controls, pointTypes, drawMultiple } = layer;
-
-        // this.debugPointerEvent(event, cursor);
 
         if (controls === "onePoint") {
             const point = grid.nearest({

@@ -126,21 +126,21 @@ export class SquareGrid {
      * @param {boolean} [args.excludePreviousPoints] - If true, add previously selected points to the blacklist as you go down the chain. Default: true
      */
     getPoints({
-        points,
+        points = [],
         connections,
         blacklist = [],
         includeOutOfBounds = false,
         excludePreviousPoints = true,
     }) {
         const finalResult = {};
-        points = points?.length && points.map(this._stringToGridPoint);
+        points = points.map(this._stringToGridPoint);
 
         for (let pointType in connections) {
-            const justGridPoints =
-                points?.filter(({ type }) => type === pointType) ??
-                this._getAllPoints(pointType).filter(
-                    ({ x, y }) => !blacklist.includes(`${x},${y}`)
-                );
+            const justGridPoints = points.length
+                ? points.filter(({ type }) => type === pointType)
+                : this._getAllPoints(pointType).filter(
+                      ({ x, y }) => !blacklist.includes(`${x},${y}`)
+                  );
 
             finalResult[pointType] = {};
             const gridPoints = [];

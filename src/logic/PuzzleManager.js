@@ -31,6 +31,7 @@ export class PuzzleManager {
         for (let layer of [
             availableLayers["Cell Outline"],
             availableLayers["Selections"],
+            availableLayers["Number"],
         ]) {
             this.addLayer(layer);
         }
