@@ -5,6 +5,8 @@ export class ControlsManager {
 
     constructor(puzzle) {
         this.puzzle = puzzle;
+
+        // Note: interpretKeyDown is not an event listener
         this.eventListeners = {
             onPointerDown: this.onPointerDown.bind(this),
             onPointerMove: this.onPointerMove.bind(this),
@@ -129,6 +131,10 @@ export class ControlsManager {
 
     onContextMenu(event) {
         event.preventDefault();
+    }
+
+    interpretKeyDown(event) {
+        console.log(event);
     }
 
     // TODO: Replace this with automated testing

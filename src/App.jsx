@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useStore } from "react-redux";
 import styles from "./App.module.css";
+import { KeepingTabs } from "./components/KeepingTabs";
 import { SideBar } from "./components/SideBar";
 import { SVGCanvas } from "./components/SVGCanvas";
 import { PuzzleManager } from "./logic/PuzzleManager";
@@ -22,6 +23,11 @@ export const App = () => {
             <div className={styles.divider}></div>
             <div className={styles.sideBar}>
                 {puzzle && <SideBar puzzle={puzzle} />}
+                {puzzle && (
+                    <KeepingTabs
+                        interpretKeyDown={puzzle.controls.interpretKeyDown}
+                    />
+                )}
             </div>
         </div>
     );
