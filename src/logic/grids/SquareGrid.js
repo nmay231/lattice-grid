@@ -12,17 +12,6 @@ export class SquareGrid {
         this.y0 = 0;
     }
 
-    pointToLattice(point) {
-        const [, x, sep, y] = point.match(/(\d+)([,cvh])(\d+)/);
-        if (sep === ",") {
-            return [2 * x + 1, 2 * y + 1];
-        } else if (sep === "c") {
-            return [2 * x, 2 * y];
-        } else {
-            return [2 * x + (sep === "h"), 2 * y + (sep === "v")];
-        }
-    }
-
     getCanvasRequirements() {
         const { cellSize, border } = this.settings;
         return {
@@ -37,9 +26,18 @@ export class SquareGrid {
     // nearest({to: {x, y}, intersection: IntersectionType, blacklist?: Points[], points: Points[]})
     // TODO: Consider expanding IntersectionType to allow nearest on first click without regard to distance (e.g. with a Voroni diagram)
     // TODO: Consider renaming `intersection` to `distanceMetric` or something like that.
+    // TODO: the intersection parameter might be completely unnecessary if I can come up with an automated method to unambiguously determine if a point was selected from a list given a starting point
+    // TODO: Consider removing the blacklist in favor of always explicitly listing relevant pointTypes
+
     /* This function finds the nearest point(s) to a click/tap that satisfies certain conditions. The first example selects any point in the grid of the specified pointType(s), while the second only selects points from the provided list. If points are not close enough to be selected or if the closest one is in the blacklist, this will return null. Arguments `to` and `intersection` are always required. `to` is the raw x,y coordinates from the canvas. `intersection` is "polygon" or "ellipse" which basically, as an example, determines whether you can "squeeze" between two orthogonally adjacent cells to reach a cell diagonally. "polygon" (e.g. using a square trigger) does not allow diagonal selecting while "ellipse" (e.g. using a circle trigger) does. Another issue is if you want to select an adjacent edge OR corner from a cell, the polygon/ellipse has to be slightly smaller. So, if there are more than one pointType in the combination of blacklist and pointTypes/points, the polygon/ellipse is automatically shrunk by half. You might be thinking that for the second API, the `blacklist` argument is unnecessary. You might be right, but I can't prove that to myself atm... Actually, I might have just proved it by the previous statement (multi-pointType shrinks the selection polygon/ellipse). */
-    nearest({ to, intersection, blacklist = [], pointTypes, points }) {
-        if (!!pointTypes?.length === !!points?.length) {
+    nearest({
+        to,
+        intersection,
+        blacklist = [],
+        pointTypes = [],
+        points = [],
+    }) {
+        if (!pointTypes.length === !points.length) {
             throw Error(
                 "Either both of pointTypes and points were missing/empty or both" +
                     `were provided: pointTypes=${pointTypes}, points=${points}`
@@ -47,19 +45,19 @@ export class SquareGrid {
         }
 
         const allPointTypes = new Set([
-            ...blacklist.map(this.pointType),
-            ...(pointTypes ?? []),
-            ...(points ?? []).map(this.pointType),
+            ...blacklist.map(this.stringToGridPoint).map(({ type }) => type),
+            ...pointTypes,
+            ...points.map(this.stringToGridPoint).map(({ type }) => type),
         ]);
 
         let getDistance;
         if (intersection === "ellipse") {
             // Manhattan distance
-            getDistance = ({ x: x1, y: y1 }, { x: x2, y: y2 }) =>
+            getDistance = (x1, y1, x2, y2) =>
                 Math.abs(x2 - x1) + Math.abs(y2 - y1);
         } else if (intersection === "polygon") {
             // Chebyshev distance
-            getDistance = ({ x: x1, y: y1 }, { x: x2, y: y2 }) =>
+            getDistance = (x1, y1, x2, y2) =>
                 Math.max(Math.abs(x2 - x1), Math.abs(y2 - y1));
         } else {
             // The "You're-silly" distance
@@ -67,268 +65,307 @@ export class SquareGrid {
         }
 
         const { cellSize } = this.settings;
-        const minimumDistance = allPointTypes.size === 1 ? 0.5 : 0.25;
+        const halfCell = cellSize / 2;
+        const minimumDistance = allPointTypes.size === 1 ? 1 : 0.5;
 
-        const x = to.x / cellSize,
-            y = to.y / cellSize;
-        let nearbyPoints = [];
-        for (let type of allPointTypes) {
-            if (type === "cells") {
-                const cellX = Math.floor(x),
-                    cellY = Math.floor(y);
-                nearbyPoints.push({
-                    point: `${cellX},${cellY}`,
-                    distance: getDistance(
-                        { x, y },
-                        { x: cellX + 0.5, y: cellY + 0.5 }
-                    ),
-                });
-                break;
-            } else if (type === "corners") {
-                const cornerX = Math.floor(x + 0.5),
-                    cornerY = Math.floor(y + 0.5);
-                nearbyPoints.push({
-                    point: `${cornerX}c${cornerY}`,
-                    distance: getDistance({ x, y }, { x: cornerX, y: cornerY }),
-                });
-                break;
-                // TODO: edges are annoying...
-                // } else if (type === "edge") {
-            } else {
-                throw Error(`Unexpected pointType=${type}`);
-            }
+        const x = to.x / halfCell,
+            y = to.y / halfCell;
+        const px = Math.floor(x),
+            py = Math.floor(y);
+
+        let nearbyPoints = [
+            {
+                string: `${px},${py}`,
+                distance: getDistance(x, y, px, py),
+            },
+            {
+                string: `${px + 1},${py}`,
+                distance: getDistance(x, y, px + 1, py),
+            },
+            {
+                string: `${px},${py + 1}`,
+                distance: getDistance(x, y, px, py + 1),
+            },
+            {
+                string: `${px + 1},${py + 1}`,
+                distance: getDistance(x, y, px + 1, py + 1),
+            },
+        ];
+        nearbyPoints = nearbyPoints
+            .filter(({ distance }) => distance < minimumDistance)
+            .map(({ string, distance }) => ({
+                // Get the point type of each
+                point: this.stringToGridPoint(string),
+                string,
+                distance,
+            }));
+
+        if (pointTypes.length) {
+            nearbyPoints = nearbyPoints.filter(({ point: { type } }) =>
+                pointTypes.includes(type)
+            );
+        } else if (points.length) {
+            nearbyPoints = nearbyPoints.filter(({ string }) =>
+                points.includes(string)
+            );
         }
 
-        if (pointTypes?.length) {
-            for (let { point, distance } of nearbyPoints) {
-                if (distance < minimumDistance) {
-                    return point;
-                }
-            }
-            return null;
-        } else if (points?.length) {
-            for (let { point, distance } of nearbyPoints) {
-                if (
-                    distance < minimumDistance &&
-                    point in points &&
-                    !(point in blacklist)
-                ) {
-                    return point;
-                }
-            }
-            return null;
-        }
+        const nearest = nearbyPoints.sort(
+            ({ distance: d1 }, { distance: d2 }) => d1 - d2
+        )[0];
+        return nearest?.string ?? null;
     }
 
-    // TODO: This could be really simplified if I just used a planar graph. I doubt it costs much memory, and it makes everyone's lives easier...
-    // TODO: I can also simply pluralize cell->cells, edge->edges, etc. It's simple, and I have to do edgeStraight->edges anyways.
+    /**
+     * @description Select points and certain attributes depending on how they are connected to other points
+     * @param {Object} args - Arguments are passed as an object
+     * @param {Object} args.connections - A nested object used to select neighboring points in a chain similar to a graph network. See examples in existing layers.
+     * @param {string[]} [args.points] - Optionally specify from which points are neighbors selected. If not provided, all points of the relevant type are used.
+     * @param {string[]} [args.blacklist] - Optionally prevent certain points from being selecting.
+     * @param {boolean} [args.includeOutOfBounds] - If true, include points outside the range of the current grid. Default: false
+     * @param {boolean} [args.excludePreviousPoints] - If true, add previously selected points to the blacklist as you go down the chain. Default: true
+     */
     getPoints({
-        points: startingPoints,
-        selection: startingSelections,
-        blacklist,
-        addToBlacklist = true,
+        points,
+        connections,
+        blacklist = [],
+        includeOutOfBounds = false,
+        excludePreviousPoints = true,
     }) {
-        // TODO: blacklist checked items and flatten finalResult
-        const selections = this.parseSelection(startingSelections);
         const finalResult = {};
+        points = points?.length && points.map(this.stringToGridPoint);
 
-        blacklist =
-            (blacklist && [...blacklist]) ??
-            (addToBlacklist && startingPoints && [...startingPoints]) ??
-            [];
-        const inProgress = [];
-        for (let selection of selections) {
-            inProgress.push({
-                selection,
-                points: startingPoints,
-                result: finalResult,
+        for (let pointType in connections) {
+            const justGridPoints =
+                points?.filter(({ type }) => type === pointType) ??
+                this.getAllPoints(pointType).filter(
+                    ({ x, y }) => !blacklist.includes(`${x},${y}`)
+                );
+
+            finalResult[pointType] = {};
+            const gridPoints = [];
+            for (let point of justGridPoints) {
+                const result = {};
+                finalResult[pointType][`${point.x},${point.y}`] = result;
+                gridPoints.push({ point, result });
+            }
+
+            this._getPoints({
+                pointType,
+                connections: connections[pointType],
+                blacklist,
+                gridPoints,
+                finalResult,
+                includeOutOfBounds,
+                excludePreviousPoints,
             });
         }
-
-        while (inProgress.length) {
-            const { points, selection, result } = inProgress.pop();
-            const [pointType, nextPointType] = selection;
-            if (points && addToBlacklist) {
-                blacklist.push(...points);
-            }
-
-            result[pointType] = result[pointType] ?? {};
-            if (nextPointType === false) {
-                for (let p of points) {
-                    result[pointType][p] = "skip";
-                }
-            } else if (nextPointType === true) {
-                for (let p of points) {
-                    result[pointType][p] = null;
-                }
-            } else if (
-                nextPointType === "cellStraight" ||
-                nextPointType === "cornerStraight"
-            ) {
-                console.log(
-                    "Not implemented. Requires doing two layers at once!"
-                );
-            } else if (pointType === "shrinkwrap") {
-                const importantPoints = points
-                    ? points.filter(
-                          (p) => this.pointType(p) === POINT_TYPES.CELL
-                      )
-                    : this.getAllPoints(POINT_TYPES.CELL).filter(
-                          (p) => blacklist.indexOf(p) === -1
-                      );
-
-                let cells = importantPoints.map((point) =>
-                    this.pointToLattice(point)
-                );
-                const offset = nextPointType.offset ?? 0;
-                result.shrinkwrap = this.shrinkwrap({ cells, offset });
-            } else {
-                const importantPoints = points
-                    ? points.filter((p) => this.pointType(p) === pointType)
-                    : this.getAllPoints(pointType).filter(
-                          (p) => blacklist.indexOf(p) === -1
-                      );
-
-                for (let p of importantPoints) {
-                    if (result[pointType][p] === "skip") {
-                        continue;
-                    }
-
-                    const nextPoints = [];
-                    const { cellSize } = this.settings;
-                    if (pointType === POINT_TYPES.CELL) {
-                        let [x, y] = p.split(",");
-                        x = parseInt(x);
-                        y = parseInt(y);
-                        if (nextPointType === POINT_TYPES.EDGE) {
-                            // prettier-ignore
-                            nextPoints.push(
-                                x + "v" + y,
-                                (x + 1) + "v" + y,
-                                x + "h" + y,
-                                x + "h" + (y + 1)
-                            );
-                        } else if (nextPointType === POINT_TYPES.CORNER) {
-                            // prettier-ignore
-                            nextPoints.push(
-                                x + "c" + y,
-                                (x + 1) + "c" + y,
-                                x + "c" + (y + 1),
-                                (x + 1) + "c" + (y + 1)
-                            );
-                        } else if (typeof nextPointType !== "string") {
-                            result[pointType][p] = result[pointType][p] ?? {};
-                            for (let key in nextPointType) {
-                                if (key === "points") {
-                                    result[pointType][p].points = {
-                                        x: x * (cellSize + 0.5) + 0.5,
-                                        y: y * (cellSize + 0.5) + 0.5,
-                                    };
-                                } else if (key === "svgOutline") {
-                                    const svgPath = `M${x * cellSize + 1} ${
-                                        y * cellSize + 1
-                                    }h${cellSize - 2}v${cellSize - 2}h${
-                                        2 - cellSize
-                                    }Z`;
-                                    result[pointType][p].svgOutline = svgPath;
-                                }
-                            }
-                            continue;
-                        } else {
-                            console.log("your face");
-                        }
-                    } else if (pointType === POINT_TYPES.EDGE) {
-                        let [, x, edgeType, y] = p.match(/^(\d+)([vh])(\d+)$/);
-                        x = parseInt(x);
-                        y = parseInt(y);
-                        if (nextPointType === POINT_TYPES.CELL) {
-                            nextPoints.push(
-                                x + "," + y,
-                                // prettier-ignore
-                                edgeType === "v"
-                                    ? (x - 1) + "," + y
-                                    : x + "," + (y - 1)
-                            );
-                        } else if (nextPointType === POINT_TYPES.CORNER) {
-                            nextPoints.push(
-                                x + "c" + y,
-                                // prettier-ignore
-                                edgeType === "v"
-                                    ? x + "c" + (y + 1)
-                                    : (x + 1) + "c" + y
-                            );
-                        } else if (typeof nextPointType !== "string") {
-                            result[pointType][p] = result[pointType][p] ?? {};
-                            for (let key in nextPointType) {
-                                if (key === "points") {
-                                    result[pointType][p].points = [
-                                        {
-                                            x: x * cellSize,
-                                            y: y * cellSize,
-                                        },
-                                        {
-                                            x:
-                                                (x + (edgeType === "h")) *
-                                                cellSize,
-                                            y:
-                                                (y + (edgeType === "v")) *
-                                                cellSize,
-                                        },
-                                    ];
-                                }
-                            }
-                            continue;
-                        } else {
-                            console.log("your face");
-                        }
-                    } else {
-                        throw Error("Not implemented...");
-                    }
-                    result[pointType][p] = result[pointType][p] ?? {};
-                    inProgress.push({
-                        points: nextPoints.filter(
-                            (p) => blacklist.indexOf(p) === -1
-                        ),
-                        selection: selection.slice(1),
-                        result: result[pointType][p],
-                    });
-                }
-            }
-        }
-
-        // const todoList = [finalResult];
-        // while (todoList.length) {
-        //     const todo = todoList.pop();
-        //     for (let key in todo) {
-        //         if (todo[key] === false) {
-        //             delete todo[key];
-        //         } else if (todo[key] === null) {
-        //             todo[key] = true;
-        //         } else {
-        //             todoList.push(todo[key]);
-        //         }
-        //     }
-        // }
 
         return finalResult;
     }
 
-    shrinkwrap({ cells, offset }) {
+    _outOfBounds(gridPoint) {
+        const x = gridPoint.x / 2 - this.x0;
+        const y = gridPoint.y / 2 - this.y0;
+        return x < 0 || x > this.width || y < 0 || y > this.height;
+    }
+
+    _getPoints({
+        pointType,
+        connections,
+        blacklist,
+        gridPoints,
+        finalResult,
+        includeOutOfBounds,
+        excludePreviousPoints,
+    }) {
+        const nextBlacklist = [...blacklist];
+        for (let nextType in connections) {
+            let deltas;
+            switch (`${pointType}->${nextType}`) {
+                case "corners->cells":
+                case "cells->corners":
+                    deltas = [
+                        { dx: 1, dy: 1 },
+                        { dx: -1, dy: 1 },
+                        { dx: 1, dy: -1 },
+                        { dx: -1, dy: -1 },
+                    ];
+                // eslint-disable-next-line no-fallthrough
+                case "cells->edges":
+                case "corners->edges": {
+                    deltas = deltas ?? [
+                        { dx: 0, dy: 1 },
+                        { dx: 0, dy: -1 },
+                        { dx: 1, dy: 0 },
+                        { dx: -1, dy: 0 },
+                    ];
+
+                    const newGridPoints = [];
+                    for (let { point, result } of gridPoints) {
+                        result[nextType] = result[nextType] ?? {};
+
+                        for (let { dx, dy } of deltas) {
+                            const nextPoint = {
+                                x: point.x + dx,
+                                y: point.y + dy,
+                                type: nextType,
+                            };
+                            const nextString = `${nextPoint.x},${nextPoint.y}`;
+                            if (
+                                blacklist.includes(nextString) ||
+                                (!includeOutOfBounds &&
+                                    this._outOfBounds(nextPoint))
+                            ) {
+                                continue;
+                            }
+                            if (excludePreviousPoints) {
+                                nextBlacklist.push(nextString);
+                            }
+
+                            const nextResult =
+                                result[nextType][nextString] ||
+                                (connections[nextType] === true ? null : {});
+                            result[nextType][nextString] = nextResult;
+                            newGridPoints.push({
+                                point: nextPoint,
+                                result: nextResult,
+                            });
+                        }
+                    }
+                    this._getPoints({
+                        pointType: nextType,
+                        connections: connections[nextType],
+                        gridPoints: newGridPoints,
+                        blacklist: nextBlacklist,
+                        excludePreviousPoints,
+                        includeOutOfBounds,
+                        finalResult,
+                    });
+                    break;
+                }
+                case "edges->cells":
+                case "edges->corners": {
+                    const upDown = [
+                        { dx: 0, dy: -1 },
+                        { dx: 0, dy: 1 },
+                    ];
+                    const leftRight = [
+                        { dx: -1, dy: 0 },
+                        { dx: 1, dy: 0 },
+                    ];
+
+                    const newGridPoints = [];
+                    for (let { point, result } of gridPoints) {
+                        // (connection === edges->cells) XOR (x is even) ? upDown : leftRight
+                        const neighbors =
+                            (nextType === POINT_TYPES.CELL) !==
+                            (point.x === (point.x >> 1) << 1)
+                                ? upDown
+                                : leftRight;
+
+                        result[nextType] = result[nextType] ?? {};
+
+                        for (let { dx, dy } of neighbors) {
+                            const nextPoint = {
+                                x: point.x + dx,
+                                y: point.y + dy,
+                                type: nextType,
+                            };
+                            const nextString = `${nextPoint.x},${nextPoint.y}`;
+                            if (
+                                blacklist.includes(nextString) ||
+                                (!includeOutOfBounds &&
+                                    this._outOfBounds(nextPoint))
+                            ) {
+                                continue;
+                            }
+                            if (excludePreviousPoints) {
+                                nextBlacklist.push(nextString);
+                            }
+
+                            const nextResult =
+                                result[nextType][nextString] ||
+                                (connections[nextType] === true ? null : {});
+                            result[nextType][nextString] = nextResult;
+                            newGridPoints.push({
+                                point: nextPoint,
+                                result: nextResult,
+                            });
+                        }
+                    }
+                    this._getPoints({
+                        pointType: nextType,
+                        connections: connections[nextType],
+                        gridPoints: newGridPoints,
+                        blacklist: nextBlacklist,
+                        excludePreviousPoints,
+                        includeOutOfBounds,
+                        finalResult,
+                    });
+                    break;
+                }
+                case "cells->svgPoint":
+                case "edges->svgPoint":
+                case "corners->svgPoint": {
+                    if (connections[nextType] !== true) {
+                        // TODO
+                        throw Error("Params for svgPoint are not supported!");
+                    }
+
+                    const { cellSize } = this.settings;
+                    const halfCell = cellSize / 2;
+                    for (let { point, result } of gridPoints) {
+                        result[nextType] = [
+                            point.x * halfCell,
+                            point.y * halfCell,
+                        ];
+                    }
+                    break;
+                }
+                case "cells->shrinkwrap": {
+                    const result = {};
+                    const { key, svgPolygon, edgePoints } =
+                        connections[nextType];
+                    finalResult[key || "shrinkwrap"] = result;
+
+                    if (svgPolygon) {
+                        result.svgPolygon = this._shrinkwrap({
+                            gridPoints: gridPoints.map(({ point }) => point),
+                            inset: svgPolygon.inset ?? 0,
+                        });
+                    }
+                    if (edgePoints) {
+                        // TODO
+                    }
+                    break;
+                }
+                default:
+                    throw Error(
+                        `Unsupported connection in getPoints: "${pointType}" -> "${nextType}"`
+                    );
+            }
+        }
+    }
+
+    _shrinkwrap({ gridPoints, inset }) {
         const result = [];
 
+        let cells = [];
         const edgesLeft = {};
         let [dx, dy] = [0, -1];
-        for (let cell of cells) {
-            const [x, y] = cell;
+        for (let cell of gridPoints) {
+            const { x, y } = cell;
             for (let i = 0; i < 4; i++) {
-                const edge = [x + dx, y + dy].toString();
+                const edge = `${x + dx},${y + dy}`;
                 if (edge in edgesLeft) {
                     delete edgesLeft[edge];
                 } else {
-                    edgesLeft[edge] = cell;
+                    edgesLeft[edge] = [x, y];
                 }
                 [dx, dy] = [-dy, dx];
             }
+            cells.push([x, y]);
         }
 
         // Points are converted to strings to allow easy comparison
@@ -344,9 +381,9 @@ export class SquareGrid {
 
             let cellAcrossBoundary = (cell) => !cells.includes(cell.toString());
 
-            // If the offset is negative, we traverse around the outside instead of the inside.
+            // If the inset is negative, we traverse around the outside instead of the inside.
             // Otherwise, lines would overlap on touching corners
-            if (offset < 0) {
+            if (inset < 0) {
                 cellAcrossBoundary = (cell) => cells.includes(cell.toString());
                 current = [current[0] + 2 * dx, current[1] + 2 * dy];
                 [dx, dy] = [-dx, -dy];
@@ -376,27 +413,27 @@ export class SquareGrid {
             }
             edgeLoop.pop();
 
-            // Convert the edges of the loop to corners and add the offset
+            // Convert the edges of the loop to corners and add the inset
             const cornerLoop = [];
             const { cellSize } = this.settings;
-            const absOffset = Math.abs(offset);
+            const absInset = Math.abs(inset);
 
             for (let index in edgeLoop) {
                 edge = edgeLoop[index];
                 const nextEdge = edgeLoop[(index * 1 + 1) % edgeLoop.length];
 
                 const corner = [edge[0] + dx, edge[1] + dy];
-                const offsetCorner = {
-                    x: (cellSize * corner[0]) / 2 + absOffset * -dy,
-                    y: (cellSize * corner[1]) / 2 + absOffset * dx,
+                const insetCorner = {
+                    x: (cellSize * corner[0]) / 2 + absInset * -dy,
+                    y: (cellSize * corner[1]) / 2 + absInset * dx,
                 };
 
                 const vectorProjection = [dx ** 2, dy ** 2]; // Needed later
                 [dx, dy] = [nextEdge[0] - corner[0], nextEdge[1] - corner[1]];
                 // If the edges are orthogonal, adjust the corner loop appropriately.
-                offsetCorner.x += vectorProjection[0] * -dy * absOffset;
-                offsetCorner.y += vectorProjection[1] * dx * absOffset;
-                cornerLoop.push(offsetCorner);
+                insetCorner.x += vectorProjection[0] * -dy * absInset;
+                insetCorner.y += vectorProjection[1] * dx * absInset;
+                cornerLoop.push(insetCorner);
 
                 delete edgesLeft[edge.toString()];
             }
@@ -405,88 +442,38 @@ export class SquareGrid {
         return result;
     }
 
-    parseSelection(selection) {
-        if (Array.isArray(selection)) {
-            // TODO: check that the unparsed array is valid
-            return selection;
+    stringToGridPoint(string) {
+        let [, x, y] = string.match(/^(-?\d+),(-?\d+)$/);
+        x = parseInt(x);
+        y = parseInt(y);
+        const xEven = (x >> 1) << 1 === x,
+            yEven = (y >> 1) << 1 === y;
+        if (xEven && yEven) {
+            return { x, y, type: POINT_TYPES.CORNER };
+        } else if (!xEven && !yEven) {
+            return { x, y, type: POINT_TYPES.CELL };
+        } else {
+            return { x, y, type: POINT_TYPES.EDGE };
         }
-        const final = [];
-        const recurse = (sel, path = []) => {
-            for (let key in sel) {
-                if (key === "self") {
-                    final.splice(0, 0, [...path, sel[key]]);
-                } else if (sel[key] === true) {
-                    final.splice(0, 0, [...path, key, true]);
-                } else if (sel[key] === false) {
-                    final.push([...path, key, false]);
-                } else {
-                    recurse(sel[key], [...path, key]);
-                }
-            }
-        };
-        recurse(selection);
-        return final;
     }
 
-    pointType(point) {
-        if (point.match(/^\d+,\d+$/)) {
-            return POINT_TYPES.CELL;
-        } else if (point.match(/^\d+[vh]\d+$/)) {
-            return POINT_TYPES.EDGE;
-        } else if (point.match(/^\d+c\d+$/)) {
-            return POINT_TYPES.CORNER;
-        } else {
-            throw Error("Unknown point type: " + point);
-        }
+    gridPointsToSVGPoints(gridPoints) {
+        const { cellSize } = this.settings;
+        const halfCell = cellSize / 2;
+        return gridPoints.map(({ x, y }) => [x * halfCell, y * halfCell]);
     }
 
     getAllPoints(type) {
         if (type === POINT_TYPES.CELL) {
             let arr = [];
-            for (let x = this.x0; x < this.width; x += 1) {
-                for (let y = this.y0; y < this.height; y += 1) {
-                    arr.push(x + "," + y);
+            for (let x = this.x0; x < this.x0 + this.width; x += 1) {
+                for (let y = this.y0; y < this.y0 + this.height; y += 1) {
+                    arr.push({ x: 2 * x + 1, y: 2 * y + 1, type });
                 }
             }
             return arr;
         } else {
             throw Error("Not implemented yet: " + type);
-        }
-    }
-
-    translatePoint(point) {
-        if (
-            typeof point !== "string" &&
-            typeof point.x === "number" &&
-            typeof point.y === "number"
-        ) {
-            return point;
-        }
-
-        let x, y, edgeType;
-        const { cellSize } = this.settings;
-        const halfCell = Math.floor(cellSize / 2);
-        switch (this.pointType(point)) {
-            case POINT_TYPES.CELL:
-                [x, y] = point.split(",");
-                return {
-                    x: x * cellSize + halfCell + 0.5,
-                    y: y * cellSize + halfCell + 0.5,
-                };
-            case POINT_TYPES.EDGE:
-                [, x, edgeType, y] = point.match(/^(\d+)([vh])(\d+)$/);
-                return {
-                    x: x * cellSize + (edgeType === "v" ? halfCell : 0) + 0.5,
-                    y: y * cellSize + (edgeType === "h" ? halfCell : 0) + 0.5,
-                };
-            case POINT_TYPES.CORNER:
-                [x, y] = point.split("c");
-                return {
-                    x: x * cellSize + 0.5,
-                    y: y * cellSize + 0.5,
-                };
-            default:
-                console.log("You suck!");
         }
     }
 }

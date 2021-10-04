@@ -54,7 +54,7 @@ export class ControlsManager {
         const layer = this.getCurrentLayer();
         const { controls, pointTypes, drawMultiple } = layer;
 
-        this.debugPointerEvent(event, cursor);
+        // this.debugPointerEvent(event, cursor);
 
         if (controls === "onePoint") {
             const point = grid.nearest({

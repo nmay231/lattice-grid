@@ -4,10 +4,10 @@ export const Line = ({ blits, style }) => {
             {/* TODO: Stop using index as a key */}
             {blits.map(([start, end], index) => (
                 <line
-                    x1={start.x}
-                    x2={end.x}
-                    y1={start.y}
-                    y2={end.y}
+                    x1={start[0]}
+                    x2={end[0]}
+                    y1={start[1]}
+                    y2={end[1]}
                     key={index}
                 />
             ))}

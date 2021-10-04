@@ -19,37 +19,45 @@ export class CellOutlineLayer {
     // -- Rendering --
     defaultRenderOrder = 2;
     getBlits(grid, storage) {
-        const points = storage
+        const blacklist = storage
             .getLayerObjects({ layer: this })
             .filter(({ state }) => !state)
             .map(({ point }) => point);
-        const { cells, shrinkwrap } = grid.getPoints({
-            selection: {
-                cells: { edges: { self: { points: true } } },
-                shrinkwrap: { self: { offset: -5 } },
+        const { cells, gridEdge } = grid.getPoints({
+            connections: {
+                cells: {
+                    edges: { corners: { svgPoint: true } },
+                    shrinkwrap: { key: "gridEdge", svgPolygon: { inset: -5 } },
+                },
             },
-            blacklist: points,
+            blacklist,
         });
 
-        const useThickEdges = {};
+        const edges = {};
         for (let cell in cells) {
-            if (cell in points) {
-                continue;
-            }
             for (let edge in cells[cell].edges) {
                 /* If a cell does not share an edge with another cell, use a thick line. */
-                if (useThickEdges[edge]) {
-                    useThickEdges[edge] = false;
+                if (edges[edge] === undefined) {
+                    edges[edge] = false;
                 } else {
-                    useThickEdges[edge] = true;
+                    const corners = cells[cell].edges[edge].corners;
+                    edges[edge] = Object.values(corners).map(
+                        ({ svgPoint }) => svgPoint
+                    );
                 }
             }
         }
 
-        const blitGroups = [
+        const edgeBlits = Object.values(edges).filter((edge) => edge);
+
+        const gridEdgeBlits = gridEdge.svgPolygon.map((loop) =>
+            loop.map(({ x, y }) => [x, y])
+        );
+
+        return [
             {
                 blitter: "line",
-                blits: [],
+                blits: edgeBlits,
                 style: {
                     stroke: "black",
                     strokeWidth: 2,
@@ -58,7 +66,7 @@ export class CellOutlineLayer {
             },
             {
                 blitter: "polygon",
-                blits: shrinkwrap.map((loop) => loop.map(({ x, y }) => [x, y])),
+                blits: gridEdgeBlits,
                 style: {
                     stroke: "black",
                     strokeWidth: 10,
@@ -67,15 +75,6 @@ export class CellOutlineLayer {
                 },
             },
         ];
-        for (let cellKey in cells) {
-            for (let edgeKey in cells[cellKey].edges) {
-                const { points } = cells[cellKey].edges[edgeKey];
-                if (!useThickEdges[edgeKey]) {
-                    blitGroups[0].blits.push(points);
-                }
-            }
-        }
-        return blitGroups;
     }
 }
 
