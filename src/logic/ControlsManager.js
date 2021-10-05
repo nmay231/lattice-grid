@@ -75,21 +75,36 @@ export class ControlsManager {
             }
             this.points.push(point);
 
-            const currentState = storage.getObject({ layer, point });
-            const states = layer.states;
-            const targetState =
-                states[(states.indexOf(currentState) + 1) % states.length];
+            if (!layer.interpretPointerEvent) {
+                const currentState = storage.getObject({ layer, point }).state;
+                const states = layer.states;
+                const targetState =
+                    states[(states.indexOf(currentState) + 1) % states.length];
 
-            this.targetState = targetState;
-            storage.addObject({ layer, points: [point], state: targetState });
+                this.targetState = targetState;
+                storage.addObject({
+                    layer,
+                    points: [point],
+                    state: targetState,
+                });
+                return;
+            }
         }
+
+        const { altKey, ctrlKey, shiftKey } = event;
+        layer.interpretPointerEvent({
+            storage,
+            points: this.points,
+            newPoint: this.points[this.points.length - 1],
+            event: { altKey, ctrlKey, shiftKey, cursor },
+        });
     }
 
     onPointerMove(event) {
         if (!event.isPrimary || !this.currentLayer) {
             return;
         }
-        const { grid } = this.puzzle;
+        const { grid, storage } = this.puzzle;
         const cursor = this.getXY(event);
         const { controls, pointTypes } = this.currentLayer;
 
@@ -101,7 +116,8 @@ export class ControlsManager {
                 blacklist: this.points,
             });
 
-            if (point === null) {
+            // TODO: this.points.includes should not be necessary, but nearest() is not using blacklist
+            if (point === null || this.points.includes(point)) {
                 return;
             }
             if (!this.currentLayer.drawMultiple) {
@@ -109,19 +125,39 @@ export class ControlsManager {
             }
             this.points.push(point);
 
-            this.puzzle.storage.addObject({
-                layer: this.currentLayer,
-                points: [point],
-                state: this.targetState,
-            });
+            if (!this.currentLayer.interpretPointerEvent) {
+                this.puzzle.storage.addObject({
+                    layer: this.currentLayer,
+                    points: [point],
+                    state: this.targetState,
+                });
+                return;
+            }
         }
+
+        const { altKey, ctrlKey, shiftKey } = event;
+        this.currentLayer.interpretPointerEvent({
+            storage,
+            points: this.points,
+            newPoint: this.points[this.points.length - 1],
+            event: { altKey, ctrlKey, shiftKey, cursor },
+        });
     }
 
     onPointerUp(event) {
         if (!event.isPrimary || !this.currentLayer) {
             return;
         }
-        this.puzzle.storage.finishCurrentObject();
+
+        if (this.currentLayer.interpretPointerEvent) {
+            this.currentLayer.interpretPointerEvent({
+                storage: this.puzzle.storage,
+                points: this.points,
+            });
+        } else {
+            this.puzzle.storage.finishCurrentObject();
+        }
+
         this.resetControls();
     }
 
@@ -145,6 +181,7 @@ export class ControlsManager {
         if (layer.interpretKeyDown) {
             layer.interpretKeyDown({
                 event,
+                // The storing layer might be different than the controlling layer
                 layer: this.puzzle.storage.getCurrentLayer(),
                 storage: this.puzzle.storage,
             });

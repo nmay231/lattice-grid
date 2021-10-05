@@ -9,9 +9,15 @@ export class StorageManager {
     // TODO: Use afterObject for selected the next object if there are many in one spot
     getObject({ layer, point, afterObject }) {
         if (layer.controls === "onePoint") {
-            return point in this.onePoint[layer.id]
-                ? this.onePoint[layer.id][point]
-                : this.defaultState[layer.id];
+            const state =
+                point in this.onePoint[layer.id]
+                    ? this.onePoint[layer.id][point]
+                    : this.defaultState[layer.id];
+
+            return {
+                point,
+                state,
+            };
         }
     }
 

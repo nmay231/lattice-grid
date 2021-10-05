@@ -25,6 +25,48 @@ export class SelectionLayer {
         }
     }
 
+    targetState = null;
+
+    interpretPointerEvent({ storage, points, newPoint, event }) {
+        if (!newPoint) {
+            this.targetState = null;
+            return;
+        }
+        if (event.ctrlKey || event.shiftKey) {
+            if (this.targetState === null) {
+                const currentState = storage.getObject({
+                    layer: this,
+                    point: newPoint,
+                }).state;
+                this.targetState = !currentState;
+            }
+            storage.addObject({
+                layer: this,
+                points: [newPoint],
+                state: this.targetState,
+            });
+        } else {
+            const toDelete = storage
+                .getLayerObjects({ layer: this })
+                .filter(({ state }) => state)
+                .map(({ point }) => point);
+            if (toDelete.length) {
+                storage.addObject({
+                    layer: this,
+                    points: toDelete,
+                    state: this.states[0],
+                });
+            }
+            if (toDelete.length !== 1 && toDelete[0] !== newPoint) {
+                storage.addObject({
+                    layer: this,
+                    points,
+                    state: this.states[1],
+                });
+            }
+        }
+    }
+
     defaultRenderOrder = 9;
 
     getBlits(grid, storage) {
