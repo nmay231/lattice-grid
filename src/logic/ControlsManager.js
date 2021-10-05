@@ -7,6 +7,7 @@ export class ControlsManager {
         this.puzzle = puzzle;
 
         // Note: interpretKeyDown is not an event listener
+        this.interpretKeyDown = this.interpretKeyDown.bind(this);
         this.eventListeners = {
             onPointerDown: this.onPointerDown.bind(this),
             onPointerMove: this.onPointerMove.bind(this),
@@ -33,9 +34,12 @@ export class ControlsManager {
     }
 
     getCurrentLayer() {
-        // const currentId = this.puzzle.store.getState().puzzle.selectedLayer;
-        const currentId = "Number";
-        return this.puzzle.layers[currentId];
+        const currentId = this.puzzle.store.getState().puzzle.selectedLayer;
+        let layer = this.puzzle.layers[currentId];
+        while (layer.controllingLayer && layer.controllingLayer !== "custom") {
+            layer = layer.controllingLayer;
+        }
+        return layer;
     }
 
     resetControls() {
@@ -134,7 +138,17 @@ export class ControlsManager {
     }
 
     interpretKeyDown(event) {
-        console.log(event);
+        if (event.code === "Tab") {
+            // TODO: switch current layer
+        }
+        const layer = this.getCurrentLayer();
+        if (layer.interpretKeyDown) {
+            layer.interpretKeyDown({
+                event,
+                layer: this.puzzle.storage.getCurrentLayer(),
+                storage: this.puzzle.storage,
+            });
+        }
     }
 
     // TODO: Replace this with automated testing

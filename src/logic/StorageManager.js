@@ -40,13 +40,28 @@ export class StorageManager {
 
     addObject({ layer, points, state }) {
         if (layer.controls === "onePoint") {
-            const oldState = this.onePoint[layer.id][points[0]];
-            this.onePoint[layer.id][points[0]] = state;
-            if (oldState !== state) {
-                // TODO: handle changes granularly
-                this.puzzle.redrawScreen();
+            const changed = [];
+            for (let p of points) {
+                const oldState = this.onePoint[layer.id][p];
+                this.onePoint[layer.id][p] = state;
+                if (oldState !== state) {
+                    changed.push(p);
+                }
+            }
+            if (changed.length) {
+                // TODO: Need to handle changes granularly in puzzle.redrawScreen
+                this.puzzle.redrawScreen(changed);
             }
         }
+    }
+
+    getCurrentLayer() {
+        const currentId = this.puzzle.store.getState().puzzle.selectedLayer;
+        let layer = this.puzzle.layers[currentId];
+        while (layer.storingLayer && layer.storingLayer !== "custom") {
+            layer = layer.storingLayer;
+        }
+        return layer;
     }
 
     // currentObject = null;

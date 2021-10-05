@@ -7,9 +7,15 @@ export class NumberLayer {
     // -- Controls --
     controls = "onePoint";
     pointTypes = ["cells"];
-    // TODO: The states api is not the best one for number
-    states = [undefined, "0", "1", "2"];
-    drawMultiple = true;
+    controllingLayer = "Selections";
+    interpretKeyDown({ event }) {
+        if (parseInt(event.key) >= 0) {
+            return {
+                state: event.key,
+                interpreted: true,
+            };
+        }
+    }
 
     defaultRenderOrder = 6;
 

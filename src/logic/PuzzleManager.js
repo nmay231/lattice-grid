@@ -64,12 +64,22 @@ export class PuzzleManager {
         this.blitter.blitToCanvas(this.layers, this.settings, {});
     }
 
+    // TODO: This assumes the layer is a blittingLayer. How do I handle controlling- and storingLayers?
     addLayer(layerClass) {
         if (layerClass.unique && layerClass.id in this.layers) {
             throw Error("Trying to add a duplicate layer!");
         }
         const layer = new layerClass();
         layer.id = layerClass.id;
+
+        // TODO: Selections only works on onePoint layers using only cells. It could probably allow for more types
+        if (
+            layer.controllingLayer === "Selections" &&
+            layer.pointTypes.toString() === POINT_TYPES.CELL &&
+            layer.controls === "onePoint"
+        ) {
+            layer.controllingLayer = this.layers["Selections"];
+        }
 
         let idNumber = 2;
         while (layer.id in this.layers) {
