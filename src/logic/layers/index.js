@@ -101,6 +101,8 @@ class DummyLayer {
         allowOverlap: false,
     };
 
+    // https://stackoverflow.com/a/1856809/4373214
+    // [0-9a-zA-Z$\-_.+!*'(),]
     /* When a puzzle is encoded, each layer is encoded and then joined by exclamation marks. "Standard library" layers use a single char string to prefix its encoded layer string to mark which layer it is. "Preset" layers (which contain multiple layers) are namespaced with a single P (case sensitive) to avoid clashes with regular layers. External or modded layers are namespaced by an X. Therefore, PX would be an external preset.
     After the prefix, required modifiers are listed in a layer-agnostic format followed by optional params in a layer-specific format, followed finally by the data of the layer. The layer specific data must only contain characters from [0-9a-zA-Z().'_-].
     Example: ...!X<prefix>*<modifier1>*<modifier2>*<param1>.<param2>.<last-param>.<layer-data>!...
