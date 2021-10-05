@@ -27,7 +27,7 @@ export class CellOutlineLayer {
             connections: {
                 cells: {
                     edges: { corners: { svgPoint: true } },
-                    shrinkwrap: { key: "gridEdge", svgPolygon: { inset: -5 } },
+                    shrinkwrap: { key: "gridEdge", svgPolygon: { inset: -4 } },
                 },
             },
             blacklist,
