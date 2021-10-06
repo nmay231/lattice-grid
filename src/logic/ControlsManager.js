@@ -183,6 +183,7 @@ export class ControlsManager {
                 event,
                 // The storing layer might be different than the controlling layer
                 layer: this.puzzle.storage.getCurrentLayer(),
+                grid: this.puzzle.grid,
                 storage: this.puzzle.storage,
             });
         }

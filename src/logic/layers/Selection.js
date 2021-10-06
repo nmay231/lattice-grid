@@ -10,7 +10,47 @@ export class SelectionLayer {
     states = [false, true];
     drawMultiple = true;
 
-    interpretKeyDown({ event, layer, storage }) {
+    interpretKeyDown({ event, layer, grid, storage }) {
+        if (event.code === "Escape") {
+            const toDelete = storage
+                .getLayerObjects({ layer: this })
+                .filter(({ state }) => state)
+                .map(({ point }) => point);
+            if (toDelete.length) {
+                storage.addObject({
+                    layer: this,
+                    points: toDelete,
+                    state: this.states[0],
+                });
+            }
+            return;
+        } else if (event.ctrlKey && event.key === "a") {
+            storage.addObject({
+                layer: this,
+                points: grid.getAllPoints("cells"),
+                state: this.states[1],
+            });
+            return;
+        } else if (event.ctrlKey && event.key === "i") {
+            const excluded = storage
+                .getLayerObjects({ layer: this })
+                .filter(({ state }) => state)
+                .map(({ point }) => point);
+            storage.addObject({
+                layer: this,
+                points: excluded,
+                state: this.states[0],
+            });
+            storage.addObject({
+                layer: this,
+                points: grid
+                    .getAllPoints("cells")
+                    .filter((cell) => !excluded.includes(cell)),
+                state: this.states[1],
+            });
+            return;
+        }
+
         if (!layer.interpretKeyDown) {
             return;
         }

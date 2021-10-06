@@ -470,4 +470,8 @@ export class SquareGrid {
             throw Error("Not implemented yet: " + type);
         }
     }
+
+    getAllPoints(type) {
+        return this._getAllPoints(type).map(({ x, y }) => `${x},${y}`);
+    }
 }
