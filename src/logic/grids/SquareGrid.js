@@ -138,7 +138,7 @@ export class SquareGrid {
         for (let pointType in connections) {
             const justGridPoints = points.length
                 ? points.filter(({ type }) => type === pointType)
-                : this._getAllPoints(pointType).filter(
+                : this._getAllGridPoints(pointType).filter(
                       ({ x, y }) => !blacklist.includes(`${x},${y}`)
                   );
 
@@ -457,7 +457,7 @@ export class SquareGrid {
         }
     }
 
-    _getAllPoints(type) {
+    _getAllGridPoints(type) {
         if (type === POINT_TYPES.CELL) {
             let arr = [];
             for (let x = this.x0; x < this.x0 + this.width; x += 1) {
@@ -472,6 +472,6 @@ export class SquareGrid {
     }
 
     getAllPoints(type) {
-        return this._getAllPoints(type).map(({ x, y }) => `${x},${y}`);
+        return this._getAllGridPoints(type).map(({ x, y }) => `${x},${y}`);
     }
 }

@@ -69,8 +69,14 @@ export class PuzzleManager {
         if (layerClass.unique && layerClass.id in this.layers) {
             throw Error("Trying to add a duplicate layer!");
         }
+
         const layer = new layerClass();
         layer.id = layerClass.id;
+        let idNumber = 2;
+        while (layer.id in this.layers) {
+            layer.id = layerClass.id + ` (${idNumber})`;
+            idNumber++;
+        }
 
         // TODO: Selections only works on onePoint layers using only cells. It could probably allow for more types
         if (
@@ -81,11 +87,6 @@ export class PuzzleManager {
             layer.controllingLayer = this.layers["Selections"];
         }
 
-        let idNumber = 2;
-        while (layer.id in this.layers) {
-            layer.id = layerClass.id + ` (${idNumber})`;
-            idNumber++;
-        }
         this.layers[layer.id] = layer;
         this.storage.addLayer(layer);
 
