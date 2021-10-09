@@ -95,7 +95,7 @@ export class SelectionLayer {
                     })),
                 });
             }
-            if (toDelete.length !== 1 && toDelete[0] !== newPoint) {
+            if (toDelete.length !== 1 || toDelete[0] !== newPoint) {
                 storage.addObjects({
                     layer: this,
                     objects: points.map((point) => ({
