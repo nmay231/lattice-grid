@@ -11,60 +11,57 @@ export class SelectionLayer {
     drawMultiple = true;
 
     interpretKeyDown({ event, layer, grid, storage }) {
+        const selections = storage
+            .getLayerObjects({ layer: this })
+            .filter(({ state }) => state)
+            .map(({ point }) => point);
         if (event.code === "Escape") {
-            const toDelete = storage
-                .getLayerObjects({ layer: this })
-                .filter(({ state }) => state)
-                .map(({ point }) => point);
-            if (toDelete.length) {
-                storage.addObject({
+            if (selections.length) {
+                storage.addObjects({
                     layer: this,
-                    points: toDelete,
-                    state: this.states[0],
+                    objects: selections.map((point) => ({
+                        point,
+                        state: this.states[0],
+                    })),
                 });
             }
             return;
         } else if (event.ctrlKey && event.key === "a") {
-            storage.addObject({
+            storage.addObjects({
                 layer: this,
-                points: grid.getAllPoints("cells"),
-                state: this.states[1],
+                objects: grid.getAllPoints("cells").map((point) => ({
+                    point,
+                    state: this.states[1],
+                })),
             });
             return;
         } else if (event.ctrlKey && event.key === "i") {
-            const excluded = storage
-                .getLayerObjects({ layer: this })
-                .filter(({ state }) => state)
-                .map(({ point }) => point);
-            storage.addObject({
+            storage.addObjects({
                 layer: this,
-                points: excluded,
-                state: this.states[0],
+                objects: selections.map((point) => ({
+                    point,
+                    state: this.states[0],
+                })),
             });
-            storage.addObject({
+            storage.addObjects({
                 layer: this,
-                points: grid
+                objects: grid
                     .getAllPoints("cells")
-                    .filter((cell) => !excluded.includes(cell)),
-                state: this.states[1],
+                    .filter((cell) => !selections.includes(cell))
+                    .map((point) => ({
+                        point,
+                        state: this.states[1],
+                    })),
             });
             return;
         }
 
-        if (!layer.interpretKeyDown) {
-            return;
-        }
-        const { state, interpreted } = layer.interpretKeyDown({ event }) || {};
-        if (interpreted) {
-            const points = storage
-                .getLayerObjects({ layer: this })
-                .filter(({ state }) => state)
-                .map(({ point }) => point);
-
-            storage.addObject({ layer, points, state });
+        if (layer.interpretKeyDown) {
+            layer.interpretKeyDown({ event, storage, points: selections });
         }
     }
 
+    // TODO: This is impure. There should be an object on storage that layers can use to store state per grid.
     targetState = null;
 
     interpretPointerEvent({ storage, points, newPoint, event }) {
@@ -80,10 +77,9 @@ export class SelectionLayer {
                 }).state;
                 this.targetState = !currentState;
             }
-            storage.addObject({
+            storage.addObjects({
                 layer: this,
-                points: [newPoint],
-                state: this.targetState,
+                objects: [{ point: newPoint, state: this.targetState }],
             });
         } else {
             const toDelete = storage
@@ -91,17 +87,21 @@ export class SelectionLayer {
                 .filter(({ state }) => state)
                 .map(({ point }) => point);
             if (toDelete.length) {
-                storage.addObject({
+                storage.addObjects({
                     layer: this,
-                    points: toDelete,
-                    state: this.states[0],
+                    objects: toDelete.map((point) => ({
+                        point,
+                        state: this.states[0],
+                    })),
                 });
             }
             if (toDelete.length !== 1 && toDelete[0] !== newPoint) {
-                storage.addObject({
+                storage.addObjects({
                     layer: this,
-                    points,
-                    state: this.states[1],
+                    objects: points.map((point) => ({
+                        point,
+                        state: this.states[1],
+                    })),
                 });
             }
         }

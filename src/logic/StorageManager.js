@@ -44,14 +44,14 @@ export class StorageManager {
         }
     }
 
-    addObject({ layer, points, state }) {
+    addObjects({ layer, objects }) {
         if (layer.controls === "onePoint") {
             const changed = [];
-            for (let p of points) {
-                const oldState = this.onePoint[layer.id][p];
-                this.onePoint[layer.id][p] = state;
+            for (let { point, state } of objects) {
+                const oldState = this.onePoint[layer.id][point];
+                this.onePoint[layer.id][point] = state;
                 if (oldState !== state) {
-                    changed.push(p);
+                    changed.push(point);
                 }
             }
             if (changed.length) {

@@ -82,10 +82,9 @@ export class ControlsManager {
                     states[(states.indexOf(currentState) + 1) % states.length];
 
                 this.targetState = targetState;
-                storage.addObject({
+                storage.addObjects({
                     layer,
-                    points: [point],
-                    state: targetState,
+                    objects: [{ point, state: targetState }],
                 });
                 return;
             }
@@ -126,10 +125,9 @@ export class ControlsManager {
             this.points.push(point);
 
             if (!this.currentLayer.interpretPointerEvent) {
-                this.puzzle.storage.addObject({
+                this.puzzle.storage.addObjects({
                     layer: this.currentLayer,
-                    points: [point],
-                    state: this.targetState,
+                    objects: [{ point, state: this.targetState }],
                 });
                 return;
             }
