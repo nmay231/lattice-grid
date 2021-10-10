@@ -49,6 +49,8 @@ export class SquareGrid {
             ...pointTypes,
             ...points.map(this._stringToGridPoint).map(({ type }) => type),
         ]);
+        const { cellSize } = this.settings;
+        const minimumDistance = allPointTypes.size === 1 ? 1 : 0.5;
 
         let getDistance;
         if (intersection === "ellipse") {
@@ -64,14 +66,11 @@ export class SquareGrid {
             throw Error(`Unexpected intersection=${intersection}`);
         }
 
-        const { cellSize } = this.settings;
         const halfCell = cellSize / 2;
-        const minimumDistance = allPointTypes.size === 1 ? 1 : 0.5;
-
-        const x = to.x / halfCell,
-            y = to.y / halfCell;
-        const px = Math.floor(x),
-            py = Math.floor(y);
+        const x = to.x / halfCell;
+        const y = to.y / halfCell;
+        const px = Math.floor(x);
+        const py = Math.floor(y);
 
         let nearbyPoints = [
             {
@@ -92,7 +91,10 @@ export class SquareGrid {
             },
         ];
         nearbyPoints = nearbyPoints
-            .filter(({ distance }) => distance < minimumDistance)
+            .filter(
+                ({ distance, string }) =>
+                    distance < minimumDistance && !blacklist.includes(string)
+            )
             .map(({ string, distance }) => ({
                 // Get the point type of each
                 point: this._stringToGridPoint(string),

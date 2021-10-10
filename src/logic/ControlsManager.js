@@ -115,8 +115,7 @@ export class ControlsManager {
                 blacklist: this.points,
             });
 
-            // TODO: this.points.includes should not be necessary, but nearestPoint() is not using blacklist
-            if (point === null || this.points.includes(point)) {
+            if (point === null) {
                 return;
             }
             if (!this.currentLayer.drawMultiple) {
