@@ -62,8 +62,8 @@ export class NumberLayer {
                     point: cells[point].svgPoint,
                 })),
                 style: {
-                    vertical: "center",
-                    horizontal: "center",
+                    originX: "center",
+                    originY: "center",
                     size: 60,
                 },
             },

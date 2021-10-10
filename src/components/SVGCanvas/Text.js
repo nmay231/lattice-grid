@@ -2,23 +2,32 @@ import { useMemo } from "react";
 
 export const Text = ({ blits, style }) => {
     const realStyle = useMemo(() => {
-        const { vertical = "center", horizontal = "center", size } = style;
+        const { originY = "center", originX = "center", size } = style;
         let dominantBaseline;
-        if (horizontal === "center") {
+        if (originY === "top") {
+            dominantBaseline = "hanging";
+        } else if (originY === "center") {
             dominantBaseline = "central";
+        } else if (originY === "bottom") {
+            dominantBaseline = "alphabetic";
         } else {
-            throw Error("your face!");
+            throw Error(`Invalid originY=${originY}`);
         }
 
         let textAnchor;
-        if (vertical === "center") {
+        if (originX === "left") {
+            textAnchor = "start";
+        } else if (originX === "center") {
             textAnchor = "middle";
+        } else if (originX === "right") {
+            textAnchor = "end";
         } else {
-            throw Error("your face!");
+            throw Error(`Invalid originX=${originX}`);
         }
 
         return {
             userSelect: "none",
+            direction: "ltr",
             dominantBaseline,
             textAnchor,
             fontFamily: "sans-serif",
