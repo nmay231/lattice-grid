@@ -22,15 +22,15 @@ export class SquareGrid {
         };
     }
 
-    // nearest({to: {x, y}, intersection: IntersectionType, blacklist?: Points[], pointTypes: PointType[]})
-    // nearest({to: {x, y}, intersection: IntersectionType, blacklist?: Points[], points: Points[]})
+    // nearestPoint({to: {x, y}, intersection: IntersectionType, blacklist?: Points[], pointTypes: PointType[]})
+    // nearestPoint({to: {x, y}, intersection: IntersectionType, blacklist?: Points[], points: Points[]})
     // TODO: Consider expanding IntersectionType to allow nearest on first click without regard to distance (e.g. with a Voroni diagram)
     // TODO: Consider renaming `intersection` to `distanceMetric` or something like that.
     // TODO: the intersection parameter might be completely unnecessary if I can come up with an automated method to unambiguously determine if a point was selected from a list given a starting point
     // TODO: Consider removing the blacklist in favor of always explicitly listing relevant pointTypes
 
     /* This function finds the nearest point(s) to a click/tap that satisfies certain conditions. The first example selects any point in the grid of the specified pointType(s), while the second only selects points from the provided list. If points are not close enough to be selected or if the closest one is in the blacklist, this will return null. Arguments `to` and `intersection` are always required. `to` is the raw x,y coordinates from the canvas. `intersection` is "polygon" or "ellipse" which basically, as an example, determines whether you can "squeeze" between two orthogonally adjacent cells to reach a cell diagonally. "polygon" (e.g. using a square trigger) does not allow diagonal selecting while "ellipse" (e.g. using a circle trigger) does. Another issue is if you want to select an adjacent edge OR corner from a cell, the polygon/ellipse has to be slightly smaller. So, if there are more than one pointType in the combination of blacklist and pointTypes/points, the polygon/ellipse is automatically shrunk by half. You might be thinking that for the second API, the `blacklist` argument is unnecessary. You might be right, but I can't prove that to myself atm... Actually, I might have just proved it by the previous statement (multi-pointType shrinks the selection polygon/ellipse). */
-    nearest({
+    nearestPoint({
         to,
         intersection,
         blacklist = [],

@@ -61,7 +61,7 @@ export class ControlsManager {
         const { controls, pointTypes, drawMultiple } = layer;
 
         if (controls === "onePoint") {
-            const point = grid.nearest({
+            const point = grid.nearestPoint({
                 to: cursor,
                 intersection: "polygon",
                 pointTypes,
@@ -108,14 +108,14 @@ export class ControlsManager {
         const { controls, pointTypes } = this.currentLayer;
 
         if (controls === "onePoint") {
-            const point = grid.nearest({
+            const point = grid.nearestPoint({
                 to: cursor,
                 intersection: "polygon",
                 pointTypes,
                 blacklist: this.points,
             });
 
-            // TODO: this.points.includes should not be necessary, but nearest() is not using blacklist
+            // TODO: this.points.includes should not be necessary, but nearestPoint() is not using blacklist
             if (point === null || this.points.includes(point)) {
                 return;
             }
@@ -205,7 +205,7 @@ export class ControlsManager {
                         ":" +
                         pointTypes +
                         ":" +
-                        this.puzzle.grid.nearest({
+                        this.puzzle.grid.nearestPoint({
                             to: cursor,
                             intersection,
                             pointTypes,
