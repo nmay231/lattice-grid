@@ -36,6 +36,7 @@ export class SquareGrid {
         blacklist = [],
         pointTypes = [],
         points = [],
+        includeOutOfBounds = false,
     }) {
         if (!pointTypes.length === !points.length) {
             throw Error(
@@ -100,7 +101,10 @@ export class SquareGrid {
                 point: this._stringToGridPoint(string),
                 string,
                 distance,
-            }));
+            }))
+            .filter(
+                ({ point }) => includeOutOfBounds || !this._outOfBounds(point)
+            );
 
         if (pointTypes.length) {
             nearbyPoints = nearbyPoints.filter(({ point: { type } }) =>
