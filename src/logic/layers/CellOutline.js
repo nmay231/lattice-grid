@@ -18,7 +18,7 @@ export class CellOutlineLayer {
 
     // -- Rendering --
     defaultRenderOrder = 2;
-    getBlits(grid, storage) {
+    getBlits({ grid, storage }) {
         const blacklist = storage
             .getLayerObjects({ layer: this })
             .filter(({ state }) => !state)

@@ -44,7 +44,7 @@ export class NumberLayer {
 
     defaultRenderOrder = 6;
 
-    getBlits(grid, storage) {
+    getBlits({ grid, storage }) {
         const objects = storage
             .getLayerObjects({ layer: this })
             .filter(({ state }) => state !== undefined);

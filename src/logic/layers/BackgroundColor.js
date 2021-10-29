@@ -10,7 +10,7 @@ export class BackgroundColorLayer {
     defaultRenderOrder = 1;
     encoderPrefix = "c";
 
-    getBlits(grid, settings, change) {
+    getBlits({ grid }) {
         const points = grid
             .getObjects({ layerId: this.id })
             .map(({ points }) => points[0]);

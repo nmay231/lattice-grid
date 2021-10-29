@@ -1,5 +1,5 @@
+import { setBlitGroups } from "../redux/blits";
 import { addLayer, removeLayer, resizeCanvas } from "../redux/puzzle";
-import { MasterBlitter } from "./blitters";
 import { ControlsManager } from "./ControlsManager";
 import { SquareGrid } from "./grids/SquareGrid";
 import { availableLayers } from "./layers";
@@ -10,7 +10,6 @@ export class PuzzleManager {
     layers = {};
     storage;
     grid;
-    blitter;
     eventListeners;
     store; // Redux store
     unsubscribeToStore;
@@ -36,9 +35,7 @@ export class PuzzleManager {
             this.addLayer(layer);
         }
         this.resizeCanvas();
-
-        this.blitter = new MasterBlitter(this.grid, this.storage);
-        this.blitter.blitToCanvas(this.layers, this.settings, {});
+        this.redrawScreen();
 
         this.controls = new ControlsManager(this);
     }
@@ -59,9 +56,19 @@ export class PuzzleManager {
         }
     }
 
-    // TODO
-    redrawScreen() {
-        this.blitter.blitToCanvas(this.layers, this.settings, {});
+    redrawScreen(changes = []) {
+        /* changes are a list of things being added or removed. It contains information like which layer the changes belong to, which points are relevant (position), if they are hidden or invalid, etc. Do NOT use it now. In fact, it might not even be necessary. */
+        const allBlitGroups = [];
+        for (let layer of Object.values(this.layers)) {
+            let blitGroups = layer.getBlits({
+                grid: this.grid,
+                storage: this.storage,
+                settings: this.settings,
+                changes,
+            });
+            allBlitGroups.push(...blitGroups);
+        }
+        this.store.dispatch(setBlitGroups(allBlitGroups));
     }
 
     // TODO: This assumes the layer is a blittingLayer. How do I handle controlling- and storingLayers?

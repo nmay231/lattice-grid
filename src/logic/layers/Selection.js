@@ -109,7 +109,7 @@ export class SelectionLayer {
 
     defaultRenderOrder = 9;
 
-    getBlits(grid, storage) {
+    getBlits({ grid, storage }) {
         const points = storage
             .getLayerObjects({ layer: this })
             .filter(({ state }) => state)
