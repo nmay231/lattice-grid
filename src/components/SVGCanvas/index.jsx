@@ -19,6 +19,7 @@ export const SVGCanvas = ({ controls }) => {
     const width = useSelector((state) => state.puzzle.width);
     const height = useSelector((state) => state.puzzle.height);
 
+    // TODO: As neat as staying in a square is, I'll probably need to switch to using a scrollbar since users can have multiple grids and I shouldn't break users expectations...
     return (
         <div
             className={styling.svgContainer}

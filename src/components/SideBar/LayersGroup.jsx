@@ -13,11 +13,11 @@ import {
 } from "@dnd-kit/sortable";
 import { useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { availableLayers } from "../logic/layers";
-import { addLayer } from "../redux/puzzle";
-import { SortableItem } from "./SortableItem";
+import { availableLayers } from "../../logic/layers";
+import { addLayer } from "../../redux/puzzle";
+import { SortableItem } from "../SortableItem";
 
-export const SideBar = ({ puzzle }) => {
+export const LayersGroup = ({ puzzle }) => {
     const sensors = useSensors(
         useSensor(PointerSensor),
         useSensor(KeyboardSensor, {
@@ -53,37 +53,34 @@ export const SideBar = ({ puzzle }) => {
         puzzle.removeLayer(id);
     };
 
-    // TODO: Handle layer options? Or should that just be listed after the layer list?
-    // TODO: The side bar will have more than just this, move this mess to another file
+    // TODO: Handle layer options? Or should that just be listed after the layer group?
     return (
         <div>
+            <h1>Layers</h1>
             <div>
-                <h1>Layers</h1>
-                <div>
-                    <label htmlFor="newLayer">Add new layer</label>
-                    <select name="NewLayer" ref={selectRef}>
-                        {Object.keys(availableLayers).map((id) => (
-                            <option value={id} key={id}>
-                                {id}
-                            </option>
-                        ))}
-                    </select>
-                    <button onPointerDown={handleAddNewLayer}>Add</button>
-                </div>
-                <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-                    <SortableContext
-                        items={layers}
-                        strategy={verticalListSortingStrategy}
-                    >
-                        {layers.map(({ id }) => (
-                            <SortableItem key={id} id={id}>
-                                <p>{id}</p>
-                                <div onPointerDown={handleDelete(id)}>D</div>
-                            </SortableItem>
-                        ))}
-                    </SortableContext>
-                </DndContext>
+                <label htmlFor="newLayer">Add new layer</label>
+                <select name="NewLayer" ref={selectRef}>
+                    {Object.keys(availableLayers).map((id) => (
+                        <option value={id} key={id}>
+                            {id}
+                        </option>
+                    ))}
+                </select>
+                <button onPointerDown={handleAddNewLayer}>Add</button>
             </div>
+            <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+                <SortableContext
+                    items={layers}
+                    strategy={verticalListSortingStrategy}
+                >
+                    {layers.map(({ id }) => (
+                        <SortableItem key={id} id={id}>
+                            <p>{id}</p>
+                            <div onPointerDown={handleDelete(id)}>D</div>
+                        </SortableItem>
+                    ))}
+                </SortableContext>
+            </DndContext>
         </div>
     );
 };
