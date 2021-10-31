@@ -1,10 +1,14 @@
 import { setBlitGroups } from "../redux/blits";
-import { addLayer, removeLayer, resizeCanvas } from "../redux/puzzle";
+import {
+    addLayer,
+    newPuzzle,
+    removeLayer,
+    resizeCanvas,
+} from "../redux/puzzle";
 import { ControlsManager } from "./ControlsManager";
 import { SquareGrid } from "./grids/SquareGrid";
 import { availableLayers } from "./layers";
 import { StorageManager } from "./StorageManager";
-
 export class PuzzleManager {
     settings;
     layers = {};
@@ -26,6 +30,15 @@ export class PuzzleManager {
 
         this.grid = new SquareGrid(this.settings, { width: 10, height: 10 });
         this.storage = new StorageManager(this);
+        this.controls = new ControlsManager(this);
+
+        this.loadPuzzle();
+        this.resizeCanvas();
+        this.redrawScreen();
+    }
+
+    loadPuzzle() {
+        this.store.dispatch(newPuzzle());
         // TODO: This is temporary since the layers of the puzzle are recovered from localStorage
         for (let layer of [
             availableLayers["Cell Outline"],
@@ -34,10 +47,6 @@ export class PuzzleManager {
         ]) {
             this.addLayer(layer);
         }
-        this.resizeCanvas();
-        this.redrawScreen();
-
-        this.controls = new ControlsManager(this);
     }
 
     resizeCanvas() {

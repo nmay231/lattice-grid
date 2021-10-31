@@ -13,6 +13,13 @@ export const puzzleSlice = createSlice({
     name: "puzzle",
     initialState,
     reducers: {
+        newPuzzle: (state) => {
+            for (let key in initialState) {
+                // TODO: This is a latent bug and simply lazy. Sounds like a normal day...
+                // To clarify, it's a bug because not everything should be reset, new state fields will not be reset, etc.
+                state[key] = initialState[key];
+            }
+        },
         resizeCanvas: (state, action) => {
             const { minX, minY, width, height } = action.payload;
             state.minX = minX;
@@ -35,6 +42,7 @@ export const puzzleSlice = createSlice({
     },
 });
 
-export const { addLayer, removeLayer, resizeCanvas } = puzzleSlice.actions;
+export const { addLayer, newPuzzle, removeLayer, resizeCanvas } =
+    puzzleSlice.actions;
 
 export default puzzleSlice.reducer;
