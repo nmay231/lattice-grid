@@ -54,13 +54,18 @@ export class NumberLayer {
             points: objects.map(({ point }) => point),
         });
 
+        const blits = {};
+        for (let { point, state } of objects) {
+            blits[point] = {
+                text: state,
+                point: cells[point].svgPoint,
+            };
+        }
+
         return [
             {
                 blitter: "text",
-                blits: objects.map(({ point, state }) => ({
-                    text: state,
-                    point: cells[point].svgPoint,
-                })),
+                blits,
                 style: {
                     originX: "center",
                     originY: "center",

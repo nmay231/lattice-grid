@@ -12,12 +12,6 @@ export class CellOutlineLayer {
     states = [true, false];
     drawMultiple = true;
 
-    // -- Encoding/decoding --
-    // TODO: by the by: https://en.wikipedia.org/wiki/Vigen%C3%A8re_cipher
-    encoderPrefix = "o";
-    encode(grid, settings) {}
-    decode(grid, settings) {}
-
     constructor() {
         this.interpretPointerEvent =
             interpretPointerEventCycleStates.bind(this);
@@ -55,16 +49,27 @@ export class CellOutlineLayer {
             }
         }
 
-        const edgeBlits = Object.values(edges).filter((edge) => edge);
+        for (let id in edges) {
+            if (!edges[id]) {
+                delete edges[id];
+            }
+        }
 
-        const gridEdgeBlits = gridEdge.svgPolygon.map((loop) =>
-            loop.map(({ x, y }) => [x, y])
-        );
+        const gridEdgeBlits = {};
+        for (let loop of gridEdge.svgPolygon) {
+            // TODO: This is stupid. Replace with uuid or something...
+            gridEdgeBlits[Math.floor(Math.random() * 100000)] = loop.map(
+                ({ x, y }) => [x, y]
+            );
+        }
+        // gridEdge.svgPolygon.map((loop) =>
+        //     loop.map(({ x, y }) => [x, y])
+        // );
 
         return [
             {
                 blitter: "line",
-                blits: edgeBlits,
+                blits: edges,
                 style: {
                     stroke: "black",
                     strokeWidth: 2,

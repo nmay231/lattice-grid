@@ -38,11 +38,14 @@ export const Text = ({ blits, style }) => {
     return (
         <g style={realStyle}>
             {/* TODO: Stop using index as a key */}
-            {blits.map(({ text, point }, index) => (
-                <text key={index} x={point[0]} y={point[1]}>
-                    {text}
-                </text>
-            ))}
+            {Object.keys(blits).map((key) => {
+                const { text, point } = blits[key];
+                return (
+                    <text key={key} x={point[0]} y={point[1]}>
+                        {text}
+                    </text>
+                );
+            })}
         </g>
     );
 };

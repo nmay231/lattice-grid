@@ -32,8 +32,8 @@ export class BackgroundColorLayer {
 
         const objectsByColor = {};
         for (let { state, point } of objects) {
-            objectsByColor[state] = objectsByColor[state] ?? [];
-            objectsByColor[state].push(cells[point].svgOutline);
+            objectsByColor[state] = objectsByColor[state] ?? {};
+            objectsByColor[state][point] = cells[point].svgOutline;
         }
 
         return Object.keys(objectsByColor).map((color) => ({

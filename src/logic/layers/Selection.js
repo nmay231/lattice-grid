@@ -115,7 +115,7 @@ export class SelectionLayer {
             .filter(({ state }) => state)
             .map(({ point }) => point);
 
-        let blits = [];
+        let blits = {};
         if (points.length) {
             const { selectionCage } = grid.getPoints({
                 connections: {
@@ -129,9 +129,12 @@ export class SelectionLayer {
                 points,
             });
 
-            blits = selectionCage.svgPolygon.map((loop) =>
-                loop.map(({ x, y }) => [x, y])
-            );
+            for (let loop of selectionCage.svgPolygon) {
+                // TODO: This is stupid. Replace with uuid or something...
+                blits[Math.floor(Math.random() * 100000)] = loop.map(
+                    ({ x, y }) => [x, y]
+                );
+            }
         }
         return [
             {
