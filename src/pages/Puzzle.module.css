@@ -12,7 +12,7 @@
 }
 
 .sideBar {
-    width: calc(19% - 5px);
+    width: calc(20% - 5px);
     height: 100%;
     overflow: hidden;
 }

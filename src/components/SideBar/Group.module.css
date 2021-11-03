@@ -1,0 +1,28 @@
+.groupBody {
+    overflow-y: hidden;
+}
+
+.groupBodyHidden {
+    composes: groupBody;
+    height: 0px;
+}
+
+.groupBodyShown {
+    composes: groupBody;
+}
+
+.groupHeader {
+    background-color: gray;
+    border-radius: 5px;
+    padding: 7px;
+    margin: 0;
+    box-sizing: border-box;
+    width: 100%;
+    text-align: center;
+    font-size: 20px;
+}
+
+.groupHeader > * {
+    margin: 0px;
+    padding: 0px;
+}

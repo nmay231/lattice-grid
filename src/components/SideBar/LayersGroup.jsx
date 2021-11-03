@@ -16,6 +16,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { availableLayers } from "../../logic/layers";
 import { addLayer } from "../../redux/puzzle";
 import { SortableItem } from "../SortableItem";
+import { Group } from "./Group";
 
 export const LayersGroup = ({ puzzle }) => {
     const sensors = useSensors(
@@ -55,8 +56,7 @@ export const LayersGroup = ({ puzzle }) => {
 
     // TODO: Handle layer options? Or should that just be listed after the layer group?
     return (
-        <div>
-            <h1>Layers</h1>
+        <Group name="Layers" expanded>
             <div>
                 <label htmlFor="newLayer">Add new layer</label>
                 <select name="NewLayer" ref={selectRef}>
@@ -81,6 +81,6 @@ export const LayersGroup = ({ puzzle }) => {
                     ))}
                 </SortableContext>
             </DndContext>
-        </div>
+        </Group>
     );
 };
