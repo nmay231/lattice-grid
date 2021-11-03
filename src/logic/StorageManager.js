@@ -61,15 +61,6 @@ export class StorageManager {
         }
     }
 
-    getCurrentLayer() {
-        const currentId = this.puzzle.store.getState().puzzle.selectedLayer;
-        let layer = this.puzzle.layers[currentId];
-        while (layer.storingLayer && layer.storingLayer !== "custom") {
-            layer = layer.storingLayer;
-        }
-        return layer;
-    }
-
     // currentObject = null;
     // /* Used for any object that previews changes before storing, e.g. multiPoint objects */
     // /* Both initializes and modifies the currentObject */

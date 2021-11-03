@@ -9,6 +9,7 @@ import { ControlsManager } from "./ControlsManager";
 import { SquareGrid } from "./grids/SquareGrid";
 import { availableLayers } from "./layers";
 import { StorageManager } from "./StorageManager";
+
 export class PuzzleManager {
     settings;
     layers = {};
@@ -68,7 +69,8 @@ export class PuzzleManager {
     redrawScreen(changes = []) {
         /* changes are a list of things being added or removed. It contains information like which layer the changes belong to, which points are relevant (position), if they are hidden or invalid, etc. Do NOT use it now. In fact, it might not even be necessary. */
         const allBlitGroups = [];
-        for (let layer of Object.values(this.layers)) {
+        for (let fakeLayer of this.store.getState().puzzle.layers) {
+            const layer = this.layers[fakeLayer.id];
             let blitGroups = layer.getBlits({
                 grid: this.grid,
                 storage: this.storage,
@@ -111,13 +113,35 @@ export class PuzzleManager {
             const { id } = layer;
             this.store.dispatch(addLayer({ id, hidden: false }));
         }
+
+        this.redrawScreen();
     }
 
     removeLayer(id) {
         if (id in this.layers) {
             delete this.layers[id];
             this.store.dispatch(removeLayer(id));
+            this.redrawScreen();
         }
+    }
+
+    // TODO
+    getCurrentLayer(type) {
+        let key;
+        if (type === "storing") {
+            key = "storingLayer";
+        } else if (type === "controlling") {
+            key = "controllingLayer";
+        } else {
+            throw Error(`Unknown current layer type: ${type}`);
+        }
+
+        const currentId = this.store.getState().puzzle.selectedLayer;
+        let layer = this.layers[currentId];
+        while (layer[key] && layer[key] !== "custom") {
+            layer = layer[key];
+        }
+        return layer;
     }
 }
 

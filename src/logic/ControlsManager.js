@@ -33,15 +33,6 @@ export class ControlsManager {
         return { x, y };
     }
 
-    getCurrentLayer() {
-        const currentId = this.puzzle.store.getState().puzzle.selectedLayer;
-        let layer = this.puzzle.layers[currentId];
-        while (layer.controllingLayer && layer.controllingLayer !== "custom") {
-            layer = layer.controllingLayer;
-        }
-        return layer;
-    }
-
     resetControls() {
         this.currentLayer = null;
         this.points = [];
@@ -57,7 +48,7 @@ export class ControlsManager {
 
         const cursor = this.getXY(event);
 
-        const layer = this.getCurrentLayer();
+        const layer = this.puzzle.getCurrentLayer("controlling");
         const { controls, pointTypes, drawMultiple } = layer;
 
         if (controls === "onePoint") {
@@ -160,12 +151,12 @@ export class ControlsManager {
         if (event.code === "Tab") {
             // TODO: switch current layer
         }
-        const layer = this.getCurrentLayer();
+        const layer = this.puzzle.getCurrentLayer("controlling");
         if (layer.interpretKeyDown) {
             layer.interpretKeyDown({
                 event,
                 // The storing layer might be different than the controlling layer
-                layer: this.puzzle.storage.getCurrentLayer(),
+                layer: this.puzzle.getCurrentLayer("storing"),
                 grid: this.puzzle.grid,
                 storage: this.puzzle.storage,
             });
