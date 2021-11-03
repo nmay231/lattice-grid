@@ -19,3 +19,13 @@ export function interpretPointerEventCycleStates({ storage, newPoint }) {
         objects: [{ point: newPoint, state: targetState }],
     });
 }
+
+export function interpretPointerEventCurrentSetting({ storage, newPoint }) {
+    if (!newPoint) {
+        return;
+    }
+    storage.addObjects({
+        layer: this,
+        objects: [{ point: newPoint, state: this.settings.selectedState }],
+    });
+}

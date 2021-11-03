@@ -329,6 +329,36 @@ export class SquareGrid {
                     }
                     break;
                 }
+                case "cells->svgOutline": {
+                    if (connections[nextType] !== true) {
+                        // TODO
+                        throw Error("Params for svgOutline are not supported!");
+                    }
+
+                    const { cellSize } = this.settings;
+                    const halfCell = cellSize / 2;
+                    for (let { point, result } of gridPoints) {
+                        result[nextType] = [
+                            [
+                                (point.x - 1) * halfCell,
+                                (point.y - 1) * halfCell,
+                            ],
+                            [
+                                (point.x + 1) * halfCell,
+                                (point.y - 1) * halfCell,
+                            ],
+                            [
+                                (point.x + 1) * halfCell,
+                                (point.y + 1) * halfCell,
+                            ],
+                            [
+                                (point.x - 1) * halfCell,
+                                (point.y + 1) * halfCell,
+                            ],
+                        ];
+                    }
+                    break;
+                }
                 case "cells->shrinkwrap": {
                     const result = {};
                     const { key, svgPolygon, edgePoints } =
