@@ -1,3 +1,5 @@
+import { interpretPointerEventCycleStates } from "../utils/onePoint";
+
 export class CellOutlineLayer {
     // -- Identification --
     static id = "Cell Outline";
@@ -15,6 +17,11 @@ export class CellOutlineLayer {
     encoderPrefix = "o";
     encode(grid, settings) {}
     decode(grid, settings) {}
+
+    constructor() {
+        this.interpretPointerEvent =
+            interpretPointerEventCycleStates.bind(this);
+    }
 
     // -- Rendering --
     defaultRenderOrder = 2;

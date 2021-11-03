@@ -74,20 +74,6 @@ export class ControlsManager {
                 return;
             }
             this.points.push(point);
-
-            if (!layer.interpretPointerEvent) {
-                const currentState = storage.getObject({ layer, point }).state;
-                const states = layer.states;
-                const targetState =
-                    states[(states.indexOf(currentState) + 1) % states.length];
-
-                this.targetState = targetState;
-                storage.addObjects({
-                    layer,
-                    objects: [{ point, state: targetState }],
-                });
-                return;
-            }
         }
 
         const { altKey, ctrlKey, shiftKey } = event;
