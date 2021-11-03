@@ -5,6 +5,7 @@ import {
     useSensor,
     useSensors,
 } from "@dnd-kit/core";
+import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import {
     arrayMove,
     SortableContext,
@@ -14,7 +15,7 @@ import {
 import { useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { availableLayers } from "../../logic/layers";
-import { addLayer } from "../../redux/puzzle";
+import { setLayers } from "../../redux/puzzle";
 import { SortableItem } from "../SortableItem";
 import { Group } from "./Group";
 
@@ -32,10 +33,12 @@ export const LayersGroup = ({ puzzle }) => {
 
     const handleDragEnd = ({ active, over }) => {
         if (active.id !== over?.id) {
-            const oldIndex = layers.indexOf(active.id);
-            const newIndex = layers.indexOf(over?.id);
-            arrayMove(layers, oldIndex, newIndex);
-            dispatch(addLayer);
+            const ids = layers.map(({ id }) => id);
+            const oldIndex = ids.indexOf(active.id);
+            const newIndex = ids.indexOf(over?.id);
+            dispatch(setLayers(arrayMove(layers, oldIndex, newIndex)));
+            // Redraw elements to draw them in the right order
+            puzzle.redrawScreen();
         }
     };
 
@@ -58,6 +61,7 @@ export const LayersGroup = ({ puzzle }) => {
     return (
         <Group name="Layers" expanded>
             <div>
+                {/* TODO: Implement with a modal */}
                 <label htmlFor="newLayer">Add new layer</label>
                 <select name="NewLayer" ref={selectRef}>
                     {Object.keys(availableLayers).map((id) => (
@@ -68,7 +72,11 @@ export const LayersGroup = ({ puzzle }) => {
                 </select>
                 <button onPointerDown={handleAddNewLayer}>Add</button>
             </div>
-            <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+            <DndContext
+                sensors={sensors}
+                onDragEnd={handleDragEnd}
+                modifiers={[restrictToVerticalAxis]}
+            >
                 <SortableContext
                     items={layers}
                     strategy={verticalListSortingStrategy}
@@ -76,7 +84,8 @@ export const LayersGroup = ({ puzzle }) => {
                     {layers.map(({ id }) => (
                         <SortableItem key={id} id={id}>
                             <p>{id}</p>
-                            <div onPointerDown={handleDelete(id)}>D</div>
+                            {/* TODO: Icon (?) */}
+                            <div onPointerDown={handleDelete(id)}>X</div>
                         </SortableItem>
                     ))}
                 </SortableContext>

@@ -39,10 +39,13 @@ export const puzzleSlice = createSlice({
             // TODO: the next layer is not necessarily one that can be selected
             state.selectedLayer = state.layers[index % state.layers.length].id;
         },
+        setLayers: (state, action) => {
+            state.layers = action.payload;
+        },
     },
 });
 
-export const { addLayer, newPuzzle, removeLayer, resizeCanvas } =
+export const { addLayer, newPuzzle, removeLayer, resizeCanvas, setLayers } =
     puzzleSlice.actions;
 
 export default puzzleSlice.reducer;

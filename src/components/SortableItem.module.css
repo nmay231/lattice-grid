@@ -1,0 +1,21 @@
+.item {
+    display: flex;
+}
+
+.itemHandle {
+    background-color: gray;
+    width: 1em;
+    height: 1em;
+}
+
+.itemBody {
+    display: flex;
+    width: 100%;
+    justify-content: center;
+    justify-content: space-between;
+    margin: 3px;
+}
+
+.itemBody > p {
+    margin: 0px;
+}
