@@ -1,3 +1,5 @@
+import { selectLayer } from "../redux/puzzle";
+
 export class ControlsManager {
     currentLayer = null;
     points = [];
@@ -149,7 +151,10 @@ export class ControlsManager {
 
     interpretKeyDown(event) {
         if (event.code === "Tab") {
-            // TODO: switch current layer
+            this.puzzle.store.dispatch(
+                selectLayer({ tab: event.shiftKey ? -1 : 1 })
+            );
+            return;
         }
         const layer = this.puzzle.getCurrentLayer("controlling");
         if (layer.interpretKeyDown) {

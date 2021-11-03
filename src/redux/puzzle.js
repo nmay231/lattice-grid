@@ -28,8 +28,9 @@ export const puzzleSlice = createSlice({
             state.height = height;
         },
         addLayer: (state, action) => {
+            // TODO: defaultRenderOrder
             state.layers.push(action.payload);
-            state.selectedLayer = action.payload.id;
+            state.selectedLayer = state.layers.length - 1;
         },
         removeLayer: (state, action) => {
             const index = state.layers
@@ -37,7 +38,17 @@ export const puzzleSlice = createSlice({
                 .indexOf(action.payload);
             state.layers.splice(index, 1);
             // TODO: the next layer is not necessarily one that can be selected
-            state.selectedLayer = state.layers[index % state.layers.length].id;
+            state.selectedLayer = index % state.layers.length;
+        },
+        selectLayer: (state, action) => {
+            if ("index" in action.payload) {
+                state.selectedLayer = action.payload.index;
+            } else if ("tab" in action.payload) {
+                const one = action.payload.tab;
+                const index = state.selectedLayer;
+                state.selectedLayer =
+                    (state.layers.length + index + one) % state.layers.length;
+            }
         },
         setLayers: (state, action) => {
             state.layers = action.payload;
@@ -45,7 +56,13 @@ export const puzzleSlice = createSlice({
     },
 });
 
-export const { addLayer, newPuzzle, removeLayer, resizeCanvas, setLayers } =
-    puzzleSlice.actions;
+export const {
+    addLayer,
+    newPuzzle,
+    removeLayer,
+    resizeCanvas,
+    setLayers,
+    selectLayer,
+} = puzzleSlice.actions;
 
 export default puzzleSlice.reducer;

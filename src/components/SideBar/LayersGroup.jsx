@@ -15,7 +15,7 @@ import {
 import { useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { availableLayers } from "../../logic/layers";
-import { setLayers } from "../../redux/puzzle";
+import { selectLayer, setLayers } from "../../redux/puzzle";
 import { SortableItem } from "../SortableItem";
 import { Group } from "./Group";
 
@@ -30,6 +30,7 @@ export const LayersGroup = ({ puzzle }) => {
 
     const dispatch = useDispatch();
     const layers = useSelector((state) => state.puzzle.layers);
+    const selectedLayer = useSelector((state) => state.puzzle.selectedLayer);
 
     const handleDragEnd = ({ active, over }) => {
         if (active.id !== over?.id) {
@@ -53,7 +54,13 @@ export const LayersGroup = ({ puzzle }) => {
         puzzle.addLayer(newLayer);
     };
 
-    const handleDelete = (id) => () => {
+    const handleSelect = (index) => (event) => {
+        event.stopPropagation();
+        dispatch(selectLayer({ index }));
+    };
+
+    const handleDelete = (id) => (event) => {
+        event.stopPropagation();
         puzzle.removeLayer(id);
     };
 
@@ -81,9 +88,13 @@ export const LayersGroup = ({ puzzle }) => {
                     items={layers}
                     strategy={verticalListSortingStrategy}
                 >
-                    {layers.map(({ id }) => (
+                    {layers.map(({ id }, index) => (
                         <SortableItem key={id} id={id}>
-                            <p>{id}</p>
+                            {/* TODO: Change the element to be the whole sortableItem but excluding the itemHandle (and maybe not just a simple onPointDown) */}
+                            <p onPointerDown={handleSelect(index)}>
+                                {index === selectedLayer && "✓"}
+                                {id}
+                            </p>
                             {/* TODO: Icon (?) */}
                             <div onPointerDown={handleDelete(id)}>X</div>
                         </SortableItem>
