@@ -1,11 +1,13 @@
 export class StorageManager {
     defaultState = {};
     onePoint = {};
+    twoPoint = {};
 
     constructor(puzzle) {
         this.puzzle = puzzle;
     }
 
+    // TODO: This should use raw cursor data instead of just the point, otherwise you have to click exactly where you want to which is meh...
     // TODO: Use afterObject for selected the next object if there are many in one spot
     getObject({ layer, point, afterObject }) {
         if (layer.controls === "onePoint") {
@@ -24,6 +26,7 @@ export class StorageManager {
     getLayerObjects({ layer }) {
         if (layer.controls === "onePoint") {
             const objects = this.onePoint[layer.id];
+
             return Object.keys(objects).map((point) => ({
                 point,
                 state:
@@ -31,6 +34,17 @@ export class StorageManager {
                         ? this.defaultState[layer.id]
                         : objects[point],
             }));
+        } else if (layer.controls === "twoPoint") {
+            const objects = this.twoPoint[layer.id];
+
+            return Object.keys(objects).map((id) => {
+                // Group the coordinates into pairs of numbers, e.g. "1,2,3,4" => ["1,2", "3,4"].
+                const points = this.puzzle.grid.convertArrayOfPoints({
+                    stringToPoints: id,
+                });
+
+                return { points, state: objects[id] };
+            });
         }
     }
 
@@ -39,6 +53,8 @@ export class StorageManager {
             this.onePoint[layer.id] = {};
             this.defaultState[layer.id] =
                 layer.defaultState ?? layer.states?.[0];
+        } else if (layer.controls === "twoPoint") {
+            this.twoPoint[layer.id] = {};
         } else {
             throw Error(`Layer controls not implemented: ${layer.controls}`);
         }
@@ -58,6 +74,16 @@ export class StorageManager {
                 // TODO: Need to handle changes granularly in puzzle.redrawScreen
                 this.puzzle.redrawScreen(changed);
             }
+        } else if (layer.controls === "twoPoint") {
+            // TODO: changed = [];
+            for (let { points, state } of objects) {
+                this.twoPoint[layer.id][points.join(",")] = state;
+            }
+            this.puzzle.redrawScreen();
+        } else {
+            throw Error(
+                `Layer controls not implemented for addObjects: ${layer.controls}`
+            );
         }
     }
 

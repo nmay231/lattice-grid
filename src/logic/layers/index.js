@@ -2,12 +2,14 @@ import { BackgroundColorLayer } from "./BackgroundColor";
 import { CellOutlineLayer } from "./CellOutline";
 import { NumberLayer } from "./Number";
 import { SelectionLayer } from "./Selection";
+import { SimpleLineLayer } from "./SimpleLine";
 
 const layers = [
     CellOutlineLayer,
     BackgroundColorLayer,
     NumberLayer,
     SelectionLayer,
+    SimpleLineLayer,
 ];
 
 export const availableLayers = {};

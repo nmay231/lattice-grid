@@ -51,29 +51,26 @@ export class ControlsManager {
         const cursor = this.getXY(event);
 
         const layer = this.puzzle.getCurrentLayer("controlling");
-        const { controls, pointTypes, drawMultiple } = layer;
+        const { pointTypes, drawMultiple } = layer;
 
-        if (controls === "onePoint") {
-            const point = grid.nearestPoint({
-                to: cursor,
-                intersection: "polygon",
-                pointTypes,
-            });
-
-            if (drawMultiple || point === null) {
-                this.currentLayer = layer;
-            }
-            if (point === null) {
-                return;
-            }
-            this.points.push(point);
+        const point = grid.nearestPoint({
+            to: cursor,
+            intersection: "polygon",
+            pointTypes,
+        });
+        if (drawMultiple || point === null) {
+            this.currentLayer = layer;
         }
+        if (point === null) {
+            return;
+        }
+        this.points.push(point);
 
         const { altKey, ctrlKey, shiftKey } = event;
         layer.interpretPointerEvent({
             storage,
             points: this.points,
-            newPoint: this.points[this.points.length - 1],
+            newPoint: point,
             event: { altKey, ctrlKey, shiftKey, cursor },
         });
     }
@@ -84,38 +81,29 @@ export class ControlsManager {
         }
         const { grid, storage } = this.puzzle;
         const cursor = this.getXY(event);
-        const { controls, pointTypes } = this.currentLayer;
+        const { pointTypes } = this.currentLayer;
 
-        if (controls === "onePoint") {
-            const point = grid.nearestPoint({
-                to: cursor,
-                intersection: "polygon",
-                pointTypes,
-                blacklist: this.points,
-            });
+        const point = grid.nearestPoint({
+            to: cursor,
+            intersection: "polygon",
+            pointTypes,
+            blacklist: this.points,
+        });
 
-            if (point === null) {
-                return;
-            }
-            if (!this.currentLayer.drawMultiple) {
-                this.currentLayer = null;
-            }
-            this.points.push(point);
-
-            if (!this.currentLayer.interpretPointerEvent) {
-                this.puzzle.storage.addObjects({
-                    layer: this.currentLayer,
-                    objects: [{ point, state: this.targetState }],
-                });
-                return;
-            }
+        if (point === null) {
+            return;
         }
+        if (!this.currentLayer.drawMultiple) {
+            this.currentLayer = null;
+        }
+        this.points.push(point);
 
+        // TODO: Should I actually remember which meta keys were held down on pointer down?
         const { altKey, ctrlKey, shiftKey } = event;
         this.currentLayer.interpretPointerEvent({
             storage,
             points: this.points,
-            newPoint: this.points[this.points.length - 1],
+            newPoint: point,
             event: { altKey, ctrlKey, shiftKey, cursor },
         });
     }
@@ -125,6 +113,7 @@ export class ControlsManager {
             return;
         }
 
+        // TODO: Are these really separate? Maybe they should both be called (or just not the second one).
         if (this.currentLayer.interpretPointerEvent) {
             this.currentLayer.interpretPointerEvent({
                 storage: this.puzzle.storage,
@@ -141,6 +130,7 @@ export class ControlsManager {
         if (!event.isPrimary) {
             return;
         }
+        // TODO: interpretPointerEvent() here?
         this.puzzle.storage.finishCurrentObject();
         this.resetControls();
     }

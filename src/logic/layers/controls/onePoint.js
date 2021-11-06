@@ -5,6 +5,7 @@ export function interpretPointerEventCycleStates({ storage, newPoint }) {
         return;
     }
 
+    // TODO: This is abusing the wrong API (.getObject is for selecting an existing object on the screen).
     const currentState = storage.getObject({
         layer: this,
         point: newPoint,
