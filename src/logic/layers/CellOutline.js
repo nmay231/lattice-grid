@@ -1,4 +1,4 @@
-import { interpretPointerEventCycleStates } from "../utils/onePoint";
+import { interpretPointerEventCycleStates } from "./controls/onePoint";
 
 export class CellOutlineLayer {
     // -- Identification --

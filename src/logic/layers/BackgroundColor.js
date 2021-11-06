@@ -1,4 +1,4 @@
-import { interpretPointerEventCurrentSetting } from "../utils/onePoint";
+import { interpretPointerEventCurrentSetting } from "./controls/onePoint";
 
 export class BackgroundColorLayer {
     // -- Identification --
