@@ -511,12 +511,11 @@ export class SquareGrid {
         return this._getAllGridPoints(type).map(({ x, y }) => `${x},${y}`);
     }
 
-    // TODO: Better API?
-    convertArrayOfPoints({ pointsToString, stringToPoints }) {
-        if (pointsToString) {
-            return pointsToString.join(",");
-        } else if (stringToPoints) {
-            const nums = stringToPoints.split(",");
+    convertIdAndPoints({ pointsToId, idToPoints }) {
+        if (pointsToId) {
+            return pointsToId.join(",");
+        } else if (idToPoints) {
+            const nums = idToPoints.split(",");
             const points = [];
             while (nums.length) {
                 points.push(nums.splice(0, 2).join(","));

@@ -38,9 +38,8 @@ export class StorageManager {
             const objects = this.twoPoint[layer.id];
 
             return Object.keys(objects).map((id) => {
-                // Group the coordinates into pairs of numbers, e.g. "1,2,3,4" => ["1,2", "3,4"].
-                const points = this.puzzle.grid.convertArrayOfPoints({
-                    stringToPoints: id,
+                const points = this.puzzle.grid.convertIdAndPoints({
+                    idToPoints: id,
                 });
 
                 return { points, state: objects[id] };
