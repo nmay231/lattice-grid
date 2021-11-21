@@ -1,4 +1,4 @@
-import { interpretPointerEventCycleStates } from "./controls/onePoint";
+import { handlePointerEventCycleStates } from "./controls/onePoint";
 
 export class CellOutlineLayer {
     // -- Identification --
@@ -9,21 +9,22 @@ export class CellOutlineLayer {
     // -- Controls --
     controls = "onePoint";
     pointTypes = ["cells"];
-    states = [true, false];
+    states = [true];
     drawMultiple = true;
 
     constructor() {
-        this.interpretPointerEvent =
-            interpretPointerEventCycleStates.bind(this);
+        handlePointerEventCycleStates(this, {
+            states: this.states,
+            pointTypes: this.pointTypes,
+        });
     }
 
     // -- Rendering --
     defaultRenderOrder = 2;
-    getBlits({ grid, storage }) {
-        const blacklist = storage
-            .getLayerObjects({ layer: this })
-            .filter(({ state }) => !state)
-            .map(({ point }) => point);
+    getBlits({ grid, stored }) {
+        const blacklist = stored.renderOrder.filter(
+            (key) => stored.objects[key].state
+        );
         const { cells, gridEdge } = grid.getPoints({
             connections: {
                 cells: {

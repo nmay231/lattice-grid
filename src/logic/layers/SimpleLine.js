@@ -1,4 +1,4 @@
-import { interpretPointerEventStopOnFirstPoint } from "./controls/twoPoint";
+import { handlePointerEventCurrentSetting } from "./controls/twoPoint";
 
 export class SimpleLineLayer {
     // -- Identification --
@@ -12,7 +12,12 @@ export class SimpleLineLayer {
     drawMultiple = true;
 
     constructor() {
-        interpretPointerEventStopOnFirstPoint(this, { directional: false });
+        handlePointerEventCurrentSetting(this, {
+            // TODO: Directional true/false is ambiguous. There are three types: lines and arrows with/without overlap
+            directional: false,
+            pointTypes: ["cells"],
+            stopOnFirstPoint: false,
+        });
     }
 
     settings = {
@@ -21,21 +26,17 @@ export class SimpleLineLayer {
 
     // -- Rendering --
     defaultRenderOrder = 6;
-    getBlits({ grid, storage }) {
-        const objects = storage
-            .getLayerObjects({ layer: this })
-            .filter(({ state }) => state);
-
+    getBlits({ grid, stored }) {
         const blits = {};
-        for (let { points, state } of objects) {
+        for (let id of stored.renderOrder) {
+            const { points, state } = stored.objects[id];
             blits[state.fill] = blits[state.fill] ?? {};
+
             const { cells } = grid.getPoints({
                 connections: { cells: { svgPoint: true } },
                 points,
             });
-            blits[state.fill][points.join(",")] = points.map(
-                (p) => cells[p].svgPoint
-            );
+            blits[state.fill][id] = points.map((p) => cells[p].svgPoint);
         }
 
         return Object.keys(blits).map((key) => ({
@@ -44,7 +45,7 @@ export class SimpleLineLayer {
             // TODO: styling includes more than just color...
             style: {
                 stroke: key,
-                strokeWidth: 2,
+                strokeWidth: 4,
                 strokeLinecap: "square",
             },
         }));

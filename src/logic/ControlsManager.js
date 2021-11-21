@@ -2,8 +2,7 @@ import { selectLayer } from "../redux/puzzle";
 
 export class ControlsManager {
     currentLayer = null;
-    points = [];
-    targetState = null;
+    history = [];
 
     constructor(puzzle) {
         this.puzzle = puzzle;
@@ -19,7 +18,13 @@ export class ControlsManager {
         };
     }
 
-    getXY(event) {
+    cleanPointerEvent(event, type) {
+        if (type === "cancelPointer" || type === "stopPointer") {
+            return { type };
+        }
+        if (type !== "startPointer" && type !== "movePointer") {
+            throw Error(`Invalid type=${type}`);
+        }
         const { clientX, clientY, target } = event;
         const {
             left,
@@ -32,13 +37,76 @@ export class ControlsManager {
         // These transformations convert dom coordinates to svg coords
         let x = (clientX - left) * (height / realHeight) - border,
             y = (clientY - top) * (width / realWidth) - border;
-        return { x, y };
+
+        // TODO: Should I actually remember which meta keys were held down on pointer down?
+        const { altKey, ctrlKey, shiftKey } = event;
+        return { type, cursor: { x, y }, altKey, ctrlKey, shiftKey };
     }
 
     resetControls() {
         this.currentLayer = null;
-        this.points = [];
-        this.targetState = null;
+    }
+
+    handleLayerActions(
+        layer,
+        {
+            discontinueInput,
+            selectedObjects,
+            history = [],
+            mergeWithPreviousHistory,
+            storingLayer,
+        } = {}
+    ) {
+        const { storage, grid } = this.puzzle;
+        if (discontinueInput === true) {
+            // TODO
+            const stored = storage.getStored({ grid, layer });
+            stored.temporary = {};
+            this.currentLayer = null;
+        } else if (discontinueInput !== "noChange") {
+            this.currentLayer = layer;
+        }
+
+        if (history.length) {
+            // TODO: Changes
+            const changes = [];
+            const stored = storage.getStored({
+                grid,
+                layer: storingLayer ?? layer,
+            });
+            for (let { action, id, object } of history) {
+                switch (action) {
+                    // TODO: Move to external "addObject"/"removeObject" function
+                    case "add":
+                        // TODO: Handle getting data required for undo and also actually do history correctly
+                        this.history.push([{ action, object }]);
+                        if (object.id in stored.objects) {
+                            stored.renderOrder.splice(
+                                stored.renderOrder.indexOf(object.id),
+                                1
+                            );
+                        }
+                        stored.renderOrder.push(object.id);
+                        stored.objects[object.id] = object;
+                        break;
+                    case "delete":
+                        // TODO: Handle getting data required for undo and also actually do history correctly
+                        this.history.push([{ action, id }]);
+                        if (id in stored.objects) {
+                            stored.renderOrder.splice(
+                                stored.renderOrder.indexOf(id),
+                                1
+                            );
+                            delete stored.objects[id];
+                        }
+                        break;
+                    default:
+                        throw Error(`Invalid history action=${action}`);
+                }
+            }
+
+            this.puzzle.redrawScreen(changes);
+        }
     }
 
     onPointerDown(event) {
@@ -47,65 +115,26 @@ export class ControlsManager {
             return;
         }
         const { grid, storage } = this.puzzle;
-
-        const cursor = this.getXY(event);
-
+        event = this.cleanPointerEvent(event, "startPointer");
         const layer = this.puzzle.getCurrentLayer("controlling");
-        const { pointTypes, drawMultiple } = layer;
 
-        const point = grid.nearestPoint({
-            to: cursor,
-            intersection: "polygon",
-            pointTypes,
-        });
-        if (drawMultiple || point === null) {
-            this.currentLayer = layer;
-        }
-        if (point === null) {
-            return;
-        }
-        this.points.push(point);
+        const actions = layer.handlePointerEvent({ grid, storage, event });
 
-        const { altKey, ctrlKey, shiftKey } = event;
-        layer.interpretPointerEvent({
-            storage,
-            points: this.points,
-            newPoint: point,
-            event: { altKey, ctrlKey, shiftKey, cursor },
-        });
+        this.handleLayerActions(layer, actions);
     }
 
     onPointerMove(event) {
         if (!event.isPrimary || !this.currentLayer) {
             return;
         }
+
         const { grid, storage } = this.puzzle;
-        const cursor = this.getXY(event);
-        const { pointTypes } = this.currentLayer;
+        event = this.cleanPointerEvent(event, "movePointer");
+        const layer = this.currentLayer;
 
-        const point = grid.nearestPoint({
-            to: cursor,
-            intersection: "polygon",
-            pointTypes,
-            blacklist: this.points,
-        });
+        const actions = layer.handlePointerEvent({ grid, storage, event });
 
-        if (point === null) {
-            return;
-        }
-        if (!this.currentLayer.drawMultiple) {
-            this.currentLayer = null;
-        }
-        this.points.push(point);
-
-        // TODO: Should I actually remember which meta keys were held down on pointer down?
-        const { altKey, ctrlKey, shiftKey } = event;
-        this.currentLayer.interpretPointerEvent({
-            storage,
-            points: this.points,
-            newPoint: point,
-            event: { altKey, ctrlKey, shiftKey, cursor },
-        });
+        this.handleLayerActions(layer, actions);
     }
 
     onPointerUp(event) {
@@ -113,26 +142,33 @@ export class ControlsManager {
             return;
         }
 
-        // TODO: Are these really separate? Maybe they should both be called (or just not the second one).
-        if (this.currentLayer.interpretPointerEvent) {
-            this.currentLayer.interpretPointerEvent({
-                storage: this.puzzle.storage,
-                points: this.points,
-            });
-        } else {
-            this.puzzle.storage.finishCurrentObject();
-        }
+        const { grid, storage } = this.puzzle;
+        const layer = this.currentLayer;
 
-        this.resetControls();
+        const actions = layer.handlePointerEvent({
+            grid,
+            storage,
+            event: this.cleanPointerEvent({}, "stopPointer"),
+        });
+
+        this.handleLayerActions(layer, actions);
     }
 
     onPointerOut(event) {
-        if (!event.isPrimary) {
+        if (!event.isPrimary || !this.currentLayer) {
             return;
         }
-        // TODO: interpretPointerEvent() here?
-        this.puzzle.storage.finishCurrentObject();
-        this.resetControls();
+
+        const { grid, storage } = this.puzzle;
+        const layer = this.currentLayer;
+
+        const actions = layer.handlePointerEvent({
+            grid,
+            storage,
+            event: this.cleanPointerEvent({}, "cancelPointer"),
+        });
+
+        this.handleLayerActions(layer, actions);
     }
 
     onContextMenu(event) {
@@ -146,16 +182,23 @@ export class ControlsManager {
             );
             return;
         }
+
+        const { grid, storage } = this.puzzle;
         const layer = this.puzzle.getCurrentLayer("controlling");
-        if (layer.interpretKeyDown) {
-            layer.interpretKeyDown({
-                event,
-                // The storing layer might be different than the controlling layer
-                layer: this.puzzle.getCurrentLayer("storing"),
-                grid: this.puzzle.grid,
-                storage: this.puzzle.storage,
-            });
-        }
+        const storingLayer = this.puzzle.getCurrentLayer("storing");
+
+        const actions = layer.handleKeyDown({
+            event,
+            // The storing layer might be different than the controlling layer
+            storingLayer,
+            grid,
+            storage,
+        });
+
+        this.handleLayerActions(layer, {
+            ...actions,
+            discontinueInput: "noChange",
+        });
     }
 
     // TODO: Replace this with automated testing

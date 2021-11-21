@@ -73,7 +73,7 @@ export class PuzzleManager {
             const layer = this.layers[fakeLayer.id];
             let blitGroups = layer.getBlits({
                 grid: this.grid,
-                storage: this.storage,
+                stored: this.storage.getStored({ grid: this.grid, layer }),
                 settings: this.settings,
                 changes,
             });
@@ -106,7 +106,7 @@ export class PuzzleManager {
         }
 
         this.layers[layer.id] = layer;
-        this.storage.addLayer(layer);
+        this.storage.addStorage({ grid: this.grid, layer });
 
         // TODO: I temporarily want to show every layer regardless.
         if (true || !(layer.hidden && layer.unique)) {

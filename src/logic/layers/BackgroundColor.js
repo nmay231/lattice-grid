@@ -1,4 +1,4 @@
-import { interpretPointerEventCurrentSetting } from "./controls/onePoint";
+import { handlePointerEventCurrentSetting } from "./controls/onePoint";
 
 export class BackgroundColorLayer {
     // -- Identification --
@@ -17,23 +17,22 @@ export class BackgroundColorLayer {
     };
     constructor() {
         // TODO: don't mix constructor and outside constructor syntax (?)
-        this.interpretPointerEvent =
-            interpretPointerEventCurrentSetting.bind(this);
+        handlePointerEventCurrentSetting(this, { pointTypes: ["cells"] });
     }
 
     // -- Rendering --
     defaultRenderOrder = 1;
-    getBlits({ grid, storage }) {
-        const objects = storage.getLayerObjects({ layer: this });
+    getBlits({ grid, stored }) {
         const { cells } = grid.getPoints({
             connections: { cells: { svgOutline: true } },
-            points: objects.map((ob) => ob.point),
+            points: [...stored.renderOrder],
         });
 
         const objectsByColor = {};
-        for (let { state, point } of objects) {
+        for (let id of stored.renderOrder) {
+            const { state } = stored.objects[id];
             objectsByColor[state] = objectsByColor[state] ?? {};
-            objectsByColor[state][point] = cells[point].svgOutline;
+            objectsByColor[state][id] = cells[id].svgOutline;
         }
 
         return Object.keys(objectsByColor).map((color) => ({

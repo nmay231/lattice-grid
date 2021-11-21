@@ -1,33 +1,65 @@
-// TODO: I'm trying a different setup than the other functions for onePoint. It's a bit cleaner IMO.
-// TODO: Rename this if I stick to it.
-export const interpretPointerEventStopOnFirstPoint = (
+export const handlePointerEventCurrentSetting = (
     layer,
-    { directional }
+    { directional, pointTypes, stopOnFirstPoint } = {}
 ) => {
-    layer.interpretPointerEvent = ({ storage, points, newPoint }) => {
-        if (!newPoint || points.length === 1) {
-            return;
+    if (!pointTypes?.length) {
+        throw Error("Was not provided parameters");
+    }
+
+    layer.handleKeyDown = () => {};
+
+    layer.handlePointerEvent = ({ grid, storage, event }) => {
+        if (event.type === "stopPointer" || event.type === "cancelPointer") {
+            return { discontinueInput: true };
         }
-        const pair = points.slice(points.length - 2);
+
+        const stored = storage.getStored({ grid, layer });
+
+        const newPoint = grid.nearestPoint({
+            to: event.cursor,
+            intersection: "polygon",
+            pointTypes,
+        });
+        if (
+            !newPoint ||
+            !stored.temporary.previousPoint ||
+            newPoint === stored.temporary.previousPoint
+        ) {
+            if (newPoint) {
+                stored.temporary.previousPoint = newPoint;
+            }
+            return {};
+        }
+
+        const pair = [stored.temporary.previousPoint, newPoint];
+        stored.temporary.previousPoint = newPoint;
         if (!directional) {
             pair.sort();
         }
-        const id = pair.join(",");
-        // TODO: Abusing private attributes (storage.twoPoint)
-        const exists = id in storage.twoPoint[layer.id];
+        const id = grid.convertIdAndPoints({ pointsToId: pair });
 
-        storage.addObjects({
-            layer,
-            objects: [
-                {
+        if (stored.temporary.targetState === undefined) {
+            stored.temporary.targetState =
+                id in stored.objects ? null : layer.settings.selectedState;
+        }
+
+        let historyAction = null;
+        if (stored.temporary.targetState === null && id in stored.objects) {
+            historyAction = { action: "delete", id };
+        } else if (stored.temporary.targetState !== null) {
+            historyAction = {
+                action: "add",
+                object: {
+                    id,
                     points: pair,
-                    state: exists ? undefined : layer.settings.selectedState,
+                    state: stored.temporary.targetState,
                 },
-            ],
-        });
+            };
+        }
+
+        return {
+            discontinueInput: stopOnFirstPoint,
+            history: historyAction ? [historyAction] : undefined,
+        };
     };
 };
-
-// TODO: Either merge this with the previous function or implement it
-// eslint-disable-next-line no-unused-vars
-function interpretPointerEventStopOnPointerRelease() {}

@@ -7,113 +7,125 @@ export class SelectionLayer {
     // -- Controls --
     controls = "onePoint";
     pointTypes = ["cells"];
-    states = [false, true];
+    states = [true];
     drawMultiple = true;
 
-    interpretKeyDown({ event, layer, grid, storage }) {
-        const selections = storage
-            .getLayerObjects({ layer: this })
-            .filter(({ state }) => state)
-            .map(({ point }) => point);
+    handleKeyDown({ event, storingLayer, grid, storage }) {
+        const stored = storage.getStored({ grid, layer: this });
+
+        const ids = stored.renderOrder;
+        let history = null;
         if (event.code === "Escape") {
-            if (selections.length) {
-                storage.addObjects({
-                    layer: this,
-                    objects: selections.map((point) => ({
-                        point,
-                        state: this.states[0],
-                    })),
-                });
-            }
-            return;
+            history = ids.map((id) => ({
+                action: "delete",
+                id,
+            }));
         } else if (event.ctrlKey && event.key === "a") {
-            storage.addObjects({
-                layer: this,
-                objects: grid.getAllPoints("cells").map((point) => ({
-                    point,
-                    state: this.states[1],
-                })),
-            });
-            return;
+            history = grid.getAllPoints("cells").map((id) => ({
+                action: "add",
+                object: { id, state: true, point: id },
+            }));
         } else if (event.ctrlKey && event.key === "i") {
-            storage.addObjects({
-                layer: this,
-                objects: selections.map((point) => ({
-                    point,
-                    state: this.states[0],
-                })),
+            const all = grid.getAllPoints("cells");
+            history = all.map((id) => {
+                if (id in stored.objects) {
+                    return { action: "delete", id };
+                } else {
+                    return {
+                        action: "add",
+                        object: { id, state: true, point: id },
+                    };
+                }
             });
-            storage.addObjects({
-                layer: this,
-                objects: grid
-                    .getAllPoints("cells")
-                    .filter((cell) => !selections.includes(cell))
-                    .map((point) => ({
-                        point,
-                        state: this.states[1],
-                    })),
-            });
-            return;
         }
 
-        if (layer.interpretKeyDown) {
-            layer.interpretKeyDown({ event, storage, points: selections });
+        if (history !== null) {
+            return { history };
         }
+
+        const actions = storingLayer?.handleKeyDown({
+            event,
+            storingLayer,
+            grid,
+            storage,
+            ids,
+        });
+
+        // TODO: Do I ever need to modify two layers at once?
+        return { ...actions, storingLayer };
     }
 
-    // TODO: This is impure. There should be an object on storage that layers can use to store state per grid.
-    targetState = null;
+    handlePointerEvent({ grid, storage, event }) {
+        const stored = storage.getStored({ grid, layer: this });
 
-    interpretPointerEvent({ storage, points, newPoint, event }) {
-        if (!newPoint) {
-            this.targetState = null;
-            return;
+        if (event.type === "stopPointer" || event.type === "cancelPointer") {
+            if (stored.temporary.removeSingle) {
+                return {
+                    discontinueInput: true,
+                    history: [{ action: "delete", id: stored.renderOrder[0] }],
+                };
+            }
+            return { discontinueInput: true };
         }
+        const id = grid.nearestPoint({
+            to: event.cursor,
+            intersection: "polygon",
+            pointTypes: ["cells"],
+            blacklist: stored.temporary.blacklist,
+        });
+        if (!id) {
+            return {};
+        }
+        stored.temporary.blacklist = stored.temporary.blacklist ?? [];
+        stored.temporary.blacklist.push(id);
+
+        let history;
         if (event.ctrlKey || event.shiftKey) {
-            if (this.targetState === null) {
-                const currentState = storage.getObject({
-                    layer: this,
-                    point: newPoint,
-                }).state;
-                this.targetState = !currentState;
+            if (stored.temporary.targetState === undefined) {
+                stored.temporary.targetState =
+                    id in stored.objects ? null : true;
             }
-            storage.addObjects({
-                layer: this,
-                objects: [{ point: newPoint, state: this.targetState }],
-            });
+
+            if (stored.temporary.targetState === null && id in stored.objects) {
+                history = [{ action: "delete", id }];
+            } else if (stored.temporary.targetState !== null) {
+                // TODO: When I change the SelectionLayer to use numbers instead of true, I'll have to set ALL the states of the old group to the state of the new group
+                history = [
+                    { action: "add", object: { id, state: true, point: id } },
+                ];
+            }
         } else {
-            const toDelete = storage
-                .getLayerObjects({ layer: this })
-                .filter(({ state }) => state)
-                .map(({ point }) => point);
-            if (toDelete.length) {
-                storage.addObjects({
-                    layer: this,
-                    objects: toDelete.map((point) => ({
-                        point,
-                        state: this.states[0],
-                    })),
-                });
+            const removeOld = stored.temporary.targetState === undefined;
+            stored.temporary.targetState = true;
+            stored.temporary.removeSingle = false;
+            history = [];
+
+            if (removeOld) {
+                const ids = stored.renderOrder;
+                history = ids
+                    .filter((toDelete) => toDelete !== id)
+                    .map((toDelete) => ({ action: "delete", id: toDelete }));
+
+                if (ids.length === 1 && ids[0] === id) {
+                    stored.temporary.removeSingle = true;
+                }
             }
-            if (toDelete.length !== 1 || toDelete[0] !== newPoint) {
-                storage.addObjects({
-                    layer: this,
-                    objects: points.map((point) => ({
-                        point,
-                        state: this.states[1],
-                    })),
-                });
-            }
+
+            history.push({
+                action: "add",
+                object: { id, state: true, point: id },
+            });
         }
+
+        return { history };
     }
 
     defaultRenderOrder = 9;
 
-    getBlits({ grid, storage }) {
-        const points = storage
-            .getLayerObjects({ layer: this })
-            .filter(({ state }) => state)
-            .map(({ point }) => point);
+    getBlits({ grid, stored }) {
+        const points = stored.renderOrder.filter(
+            (key) => stored.objects[key].state
+        );
 
         let blits = {};
         if (points.length) {

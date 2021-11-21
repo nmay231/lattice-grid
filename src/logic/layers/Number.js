@@ -9,34 +9,49 @@ export class NumberLayer {
     pointTypes = ["cells"];
     controllingLayer = "Selections";
 
-    interpretKeyDown({ event, storage, points }) {
-        // TODO: relies on internal methods (storage.onePoint)
-        const objects = points.map((point) => ({
-            point,
-            state: this._nextState(storage.onePoint[this.id][point], event),
-        }));
-        storage.addObjects({ layer: this, objects });
+    handleKeyDown({ event, grid, storage, ids }) {
+        if (!ids.length) {
+            return {};
+        }
+        const stored = storage.getStored({ grid, layer: this });
+        const states = ids.map((id) => stored.objects[id]?.state);
+        const theSame =
+            states[states.length - 1] ===
+            states.reduce((prev, next) => (prev === next ? next : {}));
+
+        const state = this._nextState(theSame ? states[0] : "", event);
+        // TODO: This almost fixes the Ctrl-i bug, but I don't know exactly what's going on...
+        if (state === undefined) {
+            return {};
+        }
+        return {
+            history: ids.map((id) => ({
+                action: state === null ? "delete" : "add",
+                object: { id, state, point: id },
+                id,
+            })),
+        };
     }
 
     // TODO: This will be a dynamic object that can be changed by the user
     settings = {
-        match: (number) => 0 <= number && number < 16 && number,
+        match: (number) => -16 <= number && number < 16 && number,
     };
     _nextState(state, event) {
-        if (
-            event.code === "-" ||
-            event.code === "+" ||
-            event.code === "Backspace" ||
-            event.code === "Delete"
-        ) {
-            // TODO
-            return state;
+        const match = this.settings.match;
+        if (event.code === "Backspace") {
+            return match(state.toString().slice(0, -1));
+        } else if (event.code === "Delete") {
+            return null;
+        } else if (event.code === "Minus") {
+            // TODO: keep the Minus sign as part of an inProgress object and remove it when we deselect things.
+            return match(-1 * state) || "-";
+        } else if (event.code === "Plus" || event.code === "Equal") {
+            return match(state && Math.abs(state));
         } else {
             return (
-                this.settings.match(
-                    parseInt(state + event.key.toLowerCase())
-                ) ||
-                this.settings.match(parseInt(event.key.toLowerCase(), 36)) ||
+                match(parseInt(state + event.key.toLowerCase())) ||
+                match(parseInt(event.key.toLowerCase(), 36)) ||
                 state
             );
         }
@@ -44,21 +59,19 @@ export class NumberLayer {
 
     defaultRenderOrder = 6;
 
-    getBlits({ grid, storage }) {
-        const objects = storage
-            .getLayerObjects({ layer: this })
-            .filter(({ state }) => state !== undefined);
+    getBlits({ grid, stored }) {
+        const ids = stored.renderOrder.filter((id) => stored.objects[id].state);
 
         const { cells } = grid.getPoints({
             connections: { cells: { svgPoint: true } },
-            points: objects.map(({ point }) => point),
+            points: ids,
         });
 
         const blits = {};
-        for (let { point, state } of objects) {
-            blits[point] = {
-                text: state,
-                point: cells[point].svgPoint,
+        for (let id of stored.renderOrder) {
+            blits[id] = {
+                text: stored.objects[id].state,
+                point: cells[id].svgPoint,
             };
         }
 
