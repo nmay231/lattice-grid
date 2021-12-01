@@ -1,7 +1,8 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
-    groups: [],
+    renderOrder: [],
+    groups: {},
 };
 
 export const blitsSlice = createSlice({
@@ -10,7 +11,8 @@ export const blitsSlice = createSlice({
     reducers: {
         // TODO: allow more granular change
         setBlitGroups: (state, action) => {
-            state.groups = action.payload;
+            state.groups = action.payload.groups;
+            state.renderOrder = action.payload.renderOrder;
         },
     },
 });

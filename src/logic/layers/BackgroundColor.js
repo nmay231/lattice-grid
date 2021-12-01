@@ -36,6 +36,7 @@ export class BackgroundColorLayer {
         }
 
         return Object.keys(objectsByColor).map((color) => ({
+            id: color,
             blitter: "polygon",
             style: { fill: color },
             blits: objectsByColor[color],

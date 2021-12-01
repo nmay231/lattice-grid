@@ -77,6 +77,7 @@ export class NumberLayer {
 
         return [
             {
+                id: "number",
                 blitter: "text",
                 blits,
                 style: {

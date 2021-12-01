@@ -58,6 +58,7 @@ export class CellOutlineLayer {
 
         return [
             {
+                id: "grid",
                 blitter: "line",
                 blits: edges,
                 style: {
@@ -67,6 +68,7 @@ export class CellOutlineLayer {
                 },
             },
             {
+                id: "outline",
                 blitter: "polygon",
                 blits: gridEdge.svgPolygons,
                 style: {

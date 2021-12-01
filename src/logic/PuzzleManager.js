@@ -68,18 +68,27 @@ export class PuzzleManager {
 
     redrawScreen(changes = []) {
         /* changes are a list of things being added or removed. It contains information like which layer the changes belong to, which points are relevant (position), if they are hidden or invalid, etc. Do NOT use it now. In fact, it might not even be necessary. */
-        const allBlitGroups = [];
+        const groups = {};
+        const renderOrder = [];
+
         for (let fakeLayer of this.store.getState().puzzle.layers) {
             const layer = this.layers[fakeLayer.id];
-            let blitGroups = layer.getBlits({
+            let layerBlitGroups = layer.getBlits({
                 grid: this.grid,
                 stored: this.storage.getStored({ grid: this.grid, layer }),
                 settings: this.settings,
                 changes,
             });
-            allBlitGroups.push(...blitGroups);
+            for (let group of layerBlitGroups) {
+                if (!group.id) {
+                    throw Error(`Expected blit group id of layer=${layer.id}`);
+                }
+                group.id += layer.id;
+                renderOrder.push(group.id);
+                groups[group.id] = group;
+            }
         }
-        this.store.dispatch(setBlitGroups(allBlitGroups));
+        this.store.dispatch(setBlitGroups({ groups, renderOrder }));
     }
 
     // TODO: This assumes the layer is a blittingLayer. How do I handle controlling- and storingLayers?

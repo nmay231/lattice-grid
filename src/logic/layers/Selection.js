@@ -156,6 +156,7 @@ export class SelectionLayer {
         }
         return [
             {
+                id: "selection",
                 blitter: "polygon",
                 blits,
                 style: {

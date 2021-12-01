@@ -13,6 +13,7 @@ const blitters = {
 
 export const SVGCanvas = ({ controls }) => {
     const blitGroups = useSelector((state) => state.blits.groups);
+    const renderOrder = useSelector((state) => state.blits.renderOrder);
 
     const minX = useSelector((state) => state.puzzle.minX);
     const minY = useSelector((state) => state.puzzle.minY);
@@ -33,15 +34,15 @@ export const SVGCanvas = ({ controls }) => {
                 className={styling.svg}
                 viewBox={`${minX} ${minY} ${width} ${height}`}
             >
-                {blitGroups.map(
-                    ({ blitter: blitterKey, blits, style }, index) => {
-                        const Blitter = blitters[blitterKey];
-                        // TODO: Change this from index
-                        return (
-                            <Blitter blits={blits} style={style} key={index} />
-                        );
-                    }
-                )}
+                {renderOrder.map((id) => {
+                    const {
+                        blitter: blitterKey,
+                        blits,
+                        style,
+                    } = blitGroups[id];
+                    const Blitter = blitters[blitterKey];
+                    return <Blitter blits={blits} style={style} key={id} />;
+                })}
             </svg>
         </div>
     );

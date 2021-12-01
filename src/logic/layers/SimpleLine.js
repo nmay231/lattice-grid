@@ -40,6 +40,7 @@ export class SimpleLineLayer {
         }
 
         return Object.keys(blits).map((key) => ({
+            id: key,
             blitter: "line",
             blits: blits[key],
             // TODO: styling includes more than just color...

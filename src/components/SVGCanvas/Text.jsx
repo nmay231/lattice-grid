@@ -37,7 +37,6 @@ export const Text = ({ blits, style }) => {
 
     return (
         <g style={realStyle}>
-            {/* TODO: Stop using index as a key */}
             {Object.keys(blits).map((key) => {
                 const { text, point } = blits[key];
                 return (
