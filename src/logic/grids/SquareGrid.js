@@ -12,12 +12,12 @@ export class SquareGrid {
     }
 
     getCanvasRequirements() {
-        const { cellSize, border } = this.settings;
+        const { cellSize, borderPadding } = this.settings;
         return {
-            minX: this.x0 * cellSize - border,
-            minY: this.y0 * cellSize - border,
-            width: this.width * cellSize + 2 * border,
-            height: this.height * cellSize + 2 * border,
+            minX: this.x0 * cellSize - borderPadding,
+            minY: this.y0 * cellSize - borderPadding,
+            width: this.width * cellSize + 2 * borderPadding,
+            height: this.height * cellSize + 2 * borderPadding,
         };
     }
 
