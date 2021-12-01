@@ -145,19 +145,14 @@ export class SelectionLayer {
                     cells: {
                         shrinkwrap: {
                             key: "selectionCage",
-                            svgPolygon: { inset: 5 },
+                            svgPolygons: { inset: 5 },
                         },
                     },
                 },
                 points,
             });
 
-            for (let loop of selectionCage.svgPolygon) {
-                // TODO: This is stupid. Replace with uuid or something...
-                blits[Math.floor(Math.random() * 100000)] = loop.map(
-                    ({ x, y }) => [x, y]
-                );
-            }
+            blits = selectionCage.svgPolygons;
         }
         return [
             {

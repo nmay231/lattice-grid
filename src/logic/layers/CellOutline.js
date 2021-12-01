@@ -29,7 +29,7 @@ export class CellOutlineLayer {
             connections: {
                 cells: {
                     edges: { corners: { svgPoint: true } },
-                    shrinkwrap: { key: "gridEdge", svgPolygon: { inset: -4 } },
+                    shrinkwrap: { key: "gridEdge", svgPolygons: { inset: -4 } },
                 },
             },
             blacklist,
@@ -56,17 +56,6 @@ export class CellOutlineLayer {
             }
         }
 
-        const gridEdgeBlits = {};
-        for (let loop of gridEdge.svgPolygon) {
-            // TODO: This is stupid. Replace with uuid or something...
-            gridEdgeBlits[Math.floor(Math.random() * 100000)] = loop.map(
-                ({ x, y }) => [x, y]
-            );
-        }
-        // gridEdge.svgPolygon.map((loop) =>
-        //     loop.map(({ x, y }) => [x, y])
-        // );
-
         return [
             {
                 blitter: "line",
@@ -79,7 +68,7 @@ export class CellOutlineLayer {
             },
             {
                 blitter: "polygon",
-                blits: gridEdgeBlits,
+                blits: gridEdge.svgPolygons,
                 style: {
                     stroke: "black",
                     strokeWidth: 10,

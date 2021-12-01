@@ -1,6 +1,5 @@
 import { POINT_TYPES } from "../PuzzleManager";
 
-// TODO: As I finalize APIs, I need to decide what sort of values are going to be passed around (e.g. canvas coords vs grid coords vs point strings)
 export class SquareGrid {
     onePointLayers = {};
 
@@ -361,14 +360,14 @@ export class SquareGrid {
                 }
                 case "cells->shrinkwrap": {
                     const result = {};
-                    const { key, svgPolygon, edgePoints } =
+                    const { key, svgPolygons, edgePoints } =
                         connections[nextType];
                     finalResult[key || "shrinkwrap"] = result;
 
-                    if (svgPolygon) {
-                        result.svgPolygon = this._shrinkwrap({
+                    if (svgPolygons) {
+                        result.svgPolygons = this._shrinkwrap({
                             gridPoints: gridPoints.map(({ point }) => point),
-                            inset: svgPolygon.inset ?? 0,
+                            inset: svgPolygons.inset ?? 0,
                         });
                     }
                     if (edgePoints) {
@@ -385,7 +384,7 @@ export class SquareGrid {
     }
 
     _shrinkwrap({ gridPoints, inset }) {
-        const result = [];
+        const result = {};
 
         let cells = [];
         const edgesLeft = {};
@@ -459,21 +458,23 @@ export class SquareGrid {
                 const nextEdge = edgeLoop[(index * 1 + 1) % edgeLoop.length];
 
                 const corner = [edge[0] + dx, edge[1] + dy];
-                const insetCorner = {
-                    x: (cellSize * corner[0]) / 2 + absInset * -dy,
-                    y: (cellSize * corner[1]) / 2 + absInset * dx,
-                };
+                const insetCorner = [
+                    (cellSize * corner[0]) / 2 + absInset * -dy,
+                    (cellSize * corner[1]) / 2 + absInset * dx,
+                ];
 
                 const vectorProjection = [dx ** 2, dy ** 2]; // Needed later
                 [dx, dy] = [nextEdge[0] - corner[0], nextEdge[1] - corner[1]];
-                // If the edges are orthogonal, adjust the corner loop appropriately.
-                insetCorner.x += vectorProjection[0] * -dy * absInset;
-                insetCorner.y += vectorProjection[1] * dx * absInset;
+                // If the edges are perpendicular, adjust the corner loop appropriately.
+                insetCorner[0] += vectorProjection[0] * -dy * absInset;
+                insetCorner[1] += vectorProjection[1] * dx * absInset;
                 cornerLoop.push(insetCorner);
 
                 delete edgesLeft[edge.toString()];
             }
-            result.push(cornerLoop);
+
+            // Each loop needs to have a unique key. We use one of the points inside the loop as the key.
+            result[current] = cornerLoop;
         }
         return result;
     }
