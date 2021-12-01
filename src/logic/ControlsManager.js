@@ -184,29 +184,36 @@ export class ControlsManager {
     }
 
     interpretKeyDown(event) {
+        const { grid, storage } = this.puzzle;
+        const layer = this.puzzle.getCurrentLayer("controlling");
+
         if (event.code === "Tab") {
+            const actions = layer.handlePointerEvent({
+                grid,
+                storage,
+                event: this.cleanPointerEvent({}, "unfocusPointer"),
+            });
+            this.handleLayerActions(layer, actions);
+
             this.puzzle.store.dispatch(
                 selectLayer({ tab: event.shiftKey ? -1 : 1 })
             );
-            return;
+        } else {
+            const storingLayer = this.puzzle.getCurrentLayer("storing");
+
+            const actions = layer.handleKeyDown({
+                event,
+                // The storing layer might be different than the controlling layer
+                storingLayer,
+                grid,
+                storage,
+            });
+
+            this.handleLayerActions(layer, {
+                ...actions,
+                discontinueInput: "noChange",
+            });
         }
-
-        const { grid, storage } = this.puzzle;
-        const layer = this.puzzle.getCurrentLayer("controlling");
-        const storingLayer = this.puzzle.getCurrentLayer("storing");
-
-        const actions = layer.handleKeyDown({
-            event,
-            // The storing layer might be different than the controlling layer
-            storingLayer,
-            grid,
-            storage,
-        });
-
-        this.handleLayerActions(layer, {
-            ...actions,
-            discontinueInput: "noChange",
-        });
     }
 
     // TODO: This method of deselecting things in the cursor is immensely dissatisfying. Clicking on the svg but off the grid will not unselect cells. Tapping on the sidebar (not on a button) doesn't deselect it. I could attach this event to the body and prevent bubbling, but then I could forget to prevent bubbling and that's a bug. Also, I do need to send a cancelPointer event if something like the page is blurred or a modal pulls up.
