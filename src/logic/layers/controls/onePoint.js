@@ -9,7 +9,7 @@ export const handlePointerEventCycleStates = (
     layer.handleKeyDown = () => {};
 
     layer.handlePointerEvent = ({ grid, storage, event }) => {
-        if (event.type === "stopPointer" || event.type === "cancelPointer") {
+        if (event.type !== "startPointer" && event.type !== "movePointer") {
             return { discontinueInput: true };
         }
 
@@ -72,7 +72,7 @@ export const handlePointerEventCurrentSetting = (layer, { pointTypes }) => {
     layer.handleKeyDown = () => {};
 
     layer.handlePointerEvent = ({ grid, storage, event }) => {
-        if (event.type === "stopPointer" || event.type === "cancelPointer") {
+        if (event.type !== "startPointer" && event.type !== "movePointer") {
             return { discontinueInput: true };
         }
 

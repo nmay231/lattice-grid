@@ -1,14 +1,17 @@
 import { selectLayer } from "../redux/puzzle";
 
 export class ControlsManager {
+    pointerLeftCanvas = false;
     currentLayer = null;
     history = [];
 
     constructor(puzzle) {
         this.puzzle = puzzle;
 
-        // Note: interpretKeyDown is not an event listener
+        // Note: interpretKeyDown and onPointerUpOutside are not event listeners
         this.interpretKeyDown = this.interpretKeyDown.bind(this);
+        this.onPointerUpOutside = this.onPointerUpOutside.bind(this);
+
         this.eventListeners = {
             onPointerDown: this.onPointerDown.bind(this),
             onPointerMove: this.onPointerMove.bind(this),
@@ -19,7 +22,11 @@ export class ControlsManager {
     }
 
     cleanPointerEvent(event, type) {
-        if (type === "cancelPointer" || type === "stopPointer") {
+        if (
+            type === "cancelPointer" ||
+            type === "stopPointer" ||
+            type === "unfocusPointer"
+        ) {
             return { type };
         }
         if (type !== "startPointer" && type !== "movePointer") {
@@ -45,6 +52,7 @@ export class ControlsManager {
 
     resetControls() {
         this.currentLayer = null;
+        this.pointerLeftCanvas = false;
     }
 
     handleLayerActions(
@@ -199,6 +207,22 @@ export class ControlsManager {
             ...actions,
             discontinueInput: "noChange",
         });
+    }
+
+    // TODO: This method of deselecting things in the cursor is immensely dissatisfying. Clicking on the svg but off the grid will not unselect cells. Tapping on the sidebar (not on a button) doesn't deselect it. I could attach this event to the body and prevent bubbling, but then I could forget to prevent bubbling and that's a bug. Also, I do need to send a cancelPointer event if something like the page is blurred or a modal pulls up.
+    onPointerUpOutside(event) {
+        if (event.target?.id === "canvas-container") {
+            const { grid, storage } = this.puzzle;
+            const layer = this.puzzle.getCurrentLayer("controlling");
+
+            const actions = layer.handlePointerEvent({
+                grid,
+                storage,
+                event: this.cleanPointerEvent({}, "unfocusPointer"),
+            });
+
+            this.handleLayerActions(layer, actions);
+        }
     }
 
     // TODO: Replace this with automated testing

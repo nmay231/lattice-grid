@@ -58,7 +58,18 @@ export class SelectionLayer {
     handlePointerEvent({ grid, storage, event }) {
         const stored = storage.getStored({ grid, layer: this });
 
-        if (event.type === "stopPointer" || event.type === "cancelPointer") {
+        if (event.type === "unfocusPointer") {
+            return {
+                discontinueInput: true,
+                history: stored.renderOrder.map((id) => ({
+                    action: "delete",
+                    id,
+                })),
+            };
+        } else if (
+            event.type === "stopPointer" ||
+            event.type === "cancelPointer"
+        ) {
             if (stored.temporary.removeSingle) {
                 return {
                     discontinueInput: true,

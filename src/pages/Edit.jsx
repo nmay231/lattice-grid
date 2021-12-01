@@ -16,7 +16,11 @@ export const EditPage = () => {
 
     return (
         <div className={styles.mainContainer}>
-            <div className={styles.canvasContainer}>
+            <div
+                id="canvas-container"
+                className={styles.canvasContainer}
+                onPointerUp={puzzle?.controls?.onPointerUpOutside}
+            >
                 {puzzle && <SVGCanvas controls={puzzle.controls} />}
             </div>
 
