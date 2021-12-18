@@ -48,10 +48,13 @@ export class NumberLayer {
             return match(-1 * state) || "-";
         } else if (event.code === "Plus" || event.code === "Equal") {
             return match(state && Math.abs(state));
+        } else if ("1234567890".indexOf(event.key) === -1) {
+            return match(parseInt(event.key, 36)) || state;
         } else {
+            // TODO: Instead of appending the current key to the end of the number if it simply matches, I could try making it time based.
             return (
-                match(parseInt(state + event.key.toLowerCase())) ||
-                match(parseInt(event.key.toLowerCase(), 36)) ||
+                match(parseInt(state + event.key)) ||
+                match(parseInt(event.key)) ||
                 state
             );
         }
