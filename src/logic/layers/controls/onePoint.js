@@ -1,6 +1,6 @@
 export const handlePointerEventCycleStates = (
     layer,
-    { states, pointTypes }
+    { states, pointTypes, deltas }
 ) => {
     if (!states?.length || !pointTypes?.length) {
         throw Error("Was not provided parameters");
@@ -15,57 +15,73 @@ export const handlePointerEventCycleStates = (
 
         const stored = storage.getStored({ grid, layer });
 
-        const newPoint = grid.nearestPoint({
-            to: event.cursor,
-            intersection: "polygon",
-            pointTypes,
-            blacklist: stored.temporary.blacklist,
-        });
-        if (!newPoint) {
+        stored.temporary.blacklist = stored.temporary.blacklist ?? [];
+        const newPoints = grid
+            .selectPointsWithCursor({
+                cursor: event.cursor,
+                pointTypes,
+                deltas,
+                lastPoint: stored.temporary.lastPoint,
+            })
+            .filter(
+                (point) => stored.temporary.blacklist.indexOf(point) === -1
+            );
+
+        if (!newPoints.length) {
             return {};
         }
-        stored.temporary.blacklist = stored.temporary.blacklist ?? [];
-        stored.temporary.blacklist.push(newPoint);
 
-        let historyAction = {
-            action: "add",
-            object: {},
-        };
+        const lastPoint = newPoints[newPoints.length - 1];
+        stored.temporary.lastPoint = lastPoint;
+        stored.temporary.blacklist.push(lastPoint);
+
         let state;
 
         if (stored.temporary.targetState !== undefined) {
             state = stored.temporary.targetState;
         } else {
-            if (newPoint in stored.objects) {
+            if (newPoints[0] in stored.objects) {
                 const index =
-                    1 + states.indexOf(stored.objects[newPoint].state);
+                    1 + states.indexOf(stored.objects[newPoints[0]].state);
                 state = index < states.length ? states[index] : null;
             } else {
                 state = states[0];
             }
         }
+        stored.temporary.targetState = state;
 
-        if (state === null) {
-            historyAction = {
-                action: "delete",
-                id: newPoint,
-            };
+        const history = [];
+        if (state !== null) {
+            history.push(
+                ...newPoints.map((id) => ({
+                    action: "add",
+                    object: {
+                        id,
+                        point: id,
+                        state,
+                    },
+                }))
+            );
         } else {
-            historyAction.object = {
-                id: newPoint,
-                state,
-            };
+            history.push(
+                ...newPoints
+                    .filter((id) => id in stored.objects)
+                    .map((id) => ({
+                        action: "delete",
+                        id,
+                    }))
+            );
         }
 
-        stored.temporary.targetState = state;
-        return {
-            history: [historyAction],
-        };
+        return { history };
     };
 };
 
-export const handlePointerEventCurrentSetting = (layer, { pointTypes }) => {
-    if (!pointTypes?.length) {
+export const handlePointerEventCurrentSetting = (
+    layer,
+    { pointTypes, deltas }
+) => {
+    if (!pointTypes?.length || !deltas?.length) {
         throw Error("Was not provided parameters");
     }
 
@@ -78,46 +94,59 @@ export const handlePointerEventCurrentSetting = (layer, { pointTypes }) => {
 
         const stored = storage.getStored({ grid, layer });
 
-        const newPoint = grid.nearestPoint({
-            to: event.cursor,
-            intersection: "polygon",
-            pointTypes,
-            blacklist: stored.temporary.blacklist,
-        });
-        if (!newPoint) {
+        stored.temporary.blacklist = stored.temporary.blacklist ?? [];
+        const newPoints = grid
+            .selectPointsWithCursor({
+                cursor: event.cursor,
+                pointTypes,
+                deltas,
+                lastPoint: stored.temporary.lastPoint,
+            })
+            .filter(
+                (point) => stored.temporary.blacklist.indexOf(point) === -1
+            );
+
+        if (!newPoints.length) {
             return {};
         }
-        stored.temporary.blacklist = stored.temporary.blacklist ?? [];
-        stored.temporary.blacklist.push(newPoint);
 
-        let historyAction;
+        const lastPoint = newPoints[newPoints.length - 1];
+        stored.temporary.lastPoint = lastPoint;
+        stored.temporary.blacklist.push(lastPoint);
+
         if (stored.temporary.targetState === undefined) {
-            if (newPoint in stored.objects) {
-                const state = stored.objects[newPoint].state;
+            if (newPoints[0] in stored.objects) {
+                const state = stored.objects[newPoints[0]].state;
                 stored.temporary.targetState =
                     state === layer.settings.selectedState ? null : state;
             } else {
                 stored.temporary.targetState = layer.settings.selectedState;
             }
         }
+
+        const history = [];
         if (stored.temporary.targetState !== null) {
-            historyAction = {
-                action: "add",
-                object: {
-                    id: newPoint,
-                    state: stored.temporary.targetState,
-                    point: newPoint,
-                },
-            };
+            history.push(
+                ...newPoints.map((id) => ({
+                    action: "add",
+                    object: {
+                        id,
+                        point: id,
+                        state: stored.temporary.targetState,
+                    },
+                }))
+            );
         } else {
-            historyAction = {
-                action: "delete",
-                id: newPoint,
-            };
+            history.push(
+                ...newPoints
+                    .filter((id) => id in stored.objects)
+                    .map((id) => ({
+                        action: "delete",
+                        id,
+                    }))
+            );
         }
 
-        return {
-            history: [historyAction],
-        };
+        return { history };
     };
 };

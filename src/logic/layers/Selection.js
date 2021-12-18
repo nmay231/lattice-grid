@@ -78,32 +78,61 @@ export class SelectionLayer {
             }
             return { discontinueInput: true };
         }
-        const id = grid.nearestPoint({
-            to: event.cursor,
-            intersection: "polygon",
-            pointTypes: ["cells"],
-            blacklist: stored.temporary.blacklist,
-        });
-        if (!id) {
+        stored.temporary.blacklist = stored.temporary.blacklist ?? [];
+        const ids = grid
+            .selectPointsWithCursor({
+                cursor: event.cursor,
+                lastPoint: stored.temporary.lastPoint,
+                pointTypes: ["cells"],
+                // TODO: Change deltas to Finite State Machine
+                deltas: [
+                    { dx: 0, dy: 2 },
+                    { dx: 0, dy: -2 },
+                    { dx: 2, dy: 0 },
+                    { dx: -2, dy: 0 },
+                    { dx: 2, dy: 2 },
+                    { dx: 2, dy: -2 },
+                    { dx: -2, dy: 2 },
+                    { dx: -2, dy: -2 },
+                ],
+            })
+            .filter((id) => stored.temporary.blacklist.indexOf(id) === -1);
+
+        if (!ids.length) {
             return {};
         }
-        stored.temporary.blacklist = stored.temporary.blacklist ?? [];
-        stored.temporary.blacklist.push(id);
+        stored.temporary.lastPoint = ids[ids.length - 1];
+        stored.temporary.blacklist.push(...ids);
 
         let history;
         if (event.ctrlKey || event.shiftKey) {
             if (stored.temporary.targetState === undefined) {
-                stored.temporary.targetState =
-                    id in stored.objects ? null : true;
-            }
-
-            if (stored.temporary.targetState === null && id in stored.objects) {
-                history = [{ action: "delete", id }];
-            } else if (stored.temporary.targetState !== null) {
+                // If targetState is undefined, there can only be one id
+                const [id] = ids;
+                if (id in stored.objects) {
+                    stored.temporary.targetState = null;
+                    history = [{ action: "delete", id }];
+                } else {
+                    stored.temporary.targetState = true;
+                    history = [
+                        {
+                            action: "add",
+                            object: { id, state: true, point: id },
+                        },
+                    ];
+                }
+            } else if (stored.temporary.targetState === null) {
+                history = ids
+                    .filter((id) => id in stored.objects)
+                    .map((id) => ({ action: "delete", id }));
+            } else {
                 // TODO: When I change the SelectionLayer to use numbers instead of true, I'll have to set ALL the states of the old group to the state of the new group
-                history = [
-                    { action: "add", object: { id, state: true, point: id } },
-                ];
+                history = ids
+                    .filter((id) => !(id in stored.objects))
+                    .map((id) => ({
+                        action: "add",
+                        object: { id, state: true, point: id },
+                    }));
             }
         } else {
             const removeOld = stored.temporary.targetState === undefined;
@@ -112,20 +141,22 @@ export class SelectionLayer {
             history = [];
 
             if (removeOld) {
-                const ids = stored.renderOrder;
-                history = ids
-                    .filter((toDelete) => toDelete !== id)
+                const oldIds = stored.renderOrder;
+                history = oldIds
+                    .filter((toDelete) => ids.indexOf(toDelete) === -1)
                     .map((toDelete) => ({ action: "delete", id: toDelete }));
 
-                if (ids.length === 1 && ids[0] === id) {
+                if (oldIds.length === 1 && oldIds[0] === ids[0]) {
                     stored.temporary.removeSingle = true;
                 }
             }
 
-            history.push({
-                action: "add",
-                object: { id, state: true, point: id },
-            });
+            history.push(
+                ...ids.map((id) => ({
+                    action: "add",
+                    object: { id, state: true, point: id },
+                }))
+            );
         }
 
         return { history };

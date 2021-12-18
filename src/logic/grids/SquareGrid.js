@@ -1,3 +1,4 @@
+import { hopStraight } from "../algorithms/hopStraight";
 import { POINT_TYPES } from "../PuzzleManager";
 
 export class SquareGrid {
@@ -21,104 +22,83 @@ export class SquareGrid {
         };
     }
 
-    // nearestPoint({to: {x, y}, intersection: IntersectionType, blacklist?: Points[], pointTypes: PointType[]})
-    // nearestPoint({to: {x, y}, intersection: IntersectionType, blacklist?: Points[], points: Points[]})
-    // TODO: Consider expanding IntersectionType to allow nearest on first click without regard to distance (e.g. with a Voroni diagram)
-    // TODO: Consider renaming `intersection` to `distanceMetric` or something like that.
-    // TODO: the intersection parameter might be completely unnecessary if I can come up with an automated method to unambiguously determine if a point was selected from a list given a starting point
-    // TODO: Consider removing the blacklist in favor of always explicitly listing relevant pointTypes
-
-    /* This function finds the nearest point(s) to a click/tap that satisfies certain conditions. The first example selects any point in the grid of the specified pointType(s), while the second only selects points from the provided list. If points are not close enough to be selected or if the closest one is in the blacklist, this will return null. Arguments `to` and `intersection` are always required. `to` is the raw x,y coordinates from the canvas. `intersection` is "polygon" or "ellipse" which basically, as an example, determines whether you can "squeeze" between two orthogonally adjacent cells to reach a cell diagonally. "polygon" (e.g. using a square trigger) does not allow diagonal selecting while "ellipse" (e.g. using a circle trigger) does. Another issue is if you want to select an adjacent edge OR corner from a cell, the polygon/ellipse has to be slightly smaller. So, if there are more than one pointType in the combination of blacklist and pointTypes/points, the polygon/ellipse is automatically shrunk by half. You might be thinking that for the second API, the `blacklist` argument is unnecessary. You might be right, but I can't prove that to myself atm... Actually, I might have just proved it by the previous statement (multi-pointType shrinks the selection polygon/ellipse). */
-    nearestPoint({
-        to,
-        intersection,
-        blacklist = [],
+    selectPointsWithCursor({
+        cursor,
         pointTypes = [],
-        points = [],
-        includeOutOfBounds = false,
+        // TODO: implement deltas as Finite State Machines for more capabilities and better cross-compatibility between grid types
+        deltas,
+        lastPoint = null,
     }) {
-        if (!pointTypes.length === !points.length) {
-            throw Error(
-                "Either both of pointTypes and points were missing/empty or both" +
-                    `were provided: pointTypes=${pointTypes}, points=${points}`
-            );
-        }
-
-        const allPointTypes = new Set([
-            ...blacklist.map(this._stringToGridPoint).map(({ type }) => type),
-            ...pointTypes,
-            ...points.map(this._stringToGridPoint).map(({ type }) => type),
-        ]);
         const { cellSize } = this.settings;
-        const minimumDistance = allPointTypes.size === 1 ? 1 : 0.5;
-
-        let getDistance;
-        if (intersection === "ellipse") {
-            // Manhattan distance
-            getDistance = (x1, y1, x2, y2) =>
-                Math.abs(x2 - x1) + Math.abs(y2 - y1);
-        } else if (intersection === "polygon") {
-            // Chebyshev distance
-            getDistance = (x1, y1, x2, y2) =>
-                Math.max(Math.abs(x2 - x1), Math.abs(y2 - y1));
-        } else {
-            // The "You're-silly" distance
-            throw Error(`Unexpected intersection=${intersection}`);
-        }
-
         const halfCell = cellSize / 2;
-        const x = to.x / halfCell;
-        const y = to.y / halfCell;
-        const px = Math.floor(x);
-        const py = Math.floor(y);
 
-        let nearbyPoints = [
-            {
-                string: `${px},${py}`,
-                distance: getDistance(x, y, px, py),
-            },
-            {
-                string: `${px + 1},${py}`,
-                distance: getDistance(x, y, px + 1, py),
-            },
-            {
-                string: `${px},${py + 1}`,
-                distance: getDistance(x, y, px, py + 1),
-            },
-            {
-                string: `${px + 1},${py + 1}`,
-                distance: getDistance(x, y, px + 1, py + 1),
-            },
-        ];
-        nearbyPoints = nearbyPoints
-            .filter(
-                ({ distance, string }) =>
-                    distance < minimumDistance && !blacklist.includes(string)
-            )
-            .map(({ string, distance }) => ({
-                // Get the point type of each
-                point: this._stringToGridPoint(string),
-                string,
-                distance,
-            }))
-            .filter(
-                ({ point }) => includeOutOfBounds || !this._outOfBounds(point)
-            );
+        cursor.x /= halfCell;
+        cursor.y /= halfCell;
 
-        if (pointTypes.length) {
-            nearbyPoints = nearbyPoints.filter(({ point: { type } }) =>
-                pointTypes.includes(type)
+        const firstPoint = [Math.floor(cursor.x), Math.floor(cursor.y)];
+        let targetPoints = [];
+        const gridPoint = this._stringToGridPoint(firstPoint.toString());
+        if (gridPoint.type === POINT_TYPES.EDGE) {
+            targetPoints.push(
+                [firstPoint[0] + 1, firstPoint[1]],
+                [firstPoint[0], firstPoint[1] + 1],
+                cursor.y - firstPoint[1] < cursor.x - firstPoint[0]
+                    ? [firstPoint[0] + 1, firstPoint[1] + 1]
+                    : firstPoint
             );
-        } else if (points.length) {
-            nearbyPoints = nearbyPoints.filter(({ string }) =>
-                points.includes(string)
+        } else {
+            targetPoints.push(
+                firstPoint,
+                [firstPoint[0] + 1, firstPoint[1] + 1],
+                1 + firstPoint[1] - cursor.y < cursor.x - firstPoint[0]
+                    ? [firstPoint[0], firstPoint[1] + 1]
+                    : [firstPoint[0] + 1, firstPoint[1]]
             );
         }
 
-        const nearest = nearbyPoints.sort(
-            ({ distance: d1 }, { distance: d2 }) => d1 - d2
-        )[0];
-        return nearest?.string ?? null;
+        if (lastPoint === null) {
+            // TODO: This is stupid, but will do for now
+            return targetPoints
+                .map((p) => this._stringToGridPoint(p.toString()))
+                .filter(({ type }) => pointTypes.indexOf(type) > -1)
+                .map(({ x, y }) => `${x},${y}`);
+        }
+
+        lastPoint = lastPoint.split(",").map((x) => parseInt(x));
+        const nearby = deltas.map(
+            ({ dx, dy }) => `${lastPoint[0] + dx},${lastPoint[1] + dy}`
+        );
+        const intersection = targetPoints
+            .map((p) => p.toString())
+            .filter((targetPoint) => nearby.indexOf(targetPoint) > -1);
+        if (intersection.length) {
+            return intersection.slice(0, 1);
+        }
+
+        const generator = hopStraight({
+            lastPoint,
+            deltas,
+            cursor: [cursor.x, cursor.y],
+        });
+        targetPoints = targetPoints.map((p) => p.toString());
+        const points = [];
+
+        let maxIteration = 100; // Prevent infinite loops
+        while (maxIteration > 0) {
+            lastPoint = generator
+                .next(lastPoint)
+                .value?.map((v) => Math.round(v));
+            const string = lastPoint?.join(",");
+            if (!lastPoint || points.indexOf(string) > -1) {
+                return [];
+            }
+            points.push(string);
+            if (targetPoints.indexOf(string) > -1) {
+                return points;
+            }
+            maxIteration -= 1;
+        }
+        return [];
     }
 
     /**

@@ -231,31 +231,4 @@ export class ControlsManager {
             this.handleLayerActions(layer, actions);
         }
     }
-
-    // TODO: Replace this with automated testing
-    debugPointerEvent(event, cursor) {
-        const options = [
-            { intersection: "polygon", pointTypes: ["cells"] },
-            { intersection: "ellipse", pointTypes: ["cells"] },
-            { intersection: "polygon", pointTypes: ["corners"] },
-            { intersection: "ellipse", pointTypes: ["corners"] },
-            // { intersection: "polygon", pointTypes: ["edges"] },
-            // { intersection: "ellipse", pointTypes: ["edges"] },
-        ];
-        if (event.buttons)
-            console.log(
-                ...options.map(
-                    ({ intersection, pointTypes }) =>
-                        intersection +
-                        ":" +
-                        pointTypes +
-                        ":" +
-                        this.puzzle.grid.nearestPoint({
-                            to: cursor,
-                            intersection,
-                            pointTypes,
-                        })
-                )
-            );
-    }
 }

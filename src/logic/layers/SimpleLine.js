@@ -17,6 +17,13 @@ export class SimpleLineLayer {
             directional: false,
             pointTypes: ["cells"],
             stopOnFirstPoint: false,
+            // TODO: Replace deltas with FSM
+            deltas: [
+                { dx: 0, dy: 2 },
+                { dx: 0, dy: -2 },
+                { dx: 2, dy: 0 },
+                { dx: -2, dy: 0 },
+            ],
         });
     }
 

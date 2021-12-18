@@ -16,6 +16,13 @@ export class CellOutlineLayer {
         handlePointerEventCycleStates(this, {
             states: this.states,
             pointTypes: this.pointTypes,
+            // TODO: Change deltas to Finite State Machine
+            deltas: [
+                { dx: 0, dy: 2 },
+                { dx: 0, dy: -2 },
+                { dx: 2, dy: 0 },
+                { dx: -2, dy: 0 },
+            ],
         });
     }
 

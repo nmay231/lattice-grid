@@ -17,7 +17,16 @@ export class BackgroundColorLayer {
     };
     constructor() {
         // TODO: don't mix constructor and outside constructor syntax (?)
-        handlePointerEventCurrentSetting(this, { pointTypes: ["cells"] });
+        handlePointerEventCurrentSetting(this, {
+            pointTypes: ["cells"],
+            // TODO: Replace deltas with FSM
+            deltas: [
+                { dx: 0, dy: 2 },
+                { dx: 0, dy: -2 },
+                { dx: 2, dy: 0 },
+                { dx: -2, dy: 0 },
+            ],
+        });
     }
 
     // -- Rendering --

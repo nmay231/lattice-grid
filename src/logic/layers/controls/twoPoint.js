@@ -1,8 +1,8 @@
 export const handlePointerEventCurrentSetting = (
     layer,
-    { directional, pointTypes, stopOnFirstPoint } = {}
+    { directional, pointTypes, stopOnFirstPoint, deltas } = {}
 ) => {
-    if (!pointTypes?.length) {
+    if (!pointTypes?.length || !deltas?.length) {
         throw Error("Was not provided parameters");
     }
 
@@ -15,51 +15,51 @@ export const handlePointerEventCurrentSetting = (
 
         const stored = storage.getStored({ grid, layer });
 
-        const newPoint = grid.nearestPoint({
-            to: event.cursor,
-            intersection: "polygon",
+        const newPoints = grid.selectPointsWithCursor({
+            cursor: event.cursor,
             pointTypes,
+            deltas,
+            lastPoint: stored.temporary.lastPoint,
         });
-        if (
-            !newPoint ||
-            !stored.temporary.previousPoint ||
-            newPoint === stored.temporary.previousPoint
-        ) {
-            if (newPoint) {
-                stored.temporary.previousPoint = newPoint;
-            }
+        if (stored.temporary.lastPoint) {
+            newPoints.unshift(stored.temporary.lastPoint);
+        }
+        stored.temporary.lastPoint = newPoints[newPoints.length - 1];
+
+        if (newPoints.length < 2) {
             return {};
         }
 
-        const pair = [stored.temporary.previousPoint, newPoint];
-        stored.temporary.previousPoint = newPoint;
-        if (!directional) {
-            pair.sort();
-        }
-        const id = grid.convertIdAndPoints({ pointsToId: pair });
+        const history = [];
+        for (let i = 0; i < newPoints.length - 1; i++) {
+            const pair = newPoints.slice(i, i + 2);
+            if (!directional) {
+                pair.sort();
+            }
+            const id = grid.convertIdAndPoints({ pointsToId: pair });
 
-        if (stored.temporary.targetState === undefined) {
-            stored.temporary.targetState =
-                id in stored.objects ? null : layer.settings.selectedState;
-        }
+            if (stored.temporary.targetState === undefined) {
+                stored.temporary.targetState =
+                    id in stored.objects ? null : layer.settings.selectedState;
+            }
 
-        let historyAction = null;
-        if (stored.temporary.targetState === null && id in stored.objects) {
-            historyAction = { action: "delete", id };
-        } else if (stored.temporary.targetState !== null) {
-            historyAction = {
-                action: "add",
-                object: {
-                    id,
-                    points: pair,
-                    state: stored.temporary.targetState,
-                },
-            };
+            if (stored.temporary.targetState === null && id in stored.objects) {
+                history.push({ action: "delete", id });
+            } else if (stored.temporary.targetState !== null) {
+                history.push({
+                    action: "add",
+                    object: {
+                        id,
+                        points: pair,
+                        state: stored.temporary.targetState,
+                    },
+                });
+            }
         }
 
         return {
             discontinueInput: stopOnFirstPoint,
-            history: historyAction ? [historyAction] : undefined,
+            history,
         };
     };
 };
