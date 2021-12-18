@@ -396,6 +396,34 @@ export class SquareGrid {
                     }
                     break;
                 }
+                case "cells->maxRadius":
+                case "corners->maxRadius":
+                case "edges->maxRadius": {
+                    const { shape, size } = connections[nextType];
+                    let radius = this.settings.cellSize / 2;
+
+                    // I'm literally making up these values as I go along...
+                    const shapeMap = {
+                        cells: { square: 1, circle: 1 },
+                        corners: { square: 0.9, circle: 1 },
+                        edges: { square: 0.8, circle: 0.8 },
+                    };
+                    const sizeMap = {
+                        cells: { large: 0.9, medium: 0.5, small: 0.2 },
+                        corners: { large: 0.8, medium: 0.4, small: 0.1 },
+                        edges: { large: 0.8, medium: 0.4, small: 0.2 },
+                    };
+
+                    radius *=
+                        shapeMap[pointType][shape] * sizeMap[pointType][size];
+
+                    for (let { result } of gridPoints) {
+                        // For some other grids, the radius will be different for different cells, etc.
+                        result[nextType] = radius;
+                    }
+
+                    break;
+                }
                 default:
                     throw Error(
                         `Unsupported connection in getPoints: "${pointType}" -> "${nextType}"`

@@ -38,9 +38,14 @@ export const Text = ({ blits, style }) => {
     return (
         <g style={realStyle}>
             {Object.keys(blits).map((key) => {
-                const { text, point } = blits[key];
+                const { text, point, size } = blits[key];
                 return (
-                    <text key={key} x={point[0]} y={point[1]}>
+                    <text
+                        key={key}
+                        x={point[0]}
+                        y={point[1]}
+                        fontSize={size ?? `${size}px`}
+                    >
                         {text}
                     </text>
                 );

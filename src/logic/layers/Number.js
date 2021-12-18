@@ -66,7 +66,12 @@ export class NumberLayer {
         const ids = stored.renderOrder.filter((id) => stored.objects[id].state);
 
         const { cells } = grid.getPoints({
-            connections: { cells: { svgPoint: true } },
+            connections: {
+                cells: {
+                    svgPoint: true,
+                    maxRadius: { shape: "square", size: "large" },
+                },
+            },
             points: ids,
         });
 
@@ -75,6 +80,7 @@ export class NumberLayer {
             blits[id] = {
                 text: stored.objects[id].state,
                 point: cells[id].svgPoint,
+                size: cells[id].maxRadius * 1.8,
             };
         }
 
@@ -86,7 +92,6 @@ export class NumberLayer {
                 style: {
                     originX: "center",
                     originY: "center",
-                    size: 60,
                 },
             },
         ];
