@@ -355,6 +355,47 @@ export class SquareGrid {
                     }
                     break;
                 }
+                case "corners->rows":
+                case "cells->rows": {
+                    const { types } =
+                        connections[nextType] === true
+                            ? { types: "all" }
+                            : connections[nextType];
+
+                    const horizontal =
+                        types === "all" || types?.indexOf("horizontal") > -1;
+                    const vertical =
+                        types === "all" || types?.indexOf("vertical") > -1;
+
+                    for (let { point, result } of gridPoints) {
+                        const isCell = point.type === POINT_TYPES.CELL;
+                        const rows = [];
+                        if (horizontal) {
+                            const horRow = [];
+                            for (
+                                let x = this.x0 * 2 + isCell;
+                                x <= 2 * this.width;
+                                x += 2
+                            ) {
+                                horRow.push(`${x},${point.y}`);
+                            }
+                            rows.push(horRow);
+                        }
+                        if (vertical) {
+                            const verRow = [];
+                            for (
+                                let y = this.y0 * 2 + isCell;
+                                y <= 2 * this.height;
+                                y += 2
+                            ) {
+                                verRow.push(`${point.x},${y}`);
+                            }
+                            rows.push(verRow);
+                        }
+                        result[nextType] = rows;
+                    }
+                    break;
+                }
                 default:
                     throw Error(
                         `Unsupported connection in getPoints: "${pointType}" -> "${nextType}"`
