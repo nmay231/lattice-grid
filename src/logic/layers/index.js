@@ -3,13 +3,15 @@ import { CellOutlineLayer } from "./CellOutline";
 import { NumberLayer } from "./Number";
 import { SelectionLayer } from "./Selection";
 import { SimpleLineLayer } from "./SimpleLine";
+import { ToggleCharactersLayer } from "./ToggleCharacters";
 
 const layers = [
-    CellOutlineLayer,
     BackgroundColorLayer,
+    CellOutlineLayer,
     NumberLayer,
     SelectionLayer,
     SimpleLineLayer,
+    ToggleCharactersLayer,
 ];
 
 export const availableLayers = {};
