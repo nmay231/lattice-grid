@@ -45,8 +45,8 @@ export const Text = ({ blits, style }) => {
                         key={key}
                         x={point[0]}
                         y={point[1]}
-                        fontSize={size ?? `${size}px`}
-                        textLength={textLength ?? `${textLength}px`}
+                        fontSize={size && `${size}px`}
+                        textLength={textLength && `${textLength}px`}
                         lengthAdjust={lengthAdjust}
                     >
                         {text}
