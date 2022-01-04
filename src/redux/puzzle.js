@@ -45,9 +45,13 @@ export const puzzleSlice = createSlice({
                 state.selectedLayer = action.payload.index;
             } else if ("tab" in action.payload) {
                 const one = action.payload.tab;
-                const index = state.selectedLayer;
-                state.selectedLayer =
-                    (state.layers.length + index + one) % state.layers.length;
+                let index = state.selectedLayer;
+                do {
+                    index =
+                        (state.layers.length + index + one) %
+                        state.layers.length;
+                } while (state.layers[index]?.hidden);
+                state.selectedLayer = index;
             }
         },
         setLayers: (state, action) => {

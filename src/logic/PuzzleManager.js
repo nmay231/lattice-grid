@@ -11,16 +11,7 @@ import { availableLayers } from "./layers";
 import { StorageManager } from "./StorageManager";
 
 export class PuzzleManager {
-    settings;
     layers = {};
-    storage;
-    grid;
-    eventListeners;
-    store; // Redux store
-    unsubscribeToStore;
-
-    // TODO: This should not just change to handle multiPoint objects, but also for selecting existing objects
-    currentPoint = null;
 
     constructor(store) {
         this.store = store;
@@ -40,13 +31,25 @@ export class PuzzleManager {
 
     loadPuzzle() {
         this.store.dispatch(newPuzzle());
-        // TODO: This is temporary since the layers of the puzzle are recovered from localStorage
-        for (let layer of [
-            availableLayers["Cell Outline"],
-            availableLayers["Selections"],
-            availableLayers["Number"],
-        ]) {
-            this.addLayer(layer);
+        try {
+            const data = JSON.parse(localStorage.getItem("_currentPuzzle"));
+            this._loadPuzzle(data);
+        } catch (err) {
+            this._loadPuzzle({
+                layers: [
+                    { layerClass: "Cell Outline" },
+                    { layerClass: "Selections" },
+                    { layerClass: "Number" },
+                ],
+            });
+        }
+    }
+
+    _loadPuzzle(data) {
+        for (let { layerClass, rawSettings } of data.layers) {
+            const id = this.addLayer(availableLayers[layerClass]);
+            // TODO: handle settings
+            console.log(id, rawSettings);
         }
     }
 
@@ -71,7 +74,8 @@ export class PuzzleManager {
         const groups = {};
         const renderOrder = [];
 
-        for (let fakeLayer of this.store.getState().puzzle.layers) {
+        const fakeLayers = this.store.getState().puzzle.layers;
+        for (let fakeLayer of fakeLayers) {
             const layer = this.layers[fakeLayer.id];
             let layerBlitGroups = layer.getBlits({
                 grid: this.grid,
@@ -89,6 +93,19 @@ export class PuzzleManager {
             }
         }
         this.store.dispatch(setBlitGroups({ groups, renderOrder }));
+
+        // TODO: change localStorage key and what's actually stored/how it's stored
+        const data = {
+            layers: [],
+        };
+        for (let fakeLayer of fakeLayers) {
+            const layer = this.layers[fakeLayer.id];
+            data.layers.push({
+                layerClass: Object.getPrototypeOf(layer).constructor.id,
+                rawSettings: layer.rawSettings,
+            });
+        }
+        localStorage.setItem("_currentPuzzle", JSON.stringify(data));
     }
 
     // TODO: This assumes the layer is a blittingLayer. How do I handle controlling- and storingLayers?
@@ -117,13 +134,13 @@ export class PuzzleManager {
         this.layers[layer.id] = layer;
         this.storage.addStorage({ grid: this.grid, layer });
 
-        // TODO: I temporarily want to show every layer regardless.
-        if (true || !(layer.hidden && layer.unique)) {
-            const { id } = layer;
-            this.store.dispatch(addLayer({ id, hidden: false }));
-        }
-
-        this.redrawScreen();
+        this.store.dispatch(
+            addLayer({
+                id: layer.id,
+                hidden: layer.hidden,
+            })
+        );
+        return layer.id;
     }
 
     removeLayer(id) {

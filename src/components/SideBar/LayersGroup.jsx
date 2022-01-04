@@ -52,6 +52,8 @@ export const LayersGroup = ({ puzzle }) => {
         }
         // PuzzleManager drives Redux, not the other way around
         puzzle.addLayer(newLayer);
+        // TODO: incorporate the changes array
+        puzzle.redrawScreen();
     };
 
     const handleSelect = (index) => (event) => {
@@ -88,17 +90,22 @@ export const LayersGroup = ({ puzzle }) => {
                     items={layers}
                     strategy={verticalListSortingStrategy}
                 >
-                    {layers.map(({ id }, index) => (
-                        <SortableItem key={id} id={id}>
-                            {/* TODO: Change the element to be the whole sortableItem but excluding the itemHandle (and maybe not just a simple onPointDown) */}
-                            <p onPointerDown={handleSelect(index)}>
-                                {index === selectedLayer && "✓"}
-                                {id}
-                            </p>
-                            {/* TODO: Icon (?) */}
-                            <div onPointerDown={handleDelete(id)}>X</div>
-                        </SortableItem>
-                    ))}
+                    {layers.map(
+                        ({ id, hidden }, index) =>
+                            !hidden && (
+                                <SortableItem key={id} id={id}>
+                                    {/* TODO: Change the element to be the whole sortableItem but excluding the itemHandle (and maybe not just a simple onPointDown) */}
+                                    <p onPointerDown={handleSelect(index)}>
+                                        {index === selectedLayer && "✓"}
+                                        {id}
+                                    </p>
+                                    {/* TODO: Icon (?) */}
+                                    <div onPointerDown={handleDelete(id)}>
+                                        X
+                                    </div>
+                                </SortableItem>
+                            )
+                    )}
                 </SortableContext>
             </DndContext>
         </Group>
