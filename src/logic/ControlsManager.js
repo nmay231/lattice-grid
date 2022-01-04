@@ -126,6 +126,9 @@ export class ControlsManager {
         event = this.cleanPointerEvent(event, "startPointer");
         const layer = this.puzzle.getCurrentLayer("controlling");
 
+        if (!layer.handlePointerEvent) {
+            return;
+        }
         const actions = layer.handlePointerEvent({ grid, storage, event });
 
         this.handleLayerActions(layer, actions);
@@ -140,6 +143,9 @@ export class ControlsManager {
         event = this.cleanPointerEvent(event, "movePointer");
         const layer = this.currentLayer;
 
+        if (!layer.handlePointerEvent) {
+            return;
+        }
         const actions = layer.handlePointerEvent({ grid, storage, event });
 
         this.handleLayerActions(layer, actions);
@@ -153,6 +159,9 @@ export class ControlsManager {
         const { grid, storage } = this.puzzle;
         const layer = this.currentLayer;
 
+        if (!layer.handlePointerEvent) {
+            return;
+        }
         const actions = layer.handlePointerEvent({
             grid,
             storage,
@@ -170,6 +179,9 @@ export class ControlsManager {
         const { grid, storage } = this.puzzle;
         const layer = this.currentLayer;
 
+        if (!layer.handlePointerEvent) {
+            return;
+        }
         const actions = layer.handlePointerEvent({
             grid,
             storage,
@@ -188,6 +200,9 @@ export class ControlsManager {
         const layer = this.puzzle.getCurrentLayer("controlling");
 
         if (event.code === "Tab") {
+            if (!layer.handlePointerEvent) {
+                return;
+            }
             const actions = layer.handlePointerEvent({
                 grid,
                 storage,
@@ -201,13 +216,15 @@ export class ControlsManager {
         } else {
             const storingLayer = this.puzzle.getCurrentLayer("storing");
 
-            const actions = layer.handleKeyDown({
-                event,
-                // The storing layer might be different than the controlling layer
-                storingLayer,
-                grid,
-                storage,
-            });
+            const actions = layer.handleKeyDown
+                ? layer.handleKeyDown({
+                      event,
+                      // The storing layer might be different than the controlling layer
+                      storingLayer,
+                      grid,
+                      storage,
+                  })
+                : {};
 
             this.handleLayerActions(layer, {
                 ...actions,
@@ -222,6 +239,9 @@ export class ControlsManager {
             const { grid, storage } = this.puzzle;
             const layer = this.puzzle.getCurrentLayer("controlling");
 
+            if (!layer.handlePointerEvent) {
+                return;
+            }
             const actions = layer.handlePointerEvent({
                 grid,
                 storage,

@@ -43,13 +43,15 @@ export class SelectionLayer {
             return { history };
         }
 
-        const actions = storingLayer?.handleKeyDown({
-            event,
-            storingLayer,
-            grid,
-            storage,
-            ids,
-        });
+        const actions = storingLayer.handleKeyDown
+            ? storingLayer.handleKeyDown({
+                  event,
+                  storingLayer,
+                  grid,
+                  storage,
+                  ids,
+              })
+            : {};
 
         // TODO: Do I ever need to modify two layers at once?
         return { ...actions, storingLayer };

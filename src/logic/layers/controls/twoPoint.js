@@ -6,7 +6,7 @@ export const handlePointerEventCurrentSetting = (
         throw Error("Was not provided parameters");
     }
 
-    layer.handleKeyDown = () => {};
+    layer.handleKeyDown = null;
 
     layer.handlePointerEvent = ({ grid, storage, event }) => {
         if (event.type !== "startPointer" && event.type !== "movePointer") {
