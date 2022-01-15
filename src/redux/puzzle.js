@@ -54,8 +54,10 @@ export const puzzleSlice = createSlice({
                 state.selectedLayer = index;
             }
         },
-        setLayers: (state, action) => {
+        reorderLayers: (state, action) => {
+            const id = state.layers[state.selectedLayer].id;
             state.layers = action.payload;
+            state.selectedLayer = state.layers.map(({ id }) => id).indexOf(id);
         },
     },
 });
@@ -65,7 +67,7 @@ export const {
     newPuzzle,
     removeLayer,
     resizeCanvas,
-    setLayers,
+    reorderLayers,
     selectLayer,
 } = puzzleSlice.actions;
 

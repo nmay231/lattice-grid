@@ -15,7 +15,7 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import { availableLayers } from "../../logic/layers";
 import { awaitModalFormSubmission, openModal } from "../../redux/modal";
-import { selectLayer, setLayers } from "../../redux/puzzle";
+import { reorderLayers, selectLayer } from "../../redux/puzzle";
 import { SortableItem } from "../SortableItem";
 import { Group } from "./Group";
 
@@ -36,8 +36,7 @@ export const LayersGroup = ({ puzzle }) => {
             const ids = layers.map(({ id }) => id);
             const oldIndex = ids.indexOf(active.id);
             const newIndex = ids.indexOf(over?.id);
-            dispatch(setLayers(arrayMove(layers, oldIndex, newIndex)));
-            // Redraw elements to draw them in the right order
+            dispatch(reorderLayers(arrayMove(layers, oldIndex, newIndex)));
             puzzle.redrawScreen();
         }
     };
