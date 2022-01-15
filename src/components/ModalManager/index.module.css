@@ -1,0 +1,16 @@
+.modalBackground {
+    position: absolute;
+    height: 100vh;
+    width: 100vw;
+    background-color: #00000033;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal {
+    padding: 10px;
+    background-color: white;
+    border: 1px solid black;
+    width: clamp(60vw, 500px, 80vw);
+}

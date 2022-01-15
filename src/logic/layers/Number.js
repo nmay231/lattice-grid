@@ -33,10 +33,6 @@ export class NumberLayer {
         };
     }
 
-    // TODO: This will be a dynamic object that can be changed by the user
-    settings = {
-        match: (number) => -16 <= number && number < 16 && number,
-    };
     _nextState(state, event) {
         const match = this.settings.match;
         if (event.code === "Backspace") {
@@ -58,6 +54,76 @@ export class NumberLayer {
                 state
             );
         }
+    }
+
+    static defaultSettings = { min: 1, max: 9 };
+    static settingsSchema = {
+        type: "object",
+        properties: {
+            min: {
+                type: "integer",
+                description: "Minimum value allowed",
+            },
+            max: {
+                type: "integer",
+                description: "Maximum value allowed",
+            },
+        },
+    };
+    static settingsUISchemaElements = [
+        {
+            type: "Control",
+            label: "Minimum",
+            scope: "#/properties/min",
+        },
+        {
+            type: "Control",
+            label: "Maximum",
+            scope: "#/properties/max",
+        },
+    ];
+
+    rawSettings = {
+        min: -16,
+        max: 16,
+    };
+    settings = {
+        match: (number) => -16 <= number && number <= 16 && number,
+    };
+
+    _newSettings(min, max) {
+        return {
+            match: (number) => min <= number && number <= max && number,
+        };
+    }
+
+    newSettings({ newSettings, grid, storage }) {
+        this.settings = this._newSettings(newSettings.min, newSettings.max);
+        this.rawSettings = newSettings;
+
+        const { objects, renderOrder } = storage.getStored({
+            grid,
+            layer: this,
+        });
+
+        const history = [];
+
+        // Clamp values between the new max and min
+        for (let id of renderOrder) {
+            const object = objects[id];
+            const newValue = Math.max(
+                newSettings.min,
+                Math.min(newSettings.max, object.state)
+            );
+            if (newValue !== object.state) {
+                history.push({
+                    action: "add",
+                    object: { id, state: newValue, point: id },
+                });
+            }
+        }
+
+        return { history };
     }
 
     defaultRenderOrder = 6;

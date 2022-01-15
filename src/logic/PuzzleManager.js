@@ -47,9 +47,7 @@ export class PuzzleManager {
 
     _loadPuzzle(data) {
         for (let { layerClass, rawSettings } of data.layers) {
-            const id = this.addLayer(availableLayers[layerClass]);
-            // TODO: handle settings
-            console.log(id, rawSettings);
+            this.addLayer(availableLayers[layerClass], rawSettings);
         }
     }
 
@@ -109,7 +107,7 @@ export class PuzzleManager {
     }
 
     // TODO: This assumes the layer is a blittingLayer. How do I handle controlling- and storingLayers?
-    addLayer(layerClass) {
+    addLayer(layerClass, settings) {
         if (layerClass.unique && layerClass.id in this.layers) {
             throw Error("Trying to add a duplicate layer!");
         }
@@ -133,6 +131,14 @@ export class PuzzleManager {
 
         this.layers[layer.id] = layer;
         this.storage.addStorage({ grid: this.grid, layer });
+
+        if (layer.newSettings) {
+            layer.newSettings({
+                newSettings: settings || layerClass.defaultSettings,
+                grid: this.grid,
+                storage: this.storage,
+            });
+        }
 
         this.store.dispatch(
             addLayer({

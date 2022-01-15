@@ -12,9 +12,9 @@ import {
     sortableKeyboardCoordinates,
     verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { availableLayers } from "../../logic/layers";
+import { awaitModalFormSubmission, openModal } from "../../redux/modal";
 import { selectLayer, setLayers } from "../../redux/puzzle";
 import { SortableItem } from "../SortableItem";
 import { Group } from "./Group";
@@ -26,7 +26,6 @@ export const LayersGroup = ({ puzzle }) => {
             coordinateGetter: sortableKeyboardCoordinates,
         })
     );
-    const selectRef = useRef();
 
     const dispatch = useDispatch();
     const layers = useSelector((state) => state.puzzle.layers);
@@ -43,16 +42,67 @@ export const LayersGroup = ({ puzzle }) => {
         }
     };
 
-    const handleAddNewLayer = () => {
-        const id = selectRef.current.value;
-        const newLayer = availableLayers[id];
-        if (newLayer?.unique && layers.includes(newLayer.displayName)) {
-            // TODO: disable the option in the select element to make this easier on the user
+    const handleAddNewLayer = async () => {
+        const layerIds = Object.keys(availableLayers);
+        layerIds.sort();
+
+        const initialData = { layerType: layerIds[0] };
+        const schemaProperties = {
+            layerType: {
+                type: "string",
+                enum: layerIds,
+            },
+        };
+        const uiGroups = [];
+        for (let id of layerIds) {
+            const layer = availableLayers[id];
+            if (!layer.settingsSchema || !layer.settingsUISchemaElements) {
+                continue;
+            }
+            initialData[id] = layer.defaultSettings;
+            schemaProperties[id] = layer.settingsSchema;
+            uiGroups.push({
+                type: "Group",
+                elements: layer.settingsUISchemaElements.map((element) => ({
+                    ...element,
+                    scope: element.scope.replace("#", `#/properties/${id}`),
+                })),
+                rule: {
+                    effect: "SHOW",
+                    condition: {
+                        scope: "#/properties/layerType",
+                        schema: { enum: [id] },
+                    },
+                },
+            });
+        }
+
+        dispatch(
+            openModal({
+                data: initialData,
+                schema: {
+                    type: "object",
+                    properties: schemaProperties,
+                },
+                uischema: {
+                    type: "VerticalLayout",
+                    elements: [
+                        {
+                            type: "Control",
+                            label: "Layer",
+                            scope: "#/properties/layerType",
+                        },
+                        ...uiGroups,
+                    ],
+                },
+            })
+        );
+
+        const { data, result } = await awaitModalFormSubmission();
+        if (result === "cancel") {
             return;
         }
-        // PuzzleManager drives Redux, not the other way around
-        puzzle.addLayer(newLayer);
-        // TODO: incorporate the changes array
+        puzzle.addLayer(availableLayers[data.layerType], data[data.layerType]);
         puzzle.redrawScreen();
     };
 
@@ -70,16 +120,7 @@ export const LayersGroup = ({ puzzle }) => {
     return (
         <Group name="Layers" expanded>
             <div>
-                {/* TODO: Implement with a modal */}
-                <label htmlFor="newLayer">Add new layer</label>
-                <select name="NewLayer" ref={selectRef}>
-                    {Object.keys(availableLayers).map((id) => (
-                        <option value={id} key={id}>
-                            {id}
-                        </option>
-                    ))}
-                </select>
-                <button onPointerDown={handleAddNewLayer}>Add</button>
+                <button onPointerDown={handleAddNewLayer}>Add new layer</button>
             </div>
             <DndContext
                 sensors={sensors}
