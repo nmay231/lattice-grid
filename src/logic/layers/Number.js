@@ -26,8 +26,7 @@ export class NumberLayer {
         }
         return {
             history: ids.map((id) => ({
-                action: state === null ? "delete" : "add",
-                object: { id, state, point: id },
+                object: state === null ? null : { state, point: id },
                 id,
             })),
         };
@@ -117,8 +116,8 @@ export class NumberLayer {
             );
             if (newValue !== object.state) {
                 history.push({
-                    action: "add",
-                    object: { id, state: newValue, point: id },
+                    object: { state: newValue, point: id },
+                    id,
                 });
             }
         }

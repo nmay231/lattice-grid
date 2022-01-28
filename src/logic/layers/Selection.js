@@ -17,23 +17,23 @@ export class SelectionLayer {
         let history = null;
         if (event.code === "Escape") {
             history = ids.map((id) => ({
-                action: "delete",
                 id,
+                object: null,
             }));
         } else if (event.ctrlKey && event.key === "a") {
             history = grid.getAllPoints("cells").map((id) => ({
-                action: "add",
-                object: { id, state: true, point: id },
+                id,
+                object: { state: true, point: id },
             }));
         } else if (event.ctrlKey && event.key === "i") {
             const all = grid.getAllPoints("cells");
             history = all.map((id) => {
                 if (id in stored.objects) {
-                    return { action: "delete", id };
+                    return { id, object: null };
                 } else {
                     return {
-                        action: "add",
-                        object: { id, state: true, point: id },
+                        id,
+                        object: { state: true, point: id },
                     };
                 }
             });
@@ -64,8 +64,8 @@ export class SelectionLayer {
             return {
                 discontinueInput: true,
                 history: stored.renderOrder.map((id) => ({
-                    action: "delete",
                     id,
+                    object: null,
                 })),
             };
         } else if (
@@ -75,7 +75,7 @@ export class SelectionLayer {
             if (stored.temporary.removeSingle) {
                 return {
                     discontinueInput: true,
-                    history: [{ action: "delete", id: stored.renderOrder[0] }],
+                    history: [{ id: stored.renderOrder[0], object: null }],
                 };
             }
             return { discontinueInput: true };
@@ -113,27 +113,27 @@ export class SelectionLayer {
                 const [id] = ids;
                 if (id in stored.objects) {
                     stored.temporary.targetState = null;
-                    history = [{ action: "delete", id }];
+                    history = [{ id, object: null }];
                 } else {
                     stored.temporary.targetState = true;
                     history = [
                         {
-                            action: "add",
-                            object: { id, state: true, point: id },
+                            id,
+                            object: { state: true, point: id },
                         },
                     ];
                 }
             } else if (stored.temporary.targetState === null) {
                 history = ids
                     .filter((id) => id in stored.objects)
-                    .map((id) => ({ action: "delete", id }));
+                    .map((id) => ({ id, object: null }));
             } else {
                 // TODO: When I change the SelectionLayer to use numbers instead of true, I'll have to set ALL the states of the old group to the state of the new group
                 history = ids
                     .filter((id) => !(id in stored.objects))
                     .map((id) => ({
-                        action: "add",
-                        object: { id, state: true, point: id },
+                        id,
+                        object: { state: true, point: id },
                     }));
             }
         } else {
@@ -146,7 +146,7 @@ export class SelectionLayer {
                 const oldIds = stored.renderOrder;
                 history = oldIds
                     .filter((toDelete) => ids.indexOf(toDelete) === -1)
-                    .map((toDelete) => ({ action: "delete", id: toDelete }));
+                    .map((toDelete) => ({ id: toDelete, object: null }));
 
                 if (oldIds.length === 1 && oldIds[0] === ids[0]) {
                     stored.temporary.removeSingle = true;
@@ -155,8 +155,8 @@ export class SelectionLayer {
 
             history.push(
                 ...ids.map((id) => ({
-                    action: "add",
-                    object: { id, state: true, point: id },
+                    id,
+                    object: { state: true, point: id },
                 }))
             );
         }

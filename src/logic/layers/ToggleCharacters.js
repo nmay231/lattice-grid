@@ -28,7 +28,7 @@ export class ToggleCharactersLayer {
             return {
                 history: ids
                     .filter((id) => id in stored.objects)
-                    .map((id) => ({ action: "delete", id })),
+                    .map((id) => ({ id, object: null })),
             };
         }
 
@@ -60,9 +60,10 @@ export class ToggleCharactersLayer {
 
         return {
             history: ids.map((id, index) => ({
-                action: newStates[index] ? "add" : "delete",
                 id,
-                object: { id, point: id, state: newStates[index] },
+                object: !newStates[index]
+                    ? null
+                    : { id, point: id, state: newStates[index] },
             })),
         };
     }

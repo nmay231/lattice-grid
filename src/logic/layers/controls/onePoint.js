@@ -50,29 +50,10 @@ export const handlePointerEventCycleStates = (
         }
         stored.temporary.targetState = state;
 
-        const history = [];
-        if (state !== null) {
-            history.push(
-                ...newPoints.map((id) => ({
-                    action: "add",
-                    object: {
-                        id,
-                        point: id,
-                        state,
-                    },
-                }))
-            );
-        } else {
-            history.push(
-                ...newPoints
-                    .filter((id) => id in stored.objects)
-                    .map((id) => ({
-                        action: "delete",
-                        id,
-                    }))
-            );
-        }
-
+        const history = newPoints.map((id) => ({
+            id,
+            object: state === null ? null : { point: id, state },
+        }));
         return { history };
     };
 };
@@ -124,29 +105,11 @@ export const handlePointerEventCurrentSetting = (
             }
         }
 
-        const history = [];
-        if (stored.temporary.targetState !== null) {
-            history.push(
-                ...newPoints.map((id) => ({
-                    action: "add",
-                    object: {
-                        id,
-                        point: id,
-                        state: stored.temporary.targetState,
-                    },
-                }))
-            );
-        } else {
-            history.push(
-                ...newPoints
-                    .filter((id) => id in stored.objects)
-                    .map((id) => ({
-                        action: "delete",
-                        id,
-                    }))
-            );
-        }
-
+        const state = stored.temporary.targetState;
+        const history = newPoints.map((id) => ({
+            id,
+            object: state === null ? null : { point: id, state },
+        }));
         return { history };
     };
 };

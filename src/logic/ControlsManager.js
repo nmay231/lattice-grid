@@ -82,37 +82,28 @@ export class ControlsManager {
                 grid,
                 layer: storingLayer ?? layer,
             });
-            for (let { action, id, object } of history) {
-                switch (action) {
-                    // TODO: Move to external "addObject"/"removeObject" function
-                    case "add":
-                        // TODO: Handle getting data required for undo and also actually do history correctly
-                        this.history.push([{ action, object }]);
-                        if (object.id in stored.objects) {
-                            stored.renderOrder.splice(
-                                stored.renderOrder.indexOf(object.id),
-                                1
-                            );
-                        }
-                        stored.renderOrder.push(object.id);
-                        stored.objects[object.id] = object;
-                        break;
-                    case "delete":
-                        // TODO: Handle getting data required for undo and also actually do history correctly
-                        this.history.push([{ action, id }]);
-                        if (id in stored.objects) {
-                            stored.renderOrder.splice(
-                                stored.renderOrder.indexOf(id),
-                                1
-                            );
-                            delete stored.objects[id];
-                        }
-                        break;
-                    default:
-                        throw Error(`Invalid history action=${action}`);
+            for (let { id, object } of history) {
+                // TODO: Handle getting data required for undo and also actually do history correctly
+                // TODO: History grouping (hence why I'm pushing an array instead of just an object)
+                this.history.push([{ id, object }]);
+
+                if (id in stored.objects) {
+                    stored.renderOrder.splice(
+                        stored.renderOrder.indexOf(id),
+                        1
+                    );
+                }
+
+                if (object === null) {
+                    delete stored.objects[id];
+                } else if (object === undefined) {
+                    throw Error("You stupid");
+                } else {
+                    object.id = id;
+                    stored.renderOrder.push(id);
+                    stored.objects[id] = object;
                 }
             }
-
             this.puzzle.redrawScreen(changes);
         }
     }

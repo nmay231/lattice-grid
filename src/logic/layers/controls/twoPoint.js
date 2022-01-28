@@ -44,12 +44,11 @@ export const handlePointerEventCurrentSetting = (
             }
 
             if (stored.temporary.targetState === null && id in stored.objects) {
-                history.push({ action: "delete", id });
+                history.push({ id, object: null });
             } else if (stored.temporary.targetState !== null) {
                 history.push({
-                    action: "add",
+                    id,
                     object: {
-                        id,
                         points: pair,
                         state: stored.temporary.targetState,
                     },
