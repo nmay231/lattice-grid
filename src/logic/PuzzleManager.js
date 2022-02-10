@@ -120,25 +120,19 @@ export class PuzzleManager {
             idNumber++;
         }
 
-        // TODO: Selections only works on onePoint layers using only cells. It could probably allow for more types
-        if (
-            layer.controllingLayer === "Selections" &&
-            layer.pointTypes.toString() === POINT_TYPES.CELL &&
-            layer.controls === "onePoint"
-        ) {
-            layer.controllingLayer = this.layers["Selections"];
-        }
-
         this.layers[layer.id] = layer;
         this.storage.addStorage({ grid: this.grid, layer });
 
-        if (layer.newSettings) {
-            layer.newSettings({
-                newSettings: settings || layerClass.defaultSettings,
-                grid: this.grid,
-                storage: this.storage,
-            });
-        }
+        // TODO: Should I even have the "Selections" layer be with the normal layers or should it always be attached to the puzzle or grid?
+        const Selections = this.layers["Selections"];
+        layer.newSettings?.({
+            newSettings: settings || layerClass.defaultSettings,
+            grid: this.grid,
+            storage: this.storage,
+            // TODO: If anything, I should prevent the issue where CellOutline is added before Selections therefore requiring the following optional chain. That's why I thought pre-instantiating it would be a good idea.
+            attachSelectionsHandler:
+                Selections?.attachHandler?.bind?.(Selections),
+        });
 
         this.store.dispatch(
             addLayer({

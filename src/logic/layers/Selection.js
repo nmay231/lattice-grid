@@ -1,14 +1,12 @@
 export class SelectionLayer {
-    // -- Identification --
     static id = "Selections";
     static unique = true;
     hidden = true;
 
-    // -- Controls --
-    controls = "onePoint";
-    pointTypes = ["cells"];
-    states = [true];
-    drawMultiple = true;
+    attachHandler(layer, options) {
+        // TODO: options
+        layer.controllingLayer = this;
+    }
 
     handleKeyDown({ event, storingLayer, grid, storage }) {
         const stored = storage.getStored({ grid, layer: this });
@@ -43,15 +41,14 @@ export class SelectionLayer {
             return { history };
         }
 
-        const actions = storingLayer.handleKeyDown
-            ? storingLayer.handleKeyDown({
-                  event,
-                  storingLayer,
-                  grid,
-                  storage,
-                  ids,
-              })
-            : {};
+        const actions =
+            storingLayer.handleKeyDown?.({
+                event,
+                storingLayer,
+                grid,
+                storage,
+                ids,
+            }) || {};
 
         // TODO: Do I ever need to modify two layers at once?
         return { ...actions, storingLayer };
@@ -163,8 +160,6 @@ export class SelectionLayer {
 
         return { history };
     }
-
-    defaultRenderOrder = 9;
 
     getBlits({ grid, stored }) {
         const points = stored.renderOrder.filter(

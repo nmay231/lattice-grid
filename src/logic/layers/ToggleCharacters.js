@@ -1,22 +1,104 @@
 export class ToggleCharactersLayer {
-    // -- Identification --
     static id = "Toggle Characters";
     static unique = false;
     hidden = false;
 
-    // -- Controls --
-    controls = "onePoint";
-    pointTypes = ["cells"];
-    controllingLayer = "Selections";
-
-    // TODO: This will be a dynamic object that can be changed by the user
-    settings = {
-        // caseSwap allows upper- and lower-case letters to be used as separate characters but to be swapped if there's no ambiguity. For now, it's just annoying :)
+    static defaultSettings = {
+        // caseSwap allows upper- and lower-case letters to be used as separate characters but to be merged if there's no ambiguity.
         caseSwap: [..."0123456789"],
         characters: "0123456789",
         // "center", "topBottom", "circle", "tapa"
         displayStyle: "center",
     };
+    static settingsSchema = {
+        type: "object",
+        properties: {
+            characters: {
+                type: "string",
+                description: "Allowed characters",
+            },
+            displayStyle: {
+                type: "string",
+                description: "How values are displayed",
+                enum: [
+                    "center", // Middle across the center
+                    "topBottom", // Two rows, top and bottom
+                    // "clock", // Placed in a circle according spacing equally apart regardless of the chars placed
+                    // "tapa", // Morphs into a circle depending on how many chars are placed
+                ],
+            },
+        },
+    };
+    static settingsUISchemaElements = [
+        {
+            type: "Control",
+            label: "Allowed Characters",
+            scope: "#/properties/characters",
+        },
+        {
+            type: "Control",
+            label: "Positioning",
+            scope: "#/properties/displayStyle",
+        },
+    ];
+
+    _newSettings({ characters, displayStyle }) {
+        const caseSwap = {};
+        // TODO: This should be done on the input side of things so that users are not confused
+        // Remove duplicates
+        characters = [...characters]
+            .filter((char, i) => characters.indexOf(char) === i)
+            .join("");
+
+        const lower = characters.toLowerCase();
+        for (let c of characters) {
+            // If there is no ambiguity between an upper- and lower-case letter (aka, only one is present), map them to the same letter
+            if (
+                lower.indexOf(c.toLowerCase()) ===
+                lower.lastIndexOf(c.toLowerCase())
+            ) {
+                caseSwap[c.toLowerCase()] = c;
+                caseSwap[c.toUpperCase()] = c;
+            } else {
+                caseSwap[c] = c;
+            }
+        }
+        return {
+            caseSwap,
+            characters,
+            displayStyle,
+        };
+    }
+
+    newSettings({ newSettings, grid, storage, attachSelectionsHandler }) {
+        this.settings = this._newSettings(newSettings);
+        this.rawSettings = newSettings;
+
+        attachSelectionsHandler(this, {});
+
+        const { objects, renderOrder } = storage.getStored({
+            grid,
+            layer: this,
+        });
+
+        const history = [];
+
+        // Exclude disallowed characters
+        for (let id of renderOrder) {
+            const object = objects[id];
+            const newState = [...object.state]
+                .filter((char) => this.settings.characters.indexOf(char) > -1)
+                .join("");
+            if (newState !== object.state) {
+                history.push({
+                    object: { state: newState, point: id },
+                    id,
+                });
+            }
+        }
+
+        return { history };
+    }
 
     handleKeyDown({ event, grid, storage, ids }) {
         if (!ids?.length) {
@@ -68,8 +150,6 @@ export class ToggleCharactersLayer {
         };
     }
 
-    // -- Render --
-    defaultRenderOrder = 6;
     getBlits({ grid, stored }) {
         const ids = stored.renderOrder.filter((id) => stored.objects[id].state);
 

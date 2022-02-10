@@ -1,22 +1,18 @@
 import { handlePointerEventCurrentSetting } from "./controls/onePoint";
 
 export class BackgroundColorLayer {
-    // -- Identification --
     static id = "Background Color";
     static unique = false;
     hidden = false;
 
-    // -- Controls --
-    controls = "onePoint";
-    pointTypes = ["cells"];
-    drawMultiple = true;
+    static defaultSettings = { selectedState: "blue" };
 
-    // TODO: allow user to select current state :P
-    settings = {
-        selectedState: "blue",
-    };
-    constructor() {
-        // TODO: don't mix constructor and outside constructor syntax (?)
+    newSettings({ newSettings }) {
+        this.rawSettings = newSettings;
+        this.settings = {
+            selectedState: newSettings.selectedState || "blue",
+        };
+
         handlePointerEventCurrentSetting(this, {
             pointTypes: ["cells"],
             // TODO: Replace deltas with FSM
@@ -29,8 +25,6 @@ export class BackgroundColorLayer {
         });
     }
 
-    // -- Rendering --
-    defaultRenderOrder = 1;
     getBlits({ grid, stored }) {
         const { cells } = grid.getPoints({
             connections: { cells: { svgOutline: true } },

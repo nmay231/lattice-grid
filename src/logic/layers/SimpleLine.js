@@ -1,17 +1,18 @@
 import { handlePointerEventCurrentSetting } from "./controls/twoPoint";
 
 export class SimpleLineLayer {
-    // -- Identification --
     static id = "Line";
     static unique = false;
     hidden = false;
 
-    // -- Controls --
-    controls = "twoPoint";
-    pointTypes = ["cells"];
-    drawMultiple = true;
+    static defaultSettings = { fill: "green" };
 
-    constructor() {
+    newSettings({ newSettings }) {
+        this.rawSettings = newSettings;
+        this.settings = {
+            selectedState: { fill: newSettings.fill || "green" },
+        };
+
         handlePointerEventCurrentSetting(this, {
             // TODO: Directional true/false is ambiguous. There are three types: lines and arrows with/without overlap
             directional: false,
@@ -27,12 +28,6 @@ export class SimpleLineLayer {
         });
     }
 
-    settings = {
-        selectedState: { fill: "green" },
-    };
-
-    // -- Rendering --
-    defaultRenderOrder = 6;
     getBlits({ grid, stored }) {
         const blits = {};
         for (let id of stored.renderOrder) {
@@ -54,7 +49,7 @@ export class SimpleLineLayer {
             style: {
                 stroke: key,
                 strokeWidth: 4,
-                strokeLinecap: "square",
+                strokeLinecap: "round",
             },
         }));
     }

@@ -1,13 +1,7 @@
 export class NumberLayer {
-    // -- Identification --
     static id = "Number";
     static unique = false;
     hidden = false;
-
-    // -- Controls --
-    controls = "onePoint";
-    pointTypes = ["cells"];
-    controllingLayer = "Selections";
 
     handleKeyDown({ event, grid, storage, ids }) {
         if (!ids.length) {
@@ -82,23 +76,17 @@ export class NumberLayer {
         },
     ];
 
-    rawSettings = {
-        min: -16,
-        max: 16,
-    };
-    settings = {
-        match: (number) => -16 <= number && number <= 16 && number,
-    };
-
     _newSettings(min, max) {
         return {
             match: (number) => min <= number && number <= max && number,
         };
     }
 
-    newSettings({ newSettings, grid, storage }) {
+    newSettings({ newSettings, grid, storage, attachSelectionsHandler }) {
         this.settings = this._newSettings(newSettings.min, newSettings.max);
         this.rawSettings = newSettings;
+
+        attachSelectionsHandler(this, {});
 
         const { objects, renderOrder } = storage.getStored({
             grid,
@@ -124,8 +112,6 @@ export class NumberLayer {
 
         return { history };
     }
-
-    defaultRenderOrder = 6;
 
     getBlits({ grid, stored }) {
         const ids = stored.renderOrder.filter((id) => stored.objects[id].state);

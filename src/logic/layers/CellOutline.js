@@ -1,21 +1,14 @@
 import { handlePointerEventCycleStates } from "./controls/onePoint";
 
 export class CellOutlineLayer {
-    // -- Identification --
     static id = "Cell Outline";
     static unique = true;
     hidden = true;
 
-    // -- Controls --
-    controls = "onePoint";
-    pointTypes = ["cells"];
-    states = [true];
-    drawMultiple = true;
-
-    constructor() {
+    newSettings() {
         handlePointerEventCycleStates(this, {
-            states: this.states,
-            pointTypes: this.pointTypes,
+            states: [true],
+            pointTypes: ["cells"],
             // TODO: Change deltas to Finite State Machine
             deltas: [
                 { dx: 0, dy: 2 },
@@ -26,8 +19,6 @@ export class CellOutlineLayer {
         });
     }
 
-    // -- Rendering --
-    defaultRenderOrder = 2;
     getBlits({ grid, stored }) {
         const blacklist = stored.renderOrder.filter(
             (key) => stored.objects[key].state
