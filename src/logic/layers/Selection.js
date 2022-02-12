@@ -10,8 +10,8 @@ export class SelectionLayer {
 
     handleKeyDown({ event, storingLayer, grid, storage }) {
         const stored = storage.getStored({ grid, layer: this });
-
         const ids = stored.renderOrder;
+
         let history = null;
         if (event.code === "Escape") {
             history = ids.map((id) => ({
@@ -21,7 +21,7 @@ export class SelectionLayer {
         } else if (event.ctrlKey && event.key === "a") {
             history = grid.getAllPoints("cells").map((id) => ({
                 id,
-                object: { state: true, point: id },
+                object: { state: 1, point: id },
             }));
         } else if (event.ctrlKey && event.key === "i") {
             const all = grid.getAllPoints("cells");
@@ -31,7 +31,7 @@ export class SelectionLayer {
                 } else {
                     return {
                         id,
-                        object: { state: true, point: id },
+                        object: { state: 1, point: id },
                     };
                 }
             });
@@ -77,6 +77,8 @@ export class SelectionLayer {
             }
             return { discontinueInput: true };
         }
+
+        stored.groupNumber = stored.groupNumber || 1;
         stored.temporary.blacklist = stored.temporary.blacklist ?? [];
         const ids = grid
             .selectPointsWithCursor({
@@ -107,16 +109,17 @@ export class SelectionLayer {
         if (event.ctrlKey || event.shiftKey) {
             if (stored.temporary.targetState === undefined) {
                 // If targetState is undefined, there can only be one id
-                const [id] = ids;
+                const id = ids[0];
                 if (id in stored.objects) {
                     stored.temporary.targetState = null;
                     history = [{ id, object: null }];
                 } else {
-                    stored.temporary.targetState = true;
+                    stored.groupNumber += 1;
+                    stored.temporary.targetState = stored.groupNumber;
                     history = [
                         {
                             id,
-                            object: { state: true, point: id },
+                            object: { state: stored.groupNumber, point: id },
                         },
                     ];
                 }
@@ -125,17 +128,25 @@ export class SelectionLayer {
                     .filter((id) => id in stored.objects)
                     .map((id) => ({ id, object: null }));
             } else {
-                // TODO: When I change the SelectionLayer to use numbers instead of true, I'll have to set ALL the states of the old group to the state of the new group
-                history = ids
+                const groupsToMerge = new Set(
+                    ids.map((id) => stored.objects[id]?.state)
+                );
+                const allIds = ids
                     .filter((id) => !(id in stored.objects))
-                    .map((id) => ({
-                        id,
-                        object: { state: true, point: id },
-                    }));
+                    .concat(
+                        stored.renderOrder.filter((id) =>
+                            groupsToMerge.has(stored.objects[id].state)
+                        )
+                    );
+                history = allIds.map((id) => ({
+                    id,
+                    object: { state: stored.temporary.targetState, point: id },
+                }));
             }
         } else {
             const removeOld = stored.temporary.targetState === undefined;
-            stored.temporary.targetState = true;
+            stored.groupNumber = 2;
+            stored.temporary.targetState = stored.groupNumber;
             stored.temporary.removeSingle = false;
             history = [];
 
@@ -153,7 +164,7 @@ export class SelectionLayer {
             history.push(
                 ...ids.map((id) => ({
                     id,
-                    object: { state: true, point: id },
+                    object: { state: stored.groupNumber, point: id },
                 }))
             );
         }
@@ -165,22 +176,29 @@ export class SelectionLayer {
         const points = stored.renderOrder.filter(
             (key) => stored.objects[key].state
         );
+        const states = points.map((id) => stored.objects[id].state);
 
         let blits = {};
         if (points.length) {
-            const { selectionCage } = grid.getPoints({
-                connections: {
-                    cells: {
-                        shrinkwrap: {
-                            key: "selectionCage",
-                            svgPolygons: { inset: 5 },
+            for (let group of new Set(states)) {
+                const { selectionCage } = grid.getPoints({
+                    connections: {
+                        cells: {
+                            shrinkwrap: {
+                                key: "selectionCage",
+                                svgPolygons: { inset: 5 },
+                            },
                         },
                     },
-                },
-                points,
-            });
+                    points: states
+                        .map((state, i) => (state === group ? points[i] : null))
+                        .filter((state) => state),
+                });
 
-            blits = selectionCage.svgPolygons;
+                for (let key of Object.keys(selectionCage.svgPolygons)) {
+                    blits[`${group}-${key}`] = selectionCage.svgPolygons[key];
+                }
+            }
         }
         return [
             {
