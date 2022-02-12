@@ -35,6 +35,9 @@ export class PuzzleManager {
             const data = JSON.parse(localStorage.getItem("_currentPuzzle"));
             this._loadPuzzle(data);
         } catch (err) {
+            // TODO: Toast message to user saying something went wrong.
+            console.error(err);
+            this.store.dispatch(newPuzzle());
             this._loadPuzzle({
                 layers: [
                     { layerClass: "Cell Outline" },
@@ -122,22 +125,16 @@ export class PuzzleManager {
 
         this.layers[layer.id] = layer;
         this.storage.addStorage({ grid: this.grid, layer });
-
-        // TODO: Should I even have the "Selections" layer be with the normal layers or should it always be attached to the puzzle or grid?
-        const Selections = this.layers["Selections"];
-        layer.newSettings?.({
-            newSettings: settings || layerClass.defaultSettings,
-            grid: this.grid,
-            storage: this.storage,
-            // TODO: If anything, I should prevent the issue where CellOutline is added before Selections therefore requiring the following optional chain. That's why I thought pre-instantiating it would be a good idea.
-            attachSelectionsHandler:
-                Selections?.attachHandler?.bind?.(Selections),
-        });
+        this.changeLayerSettings(
+            layer.id,
+            settings || layerClass.defaultSettings
+        );
 
         this.store.dispatch(
             addLayer({
                 id: layer.id,
                 hidden: layer.hidden,
+                layerType: layerClass.id,
             })
         );
         return layer.id;
@@ -148,6 +145,28 @@ export class PuzzleManager {
             delete this.layers[id];
             this.store.dispatch(removeLayer(id));
             this.redrawScreen();
+        }
+    }
+
+    changeLayerSettings(layerId, newSettings) {
+        // TODO: Should I even have the "Selections" layer be with the normal layers or should it always be attached to the puzzle or grid?
+        const Selections = this.layers["Selections"];
+        const layer = this.layers[layerId];
+        const { history } =
+            layer.newSettings?.({
+                newSettings,
+                grid: this.grid,
+                storage: this.storage,
+                // TODO: If anything, I should prevent the issue where CellOutline is added before Selections therefore requiring the following optional chain. That's why I thought pre-instantiating it would be a good idea.
+                attachSelectionsHandler:
+                    Selections?.attachHandler?.bind?.(Selections),
+            }) || [];
+
+        if (history?.length) {
+            this.controls.handleLayerActions(layer, {
+                history,
+                discontinueInput: "noChange",
+            });
         }
     }
 

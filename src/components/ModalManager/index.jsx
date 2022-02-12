@@ -1,8 +1,7 @@
-import { JsonForms } from "@jsonforms/react";
-import { vanillaCells, vanillaRenderers } from "@jsonforms/vanilla-renderers";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { closeModal } from "../../redux/modal";
+import { JsonFormsWrapper } from "../JsonFormsWrapper";
 import styles from "./index.module.css";
 
 export const ModalManager = () => {
@@ -16,19 +15,10 @@ export const ModalManager = () => {
     const dispatch = useDispatch();
 
     useEffect(() => {
-        if (initialData) {
+        if (isOpen) {
             setData(initialData);
-
-            // Yes... This needs to be in a timeout to work properly
-            setTimeout(
-                () =>
-                    document
-                        .querySelector("#modalForm input, #modalForm select")
-                        ?.focus?.(),
-                0
-            );
         }
-    }, [initialData]);
+    }, [isOpen, initialData]);
 
     if (!isOpen) {
         return <></>;
@@ -45,9 +35,10 @@ export const ModalManager = () => {
     };
     const handleSubmit = (e) => {
         e.preventDefault();
-        dispatch(closeModal({ result: "success", data }));
+        dispatch(closeModal({ result: "submit", data }));
     };
 
+    // TODO: generalize to handle more than just "Add a new layer"
     return (
         <div
             className={styles.modalBackground}
@@ -56,19 +47,16 @@ export const ModalManager = () => {
         >
             <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
                 <form onSubmit={handleSubmit} id="modalForm">
-                    <JsonForms
+                    <JsonFormsWrapper
+                        data={data}
+                        setData={setData}
                         schema={schema}
                         uischema={uischema}
-                        data={data}
-                        cells={vanillaCells}
-                        renderers={vanillaRenderers}
-                        onChange={({ data, errors }) => {
-                            if (!errors.length) {
-                                setData(data);
-                            }
-                        }}
+                        formId="modalForm"
+                        autoFocus
                     />
-                    <button type="submit">Click me</button>
+                    {/* TODO: Customizable buttons */}
+                    <button type="submit">Submit</button>
                 </form>
             </div>
         </div>
