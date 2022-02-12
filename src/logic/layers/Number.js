@@ -95,18 +95,14 @@ export class NumberLayer {
 
         const history = [];
 
-        // Clamp values between the new max and min
+        // Delete numbers that are out of range
         for (let id of renderOrder) {
             const object = objects[id];
-            const newValue = Math.max(
-                newSettings.min,
-                Math.min(newSettings.max, object.state)
-            );
-            if (newValue !== object.state) {
-                history.push({
-                    object: { state: newValue, point: id },
-                    id,
-                });
+            if (
+                object.state < newSettings.min ||
+                object.state > newSettings.max
+            ) {
+                history.push({ object: null, id });
             }
         }
 
