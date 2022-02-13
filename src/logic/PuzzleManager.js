@@ -75,6 +75,11 @@ export class PuzzleManager {
         const groups = {};
         const renderOrder = [];
 
+        const currentLayerIds = [
+            this.getCurrentLayer("storing").id,
+            this.getCurrentLayer("controlling").id,
+        ];
+
         const fakeLayers = this.store.getState().puzzle.layers;
         for (let fakeLayer of fakeLayers) {
             const layer = this.layers[fakeLayer.id];
@@ -87,6 +92,12 @@ export class PuzzleManager {
             for (let group of layerBlitGroups) {
                 if (!group.id) {
                     throw Error(`Expected blit group id of layer=${layer.id}`);
+                }
+                if (
+                    group.renderOnlyWhenFocused &&
+                    !currentLayerIds.includes(layer.id)
+                ) {
+                    continue;
                 }
                 group.id += layer.id;
                 renderOrder.push(group.id);

@@ -41,6 +41,7 @@ export const LayerList = ({ puzzle }) => {
     const handleSelect = (index) => (event) => {
         event.stopPropagation();
         dispatch(selectLayer({ index }));
+        puzzle.redrawScreen();
     };
 
     const handleDelete = (id) => (event) => {

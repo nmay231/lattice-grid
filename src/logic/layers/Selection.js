@@ -211,6 +211,7 @@ export class SelectionLayer {
                     strokeLinecap: "round",
                     fill: "none",
                 },
+                renderOnlyWhenFocused: true,
             },
         ];
     }
