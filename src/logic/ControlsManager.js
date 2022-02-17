@@ -78,7 +78,7 @@ export class ControlsManager {
         if (history.length) {
             // TODO: Changes
             const changes = [];
-            const stored = storage.getStored({
+            const { renderOrder, objects } = storage.getStored({
                 grid,
                 layer: storingLayer ?? layer,
             });
@@ -87,21 +87,18 @@ export class ControlsManager {
                 // TODO: History grouping (hence why I'm pushing an array instead of just an object)
                 this.history.push([{ id, object }]);
 
-                if (id in stored.objects) {
-                    stored.renderOrder.splice(
-                        stored.renderOrder.indexOf(id),
-                        1
-                    );
+                if (id in objects) {
+                    renderOrder.splice(renderOrder.indexOf(id), 1);
                 }
 
                 if (object === null) {
-                    delete stored.objects[id];
+                    delete objects[id];
                 } else if (object === undefined) {
                     throw Error("You stupid");
                 } else {
                     object.id = id;
-                    stored.renderOrder.push(id);
-                    stored.objects[id] = object;
+                    renderOrder.push(id);
+                    objects[id] = object;
                 }
             }
             this.puzzle.redrawScreen(changes);
