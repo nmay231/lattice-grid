@@ -433,8 +433,6 @@ export class SquareGrid {
     }
 
     _shrinkwrap({ gridPoints, inset }) {
-        const result = {};
-
         let cells = [];
         const edgesLeft = {};
         let [dx, dy] = [0, -1];
@@ -454,6 +452,7 @@ export class SquareGrid {
 
         // Points are converted to strings to allow easy comparison
         cells = cells.map((cell) => cell.toString());
+        const result = [];
 
         while (Object.keys(edgesLeft).length) {
             const edgeKey = Object.keys(edgesLeft)[0];
@@ -521,9 +520,7 @@ export class SquareGrid {
 
                 delete edgesLeft[edge.toString()];
             }
-
-            // Each loop needs to have a unique key. We use one of the points inside the loop as the key.
-            result[current] = cornerLoop;
+            result.push(cornerLoop);
         }
         return result;
     }
