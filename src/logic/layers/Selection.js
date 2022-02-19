@@ -195,7 +195,9 @@ export class SelectionLayer {
                 });
 
                 for (let key in selectionCage.svgPolygons) {
-                    blits[`${group}-${key}`] = selectionCage.svgPolygons[key];
+                    blits[`${group}-${key}`] = {
+                        points: selectionCage.svgPolygons[key],
+                    };
                 }
             }
         }

@@ -37,9 +37,13 @@ export class KillerCagesLayer {
                 points: object.points,
             });
 
-            // TODO: Color the selected object
+            const style =
+                id === stored.currentObjectId ? { stroke: "#33F" } : undefined;
             for (let key in cageOutline.svgPolygons) {
-                blits[`${object.id}-${key}`] = cageOutline.svgPolygons[key];
+                blits[`${object.id}-${key}`] = {
+                    style,
+                    points: cageOutline.svgPolygons[key],
+                };
             }
         }
 
@@ -56,7 +60,6 @@ export class KillerCagesLayer {
                     strokeLinecap: "round",
                     fill: "none",
                 },
-                renderOnlyWhenFocused: true,
             },
         ];
     }

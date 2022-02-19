@@ -54,6 +54,11 @@ export class CellOutlineLayer {
             }
         }
 
+        const outline = {};
+        for (let key in gridEdge.svgPolygons) {
+            outline[key] = { points: gridEdge.svgPolygons[key] };
+        }
+
         return [
             {
                 id: "grid",
@@ -68,7 +73,7 @@ export class CellOutlineLayer {
             {
                 id: "outline",
                 blitter: "polygon",
-                blits: gridEdge.svgPolygons,
+                blits: outline,
                 style: {
                     stroke: "black",
                     strokeWidth: 10,

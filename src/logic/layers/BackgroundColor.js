@@ -35,7 +35,7 @@ export class BackgroundColorLayer {
         for (let id of stored.renderOrder) {
             const { state } = stored.objects[id];
             objectsByColor[state] = objectsByColor[state] ?? {};
-            objectsByColor[state][id] = cells[id].svgOutline;
+            objectsByColor[state][id] = { points: cells[id].svgOutline };
         }
 
         return Object.keys(objectsByColor).map((color) => ({
