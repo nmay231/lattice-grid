@@ -89,21 +89,23 @@ export const handlePointerEventUnorderedSets = (
         }
 
         stored.temporary.blacklist = stored.temporary.blacklist ?? [];
-        const newPoints = grid
-            .selectPointsWithCursor({
-                cursor: event.cursor,
-                pointTypes,
-                deltas,
-                lastPoint: stored.temporary.lastPoint,
-            })
-            .filter((id) => stored.temporary.blacklist.indexOf(id) === -1);
-        if (!newPoints.length) {
-            return;
-        }
+        let newPoints = grid.selectPointsWithCursor({
+            cursor: event.cursor,
+            pointTypes,
+            deltas,
+            lastPoint: stored.temporary.lastPoint,
+        });
+        if (!newPoints.length) return;
 
         const lastPoint = stored.temporary.lastPoint;
         stored.temporary.lastPoint = newPoints[newPoints.length - 1];
+
+        newPoints = newPoints.filter(
+            (id) => stored.temporary.blacklist.indexOf(id) === -1
+        );
+        if (!newPoints.length) return;
         stored.temporary.blacklist.push(...newPoints);
+
         const allPoints = Object.values(stored.objects)
             .map((object) => object.points)
             .flat();

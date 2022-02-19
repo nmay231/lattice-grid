@@ -80,29 +80,28 @@ export class SelectionLayer {
 
         stored.groupNumber = stored.groupNumber || 1;
         stored.temporary.blacklist = stored.temporary.blacklist ?? [];
-        const ids = grid
-            .selectPointsWithCursor({
-                cursor: event.cursor,
-                lastPoint: stored.temporary.lastPoint,
-                pointTypes: ["cells"],
-                // TODO: Change deltas to Finite State Machine
-                deltas: [
-                    { dx: 0, dy: 2 },
-                    { dx: 0, dy: -2 },
-                    { dx: 2, dy: 0 },
-                    { dx: -2, dy: 0 },
-                    { dx: 2, dy: 2 },
-                    { dx: 2, dy: -2 },
-                    { dx: -2, dy: 2 },
-                    { dx: -2, dy: -2 },
-                ],
-            })
-            .filter((id) => stored.temporary.blacklist.indexOf(id) === -1);
+        let ids = grid.selectPointsWithCursor({
+            cursor: event.cursor,
+            lastPoint: stored.temporary.lastPoint,
+            pointTypes: ["cells"],
+            // TODO: Change deltas to Finite State Machine
+            deltas: [
+                { dx: 0, dy: 2 },
+                { dx: 0, dy: -2 },
+                { dx: 2, dy: 0 },
+                { dx: -2, dy: 0 },
+                { dx: 2, dy: 2 },
+                { dx: 2, dy: -2 },
+                { dx: -2, dy: 2 },
+                { dx: -2, dy: -2 },
+            ],
+        });
 
-        if (!ids.length) {
-            return {};
-        }
+        if (!ids.length) return;
         stored.temporary.lastPoint = ids[ids.length - 1];
+        ids = ids.filter((id) => stored.temporary.blacklist.indexOf(id) === -1);
+        if (!ids.length) return;
+
         stored.temporary.blacklist.push(...ids);
 
         let history;
@@ -195,7 +194,7 @@ export class SelectionLayer {
                         .filter((state) => state),
                 });
 
-                for (let key of Object.keys(selectionCage.svgPolygons)) {
+                for (let key in selectionCage.svgPolygons) {
                     blits[`${group}-${key}`] = selectionCage.svgPolygons[key];
                 }
             }

@@ -16,24 +16,21 @@ export const handlePointerEventCycleStates = (
         const stored = storage.getStored({ grid, layer });
 
         stored.temporary.blacklist = stored.temporary.blacklist ?? [];
-        const newPoints = grid
-            .selectPointsWithCursor({
-                cursor: event.cursor,
-                pointTypes,
-                deltas,
-                lastPoint: stored.temporary.lastPoint,
-            })
-            .filter(
-                (point) => stored.temporary.blacklist.indexOf(point) === -1
-            );
+        let newPoints = grid.selectPointsWithCursor({
+            cursor: event.cursor,
+            pointTypes,
+            deltas,
+            lastPoint: stored.temporary.lastPoint,
+        });
 
-        if (!newPoints.length) {
-            return {};
-        }
+        if (!newPoints.length) return;
+        stored.temporary.lastPoint = newPoints[newPoints.length - 1];
+        newPoints = newPoints.filter(
+            (point) => stored.temporary.blacklist.indexOf(point) === -1
+        );
 
-        const lastPoint = newPoints[newPoints.length - 1];
-        stored.temporary.lastPoint = lastPoint;
-        stored.temporary.blacklist.push(lastPoint);
+        if (!newPoints.length) return;
+        stored.temporary.blacklist.push(...newPoints);
 
         let state;
 
@@ -76,24 +73,21 @@ export const handlePointerEventCurrentSetting = (
         const stored = storage.getStored({ grid, layer });
 
         stored.temporary.blacklist = stored.temporary.blacklist ?? [];
-        const newPoints = grid
-            .selectPointsWithCursor({
-                cursor: event.cursor,
-                pointTypes,
-                deltas,
-                lastPoint: stored.temporary.lastPoint,
-            })
-            .filter(
-                (point) => stored.temporary.blacklist.indexOf(point) === -1
-            );
+        let newPoints = grid.selectPointsWithCursor({
+            cursor: event.cursor,
+            pointTypes,
+            deltas,
+            lastPoint: stored.temporary.lastPoint,
+        });
 
-        if (!newPoints.length) {
-            return {};
-        }
+        if (!newPoints.length) return;
+        stored.temporary.lastPoint = newPoints[newPoints.length - 1];
+        newPoints = newPoints.filter(
+            (point) => stored.temporary.blacklist.indexOf(point) === -1
+        );
 
-        const lastPoint = newPoints[newPoints.length - 1];
-        stored.temporary.lastPoint = lastPoint;
-        stored.temporary.blacklist.push(lastPoint);
+        if (!newPoints.length) return;
+        stored.temporary.blacklist.push(...newPoints);
 
         if (stored.temporary.targetState === undefined) {
             if (newPoints[0] in stored.objects) {
