@@ -1,6 +1,7 @@
 export const handlePointerEventUnorderedSets = (
     layer,
     {
+        // TODO: In user settings, rename allowOverlap to "Allow partial overlap"
         allowOverlap = false,
         handleKeyDown,
         pointTypes,
@@ -25,30 +26,30 @@ export const handlePointerEventUnorderedSets = (
 
     layer.handleKeyDown = ({ event, grid, storage }) => {
         const stored = storage.getStored({ grid, layer });
-        const { objects, currentObjectId } = stored;
+        const currentObjectId = stored.currentObjectId;
 
-        if (currentObjectId === null) {
+        if (currentObjectId === undefined) {
             return;
         }
+
+        const object = stored.objects[currentObjectId];
 
         if (event.code === "Escape") {
-            stored.currentObjectId = null;
-            if (typeof currentObjectId === "symbol") {
-                // If object was being created (not edited), delete the temporary object and add back in the normal one
-                const id = grid.convertIdAndPoints({
-                    pointsToId: objects[currentObjectId].points,
-                });
-                return {
-                    history: [
-                        { id: currentObjectId, object: null },
-                        { id, object: objects[currentObjectId] },
-                    ],
-                };
+            stored.currentObjectId = undefined;
+            const newId = grid.convertIdAndPoints({
+                pointsToId: object.points,
+            });
+
+            const history = [{ id: newId, object }];
+            if (currentObjectId !== newId) {
+                // TODO: This might not even be useful. currentObjectId should only not equal newId when in the middle of resizing the object, i.e. when the user's cursor/finger is down.
+                history.unshift({ id: currentObjectId, object: null });
             }
-            return;
+            return { history };
         }
         if (event.code === "Delete") {
-            stored.currentObjectId = null;
+            stored.currentObjectId = undefined;
+            // TODO: allow the layer to "delete" it's state before deleting the object?
             return {
                 history: [{ id: currentObjectId, object: null }],
             };
@@ -62,10 +63,24 @@ export const handlePointerEventUnorderedSets = (
         const stored = storage.getStored({ layer, grid });
         if (event.type !== "startPointer" && event.type !== "movePointer") {
             if (stored.currentObjectId === undefined) {
-                return;
+                return { discontinueInput: true };
+            } else if (event.type === "unfocusPointer") {
+                const id = stored.currentObjectId;
+                stored.currentObjectId = undefined;
+                return {
+                    discontinueInput: true,
+                    // TODO: How do I force rerender without polluting history
+                    history: [{ id, object: stored.objects[id] }],
+                };
             }
 
-            const object = stored.objects[stored.currentObjectId];
+            const object = { ...stored.objects[stored.currentObjectId] };
+            if (stored.temporary.expanding === undefined) {
+                // Remove the one cell that was selected
+                object.points = object.points.filter(
+                    (p) => p !== stored.temporary.lastPoint
+                );
+            }
             const newId = grid.convertIdAndPoints({
                 pointsToId: object.points,
             });
@@ -74,17 +89,14 @@ export const handlePointerEventUnorderedSets = (
                 return { discontinueInput: true };
             }
 
-            const history = [{ id: newId, object }];
-            if (event.type !== "unfocusPointer") {
-                history.push({ id: stored.currentObjectId, object: null });
-                stored.currentObjectId = newId;
-            } else {
-                stored.currentObjectId = undefined;
-            }
-
+            const oldId = stored.currentObjectId;
+            stored.currentObjectId = newId;
             return {
                 discontinueInput: true,
-                history,
+                history: [
+                    { id: oldId, object: null },
+                    { id: newId, object },
+                ],
             };
         }
 
@@ -106,9 +118,6 @@ export const handlePointerEventUnorderedSets = (
         if (!newPoints.length) return;
         stored.temporary.blacklist.push(...newPoints);
 
-        const allPoints = Object.values(stored.objects)
-            .map((object) => object.points)
-            .flat();
         const overlap = stored.renderOrder.filter(
             (id) => stored.objects[id].points.indexOf(newPoints[0]) > -1
         );
@@ -116,18 +125,20 @@ export const handlePointerEventUnorderedSets = (
         if (stored.currentObjectId === undefined) {
             // This is only called on startPointer, so there is only one new point
             const point = newPoints[0];
-            if (allPoints.indexOf(point) > -1) {
-                // Select the topmost existing object and move it to the front of the rendering stack
+            if (overlap.length) {
+                // Select the topmost existing object
                 const id = overlap[overlap.length - 1];
-                stored.temporary.currentObjectId = id;
-
+                stored.currentObjectId = id;
                 return {
+                    // Prevent interaction until user clicks/taps again
+                    discontinueInput: true,
                     // Move object to the front of the stack
                     history: [{ id, object: stored.objects[id] }],
                 };
             } else {
                 // Start drawing new object
                 stored.currentObjectId = point;
+                stored.temporary.expanding = true;
                 return {
                     history: [
                         // TODO: state=null vs state=layer.getState(null)
@@ -142,23 +153,36 @@ export const handlePointerEventUnorderedSets = (
                 event.type === "startPointer" &&
                 points.indexOf(newPoints[0]) === -1
             ) {
-                if (overlap.length) {
-                    // Selecting a different existing object
-                    const id = overlap[overlap.length - 1];
-                    stored.currentObjectId = id;
-                    // TODO: How to force rerender without polluting history (current Object changed, but the object state has not)
-                    return { history: [{ id, object: stored.objects[id] }] };
+                let discontinueInput = false;
+                const history = [];
+                const newId = grid.convertIdAndPoints({
+                    pointsToId: object.points,
+                });
+                if (stored.currentObjectId !== newId) {
+                    history.push(
+                        { id: stored.currentObjectId, object: null },
+                        { id: newId, object }
+                    );
                 } else {
-                    // Creating a new one
+                    // Force rerender of current object
+                    // TODO: How do I force rerender without polluting history (currentObjectId changed, but the object state has not). Then again, it does need to affect history because reordering objects in renderOrder is changing the puzzle (if allowOverlap=true).
+                    history.push({ id: object.id, object });
+                }
+
+                if (overlap.length) {
+                    // Select a different existing object
+                    stored.currentObjectId = overlap[overlap.length - 1];
+                    discontinueInput = true;
+                } else {
+                    // Create a new one
                     const id = newPoints[0];
                     stored.currentObjectId = id;
-                    return {
-                        history: [
-                            { id, object: { points: [id], state: null } },
-                        ],
-                    };
+                    stored.temporary.expanding = true;
+                    history.push({ id, object: { points: [id], state: null } });
                 }
+                return { history, discontinueInput };
             } else if (event.type === "startPointer") {
+                // We start to resize the current object, but we don't know yet if it's expanding or shrinking
                 return;
             }
             // Else, we're resizing an object
@@ -186,9 +210,11 @@ export const handlePointerEventUnorderedSets = (
                   );
 
             if (!updatedPoints.length) {
+                const id = stored.currentObjectId;
                 stored.currentObjectId = undefined;
                 return {
-                    history: [{ id: stored.currentObjectId, object: null }],
+                    discontinueInput: true,
+                    history: [{ id, object: null }],
                 };
             }
             const newObject = { points: updatedPoints, state: object.state };
