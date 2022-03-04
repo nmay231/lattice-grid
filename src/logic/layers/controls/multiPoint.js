@@ -85,7 +85,6 @@ export const handlePointerEventUnorderedSets = (
                 pointsToId: object.points,
             });
             if (stored.currentObjectId === newId) {
-                stored.currentObjectId = undefined;
                 return { discontinueInput: true };
             }
 
