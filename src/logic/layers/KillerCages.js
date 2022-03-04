@@ -21,14 +21,12 @@ export class KillerCagesLayer {
         } else if (event.code === "Delete") {
             return null;
         } else if (event.code === "Minus") {
-            // TODO: keep the Minus sign as part of an inProgress object and remove it when we deselect things.
             return match(-1 * state) || "-";
         } else if (event.code === "Plus" || event.code === "Equal") {
             return match(state && Math.abs(state));
         } else if ("1234567890".indexOf(event.key) === -1) {
             return match(parseInt(event.key, 36)) || state;
         } else {
-            // TODO: Instead of appending the current key to the end of the number if it simply matches, I could try making it time based.
             return (
                 match(parseInt(state + event.key)) ||
                 match(parseInt(event.key)) ||
@@ -54,13 +52,14 @@ export class KillerCagesLayer {
         const numberBlits = {};
         for (let id of stored.renderOrder) {
             const object = stored.objects[id];
-            const { cageOutline, cells } = grid.getPoints({
+            const { cageOutline, cells, sorted } = grid.getPoints({
                 connections: {
                     cells: {
                         shrinkwrap: {
                             key: "cageOutline",
                             svgPolygons: { inset: 5 },
                         },
+                        sorted: { key: "sorted", direction: "NW" },
                         svgPoint: true,
                         maxRadius: { shape: "square", size: "large" },
                     },
@@ -78,10 +77,8 @@ export class KillerCagesLayer {
             }
 
             if (object.state !== null) {
-                // TODO: always select top-right corner instead of the first point added to the object
-                const point = object.points[0];
+                const point = sorted[0];
                 const { svgPoint, maxRadius } = cells[point];
-                // const center = cells[point].svgPoint, radius = cells[point].
                 const corner = [
                     svgPoint[0] - 0.8 * maxRadius,
                     svgPoint[1] - 0.8 * maxRadius,

@@ -355,6 +355,35 @@ export class SquareGrid {
                     }
                     break;
                 }
+                case "cells->sorted":
+                case "corners->sorted":
+                case "edges->sorted": {
+                    const { key, direction } = connections[nextType];
+
+                    if (
+                        typeof direction !== "string" ||
+                        direction.length !== 2
+                    ) {
+                        throw Error(
+                            `param direction required to be string of length two instead of "${direction}"`
+                        );
+                    }
+                    const [primary, secondary] = direction.toUpperCase();
+
+                    const sorts = {
+                        N: (a, b) => a.y - b.y,
+                        S: (a, b) => b.y - a.y,
+                        E: (a, b) => b.x - a.x,
+                        W: (a, b) => a.x - b.x,
+                    };
+                    finalResult[key || "sorted"] = gridPoints
+                        .map(({ point }) => point)
+                        // Yes, we sort by the secondary direction before the primary.
+                        .sort(sorts[secondary])
+                        .sort(sorts[primary])
+                        .map((point) => `${point.x},${point.y}`);
+                    break;
+                }
                 case "corners->rows":
                 case "cells->rows": {
                     const { types } =
