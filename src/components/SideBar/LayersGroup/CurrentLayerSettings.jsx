@@ -6,13 +6,22 @@ import { JsonFormsWrapper } from "../../JsonFormsWrapper";
 
 export const CurrentLayerSettings = ({ puzzle }) => {
     const layers = useSelector((state) => state.puzzle.layers);
-    const selectedLayer = useSelector((state) => state.puzzle.selectedLayer);
+    const id = useSelector((state) => state.puzzle.currentLayerId);
+    const layer = puzzle.layers[id];
     const [data, setData] = useState(null);
 
-    const { layerType, id } = layers[selectedLayer];
-    const layer = puzzle.layers[id];
-    const layerClass = availableLayers[layerType];
+    useEffect(() => {
+        if (layer) {
+            setData(layer.rawSettings);
+        }
+    }, [layer]);
 
+    if (!data || !layer) {
+        return <></>;
+    }
+
+    const layerType = layers.filter((layer) => layer.id === id)[0].layerType;
+    const layerClass = availableLayers[layerType];
     const schema = layerClass.settingsSchema;
     const uischema = {
         type: "VerticalLayout",
@@ -20,18 +29,10 @@ export const CurrentLayerSettings = ({ puzzle }) => {
     };
     const changed = !isEqual(data, layer.rawSettings);
 
-    useEffect(() => {
-        setData(layer.rawSettings);
-    }, [layer.rawSettings]);
-
-    if (!data) {
-        return <></>;
-    }
-
     const handleSubmit = (event) => {
         event.preventDefault();
-        puzzle.changeLayerSettings(layers[selectedLayer].id, data);
-        setData(null); // Trigger render
+        puzzle.changeLayerSettings(id, data);
+        setData({ ...data }); // Trigger render
 
         // TODO: This can call .redrawScreen() twice if changing settings adds/removes objects as well as changing how the objects are displayed.
         // e.g. using the ToggleCharacters() layer, you might change the allowed characters and the displayStyle/positioning and that will call it twice: once from .changeLayerSettings (calling ControlsManager.handleLayerActions) and a second time directly in this function.

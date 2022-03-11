@@ -26,7 +26,7 @@ export const LayerList = ({ puzzle }) => {
 
     const dispatch = useDispatch();
     const layers = useSelector((state) => state.puzzle.layers);
-    const selectedLayer = useSelector((state) => state.puzzle.selectedLayer);
+    const currentLayerId = useSelector((state) => state.puzzle.currentLayerId);
 
     const handleDragEnd = ({ active, over }) => {
         if (active.id !== over?.id) {
@@ -38,9 +38,9 @@ export const LayerList = ({ puzzle }) => {
         }
     };
 
-    const handleSelect = (index) => (event) => {
+    const handleSelect = (id) => (event) => {
         event.stopPropagation();
-        dispatch(selectLayer({ index }));
+        dispatch(selectLayer({ id }));
         puzzle.redrawScreen();
     };
 
@@ -60,12 +60,12 @@ export const LayerList = ({ puzzle }) => {
                 strategy={verticalListSortingStrategy}
             >
                 {layers.map(
-                    ({ id, hidden }, index) =>
+                    ({ id, hidden }) =>
                         !hidden && (
                             <SortableItem key={id} id={id}>
                                 {/* TODO: Change the element to be the whole sortableItem but excluding the itemHandle (and maybe not just a simple onPointDown) */}
-                                <p onPointerDown={handleSelect(index)}>
-                                    {index === selectedLayer && "✓"}
+                                <p onPointerDown={handleSelect(id)}>
+                                    {id === currentLayerId && "✓"}
                                     {id}
                                 </p>
                                 {/* TODO: Icon (?) */}

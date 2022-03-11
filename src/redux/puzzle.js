@@ -6,7 +6,7 @@ const initialState = {
     width: 0,
     height: 0,
     layers: [],
-    selectedLayer: null,
+    currentLayerId: null,
 };
 
 export const puzzleSlice = createSlice({
@@ -30,34 +30,56 @@ export const puzzleSlice = createSlice({
         addLayer: (state, action) => {
             // TODO: defaultRenderOrder
             state.layers.push(action.payload);
-            state.selectedLayer = state.layers.length - 1;
+            state.currentLayerId = action.payload.id;
         },
         removeLayer: (state, action) => {
             const index = state.layers
                 .map(({ id }) => id)
                 .indexOf(action.payload);
             state.layers.splice(index, 1);
-            // TODO: the next layer is not necessarily one that can be selected
-            state.selectedLayer = index % state.layers.length;
+            if (state.currentLayerId === action.payload) {
+                let nextId = null;
+                // We try to select the next layer without wrapping to the other end
+                for (let layer of state.layers.slice(index)) {
+                    if (layer.hidden) continue;
+                    nextId = layer.id;
+                    break;
+                }
+                if (nextId === null) {
+                    // If that fails, try selecting the previous layer
+                    for (let i = index - 1; i >= 0; i--) {
+                        const layer = state.layers[i];
+                        if (layer.hidden) continue;
+                        nextId = layer.id;
+                        break;
+                    }
+                    // If THAT fails, then no layer is selectable anyways and currentLayerId should be null
+                }
+                state.currentLayerId = nextId;
+            }
         },
         selectLayer: (state, action) => {
-            if ("index" in action.payload) {
-                state.selectedLayer = action.payload.index;
+            if ("id" in action.payload) {
+                state.currentLayerId = action.payload.id;
             } else if ("tab" in action.payload) {
-                const one = action.payload.tab;
-                let index = state.selectedLayer;
-                do {
+                const one = action.payload.tab; // positive or negative one
+                let index = state.layers
+                    .map(({ id }) => id)
+                    .indexOf(state.currentLayerId);
+
+                for (let count = 0; count < state.layers.length; count++) {
                     index =
                         (state.layers.length + index + one) %
                         state.layers.length;
-                } while (state.layers[index]?.hidden);
-                state.selectedLayer = index;
+                    if (!state.layers[index].hidden) {
+                        state.currentLayerId = state.layers[index].id;
+                        break;
+                    }
+                }
             }
         },
         reorderLayers: (state, action) => {
-            const id = state.layers[state.selectedLayer].id;
             state.layers = action.payload;
-            state.selectedLayer = state.layers.map(({ id }) => id).indexOf(id);
         },
     },
 });

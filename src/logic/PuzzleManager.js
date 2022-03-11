@@ -192,8 +192,8 @@ export class PuzzleManager {
             throw Error(`Unknown current layer type: ${type}`);
         }
 
-        const { layers, selectedLayer } = this.store.getState().puzzle;
-        let layer = this.layers[layers[selectedLayer].id];
+        const { currentLayerId } = this.store.getState().puzzle;
+        let layer = this.layers[currentLayerId];
         while (layer[key] && layer[key] !== "custom") {
             layer = layer[key];
         }
