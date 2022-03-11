@@ -77,7 +77,7 @@ export class CellOutlineLayer {
                 style: {
                     stroke: "black",
                     strokeWidth: 10,
-                    strokeLinecap: "square",
+                    strokeLinejoin: "square",
                     fill: "none",
                 },
             },

@@ -185,7 +185,7 @@ export class SelectionLayer {
                         cells: {
                             shrinkwrap: {
                                 key: "selectionCage",
-                                svgPolygons: { inset: 5 },
+                                svgPolygons: { inset: 3 },
                             },
                         },
                     },
@@ -208,8 +208,8 @@ export class SelectionLayer {
                 blits,
                 style: {
                     stroke: "#00F9",
-                    strokeWidth: 8,
-                    strokeLinecap: "round",
+                    strokeWidth: 6,
+                    strokeLinejoin: "round",
                     fill: "none",
                 },
                 renderOnlyWhenFocused: true,
