@@ -8,8 +8,8 @@ export class ControlsManager {
     constructor(puzzle) {
         this.puzzle = puzzle;
 
-        // Note: interpretKeyDown and onPointerUpOutside are not event listeners
-        this.interpretKeyDown = this.interpretKeyDown.bind(this);
+        // Note: interpretKeyDown and onPointerUpOutside are not event listeners attached to the SVGCanvas
+        this.handleKeyDown = this.handleKeyDown.bind(this);
         this.onPointerUpOutside = this.onPointerUpOutside.bind(this);
 
         this.eventListeners = {
@@ -183,7 +183,20 @@ export class ControlsManager {
         event.preventDefault();
     }
 
-    interpretKeyDown(event) {
+    // Attached to the document body
+    handleKeyDown(rawEvent) {
+        // This should be a very small whitelist for what input is allowed to be blocked
+        const { shiftKey, ctrlKey, altKey, key, code } = rawEvent;
+        if (
+            code === "Tab" ||
+            parseInt(key) >= 0 ||
+            (!ctrlKey && !altKey && key.length === 1) ||
+            (!shiftKey && !altKey && (key === "a" || key === "i"))
+        ) {
+            rawEvent.preventDefault();
+        }
+
+        const event = { shiftKey, ctrlKey, altKey, key, code };
         const { grid, storage } = this.puzzle;
         const layer = this.puzzle.getCurrentLayer("controlling");
 

@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useSelector, useStore } from "react-redux";
-import { KeepingTabs } from "../components/KeepingTabs";
 import { ModalManager } from "../components/ModalManager";
 import { SideBar } from "../components/SideBar";
 import { SVGCanvas } from "../components/SVGCanvas";
@@ -16,6 +15,18 @@ export const EditPage = () => {
         setPuzzle(new PuzzleManager(store));
     }, [store]);
 
+    useEffect(() => {
+        const body = document.querySelector("body");
+        const handleKeyDown = puzzle?.controls?.handleKeyDown;
+        if (handleKeyDown && !isOpen) {
+            body.addEventListener("keydown", handleKeyDown);
+        }
+
+        return () => {
+            body.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [isOpen, puzzle]);
+
     return (
         <div className={styles.mainContainer}>
             <div
@@ -29,11 +40,6 @@ export const EditPage = () => {
             <div className={styles.divider}></div>
             <div className={styles.sideBar}>
                 {puzzle && <SideBar puzzle={puzzle} />}
-                {puzzle && !isOpen && (
-                    <KeepingTabs
-                        interpretKeyDown={puzzle.controls.interpretKeyDown}
-                    />
-                )}
             </div>
             {isOpen && <ModalManager />}
         </div>
