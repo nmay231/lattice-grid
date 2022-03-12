@@ -14,9 +14,11 @@ import {
 } from "@dnd-kit/sortable";
 import { useDispatch, useSelector } from "react-redux";
 import { reorderLayers, selectLayer } from "../../../redux/puzzle";
+import { usePuzzle } from "../../PuzzleContext/PuzzleContext";
 import { SortableItem } from "../../SortableItem";
 
-export const LayerList = ({ puzzle }) => {
+export const LayerList = () => {
+    const puzzle = usePuzzle();
     const sensors = useSensors(
         useSensor(PointerSensor),
         useSensor(KeyboardSensor, {

@@ -3,8 +3,10 @@ import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { availableLayers } from "../../../logic/layers";
 import { JsonFormsWrapper } from "../../JsonFormsWrapper";
+import { usePuzzle } from "../../PuzzleContext/PuzzleContext";
 
-export const CurrentLayerSettings = ({ puzzle }) => {
+export const CurrentLayerSettings = () => {
+    const puzzle = usePuzzle();
     const layers = useSelector((state) => state.puzzle.layers);
     const id = useSelector((state) => state.puzzle.currentLayerId);
     const layer = puzzle.layers[id];

@@ -1,9 +1,9 @@
 import { LayersGroup } from "./LayersGroup";
 
-export const SideBar = ({ puzzle }) => {
+export const SideBar = () => {
     return (
         <div>
-            <LayersGroup puzzle={puzzle} />
+            <LayersGroup />
         </div>
     );
 };

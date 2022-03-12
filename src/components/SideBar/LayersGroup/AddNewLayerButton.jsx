@@ -1,8 +1,10 @@
 import { useDispatch } from "react-redux";
 import { availableLayers } from "../../../logic/layers";
 import { awaitModalFormSubmission, openModal } from "../../../redux/modal";
+import { usePuzzle } from "../../PuzzleContext/PuzzleContext";
 
-export const AddNewLayerButton = ({ puzzle }) => {
+export const AddNewLayerButton = () => {
+    const puzzle = usePuzzle();
     const dispatch = useDispatch();
 
     const handleAddNewLayer = async () => {

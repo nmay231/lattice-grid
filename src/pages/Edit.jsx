@@ -1,23 +1,18 @@
-import { useEffect, useState } from "react";
-import { useSelector, useStore } from "react-redux";
+import { useEffect } from "react";
+import { useSelector } from "react-redux";
 import { ModalManager } from "../components/ModalManager";
+import { usePuzzle } from "../components/PuzzleContext/PuzzleContext";
 import { SideBar } from "../components/SideBar";
 import { SVGCanvas } from "../components/SVGCanvas";
-import { PuzzleManager } from "../logic/PuzzleManager";
 import styles from "./Puzzle.module.css";
 
 export const EditPage = () => {
-    const [puzzle, setPuzzle] = useState(null);
     const isOpen = useSelector((state) => state.modal.isOpen);
-    const store = useStore();
-
-    useEffect(() => {
-        setPuzzle(new PuzzleManager(store));
-    }, [store]);
+    const puzzle = usePuzzle();
 
     useEffect(() => {
         const body = document.querySelector("body");
-        const handleKeyDown = puzzle?.controls?.handleKeyDown;
+        const handleKeyDown = puzzle.controls.handleKeyDown;
         if (handleKeyDown && !isOpen) {
             body.addEventListener("keydown", handleKeyDown);
         }
@@ -32,14 +27,14 @@ export const EditPage = () => {
             <div
                 id="canvas-container"
                 className={styles.canvasContainer}
-                onPointerUp={puzzle?.controls?.onPointerUpOutside}
+                onPointerUp={puzzle.controls.onPointerUpOutside}
             >
-                {puzzle && <SVGCanvas controls={puzzle.controls} />}
+                <SVGCanvas />
             </div>
 
             <div className={styles.divider}></div>
             <div className={styles.sideBar}>
-                {puzzle && <SideBar puzzle={puzzle} />}
+                <SideBar />
             </div>
             {isOpen && <ModalManager />}
         </div>
