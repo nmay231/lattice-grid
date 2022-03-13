@@ -8,7 +8,7 @@ export class SelectionLayer {
         layer.controllingLayer = this;
     }
 
-    handleKeyDown({ event, storingLayer, grid, storage }) {
+    handleKeyDown({ event, storingLayer, grid, storage, settings }) {
         const stored = storage.getStored({ grid, layer: this });
         const ids = stored.renderOrder;
 
@@ -47,6 +47,7 @@ export class SelectionLayer {
                 storingLayer,
                 grid,
                 storage,
+                settings,
                 ids,
             }) || {};
 

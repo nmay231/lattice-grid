@@ -110,14 +110,19 @@ export class ControlsManager {
         if (!event.isPrimary) {
             return;
         }
-        const { grid, storage } = this.puzzle;
+        const { grid, storage, settings } = this.puzzle;
         event = this.cleanPointerEvent(event, "startPointer");
         const layer = this.puzzle.getCurrentLayer("controlling");
 
         if (!layer.handlePointerEvent) {
             return;
         }
-        const actions = layer.handlePointerEvent({ grid, storage, event });
+        const actions = layer.handlePointerEvent({
+            grid,
+            storage,
+            settings,
+            event,
+        });
 
         this.handleLayerActions(layer, actions);
     }
@@ -127,14 +132,19 @@ export class ControlsManager {
             return;
         }
 
-        const { grid, storage } = this.puzzle;
+        const { grid, storage, settings } = this.puzzle;
         event = this.cleanPointerEvent(event, "movePointer");
         const layer = this.currentLayer;
 
         if (!layer.handlePointerEvent) {
             return;
         }
-        const actions = layer.handlePointerEvent({ grid, storage, event });
+        const actions = layer.handlePointerEvent({
+            grid,
+            storage,
+            settings,
+            event,
+        });
 
         this.handleLayerActions(layer, actions);
     }
@@ -144,7 +154,7 @@ export class ControlsManager {
             return;
         }
 
-        const { grid, storage } = this.puzzle;
+        const { grid, storage, settings } = this.puzzle;
         const layer = this.currentLayer;
 
         if (!layer.handlePointerEvent) {
@@ -153,6 +163,7 @@ export class ControlsManager {
         const actions = layer.handlePointerEvent({
             grid,
             storage,
+            settings,
             event: this.cleanPointerEvent({}, "stopPointer"),
         });
 
@@ -164,7 +175,7 @@ export class ControlsManager {
             return;
         }
 
-        const { grid, storage } = this.puzzle;
+        const { grid, storage, settings } = this.puzzle;
         const layer = this.currentLayer;
 
         if (!layer.handlePointerEvent) {
@@ -173,6 +184,7 @@ export class ControlsManager {
         const actions = layer.handlePointerEvent({
             grid,
             storage,
+            settings,
             event: this.cleanPointerEvent({}, "cancelPointer"),
         });
 
@@ -197,7 +209,7 @@ export class ControlsManager {
         }
 
         const event = { shiftKey, ctrlKey, altKey, key, code };
-        const { grid, storage } = this.puzzle;
+        const { grid, storage, settings } = this.puzzle;
         const layer = this.puzzle.getCurrentLayer("controlling");
 
         if (event.code === "Tab") {
@@ -207,6 +219,7 @@ export class ControlsManager {
             const actions = layer.handlePointerEvent({
                 grid,
                 storage,
+                settings,
                 event: this.cleanPointerEvent({}, "unfocusPointer"),
             });
             this.handleLayerActions(layer, actions);
@@ -224,6 +237,7 @@ export class ControlsManager {
                       storingLayer,
                       grid,
                       storage,
+                      settings,
                   })
                 : {};
 
@@ -237,7 +251,7 @@ export class ControlsManager {
     // TODO: This method of deselecting things in the cursor is immensely dissatisfying. Clicking on the svg but off the grid will not unselect cells. Tapping on the sidebar (not on a button) doesn't deselect it. I could attach this event to the body and prevent bubbling, but then I could forget to prevent bubbling and that's a bug. Also, I do need to send a cancelPointer event if something like the page is blurred or a modal pulls up.
     onPointerUpOutside(event) {
         if (event.target?.id === "canvas-container") {
-            const { grid, storage } = this.puzzle;
+            const { grid, storage, settings } = this.puzzle;
             const layer = this.puzzle.getCurrentLayer("controlling");
 
             if (!layer.handlePointerEvent) {
@@ -246,6 +260,7 @@ export class ControlsManager {
             const actions = layer.handlePointerEvent({
                 grid,
                 storage,
+                settings,
                 event: this.cleanPointerEvent({}, "unfocusPointer"),
             });
 

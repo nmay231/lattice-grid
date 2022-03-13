@@ -5,6 +5,8 @@ const initialState = {
     cellSize: 60,
     // TODO: After I switch to SVG
     // zoom: 100,
+    // The time window allowed between parts of a single action, e.g. typing a two-digit number
+    actionWindowMs: 600,
 };
 
 export const settingsSlice = createSlice({

@@ -3,18 +3,32 @@ export class NumberLayer {
     static unique = false;
     hidden = false;
 
-    handleKeyDown({ event, grid, storage, ids }) {
+    handleKeyDown({ event, grid, storage, settings, ids }) {
         if (!ids.length) {
             return {};
         }
         const stored = storage.getStored({ grid, layer: this });
+
+        const timeDelay = Date.now() - (stored.lastTime || 0);
+        stored.lastTime = Date.now();
+
+        const selectionChanged =
+            grid.convertIdAndPoints({ pointsToId: stored.lastIds || [] }) !==
+            grid.convertIdAndPoints({ pointsToId: ids });
+        stored.lastIds = ids.slice();
+
         const states = ids.map((id) => stored.objects[id]?.state);
         const theSame =
             states[states.length - 1] ===
             states.reduce((prev, next) => (prev === next ? next : {}));
 
-        const state = this._nextState(theSame ? states[0] : "", event);
-        // TODO: This almost fixes the Ctrl-i bug, but I don't know exactly what's going on...
+        let state = theSame ? states[0] : "";
+        if (timeDelay > settings.actionWindowMs || selectionChanged) {
+            state = this._nextState("", state, event);
+        } else {
+            state = this._nextState(state, state, event);
+        }
+
         if (state === undefined) {
             return {};
         }
@@ -26,10 +40,10 @@ export class NumberLayer {
         };
     }
 
-    _nextState(state, event) {
+    _nextState(state, oldState, event) {
         const match = this.settings.match;
         if (event.code === "Backspace") {
-            return match(state.toString().slice(0, -1));
+            return match(oldState.toString().slice(0, -1));
         } else if (event.code === "Delete") {
             return null;
         } else if (event.code === "Minus") {
@@ -37,15 +51,12 @@ export class NumberLayer {
             return match(-1 * state) || "-";
         } else if (event.code === "Plus" || event.code === "Equal") {
             return match(state && Math.abs(state));
-        } else if ("1234567890".indexOf(event.key) === -1) {
+        } else if ("1234567890".indexOf(event.key) !== -1) {
+            return match(parseInt(state + event.key)) || state;
+        } else if (/^[a-zA-Z]$/.test(event.key)) {
             return match(parseInt(event.key, 36)) || state;
         } else {
-            // TODO: Instead of appending the current key to the end of the number if it simply matches, I could try making it time based.
-            return (
-                match(parseInt(state + event.key)) ||
-                match(parseInt(event.key)) ||
-                state
-            );
+            return undefined; // Change nothing
         }
     }
 
