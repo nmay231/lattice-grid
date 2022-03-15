@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { closeModal } from "../../redux/modal";
+import { blurActiveElement } from "../../utils/DOMUtils";
 import { JsonFormsWrapper } from "../JsonFormsWrapper";
+import { usePuzzle } from "../PuzzleContext/PuzzleContext";
 import styles from "./ModalManager.module.css";
 
 export const ModalManager = () => {
@@ -13,6 +15,7 @@ export const ModalManager = () => {
     } = useSelector((state) => state.modal);
     const [data, setData] = useState(initialData);
     const dispatch = useDispatch();
+    const puzzle = usePuzzle();
 
     useEffect(() => {
         if (isOpen) {
@@ -24,28 +27,30 @@ export const ModalManager = () => {
         return <></>;
     }
 
-    const handleCancel = (e) => {
-        e?.stopPropagation();
+    const handleCancel = (event) => {
+        event?.stopPropagation();
         dispatch(closeModal({ result: "cancel" }));
+        blurActiveElement();
     };
-    const handleKeyDown = (e) => {
-        if (e.code === "Escape") {
-            handleCancel();
+    const handleKeyDown = (event) => {
+        if (event.code === "Escape") {
+            handleCancel(event);
         }
     };
-    const handleSubmit = (e) => {
-        e.preventDefault();
+    const handleSubmit = (event) => {
+        event.preventDefault();
         dispatch(closeModal({ result: "submit", data }));
+        blurActiveElement();
     };
 
     // TODO: generalize to handle more than just "Add a new layer"
     return (
-        <div
-            className={styles.modalBackground}
-            onClick={handleCancel}
-            onKeyDown={handleKeyDown}
-        >
-            <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.modalBackground} onPointerDown={handleCancel}>
+            <div
+                className={styles.modal}
+                {...puzzle.controls.stopPropagation}
+                onKeyDown={handleKeyDown}
+            >
                 <form onSubmit={handleSubmit} id="modalForm">
                     <JsonFormsWrapper
                         data={data}

@@ -2,6 +2,7 @@ import { isEqual } from "lodash";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { availableLayers } from "../../../logic/layers";
+import { blurActiveElement } from "../../../utils/DOMUtils";
 import { JsonFormsWrapper } from "../../JsonFormsWrapper";
 import { usePuzzle } from "../../PuzzleContext/PuzzleContext";
 
@@ -40,16 +41,18 @@ export const CurrentLayerSettings = () => {
         // e.g. using the ToggleCharacters() layer, you might change the allowed characters and the displayStyle/positioning and that will call it twice: once from .changeLayerSettings (calling ControlsManager.handleLayerActions) and a second time directly in this function.
         // TODO: Changes = []
         puzzle.redrawScreen([]);
+        blurActiveElement();
     };
 
     const handleCancel = () => {
         setData(layer.rawSettings);
+        blurActiveElement();
     };
 
     // TODO: Handle when no layers are present.
     return (
-        <div>
-            <form onSubmit={handleSubmit}>
+        <div {...puzzle.controls.stopPropagation}>
+            <form action="#" onSubmit={handleSubmit}>
                 <JsonFormsWrapper
                     data={data}
                     setData={(newData) => {

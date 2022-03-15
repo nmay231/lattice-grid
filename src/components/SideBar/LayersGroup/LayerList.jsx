@@ -14,6 +14,7 @@ import {
 } from "@dnd-kit/sortable";
 import { useDispatch, useSelector } from "react-redux";
 import { reorderLayers, selectLayer } from "../../../redux/puzzle";
+import { blurActiveElement } from "../../../utils/DOMUtils";
 import { usePuzzle } from "../../PuzzleContext/PuzzleContext";
 import { SortableItem } from "../../SortableItem";
 
@@ -38,17 +39,20 @@ export const LayerList = () => {
             dispatch(reorderLayers(arrayMove(layers, oldIndex, newIndex)));
             puzzle.redrawScreen();
         }
+        blurActiveElement();
     };
 
     const handleSelect = (id) => (event) => {
         event.stopPropagation();
         dispatch(selectLayer({ id }));
         puzzle.redrawScreen();
+        blurActiveElement();
     };
 
     const handleDelete = (id) => (event) => {
         event.stopPropagation();
         puzzle.removeLayer(id);
+        blurActiveElement();
     };
 
     return (

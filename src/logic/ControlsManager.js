@@ -19,6 +19,20 @@ export class ControlsManager {
             onPointerOut: this.onPointerOut.bind(this),
             onContextMenu: this.onContextMenu.bind(this),
         };
+
+        // Attached to elements that don't want to send events to the svgcanvas like forms
+        this.stopPropagation = {
+            onPointerDown: this._stopPropagation.bind(this),
+            onPointerMove: this._stopPropagation.bind(this),
+            onPointerUp: this._stopPropagation.bind(this),
+            onPointerOut: this._stopPropagation.bind(this),
+            onKeyDown: this._stopPropagation.bind(this),
+            onContextMenu: this._stopPropagation.bind(this),
+        };
+    }
+
+    _stopPropagation(event) {
+        event.stopPropagation();
     }
 
     cleanPointerEvent(event, type) {
