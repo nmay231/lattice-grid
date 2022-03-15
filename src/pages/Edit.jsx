@@ -11,14 +11,13 @@ export const EditPage = () => {
     const puzzle = usePuzzle();
 
     useEffect(() => {
-        const body = document.querySelector("body");
         const handleKeyDown = puzzle.controls.handleKeyDown;
         if (handleKeyDown && !isOpen) {
-            body.addEventListener("keydown", handleKeyDown);
+            document.body.addEventListener("keydown", handleKeyDown);
         }
 
         return () => {
-            body.removeEventListener("keydown", handleKeyDown);
+            document.body.removeEventListener("keydown", handleKeyDown);
         };
     }, [isOpen, puzzle]);
 
