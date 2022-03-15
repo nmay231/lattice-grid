@@ -3,7 +3,8 @@ export class NumberLayer {
     static unique = false;
     hidden = false;
 
-    handleKeyDown({ event, grid, storage, settings, ids }) {
+    handleKeyDown({ event, grid, storage, settings }) {
+        const ids = event.points;
         if (!ids.length) {
             return {};
         }

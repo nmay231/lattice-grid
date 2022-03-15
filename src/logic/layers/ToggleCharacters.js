@@ -100,7 +100,8 @@ export class ToggleCharactersLayer {
         return { history };
     }
 
-    handleKeyDown({ event, grid, storage, ids }) {
+    handleKeyDown({ event, grid, storage }) {
+        const ids = event.points;
         if (!ids?.length) {
             return {};
         }

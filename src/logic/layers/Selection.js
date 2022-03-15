@@ -84,14 +84,15 @@ export class SelectionLayer {
                     return { history };
                 }
 
+                event.points = ids;
+
                 const actions =
                     storingLayer.handleKeyDown?.({
-                        event,
-                        storingLayer,
                         grid,
                         storage,
                         settings,
-                        ids,
+                        event,
+                        storingLayer,
                     }) || {};
 
                 return { ...actions, storingLayer, discontinueInput: true };
