@@ -27,7 +27,7 @@ export class SquareGrid {
         pointTypes = [],
         // TODO: implement deltas as Finite State Machines for more capabilities and better cross-compatibility between grid types
         deltas,
-        lastPoint = null,
+        previousPoint = null,
     }) {
         const { cellSize } = this.settings;
         const halfCell = cellSize / 2;
@@ -56,7 +56,7 @@ export class SquareGrid {
             );
         }
 
-        if (lastPoint === null) {
+        if (previousPoint === null) {
             // TODO: This is stupid, but will do for now
             return targetPoints
                 .map((p) => this._stringToGridPoint(p.toString()))
@@ -64,9 +64,9 @@ export class SquareGrid {
                 .map(({ x, y }) => `${x},${y}`);
         }
 
-        lastPoint = lastPoint.split(",").map((x) => parseInt(x));
+        previousPoint = previousPoint.split(",").map((x) => parseInt(x));
         const nearby = deltas.map(
-            ({ dx, dy }) => `${lastPoint[0] + dx},${lastPoint[1] + dy}`
+            ({ dx, dy }) => `${previousPoint[0] + dx},${previousPoint[1] + dy}`
         );
         const intersection = targetPoints
             .map((p) => p.toString())
@@ -76,7 +76,7 @@ export class SquareGrid {
         }
 
         const generator = hopStraight({
-            lastPoint,
+            previousPoint,
             deltas,
             cursor: [cursor.x, cursor.y],
         });
@@ -85,11 +85,11 @@ export class SquareGrid {
 
         let maxIteration = 100; // Prevent infinite loops
         while (maxIteration > 0) {
-            lastPoint = generator
-                .next(lastPoint)
+            previousPoint = generator
+                .next(previousPoint)
                 .value?.map((v) => Math.round(v));
-            const string = lastPoint?.join(",");
-            if (!lastPoint || points.indexOf(string) > -1) {
+            const string = previousPoint?.join(",");
+            if (!previousPoint || points.indexOf(string) > -1) {
                 return [];
             }
             points.push(string);

@@ -1,4 +1,4 @@
-import { handlePointerEventCurrentSetting } from "./controls/onePoint";
+import { handleEventsCurrentSetting } from "./controls/onePoint";
 
 export class BackgroundColorLayer {
     static id = "Background Color";
@@ -13,7 +13,7 @@ export class BackgroundColorLayer {
             selectedState: newSettings.selectedState || "blue",
         };
 
-        handlePointerEventCurrentSetting(this, {
+        handleEventsCurrentSetting(this, {
             pointTypes: ["cells"],
             // TODO: Replace deltas with FSM
             deltas: [

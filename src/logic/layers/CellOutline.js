@@ -1,4 +1,4 @@
-import { handlePointerEventCycleStates } from "./controls/onePoint";
+import { handleEventsCycleStates } from "./controls/onePoint";
 
 export class CellOutlineLayer {
     static id = "Cell Outline";
@@ -6,7 +6,7 @@ export class CellOutlineLayer {
     hidden = true;
 
     newSettings() {
-        handlePointerEventCycleStates(this, {
+        handleEventsCycleStates(this, {
             states: [true],
             pointTypes: ["cells"],
             // TODO: Change deltas to Finite State Machine

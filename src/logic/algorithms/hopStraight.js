@@ -5,12 +5,12 @@ const euclidean = (x1, y1, x2, y2) => ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5;
  *
  * @param {Object} args
  * @param {[number, number]} args.cursor - The cursor position (scaled to grid coordinates)
- * @param {[number, number]} args.lastPoint - The previous selected point, i.e. the target point from last time
+ * @param {[number, number]} args.previousPoint - The previous selected point, i.e. the target point from last time
  * @param {{dx: number, dy: number}[]} args.deltas - The path must use these set of "hops" or vectors
  * @yields {null | [number, number]}
  */
-export function* hopStraight({ cursor, lastPoint, deltas }) {
-    let [startX, startY] = lastPoint;
+export function* hopStraight({ cursor, previousPoint, deltas }) {
+    let [startX, startY] = previousPoint;
     const [targetX, targetY] = cursor;
 
     deltas = deltas

@@ -6,84 +6,17 @@ export class SelectionLayer {
     attachHandler(layer, options) {
         // TODO: options
         layer.controllingLayer = this;
+        // TODO: Get rid of the controlling/storing heirarchy and do this instead:
+        // layer.handleEvent = (args) => this.handleEvent({...args}, layer);
     }
 
-    handleKeyDown({ event, storingLayer, grid, storage, settings }) {
-        const stored = storage.getStored({ grid, layer: this });
-        const ids = stored.renderOrder;
-
-        let history = null;
-        if (event.code === "Escape") {
-            history = ids.map((id) => ({
-                id,
-                object: null,
-            }));
-        } else if (event.ctrlKey && event.key === "a") {
-            history = grid.getAllPoints("cells").map((id) => ({
-                id,
-                object: { state: 1, point: id },
-            }));
-        } else if (event.ctrlKey && event.key === "i") {
-            const all = grid.getAllPoints("cells");
-            history = all.map((id) => {
-                if (id in stored.objects) {
-                    return { id, object: null };
-                } else {
-                    return {
-                        id,
-                        object: { state: 1, point: id },
-                    };
-                }
-            });
-        }
-
-        if (history !== null) {
-            return { history };
-        }
-
-        const actions =
-            storingLayer.handleKeyDown?.({
-                event,
-                storingLayer,
-                grid,
-                storage,
-                settings,
-                ids,
-            }) || {};
-
-        // TODO: Do I ever need to modify two layers at once?
-        return { ...actions, storingLayer };
-    }
-
-    handlePointerEvent({ grid, storage, event }) {
+    gatherPoints({ grid, storage, event }) {
         const stored = storage.getStored({ grid, layer: this });
 
-        if (event.type === "unfocusPointer") {
-            return {
-                discontinueInput: true,
-                history: stored.renderOrder.map((id) => ({
-                    id,
-                    object: null,
-                })),
-            };
-        } else if (
-            event.type === "stopPointer" ||
-            event.type === "cancelPointer"
-        ) {
-            if (stored.temporary.removeSingle) {
-                return {
-                    discontinueInput: true,
-                    history: [{ id: stored.renderOrder[0], object: null }],
-                };
-            }
-            return { discontinueInput: true };
-        }
-
-        stored.groupNumber = stored.groupNumber || 1;
         stored.temporary.blacklist = stored.temporary.blacklist ?? [];
-        let ids = grid.selectPointsWithCursor({
+        let newPoints = grid.selectPointsWithCursor({
             cursor: event.cursor,
-            lastPoint: stored.temporary.lastPoint,
+            previousPoint: stored.temporary.previousPoint,
             pointTypes: ["cells"],
             // TODO: Change deltas to Finite State Machine
             deltas: [
@@ -98,78 +31,165 @@ export class SelectionLayer {
             ],
         });
 
-        if (!ids.length) return;
-        stored.temporary.lastPoint = ids[ids.length - 1];
-        ids = ids.filter((id) => stored.temporary.blacklist.indexOf(id) === -1);
-        if (!ids.length) return;
+        if (!newPoints.length) return;
+        stored.temporary.previousPoint = newPoints[newPoints.length - 1];
+        newPoints = newPoints.filter(
+            (id) => stored.temporary.blacklist.indexOf(id) === -1
+        );
+        if (!newPoints.length) return;
 
-        stored.temporary.blacklist.push(...ids);
+        stored.temporary.blacklist.push(...newPoints);
 
-        let history;
-        if (event.ctrlKey || event.shiftKey) {
-            if (stored.temporary.targetState === undefined) {
-                // If targetState is undefined, there can only be one id
-                const id = ids[0];
-                if (id in stored.objects) {
-                    stored.temporary.targetState = null;
-                    history = [{ id, object: null }];
+        return newPoints;
+    }
+
+    handleEvent({ grid, storage, settings, event, storingLayer }) {
+        const stored = storage.getStored({ grid, layer: this });
+
+        switch (event.type) {
+            case "cancelAction": {
+                return {
+                    discontinueInput: true,
+                    history: stored.renderOrder.map((id) => ({
+                        id,
+                        object: null,
+                    })),
+                };
+            }
+            case "delete":
+            case "keyDown": {
+                const ids = stored.renderOrder;
+
+                let history = null;
+                if (event.ctrlKey && event.key === "a") {
+                    history = grid.getAllPoints("cells").map((id) => ({
+                        id,
+                        object: { state: 1, point: id },
+                    }));
+                } else if (event.ctrlKey && event.key === "i") {
+                    const all = grid.getAllPoints("cells");
+                    history = all.map((id) => {
+                        if (id in stored.objects) {
+                            return { id, object: null };
+                        } else {
+                            return {
+                                id,
+                                object: { state: 1, point: id },
+                            };
+                        }
+                    });
+                }
+
+                if (history !== null) {
+                    return { history };
+                }
+
+                const actions =
+                    storingLayer.handleKeyDown?.({
+                        event,
+                        storingLayer,
+                        grid,
+                        storage,
+                        settings,
+                        ids,
+                    }) || {};
+
+                return { ...actions, storingLayer, discontinueInput: true };
+            }
+            case "pointerDown":
+            case "pointerMove": {
+                stored.groupNumber = stored.groupNumber || 1;
+                const ids = event.points;
+
+                let history;
+                if (event.ctrlKey || event.shiftKey) {
+                    if (stored.temporary.targetState === undefined) {
+                        // If targetState is undefined, there can only be one id
+                        const id = ids[0];
+                        if (id in stored.objects) {
+                            stored.temporary.targetState = null;
+                            history = [{ id, object: null }];
+                        } else {
+                            stored.groupNumber += 1;
+                            stored.temporary.targetState = stored.groupNumber;
+                            history = [
+                                {
+                                    id,
+                                    object: {
+                                        state: stored.groupNumber,
+                                        point: id,
+                                    },
+                                },
+                            ];
+                        }
+                    } else if (stored.temporary.targetState === null) {
+                        history = ids
+                            .filter((id) => id in stored.objects)
+                            .map((id) => ({ id, object: null }));
+                    } else {
+                        const groupsToMerge = new Set(
+                            ids.map((id) => stored.objects[id]?.state)
+                        );
+                        const allIds = ids
+                            .filter((id) => !(id in stored.objects))
+                            .concat(
+                                stored.renderOrder.filter((id) =>
+                                    groupsToMerge.has(stored.objects[id].state)
+                                )
+                            );
+                        history = allIds.map((id) => ({
+                            id,
+                            object: {
+                                state: stored.temporary.targetState,
+                                point: id,
+                            },
+                        }));
+                    }
                 } else {
-                    stored.groupNumber += 1;
+                    const removeOld =
+                        stored.temporary.targetState === undefined;
+                    stored.groupNumber = 2;
                     stored.temporary.targetState = stored.groupNumber;
-                    history = [
-                        {
+                    stored.temporary.removeSingle = false;
+                    history = [];
+
+                    if (removeOld) {
+                        const oldIds = stored.renderOrder;
+                        history = oldIds
+                            .filter((toDelete) => ids.indexOf(toDelete) === -1)
+                            .map((toDelete) => ({
+                                id: toDelete,
+                                object: null,
+                            }));
+
+                        if (oldIds.length === 1 && oldIds[0] === ids[0]) {
+                            stored.temporary.removeSingle = true;
+                        }
+                    }
+
+                    history.push(
+                        ...ids.map((id) => ({
                             id,
                             object: { state: stored.groupNumber, point: id },
-                        },
-                    ];
-                }
-            } else if (stored.temporary.targetState === null) {
-                history = ids
-                    .filter((id) => id in stored.objects)
-                    .map((id) => ({ id, object: null }));
-            } else {
-                const groupsToMerge = new Set(
-                    ids.map((id) => stored.objects[id]?.state)
-                );
-                const allIds = ids
-                    .filter((id) => !(id in stored.objects))
-                    .concat(
-                        stored.renderOrder.filter((id) =>
-                            groupsToMerge.has(stored.objects[id].state)
-                        )
+                        }))
                     );
-                history = allIds.map((id) => ({
-                    id,
-                    object: { state: stored.temporary.targetState, point: id },
-                }));
-            }
-        } else {
-            const removeOld = stored.temporary.targetState === undefined;
-            stored.groupNumber = 2;
-            stored.temporary.targetState = stored.groupNumber;
-            stored.temporary.removeSingle = false;
-            history = [];
-
-            if (removeOld) {
-                const oldIds = stored.renderOrder;
-                history = oldIds
-                    .filter((toDelete) => ids.indexOf(toDelete) === -1)
-                    .map((toDelete) => ({ id: toDelete, object: null }));
-
-                if (oldIds.length === 1 && oldIds[0] === ids[0]) {
-                    stored.temporary.removeSingle = true;
                 }
+
+                return { history };
             }
-
-            history.push(
-                ...ids.map((id) => ({
-                    id,
-                    object: { state: stored.groupNumber, point: id },
-                }))
-            );
+            case "pointerUp": {
+                if (stored.temporary.removeSingle) {
+                    return {
+                        discontinueInput: true,
+                        history: [{ id: stored.renderOrder[0], object: null }],
+                    };
+                }
+                return { discontinueInput: true };
+            }
+            default: {
+                throw new Error(`Unknown event.type=${event.type}`);
+            }
         }
-
-        return { history };
     }
 
     getBlits({ grid, stored }) {

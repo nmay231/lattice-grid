@@ -1,4 +1,4 @@
-import { handlePointerEventCurrentSetting } from "./controls/twoPoint";
+import { handleEventsCurrentSetting } from "./controls/twoPoint";
 
 export class SimpleLineLayer {
     static id = "Line";
@@ -13,7 +13,7 @@ export class SimpleLineLayer {
             selectedState: { fill: newSettings.fill || "green" },
         };
 
-        handlePointerEventCurrentSetting(this, {
+        handleEventsCurrentSetting(this, {
             // TODO: Directional true/false is ambiguous. There are three types: lines and arrows with/without overlap
             directional: false,
             pointTypes: ["cells"],

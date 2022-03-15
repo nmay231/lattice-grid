@@ -1,4 +1,4 @@
-import { handlePointerEventUnorderedSets } from "./controls/multiPoint";
+import { handleEventsUnorderedSets } from "./controls/multiPoint";
 
 export class KillerCagesLayer {
     static id = "Killer Cages";
@@ -38,7 +38,7 @@ export class KillerCagesLayer {
     newSettings({ newSettings, grid, storage }) {
         // this.rawSettings = newSettings;
 
-        handlePointerEventUnorderedSets(this, {
+        handleEventsUnorderedSets(this, {
             handleKeyDown: this._handleKeyDown.bind(this),
             pointTypes: ["cells"],
             ensureConnected: false, // TODO: Change to true when properly implemented

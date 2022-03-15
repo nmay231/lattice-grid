@@ -1,4 +1,4 @@
-export const handlePointerEventCurrentSetting = (
+export const handleEventsCurrentSetting = (
     layer,
     { directional, pointTypes, stopOnFirstPoint, deltas } = {}
 ) => {
@@ -6,29 +6,34 @@ export const handlePointerEventCurrentSetting = (
         throw Error("Was not provided parameters");
     }
 
-    layer.handleKeyDown = null;
-
-    layer.handlePointerEvent = ({ grid, storage, event }) => {
-        if (event.type !== "startPointer" && event.type !== "movePointer") {
-            return { discontinueInput: true };
-        }
-
+    layer.gatherPoints = ({ grid, storage, event }) => {
         const stored = storage.getStored({ grid, layer });
 
         const newPoints = grid.selectPointsWithCursor({
             cursor: event.cursor,
             pointTypes,
             deltas,
-            lastPoint: stored.temporary.lastPoint,
+            previousPoint: stored.temporary.previousPoint,
         });
-        if (stored.temporary.lastPoint) {
-            newPoints.unshift(stored.temporary.lastPoint);
+        if (stored.temporary.previousPoint) {
+            newPoints.unshift(stored.temporary.previousPoint);
         }
-        stored.temporary.lastPoint = newPoints[newPoints.length - 1];
+        stored.temporary.previousPoint = newPoints[newPoints.length - 1];
 
-        if (newPoints.length < 2) {
-            return {};
+        if (newPoints.length < 2) return [];
+
+        return newPoints;
+    };
+
+    layer.handleEvent = ({ grid, storage, event }) => {
+        if (event.type !== "pointerDown" && event.type !== "pointerMove") {
+            return { discontinueInput: true };
+        } else if (!event.points.length) {
+            return;
         }
+
+        const stored = storage.getStored({ grid, layer });
+        const newPoints = event.points;
 
         const history = [];
         for (let i = 0; i < newPoints.length - 1; i++) {
