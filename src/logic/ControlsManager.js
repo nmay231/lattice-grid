@@ -1,7 +1,7 @@
 import { selectLayer } from "../redux/puzzle";
 
 export class ControlsManager {
-    pointerLeftCanvas = false;
+    leaveCanvasTimeout = null;
     currentLayer = null;
     history = [];
 
@@ -16,7 +16,8 @@ export class ControlsManager {
             onPointerDown: this.onPointerDown.bind(this),
             onPointerMove: this.onPointerMove.bind(this),
             onPointerUp: this.onPointerUp.bind(this),
-            onPointerOut: this.onPointerOut.bind(this),
+            onPointerLeave: this.onPointerLeave.bind(this),
+            onPointerEnter: this.onPointerEnter.bind(this),
             onContextMenu: this.onContextMenu.bind(this),
         };
 
@@ -25,7 +26,8 @@ export class ControlsManager {
             onPointerDown: this._stopPropagation.bind(this),
             onPointerMove: this._stopPropagation.bind(this),
             onPointerUp: this._stopPropagation.bind(this),
-            onPointerOut: this._stopPropagation.bind(this),
+            onPointerLeave: this._stopPropagation.bind(this),
+            onPointerEnter: this._stopPropagation.bind(this),
             onKeyDown: this._stopPropagation.bind(this),
             onContextMenu: this._stopPropagation.bind(this),
         };
@@ -66,7 +68,7 @@ export class ControlsManager {
 
     resetControls() {
         this.currentLayer = null;
-        this.pointerLeftCanvas = false;
+        this.leaveCanvasTimeout = null;
     }
 
     handleLayerActions(
@@ -175,17 +177,32 @@ export class ControlsManager {
         this.handleLayerActions(layer, actions);
     }
 
-    onPointerOut(event) {
+    onPointerLeave(event) {
         if (!event.isPrimary || !this.currentLayer) {
             return;
         }
 
         const layer = this.currentLayer;
         const { grid, storage, settings } = this.puzzle;
-        event = this.cleanPointerEvent({}, "cancelAction");
+        event = this.cleanPointerEvent(event, "cancelAction");
 
-        const actions = layer.handleEvent({ grid, storage, settings, event });
-        this.handleLayerActions(layer, actions);
+        this.leaveCanvasTimeout = setTimeout(() => {
+            const actions = layer.handleEvent({
+                grid,
+                storage,
+                settings,
+                event,
+            });
+            this.handleLayerActions(layer, actions);
+        }, settings.actionWindowMs);
+    }
+
+    onPointerEnter(event) {
+        if (!event.isPrimary || !this.currentLayer) {
+            return;
+        }
+
+        clearTimeout(this.leaveCanvasTimeout);
     }
 
     onContextMenu(event) {
