@@ -2,8 +2,6 @@ import { hopStraight } from "../algorithms/hopStraight";
 import { POINT_TYPES } from "../PuzzleManager";
 
 export class SquareGrid {
-    onePointLayers = {};
-
     constructor(settings, params) {
         this.settings = settings;
         this.width = params.width;
@@ -578,8 +576,28 @@ export class SquareGrid {
                 }
             }
             return arr;
+        } else if (type === POINT_TYPES.CORNER) {
+            let arr = [];
+            for (let x = this.x0; x <= this.x0 + this.width; x += 1) {
+                for (let y = this.y0; y <= this.y0 + this.height; y += 1) {
+                    arr.push({ x: 2 * x, y: 2 * y, type });
+                }
+            }
+            return arr;
+        } else if (type === POINT_TYPES.EDGE) {
+            let arr = [];
+            for (let x = this.x0; x <= this.x0 + this.width; x += 1) {
+                for (let y = this.y0; y <= this.y0 + this.height; y += 1) {
+                    if (x < this.x0 + this.width)
+                        arr.push({ x: 2 * x + 1, y: 2 * y, type });
+
+                    if (y < this.y0 + this.height)
+                        arr.push({ x: 2 * x, y: 2 * y + 1, type });
+                }
+            }
+            return arr;
         } else {
-            throw Error("Not implemented yet: " + type);
+            throw Error(`Unrecognized type=${type}`);
         }
     }
 
