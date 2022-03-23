@@ -1,6 +1,7 @@
 import { ControlsGroup } from "./ControlsGroup";
 import { LayersGroup } from "./LayersGroup";
 import { MainGroup } from "./MainGroup";
+import { CodeGroup } from "./TemporaryCodeGroup";
 
 export const SideBar: React.FC = () => {
     return (
@@ -8,6 +9,7 @@ export const SideBar: React.FC = () => {
             <MainGroup />
             <LayersGroup />
             <ControlsGroup />
+            <CodeGroup />
         </div>
     );
 };
