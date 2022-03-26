@@ -11,11 +11,23 @@ export const CodeGroup = () => {
             storage: puzzle.storage,
             layers: puzzle.layers,
             variables: {},
+            puzzleErrors: [],
+            puzzleWarnings: [],
         };
         return [
             compile(context, testCode).run,
             compile(context, testCode2).run,
-        ];
+        ].map((runFunc) => {
+            return () => {
+                runFunc();
+                if (context.puzzleWarnings.length) {
+                    console.log("Warning:", context.puzzleWarnings);
+                }
+                if (context.puzzleErrors.length) {
+                    console.log("Error:", context.puzzleErrors);
+                }
+            };
+        });
         // const result =
         // return () => result.run();
     }, [puzzle]);

@@ -43,10 +43,26 @@ const objectSelectorExpression = (
     };
 };
 
-// interface MarkIncomplete {
-//     type: "markIncomplete";
-//     objectOrArrayOfObjectsOrSomething: any;
-// }
+interface MarkIncomplete {
+    type: "markIncomplete";
+    expression: Expression;
+    userMessage?: string;
+}
+
+const markIncompleteStatement = (
+    ctx: Context,
+    userCode: MarkIncomplete
+): CompiledCode => {
+    const x = compileVariable(ctx, userCode.expression);
+    return {
+        run: () => {
+            ctx.puzzleWarnings.push({
+                message: userCode.userMessage || "",
+                objects: x.getValue(),
+            });
+        },
+    };
+};
 
 interface ForEach {
     type: "forEach";
@@ -71,6 +87,116 @@ const forEachStatement = (ctx: Context, userCode: ForEach): CompiledCode => {
     };
 };
 
+interface Int {
+    type: "int";
+    value: number;
+}
+
+const intExpression = (ctx: Context, userCode: Int): Variable => {
+    if (typeof userCode.value !== "number" || userCode.value % 1 !== 0) {
+        throw Error(`${userCode.value} is not an integer`);
+    }
+    return {
+        getValue: () => userCode.value,
+    };
+};
+
+// A user variable is a variable that a user sets directly (as opposed to a variable make automatically like in a for-loop)
+interface UserVariable {
+    type: "userVariable";
+    name: string;
+    expression: Expression;
+}
+
+const userVariableStatement = (
+    ctx: Context,
+    userCode: UserVariable
+): CompiledCode => {
+    const variable = compileVariable(ctx, userCode.expression);
+    return {
+        run: () => {
+            ctx.variables[userCode.name] = variable;
+        },
+    };
+};
+
+interface ReadVariable {
+    type: "readVariable";
+    variableName: string;
+}
+
+const readVariableExpression = (
+    ctx: Context,
+    userCode: ReadVariable
+): Variable => {
+    return {
+        getValue: () => {
+            return ctx.variables[userCode.variableName].getValue();
+        },
+    };
+};
+
+interface Compare {
+    type: "compare";
+    compareType: ">" | "<";
+    left: Expression;
+    right: Expression;
+}
+
+const compareExpression = (ctx: Context, userCode: Compare): Variable => {
+    const left = compileVariable(ctx, userCode.left);
+    const right = compileVariable(ctx, userCode.right);
+    return {
+        getValue: () => {
+            switch (userCode.compareType) {
+                case "<":
+                    return left.getValue() < right.getValue();
+                case ">":
+                    return left.getValue() > right.getValue();
+            }
+        },
+    };
+};
+
+const convertToBool = (variable: Variable) => {
+    const x = variable.getValue();
+    let bool: boolean | null = null;
+    if (Array.isArray(x) && x.length) {
+        bool = true;
+    } else if (typeof x === "boolean") {
+        bool = x;
+    }
+
+    if (bool === null) {
+        // TODO: move this exception to the calling function?
+        throw Error(`Invalid value for expression: ${x}`);
+    }
+    return bool;
+};
+
+interface IfElse {
+    type: "ifElse";
+    expression: Expression;
+    ifTrue: UserCodeStatement[];
+    ifFalse: UserCodeStatement[];
+}
+
+const ifElseStatement = (ctx: Context, userCode: IfElse): CompiledCode => {
+    const variable = compileVariable(ctx, userCode.expression);
+    const ifTrue = compile(ctx, userCode.ifTrue);
+    const ifFalse = compile(ctx, userCode.ifFalse);
+    return {
+        run: () => {
+            const bool = convertToBool(variable);
+            if (bool) {
+                ifTrue.run();
+            } else {
+                ifFalse.run();
+            }
+        },
+    };
+};
+
 interface Debug {
     type: "debug";
     variable: string;
@@ -84,19 +210,28 @@ const debugStatement = (ctx: Context, userCode: Debug): CompiledCode => {
     };
 };
 
-type UserCodeStatement = ForEach | Debug;
-type Expression = PointSelector | ObjectSelector;
+type UserCodeStatement =
+    | ForEach
+    | Debug
+    | MarkIncomplete
+    | IfElse
+    | UserVariable;
+type Expression = PointSelector | ObjectSelector | Compare | Int | ReadVariable;
+
+type PuzzleErrorMessage = {
+    message: string;
+    objects: any[];
+    // TODO: This might be better?
+    // objectIds: string[];
+};
 
 interface Context {
     grid: SquareGrid;
     storage: StorageManager;
     layers: { [layerId: string]: any };
     variables: { [key: string]: Variable };
-    // TODO: Do I need temporary?
-    temporary?: {
-        variableValuesOrSomething: { [key: string]: any };
-        [key: string]: any;
-    };
+    puzzleErrors: PuzzleErrorMessage[];
+    puzzleWarnings: PuzzleErrorMessage[];
 }
 
 interface CompiledCode {
@@ -108,6 +243,12 @@ const compileVariable = (ctx: Context, expression: Expression): Variable => {
         return pointSelectorExpression(ctx, expression);
     } else if (expression.type === "objectSelector") {
         return objectSelectorExpression(ctx, expression);
+    } else if (expression.type === "compare") {
+        return compareExpression(ctx, expression);
+    } else if (expression.type === "int") {
+        return intExpression(ctx, expression);
+    } else if (expression.type === "readVariable") {
+        return readVariableExpression(ctx, expression);
     } else {
         throw Error("you failed");
     }
@@ -123,6 +264,14 @@ export const compile = (
             thingsToRun.push(forEachStatement(ctx, code));
         } else if (code.type === "debug") {
             thingsToRun.push(debugStatement(ctx, code));
+        } else if (code.type === "markIncomplete") {
+            thingsToRun.push(markIncompleteStatement(ctx, code));
+        } else if (code.type === "ifElse") {
+            thingsToRun.push(ifElseStatement(ctx, code));
+        } else if (code.type === "userVariable") {
+            thingsToRun.push(userVariableStatement(ctx, code));
+        } else {
+            throw Error("you failed");
         }
     }
     return {
@@ -209,6 +358,50 @@ ForEach(square UNION circle, (square_or_circle) => {
 // I also never figured out if adjacent statements are truly independent or not. When modifying an object, one statement might need to happen before the other. Is there anything like that?
 export const testCode: UserCodeStatement[] = [
     {
+        type: "userVariable",
+        name: "five",
+        expression: {
+            type: "int",
+            value: 5,
+        },
+    },
+    {
+        type: "userVariable",
+        name: "four",
+        expression: {
+            type: "int",
+            value: 4,
+        },
+    },
+    {
+        type: "userVariable",
+        name: "bool",
+        expression: {
+            type: "compare",
+            compareType: "<",
+            left: {
+                type: "readVariable",
+                variableName: "four",
+            },
+            right: {
+                type: "readVariable",
+                variableName: "four",
+            },
+        },
+    },
+    {
+        type: "debug",
+        variable: "bool",
+    },
+    {
+        type: "markIncomplete",
+        expression: {
+            type: "int",
+            value: 42,
+        },
+        userMessage: "Not really the answer to life...",
+    },
+    {
         type: "forEach",
         variableName: "myVar",
         expression: {
@@ -221,6 +414,13 @@ export const testCode: UserCodeStatement[] = [
                 type: "debug",
                 variable: "myVar",
             },
+            // {
+            //     type: "markIncomplete",
+            //     expression: {
+            //         type: "objectSelector",
+            //         layerId: "Number",
+            //     },
+            // },
         ],
     },
 ];
