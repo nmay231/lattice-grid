@@ -1,6 +1,6 @@
 import { Group } from "../Group";
 import { AddNewLayerButton } from "./AddNewLayerButton";
-import { CurrentLayerSettings } from "./CurrentLayerSettings";
+import { LayerBehaviorSettings } from "./LayerBehaviorSettings";
 import { LayerList } from "./LayerList";
 
 export const LayersGroup = () => {
@@ -10,7 +10,7 @@ export const LayersGroup = () => {
             <LayerList />
             <hr />
             <p>Settings:</p>
-            <CurrentLayerSettings />
+            <LayerBehaviorSettings />
         </Group>
     );
 };

@@ -6,7 +6,7 @@ import { blurActiveElement } from "../../../utils/DOMUtils";
 import { JsonFormsWrapper } from "../../JsonFormsWrapper";
 import { usePuzzle } from "../../PuzzleContext/PuzzleContext";
 
-export const CurrentLayerSettings = () => {
+export const LayerBehaviorSettings = () => {
     const puzzle = usePuzzle();
     const layers = useSelector((state) => state.puzzle.layers);
     const id = useSelector((state) => state.puzzle.currentLayerId);
