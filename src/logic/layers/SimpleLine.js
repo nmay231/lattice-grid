@@ -30,6 +30,30 @@ export class SimpleLineLayer {
             scope: "#/properties/connections",
         },
     ];
+    static controlsSchema = {
+        type: "object",
+        properties: {
+            fill: {
+                type: "string",
+                enum: [
+                    "blue",
+                    "green",
+                    "orange",
+                    "pink",
+                    "purple",
+                    "red",
+                    "yellow",
+                ],
+            },
+        },
+    };
+    static controlsUISchemaElements = [
+        {
+            type: "Control",
+            label: "Color",
+            scope: "#/properties/fill",
+        },
+    ];
 
     newSettings({ newSettings, storage, grid }) {
         this.rawSettings = this.rawSettings || {};

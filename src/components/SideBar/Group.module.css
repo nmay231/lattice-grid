@@ -1,3 +1,7 @@
+.groupContainer {
+    margin-bottom: 10px;
+}
+
 .groupBody {
     overflow-y: hidden;
 }

@@ -1,10 +1,10 @@
 import { useState } from "react";
 import styling from "./Group.module.css";
 
-export const Group = ({ children, name, expanded }) => {
+export const Group = ({ children, name, expanded = false }) => {
     const [expand, setExpand] = useState(expanded);
     return (
-        <div>
+        <div className={styling.groupContainer}>
             <div
                 className={styling.groupHeader}
                 onClick={() => setExpand(!expand)}
