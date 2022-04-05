@@ -30,6 +30,7 @@ export class PuzzleManager {
     }
 
     loadPuzzle() {
+        this.layers = {};
         this.store.dispatch(newPuzzle());
         try {
             const data = JSON.parse(localStorage.getItem("_currentPuzzle"));
@@ -37,15 +38,20 @@ export class PuzzleManager {
         } catch (err) {
             // TODO: Toast message to user saying something went wrong.
             console.error(err);
-            this.store.dispatch(newPuzzle());
-            this._loadPuzzle({
-                layers: [
-                    { layerClass: "Cell Outline" },
-                    { layerClass: "Selections" },
-                    { layerClass: "Number" },
-                ],
-            });
+            this.freshPuzzle();
         }
+    }
+
+    freshPuzzle() {
+        this.layers = {};
+        this.store.dispatch(newPuzzle());
+        this._loadPuzzle({
+            layers: [
+                { layerClass: "Cell Outline" },
+                { layerClass: "Selections" },
+                { layerClass: "Number" },
+            ],
+        });
     }
 
     _loadPuzzle(data) {
