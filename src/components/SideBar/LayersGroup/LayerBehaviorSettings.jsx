@@ -1,7 +1,9 @@
+import { useAtom } from "jotai";
 import { isEqual } from "lodash";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useSelector } from "react-redux";
 import { availableLayers } from "../../../logic/layers";
+import { behaviorSettingsAtom } from "../../../redux/jotai";
 import { blurActiveElement } from "../../../utils/DOMUtils";
 import { JsonFormsWrapper } from "../../JsonFormsWrapper";
 import { usePuzzle } from "../../PuzzleContext/PuzzleContext";
@@ -11,13 +13,14 @@ export const LayerBehaviorSettings = () => {
     const layers = useSelector((state) => state.puzzle.layers);
     const id = useSelector((state) => state.puzzle.currentLayerId);
     const layer = puzzle.layers[id];
-    const [data, setData] = useState(null);
+
+    const [data, setData] = useAtom(behaviorSettingsAtom);
 
     useEffect(() => {
         if (layer) {
             setData(layer.rawSettings);
         }
-    }, [layer]);
+    }, [layer, setData]);
 
     if (!data || !layer) {
         return <></>;
