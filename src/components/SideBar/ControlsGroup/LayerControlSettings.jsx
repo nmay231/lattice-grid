@@ -33,11 +33,8 @@ export const LayerControlSettings = () => {
     const layerType = layers.filter((layer) => layer.id === id)[0].layerType;
     const layerClass = availableLayers[layerType];
 
-    const schema = layerClass.controlsSchema;
-    const uischema = {
-        type: "VerticalLayout",
-        elements: layerClass.controlsUISchemaElements,
-    };
+    const { schema, uischemaElements } = layerClass.controls || {};
+    const uischema = { type: "VerticalLayout", elements: uischemaElements };
 
     return (
         <div {...puzzle.controls.stopPropagation}>

@@ -22,14 +22,14 @@ export const AddNewLayerButton = () => {
         const uiGroups = [];
         for (let id of layerIds) {
             const layer = availableLayers[id];
-            if (!layer.settingsSchema || !layer.settingsUISchemaElements) {
+            if (!layer.constraints) {
                 continue;
             }
             initialData[id] = layer.defaultSettings;
-            schemaProperties[id] = layer.settingsSchema;
+            schemaProperties[id] = layer.constraints.schema;
             uiGroups.push({
                 type: "Group",
-                elements: layer.settingsUISchemaElements.map((element) => ({
+                elements: layer.constraints.uischemaElements.map((element) => ({
                     ...element,
                     scope: element.scope.replace("#", `#/properties/${id}`),
                 })),

@@ -14,46 +14,52 @@ export class SimpleLineLayer {
         fill: "green",
         connections: "Cell to Cell",
     };
-    static settingsSchema = {
-        type: "object",
-        properties: {
-            connections: {
-                type: "string",
-                enum: Object.keys(pointTypes),
+
+    static constraints = {
+        schema: {
+            type: "object",
+            properties: {
+                connections: {
+                    type: "string",
+                    enum: Object.keys(pointTypes),
+                },
             },
         },
+        uischemaElements: [
+            {
+                type: "Control",
+                label: "Connections",
+                scope: "#/properties/connections",
+            },
+        ],
     };
-    static settingsUISchemaElements = [
-        {
-            type: "Control",
-            label: "Connections",
-            scope: "#/properties/connections",
-        },
-    ];
-    static controlsSchema = {
-        type: "object",
-        properties: {
-            fill: {
-                type: "string",
-                enum: [
-                    "blue",
-                    "green",
-                    "orange",
-                    "pink",
-                    "purple",
-                    "red",
-                    "yellow",
-                ],
+
+    static controls = {
+        schema: {
+            type: "object",
+            properties: {
+                fill: {
+                    type: "string",
+                    enum: [
+                        "blue",
+                        "green",
+                        "orange",
+                        "pink",
+                        "purple",
+                        "red",
+                        "yellow",
+                    ],
+                },
             },
         },
+        uischemaElements: [
+            {
+                type: "Control",
+                label: "Color",
+                scope: "#/properties/fill",
+            },
+        ],
     };
-    static controlsUISchemaElements = [
-        {
-            type: "Control",
-            label: "Color",
-            scope: "#/properties/fill",
-        },
-    ];
 
     newSettings({ newSettings, storage, grid }) {
         this.rawSettings = this.rawSettings || {};

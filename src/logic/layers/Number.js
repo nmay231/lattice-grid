@@ -62,31 +62,25 @@ export class NumberLayer {
     }
 
     static defaultSettings = { min: 1, max: 9 };
-    static settingsSchema = {
-        type: "object",
-        properties: {
-            min: {
-                type: "integer",
-                description: "Minimum value allowed",
-            },
-            max: {
-                type: "integer",
-                description: "Maximum value allowed",
-            },
+
+    static constraints = {
+        schema: {
+            type: "object",
+            properties: { min: { type: "integer" }, max: { type: "integer" } },
         },
+        uischemaElements: [
+            {
+                type: "Control",
+                label: "Minimum",
+                scope: "#/properties/min",
+            },
+            {
+                type: "Control",
+                label: "Maximum",
+                scope: "#/properties/max",
+            },
+        ],
     };
-    static settingsUISchemaElements = [
-        {
-            type: "Control",
-            label: "Minimum",
-            scope: "#/properties/min",
-        },
-        {
-            type: "Control",
-            label: "Maximum",
-            scope: "#/properties/max",
-        },
-    ];
 
     _newSettings(min, max) {
         return {

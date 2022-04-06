@@ -10,37 +10,40 @@ export class ToggleCharactersLayer {
         // "center", "topBottom", "circle", "tapa"
         displayStyle: "center",
     };
-    static settingsSchema = {
-        type: "object",
-        properties: {
-            characters: {
-                type: "string",
-                description: "Allowed characters",
-            },
-            displayStyle: {
-                type: "string",
-                description: "How values are displayed",
-                enum: [
-                    "center", // Middle across the center
-                    "topBottom", // Two rows, top and bottom
-                    // "clock", // Placed in a circle according spacing equally apart regardless of the chars placed
-                    // "tapa", // Morphs into a circle depending on how many chars are placed
-                ],
+
+    static constraints = {
+        schema: {
+            type: "object",
+            properties: {
+                characters: {
+                    type: "string",
+                    description: "Allowed characters",
+                },
+                displayStyle: {
+                    type: "string",
+                    description: "How values are displayed",
+                    enum: [
+                        "center", // Middle across the center
+                        "topBottom", // Two rows, top and bottom
+                        // "clock", // Placed in a circle according spacing equally apart regardless of the chars placed
+                        // "tapa", // Morphs into a circle depending on how many chars are placed
+                    ],
+                },
             },
         },
+        uischemaElements: [
+            {
+                type: "Control",
+                label: "Allowed Characters",
+                scope: "#/properties/characters",
+            },
+            {
+                type: "Control",
+                label: "Positioning",
+                scope: "#/properties/displayStyle",
+            },
+        ],
     };
-    static settingsUISchemaElements = [
-        {
-            type: "Control",
-            label: "Allowed Characters",
-            scope: "#/properties/characters",
-        },
-        {
-            type: "Control",
-            label: "Positioning",
-            scope: "#/properties/displayStyle",
-        },
-    ];
 
     _newSettings({ characters, displayStyle }) {
         const caseSwap = {};

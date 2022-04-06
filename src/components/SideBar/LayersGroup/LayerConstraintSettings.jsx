@@ -29,16 +29,14 @@ export const LayerConstraintSettings = () => {
     const layerType = layers.filter((layer) => layer.id === id)[0].layerType;
     const layerClass = availableLayers[layerType];
 
-    if (!layerClass.settingsSchema || !layerClass.settingsUISchemaElements) {
+    if (!layerClass.constraints) {
         // We don't want to display anything if the layer only has control settings but no regular settings
         return <></>;
     }
 
-    const schema = layerClass.settingsSchema;
-    const uischema = {
-        type: "VerticalLayout",
-        elements: layerClass.settingsUISchemaElements,
-    };
+    const { schema, uischemaElements } = layerClass.constraints || {};
+    const uischema = { type: "VerticalLayout", elements: uischemaElements };
+
     const changed = !isEqual(data, layer.rawSettings);
 
     const handleSubmit = (event) => {
