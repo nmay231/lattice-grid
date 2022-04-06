@@ -1,3 +1,3 @@
 import { atom } from "jotai";
 
-export const behaviorSettingsAtom = atom<null | object>(null);
+export const constraintSettingsAtom = atom<null | object>(null);

@@ -3,18 +3,18 @@ import { isEqual } from "lodash";
 import { useEffect } from "react";
 import { useSelector } from "react-redux";
 import { availableLayers } from "../../../logic/layers";
-import { behaviorSettingsAtom } from "../../../redux/jotai";
+import { constraintSettingsAtom } from "../../../redux/jotai";
 import { blurActiveElement } from "../../../utils/DOMUtils";
 import { JsonFormsWrapper } from "../../JsonFormsWrapper";
 import { usePuzzle } from "../../PuzzleContext/PuzzleContext";
 
-export const LayerBehaviorSettings = () => {
+export const LayerConstraintSettings = () => {
     const puzzle = usePuzzle();
     const layers = useSelector((state) => state.puzzle.layers);
     const id = useSelector((state) => state.puzzle.currentLayerId);
     const layer = puzzle.layers[id];
 
-    const [data, setData] = useAtom(behaviorSettingsAtom);
+    const [data, setData] = useAtom(constraintSettingsAtom);
 
     useEffect(() => {
         if (layer) {

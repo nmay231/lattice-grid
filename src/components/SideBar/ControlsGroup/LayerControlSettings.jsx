@@ -2,7 +2,7 @@ import { useSetAtom } from "jotai";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { availableLayers } from "../../../logic/layers";
-import { behaviorSettingsAtom } from "../../../redux/jotai";
+import { constraintSettingsAtom } from "../../../redux/jotai";
 import { blurActiveElement } from "../../../utils/DOMUtils";
 import { JsonFormsWrapper } from "../../JsonFormsWrapper";
 import { usePuzzle } from "../../PuzzleContext/PuzzleContext";
@@ -14,7 +14,7 @@ export const LayerControlSettings = () => {
     const layer = puzzle.layers[id];
 
     const [data, setData] = useState(null);
-    const setBehaviorSettings = useSetAtom(behaviorSettingsAtom);
+    const setConstraintSettings = useSetAtom(constraintSettingsAtom);
 
     // We want to update a layer's settings whenever data changes, but changing id also changes data.
     // So we keep track of the data and only update settings when data changes but id doesn't.
@@ -45,8 +45,8 @@ export const LayerControlSettings = () => {
                 data={data}
                 setData={(newData) => {
                     setData(newData);
-                    // Behavior settings cannot be left out of date
-                    setBehaviorSettings(newData);
+                    // Constraint settings cannot be left out of date
+                    setConstraintSettings(newData);
 
                     if (id !== lastId) {
                         setLastId(id);

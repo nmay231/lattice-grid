@@ -1,7 +1,7 @@
 import { usePuzzle } from "../../PuzzleContext";
 import { Group } from "../Group";
 import { AddNewLayerButton } from "./AddNewLayerButton";
-import { LayerBehaviorSettings } from "./LayerBehaviorSettings";
+import { LayerConstraintSettings } from "./LayerConstraintSettings";
 import { LayerList } from "./LayerList";
 
 export const LayersGroup = () => {
@@ -11,6 +11,7 @@ export const LayersGroup = () => {
         <Group name="Layers" expanded>
             <button
                 onClick={() => {
+                    // Temporary in it's current form
                     puzzle.freshPuzzle();
                     puzzle.resizeCanvas();
                     puzzle.redrawScreen();
@@ -22,7 +23,7 @@ export const LayersGroup = () => {
             <LayerList />
             <hr />
             <p>Settings:</p>
-            <LayerBehaviorSettings />
+            <LayerConstraintSettings />
         </Group>
     );
 };
