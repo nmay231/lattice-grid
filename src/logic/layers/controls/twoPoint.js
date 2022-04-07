@@ -1,3 +1,5 @@
+import { isEqual } from "lodash";
+
 export const handleEventsCurrentSetting = (
     layer,
     { directional, pointTypes, stopOnFirstPoint, deltas } = {}
@@ -44,8 +46,14 @@ export const handleEventsCurrentSetting = (
             const id = grid.convertIdAndPoints({ pointsToId: pair });
 
             if (stored.temporary.targetState === undefined) {
-                stored.temporary.targetState =
-                    id in stored.objects ? null : layer.settings.selectedState;
+                const isSame = isEqual(
+                    stored.objects[id]?.state,
+                    layer.settings.selectedState,
+                );
+
+                stored.temporary.targetState = isSame
+                    ? null
+                    : layer.settings.selectedState;
             }
 
             if (stored.temporary.targetState === null && id in stored.objects) {
