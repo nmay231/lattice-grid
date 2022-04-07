@@ -20,7 +20,7 @@ describe("SquareGrid", () => {
         expect(mediumGrid._outOfBounds({ x: 10, y: 21 })).toEqual(true);
         expect(mediumGrid._outOfBounds({ x: 21, y: 10 })).toEqual(true);
         expect(mediumGrid._outOfBounds({ x: 1000000, y: 1000000 })).toEqual(
-            true
+            true,
         );
     });
 

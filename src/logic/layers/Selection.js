@@ -34,7 +34,7 @@ export class SelectionLayer {
         if (!newPoints.length) return;
         stored.temporary.previousPoint = newPoints[newPoints.length - 1];
         newPoints = newPoints.filter(
-            (id) => stored.temporary.blacklist.indexOf(id) === -1
+            (id) => stored.temporary.blacklist.indexOf(id) === -1,
         );
         if (!newPoints.length) return;
 
@@ -129,14 +129,14 @@ export class SelectionLayer {
                             .map((id) => ({ id, object: null }));
                     } else {
                         const groupsToMerge = new Set(
-                            ids.map((id) => stored.objects[id]?.state)
+                            ids.map((id) => stored.objects[id]?.state),
                         );
                         const allIds = ids
                             .filter((id) => !(id in stored.objects))
                             .concat(
                                 stored.renderOrder.filter((id) =>
-                                    groupsToMerge.has(stored.objects[id].state)
-                                )
+                                    groupsToMerge.has(stored.objects[id].state),
+                                ),
                             );
                         history = allIds.map((id) => ({
                             id,
@@ -172,7 +172,7 @@ export class SelectionLayer {
                         ...ids.map((id) => ({
                             id,
                             object: { state: stored.groupNumber, point: id },
-                        }))
+                        })),
                     );
                 }
 
@@ -195,7 +195,7 @@ export class SelectionLayer {
 
     getBlits({ grid, stored }) {
         const points = stored.renderOrder.filter(
-            (key) => stored.objects[key].state
+            (key) => stored.objects[key].state,
         );
         const states = points.map((id) => stored.objects[id].state);
 

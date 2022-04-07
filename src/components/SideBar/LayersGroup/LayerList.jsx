@@ -24,7 +24,7 @@ export const LayerList = () => {
         useSensor(PointerSensor),
         useSensor(KeyboardSensor, {
             coordinateGetter: sortableKeyboardCoordinates,
-        })
+        }),
     );
 
     const dispatch = useDispatch();
@@ -77,7 +77,7 @@ export const LayerList = () => {
                                 {/* TODO: Icon (?) */}
                                 <div onPointerDown={handleDelete(id)}>X</div>
                             </SortableItem>
-                        )
+                        ),
                 )}
             </SortableContext>
         </DndContext>

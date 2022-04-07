@@ -19,7 +19,7 @@ export const JsonFormsWrapper = ({
                     document
                         .querySelector(`#${formId} input, #${formId} select`)
                         ?.focus?.(),
-                0
+                0,
             );
         }
     }, [formId, autoFocus]);

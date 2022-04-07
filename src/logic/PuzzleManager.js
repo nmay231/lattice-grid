@@ -16,7 +16,7 @@ export class PuzzleManager {
     constructor(store) {
         this.store = store;
         this.unsubscribeToStore = this.store.subscribe(
-            this.subscribeToStore.bind(this)
+            this.subscribeToStore.bind(this),
         );
         this.settings = store.getState().settings;
 
@@ -144,7 +144,7 @@ export class PuzzleManager {
         this.storage.addStorage({ grid: this.grid, layer });
         this.changeLayerSettings(
             layer.id,
-            settings || layerClass.defaultSettings
+            settings || layerClass.defaultSettings,
         );
 
         this.store.dispatch(
@@ -152,7 +152,7 @@ export class PuzzleManager {
                 id: layer.id,
                 hidden: layer.hidden,
                 layerType: layerClass.id,
-            })
+            }),
         );
         return layer.id;
     }

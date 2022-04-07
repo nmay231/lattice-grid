@@ -42,7 +42,7 @@ export class SquareGrid {
                 [firstPoint[0], firstPoint[1] + 1],
                 cursor.y - firstPoint[1] < cursor.x - firstPoint[0]
                     ? [firstPoint[0] + 1, firstPoint[1] + 1]
-                    : firstPoint
+                    : firstPoint,
             );
         } else {
             targetPoints.push(
@@ -50,7 +50,7 @@ export class SquareGrid {
                 [firstPoint[0] + 1, firstPoint[1] + 1],
                 1 + firstPoint[1] - cursor.y < cursor.x - firstPoint[0]
                     ? [firstPoint[0], firstPoint[1] + 1]
-                    : [firstPoint[0] + 1, firstPoint[1]]
+                    : [firstPoint[0] + 1, firstPoint[1]],
             );
         }
 
@@ -64,7 +64,7 @@ export class SquareGrid {
 
         previousPoint = previousPoint.split(",").map((x) => parseInt(x));
         const nearby = deltas.map(
-            ({ dx, dy }) => `${previousPoint[0] + dx},${previousPoint[1] + dy}`
+            ({ dx, dy }) => `${previousPoint[0] + dx},${previousPoint[1] + dy}`,
         );
         const intersection = targetPoints
             .map((p) => p.toString())
@@ -122,7 +122,7 @@ export class SquareGrid {
             const justGridPoints = points.length
                 ? points.filter(({ type }) => type === pointType)
                 : this._getAllGridPoints(pointType).filter(
-                      ({ x, y }) => !blacklist.includes(`${x},${y}`)
+                      ({ x, y }) => !blacklist.includes(`${x},${y}`),
                   );
 
             finalResult[pointType] = {};
@@ -363,7 +363,7 @@ export class SquareGrid {
                         direction.length !== 2
                     ) {
                         throw Error(
-                            `param direction required to be string of length two instead of "${direction}"`
+                            `param direction required to be string of length two instead of "${direction}"`,
                         );
                     }
                     const [primary, secondary] = direction.toUpperCase();
@@ -453,7 +453,7 @@ export class SquareGrid {
                 }
                 default:
                     throw Error(
-                        `Unsupported connection in getPoints: "${pointType}" -> "${nextType}"`
+                        `Unsupported connection in getPoints: "${pointType}" -> "${nextType}"`,
                     );
             }
         }

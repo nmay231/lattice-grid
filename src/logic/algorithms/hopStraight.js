@@ -17,8 +17,8 @@ export function* hopStraight({ cursor, previousPoint, deltas }) {
         .filter(
             ({ dx, dy }) =>
                 Math.abs(
-                    atan(dx, dy) - atan(startX - targetX, startY - targetY)
-                ) <= Math.PI
+                    atan(dx, dy) - atan(startX - targetX, startY - targetY),
+                ) <= Math.PI,
         )
         .map(({ dx, dy }) => [dx, dy]);
     if (!deltas.length) {
@@ -48,7 +48,7 @@ export function* hopStraight({ cursor, previousPoint, deltas }) {
             toMinimize(newX + dx1, newY + dy1) <
             toMinimize(newX + dx2, newY + dy2)
                 ? [dx1, dy1]
-                : [dx2, dy2]
+                : [dx2, dy2],
         );
 
         newX += bestDelta[0];

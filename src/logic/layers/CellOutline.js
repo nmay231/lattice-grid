@@ -21,7 +21,7 @@ export class CellOutlineLayer {
 
     getBlits({ grid, stored }) {
         const blacklist = stored.renderOrder.filter(
-            (key) => stored.objects[key].state
+            (key) => stored.objects[key].state,
         );
         const { cells, gridEdge } = grid.getPoints({
             connections: {
@@ -42,7 +42,7 @@ export class CellOutlineLayer {
                 } else {
                     const corners = cells[cell].edges[edge].corners;
                     edges[edge] = Object.values(corners).map(
-                        ({ svgPoint }) => svgPoint
+                        ({ svgPoint }) => svgPoint,
                     );
                 }
             }

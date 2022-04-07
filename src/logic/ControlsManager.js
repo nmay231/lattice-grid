@@ -78,7 +78,7 @@ export class ControlsManager {
             history = [],
             mergeWithPreviousHistory,
             storingLayer,
-        } = {}
+        } = {},
     ) {
         const { storage, grid } = this.puzzle;
         if (discontinueInput === true) {
@@ -235,7 +235,7 @@ export class ControlsManager {
         if (event.code === "Escape" || event.code === "Delete") {
             const cleanedEvent = this.cleanPointerEvent(
                 event,
-                event.code === "Escape" ? "cancelAction" : "delete"
+                event.code === "Escape" ? "cancelAction" : "delete",
             );
             const actions = layer.handleEvent({
                 grid,
@@ -249,7 +249,7 @@ export class ControlsManager {
         } else if (event.code === "Tab") {
             // TODO: allow layers to have sublayers that you can tab through (e.g. for sudoku). This should be handled by a separate api than .handleEvent() though to prevent serious bugs and to allow UI indicators.
             this.puzzle.store.dispatch(
-                selectLayer({ tab: event.shiftKey ? -1 : 1 })
+                selectLayer({ tab: event.shiftKey ? -1 : 1 }),
             );
         } else {
             const actions = layer.handleEvent({

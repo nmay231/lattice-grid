@@ -7,7 +7,7 @@ export const handleEventsUnorderedSets = (
         pointTypes,
         overwriteOthers = false,
         ensureConnected = true,
-    }
+    },
 ) => {
     if (!pointTypes?.length) {
         throw Error("Was not provided parameters");
@@ -39,7 +39,7 @@ export const handleEventsUnorderedSets = (
         stored.temporary.previousPoint = newPoints[newPoints.length - 1];
 
         newPoints = newPoints.filter(
-            (id) => stored.temporary.blacklist.indexOf(id) === -1
+            (id) => stored.temporary.blacklist.indexOf(id) === -1,
         );
         if (!newPoints.length) return;
         stored.temporary.blacklist.push(...newPoints);
@@ -82,7 +82,7 @@ export const handleEventsUnorderedSets = (
             case "pointerMove": {
                 const startPoint = event.points[0];
                 const overlap = stored.renderOrder.filter(
-                    (id) => stored.objects[id].points.indexOf(startPoint) > -1
+                    (id) => stored.objects[id].points.indexOf(startPoint) > -1,
                 );
 
                 if (currentObjectId === undefined) {
@@ -128,7 +128,7 @@ export const handleEventsUnorderedSets = (
                     if (currentObjectId !== newId) {
                         history.push(
                             { id: currentObjectId, object: null },
-                            { id: newId, object }
+                            { id: newId, object },
                         );
                     } else {
                         // Force rerender of current object
@@ -168,12 +168,12 @@ export const handleEventsUnorderedSets = (
                     ? points
                           .concat(
                               event.points.filter(
-                                  (point) => points.indexOf(point) === -1
-                              )
+                                  (point) => points.indexOf(point) === -1,
+                              ),
                           )
                           .sort()
                     : points.filter(
-                          (point) => event.points.indexOf(point) === -1
+                          (point) => event.points.indexOf(point) === -1,
                       );
 
                 if (!updatedPoints.length) {
@@ -201,7 +201,7 @@ export const handleEventsUnorderedSets = (
                 if (stored.temporary.expanding === undefined) {
                     // Remove the one cell that was selected
                     objectCopy.points = objectCopy.points.filter(
-                        (p) => p !== stored.temporary.previousPoint
+                        (p) => p !== stored.temporary.previousPoint,
                     );
 
                     if (!objectCopy.points.length) {

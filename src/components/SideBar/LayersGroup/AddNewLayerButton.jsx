@@ -61,7 +61,7 @@ export const AddNewLayerButton = () => {
                         ...uiGroups,
                     ],
                 },
-            })
+            }),
         );
 
         const { data, result } = await awaitModalFormSubmission();

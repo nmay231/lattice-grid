@@ -14,7 +14,7 @@ const pointGatherer =
         if (!newPoints.length) return;
         stored.temporary.previousPoint = newPoints[newPoints.length - 1];
         newPoints = newPoints.filter(
-            (point) => stored.temporary.blacklist.indexOf(point) === -1
+            (point) => stored.temporary.blacklist.indexOf(point) === -1,
         );
 
         if (!newPoints.length) return;
@@ -25,7 +25,7 @@ const pointGatherer =
 
 export const handleEventsCycleStates = (
     layer,
-    { states, pointTypes, deltas }
+    { states, pointTypes, deltas },
 ) => {
     if (!states?.length || !pointTypes?.length) {
         throw Error("Was not provided parameters");

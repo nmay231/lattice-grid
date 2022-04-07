@@ -2,7 +2,7 @@ import { isEqual } from "lodash";
 
 export const handleEventsCurrentSetting = (
     layer,
-    { directional, pointTypes, stopOnFirstPoint, deltas } = {}
+    { directional, pointTypes, stopOnFirstPoint, deltas } = {},
 ) => {
     if (!pointTypes?.length || !deltas?.length) {
         throw Error("Was not provided parameters");

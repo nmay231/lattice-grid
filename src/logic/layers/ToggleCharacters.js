@@ -126,13 +126,13 @@ export class ToggleCharactersLayer {
         const states = ids.map((id) => stored.objects[id]?.state || "");
         const allIncluded = states.reduce(
             (prev, next) => prev && next.indexOf(char) > -1,
-            true
+            true,
         );
 
         let newStates;
         if (allIncluded) {
             newStates = states.map((state) =>
-                [...state].filter((c) => c !== char).join("")
+                [...state].filter((c) => c !== char).join(""),
             );
         } else {
             newStates = states.map((state) =>
@@ -140,7 +140,7 @@ export class ToggleCharactersLayer {
                     ? state
                     : [...this.settings.characters]
                           .filter((c) => c === char || state.indexOf(c) > -1)
-                          .join("")
+                          .join(""),
             );
         }
 
@@ -178,7 +178,7 @@ export class ToggleCharactersLayer {
                     size: Math.min(
                         cells[id].maxRadius / 1.5,
                         (cells[id].maxRadius * 4) /
-                            (stored.objects[id].state.length + 1)
+                            (stored.objects[id].state.length + 1),
                     ),
                 };
             }
