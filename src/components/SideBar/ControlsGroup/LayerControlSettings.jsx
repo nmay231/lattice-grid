@@ -1,8 +1,8 @@
 import { useAtom } from "jotai";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
+import { constraintSettingsAtom } from "../../../atoms/constraintSettings";
 import { availableLayers } from "../../../logic/layers";
-import { constraintSettingsAtom } from "../../../redux/jotai";
 import { blurActiveElement } from "../../../utils/DOMUtils";
 import { JsonFormsWrapper } from "../../JsonFormsWrapper";
 import { usePuzzle } from "../../PuzzleContext/PuzzleContext";
