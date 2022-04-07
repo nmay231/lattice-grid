@@ -1,4 +1,4 @@
-import { useSetAtom } from "jotai";
+import { useAtom } from "jotai";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { availableLayers } from "../../../logic/layers";
@@ -14,7 +14,9 @@ export const LayerControlSettings = () => {
     const layer = puzzle.layers[id];
 
     const [data, setData] = useState(null);
-    const setConstraintSettings = useSetAtom(constraintSettingsAtom);
+    const [constraintSettings, setConstraintSettings] = useAtom(
+        constraintSettingsAtom,
+    );
 
     // We want to update a layer's settings whenever data changes, but changing id also changes data.
     // So we keep track of the data and only update settings when data changes but id doesn't.
@@ -24,7 +26,8 @@ export const LayerControlSettings = () => {
         if (layer) {
             setData(layer.rawSettings);
         }
-    }, [layer, setData]);
+        // Putting constraintSettings as a render dependency is necessary to update this component's `data`
+    }, [layer, setData, constraintSettings]);
 
     if (!data || !layer) {
         return <></>;
