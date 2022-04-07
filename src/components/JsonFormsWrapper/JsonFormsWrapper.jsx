@@ -1,6 +1,6 @@
 import { JsonForms } from "@jsonforms/react";
 import { vanillaCells, vanillaRenderers } from "@jsonforms/vanilla-renderers";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 // TODO: Styling
 export const JsonFormsWrapper = ({
@@ -24,6 +24,9 @@ export const JsonFormsWrapper = ({
         }
     }, [formId, autoFocus]);
 
+    // The onChange event is called once on first render. It is annoying.
+    const firstRender = useRef(true);
+
     return (
         <JsonForms
             schema={schema}
@@ -32,9 +35,10 @@ export const JsonFormsWrapper = ({
             cells={vanillaCells}
             renderers={vanillaRenderers}
             onChange={({ data, errors }) => {
-                if (!errors.length) {
+                if (!errors.length && !firstRender.current) {
                     setData(data);
                 }
+                firstRender.current = false;
             }}
         />
     );
