@@ -1,10 +1,6 @@
+import { setCanvasSize } from "../atoms/canvasSize";
 import { setBlitGroups } from "../redux/blits";
-import {
-    addLayer,
-    newPuzzle,
-    removeLayer,
-    resizeCanvas,
-} from "../redux/puzzle";
+import { addLayer, newPuzzle, removeLayer } from "../redux/puzzle";
 import { ControlsManager } from "./ControlsManager";
 import { SquareGrid } from "./grids/SquareGrid";
 import { availableLayers } from "./layers";
@@ -62,7 +58,7 @@ export class PuzzleManager {
 
     resizeCanvas() {
         const requirements = this.grid.getCanvasRequirements();
-        this.store.dispatch(resizeCanvas(requirements));
+        setCanvasSize(requirements);
     }
 
     subscribeToStore() {

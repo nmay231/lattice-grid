@@ -1,5 +1,6 @@
-import React from "react";
+import { useAtomValue } from "jotai";
 import { useSelector } from "react-redux";
+import { canvasSizeAtom } from "../../atoms/canvasSize";
 import { usePuzzle } from "../PuzzleContext/PuzzleContext";
 import { Line } from "./Line";
 import { Polygon } from "./Polygon";
@@ -17,10 +18,7 @@ export const SVGCanvas = () => {
     const blitGroups = useSelector((state) => state.blits.groups);
     const renderOrder = useSelector((state) => state.blits.renderOrder);
 
-    const minX = useSelector((state) => state.puzzle.minX);
-    const minY = useSelector((state) => state.puzzle.minY);
-    const width = useSelector((state) => state.puzzle.width);
-    const height = useSelector((state) => state.puzzle.height);
+    const { minX, minY, width, height } = useAtomValue(canvasSizeAtom);
 
     // TODO: As neat as staying in a square is, I'll probably need to switch to using a scrollbar since users can have multiple grids and I shouldn't break users expectations...
     return (

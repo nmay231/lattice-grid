@@ -1,10 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
-    minX: 0,
-    minY: 0,
-    width: 0,
-    height: 0,
     layers: [],
     currentLayerId: null,
 };
@@ -19,13 +15,6 @@ export const puzzleSlice = createSlice({
                 // To clarify, it's a bug because not everything should be reset, new state fields will not be reset, etc.
                 state[key] = initialState[key];
             }
-        },
-        resizeCanvas: (state, action) => {
-            const { minX, minY, width, height } = action.payload;
-            state.minX = minX;
-            state.minY = minY;
-            state.width = width;
-            state.height = height;
         },
         addLayer: (state, action) => {
             // TODO: defaultRenderOrder
@@ -84,13 +73,7 @@ export const puzzleSlice = createSlice({
     },
 });
 
-export const {
-    addLayer,
-    newPuzzle,
-    removeLayer,
-    resizeCanvas,
-    reorderLayers,
-    selectLayer,
-} = puzzleSlice.actions;
+export const { addLayer, newPuzzle, removeLayer, reorderLayers, selectLayer } =
+    puzzleSlice.actions;
 
 export default puzzleSlice.reducer;
