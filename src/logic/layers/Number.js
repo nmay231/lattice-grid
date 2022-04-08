@@ -44,18 +44,18 @@ export class NumberLayer {
     _nextState(state, oldState, event) {
         const match = this.settings.match;
         if (event.code === "Backspace") {
-            return match(oldState.toString().slice(0, -1));
+            return match(oldState.toString().slice(0, -1), null);
         } else if (event.code === "Delete") {
             return null;
         } else if (event.code === "Minus") {
             // TODO: keep the Minus sign as part of an inProgress object and remove it when we deselect things.
-            return match(-1 * state) || "-";
+            return match(-1 * parseInt(oldState)) ?? "-";
         } else if (event.code === "Plus" || event.code === "Equal") {
-            return match(state && Math.abs(state));
+            return match(oldState && Math.abs(parseInt(oldState)), undefined);
         } else if ("1234567890".indexOf(event.key) !== -1) {
-            return match(parseInt(state + event.key)) || state;
+            return match(parseInt(state + event.key), oldState);
         } else if (/^[a-zA-Z]$/.test(event.key)) {
-            return match(parseInt(event.key, 36)) || state;
+            return match(parseInt(event.key.toLowerCase(), 36), oldState);
         } else {
             return undefined; // Change nothing
         }
@@ -84,7 +84,8 @@ export class NumberLayer {
 
     _newSettings(min, max) {
         return {
-            match: (number) => min <= number && number <= max && number,
+            match: (number, alternate) =>
+                min <= number && number <= max ? number.toString() : alternate,
         };
     }
 
@@ -116,8 +117,6 @@ export class NumberLayer {
     }
 
     getBlits({ grid, stored }) {
-        const ids = stored.renderOrder.filter((id) => stored.objects[id].state);
-
         const { cells } = grid.getPoints({
             connections: {
                 cells: {
@@ -125,7 +124,7 @@ export class NumberLayer {
                     maxRadius: { shape: "square", size: "large" },
                 },
             },
-            points: ids,
+            points: stored.renderOrder,
         });
 
         const blits = {};
