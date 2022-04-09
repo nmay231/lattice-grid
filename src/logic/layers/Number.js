@@ -54,7 +54,7 @@ export class NumberLayer {
             return match(oldState && Math.abs(parseInt(oldState)), undefined);
         } else if ("1234567890".indexOf(event.key) !== -1) {
             return match(parseInt(state + event.key), oldState);
-        } else if (/^[a-zA-Z]$/.test(event.key)) {
+        } else if (/^[a-fA-F]$/.test(event.key)) {
             return match(parseInt(event.key.toLowerCase(), 36), oldState);
         } else {
             return undefined; // Change nothing
