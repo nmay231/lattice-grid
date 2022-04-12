@@ -81,7 +81,7 @@ export class ControlsManager {
             this.currentLayer = layer;
         }
 
-        storage.handleHistory(grid, layer, history);
+        storage.addToHistory(grid, layer, history);
     }
 
     onPointerDown(event) {
@@ -215,6 +215,10 @@ export class ControlsManager {
             this.puzzle.store.dispatch(
                 selectLayer({ tab: event.shiftKey ? -1 : 1 }),
             );
+        } else if (event.ctrlKey && event.key === "z") {
+            storage.undoHistory(grid.id);
+        } else if (event.ctrlKey && event.key === "y") {
+            storage.redoHistory(grid.id);
         } else {
             const actions = layer.handleEvent({
                 event,

@@ -97,7 +97,7 @@ export class SelectionLayer {
 
                 return {
                     ...actions,
-                    history: subLayerHistory.map((object) => ({
+                    history: (subLayerHistory || []).map((object) => ({
                         layerId: storingLayer.id,
                         ...object,
                     })),

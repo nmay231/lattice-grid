@@ -8,24 +8,35 @@ type Layer = { id: string };
 type GridAndLayer = { grid: Grid; layer: Layer };
 
 type PuzzleObject = {
+    id: string;
+    layerId?: string;
+    object: any;
+};
+type LayerStorage = {
     renderOrder: string[];
-    objects: Record<string, any>;
+    objects: Record<string, PuzzleObject>;
     temporary: object;
 };
 
 type HistoryAction = {
+    object: PuzzleObject;
+    renderIndex: number;
+};
+type HistorySlice = {
     id: string;
     layerId: string;
-    object: any;
+    undo: HistoryAction;
+    redo: HistoryAction;
+};
+type History = {
+    actions: HistorySlice[];
+    index: number;
 };
 
 export class StorageManager {
-    // all[grid.id][layer.id] = {renderOrder: [id2, ...], objects: {id1: {}, ...}, temporary: {}}
-    all: Record<string | symbol, Record<string, PuzzleObject>> = {};
+    all: Record<string | symbol, Record<string, LayerStorage>> = {};
 
-    history: HistoryAction[] = [];
-    // For all items history[i]: i < historyIndex are undoActions, i >= historyIndex are redoActions
-    historyIndex = 0;
+    histories: Record<string | symbol, History> = {};
 
     puzzle: PuzzleManager;
 
@@ -40,6 +51,11 @@ export class StorageManager {
             objects: {},
             temporary: {},
         };
+
+        this.histories[grid.id] = this.histories[grid.id] || {
+            actions: [],
+            index: 0,
+        };
     }
 
     removeStorage({ grid, layer }: GridAndLayer) {
@@ -51,67 +67,99 @@ export class StorageManager {
         return this.all[grid.id][layer.id];
     }
 
-    handleHistory(grid: Grid, layer: Layer, history?: HistoryAction[]) {
-        if (!history?.length) {
+    addToHistory(grid: Grid, layer: Layer, puzzleObjects?: PuzzleObject[]) {
+        if (!puzzleObjects?.length) {
             return;
         }
 
-        const changes: any[] = [];
+        const history = this.histories[grid.id];
 
-        if (this.historyIndex < this.history.length) {
-            this.history.splice(this.historyIndex); // Prune any redo actions
+        if (history.index < history.actions.length) {
+            history.actions.splice(history.index); // Prune any redo actions
         }
 
-        for (let { id, layerId, object } of history) {
-            layerId = layerId || layer.id;
+        history.index += puzzleObjects.length;
+
+        for (let puzzleObject of puzzleObjects) {
+            const layerId = puzzleObject.layerId || layer.id;
             const { objects, renderOrder } = this.all[grid.id][layerId];
 
-            let oldObject = objects[id] || { layerId, id, object: null };
-            this.history.push(oldObject);
-            this.historyIndex++;
+            const redo: HistoryAction = {
+                object: puzzleObject.object,
+                renderIndex:
+                    puzzleObject.id in objects
+                        ? renderOrder.indexOf(puzzleObject.id)
+                        : renderOrder.length,
+            };
 
-            if (id in objects) {
-                renderOrder.splice(renderOrder.indexOf(id), 1);
-            }
+            const undo: HistoryAction = {
+                object: objects[puzzleObject.id] || null,
+                renderIndex: renderOrder.indexOf(puzzleObject.id),
+            };
 
-            if (object === null) {
-                delete objects[id];
-            } else if (object === undefined) {
-                throw Error("You stupid");
-            } else {
-                object.id = id;
-                object.layerId = layerId;
-                renderOrder.push(id);
-                objects[id] = object;
-            }
+            const slice: HistorySlice = {
+                id: puzzleObject.id,
+                layerId,
+                redo,
+                undo,
+            };
+            history.actions.push(slice);
+            this._ApplyHistoryAction(objects, renderOrder, slice, "redo");
         }
 
-        this.puzzle.redrawScreen(changes);
+        this.puzzle.redrawScreen();
     }
 
-    undoHistory(historyId: string) {
-        if (this.historyIndex <= 0) {
+    _ApplyHistoryAction(
+        objects: LayerStorage["objects"],
+        renderOrder: LayerStorage["renderOrder"],
+        slice: HistorySlice,
+        type: "undo" | "redo",
+    ) {
+        const action = type === "undo" ? slice.undo : slice.redo;
+
+        if (action.object === undefined) {
+            throw Error("You stupid");
+        }
+
+        if (slice.id in objects) {
+            renderOrder.splice(renderOrder.indexOf(slice.id), 1);
+        }
+
+        if (action.object === null) {
+            delete objects[slice.id];
+        } else {
+            renderOrder.splice(action.renderIndex, 0, slice.id);
+            action.object.id = slice.id; // TODO: This should not be done here
+            objects[slice.id] = action.object;
+        }
+    }
+
+    undoHistory(historyId: string | symbol) {
+        const history = this.histories[historyId];
+        if (history.index <= 0) {
             return;
         }
 
-        this.historyIndex--;
-        const undoAction = this.history[this.historyIndex];
-        const redoAction =
-            this.all[historyId][undoAction.layerId].objects[undoAction.id];
-        this.history[this.historyIndex] = redoAction;
-        return { history: [undoAction] };
+        history.index--;
+        const action = history.actions[history.index];
+        const { objects, renderOrder } = this.all[historyId][action.layerId];
+
+        this._ApplyHistoryAction(objects, renderOrder, action, "undo");
+        this.puzzle.redrawScreen();
     }
 
-    redoHistory(historyId: string) {
-        if (this.historyIndex >= this.history.length) {
+    redoHistory(historyId: string | symbol) {
+        const history = this.histories[historyId];
+        if (history.index >= history.actions.length) {
             return;
         }
 
-        const redoAction = this.history[this.historyIndex];
-        const undoAction =
-            this.all[historyId][redoAction.layerId].objects[redoAction.id];
-        this.history[this.historyIndex] = undoAction;
-        this.historyIndex++;
-        return { history: [redoAction] };
+        const action = history.actions[history.index];
+        const { objects, renderOrder } = this.all[historyId][action.layerId];
+        history.index++;
+
+        this._ApplyHistoryAction(objects, renderOrder, action, "redo");
+        this.puzzle.redrawScreen();
     }
 }
