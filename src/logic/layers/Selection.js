@@ -86,7 +86,7 @@ export class SelectionLayer {
 
                 event.points = ids;
 
-                const actions =
+                const { history: subLayerHistory, ...actions } =
                     storingLayer.handleKeyDown?.({
                         grid,
                         storage,
@@ -95,7 +95,14 @@ export class SelectionLayer {
                         storingLayer,
                     }) || {};
 
-                return { ...actions, storingLayer, discontinueInput: true };
+                return {
+                    ...actions,
+                    history: subLayerHistory.map((object) => ({
+                        layerId: storingLayer.id,
+                        ...object,
+                    })),
+                    discontinueInput: true,
+                };
             }
             case "pointerDown":
             case "pointerMove": {

@@ -3,7 +3,6 @@ import { selectLayer } from "../redux/puzzle";
 export class ControlsManager {
     leaveCanvasTimeout = null;
     currentLayer = null;
-    history = [];
 
     constructor(puzzle) {
         this.puzzle = puzzle;
@@ -71,15 +70,7 @@ export class ControlsManager {
         this.leaveCanvasTimeout = null;
     }
 
-    handleLayerActions(
-        layer,
-        {
-            discontinueInput,
-            history = [],
-            mergeWithPreviousHistory,
-            storingLayer,
-        } = {},
-    ) {
+    handleLayerActions(layer, { discontinueInput, history } = {}) {
         const { storage, grid } = this.puzzle;
         if (discontinueInput === true) {
             // TODO
@@ -90,34 +81,7 @@ export class ControlsManager {
             this.currentLayer = layer;
         }
 
-        if (history.length) {
-            // TODO: Changes
-            const changes = [];
-            const { renderOrder, objects } = storage.getStored({
-                grid,
-                layer: storingLayer ?? layer,
-            });
-            for (let { id, object } of history) {
-                // TODO: Handle getting data required for undo and also actually do history correctly
-                // TODO: History grouping (hence why I'm pushing an array instead of just an object)
-                this.history.push([{ id, object }]);
-
-                if (id in objects) {
-                    renderOrder.splice(renderOrder.indexOf(id), 1);
-                }
-
-                if (object === null) {
-                    delete objects[id];
-                } else if (object === undefined) {
-                    throw Error("You stupid");
-                } else {
-                    object.id = id;
-                    renderOrder.push(id);
-                    objects[id] = object;
-                }
-            }
-            this.puzzle.redrawScreen(changes);
-        }
+        storage.handleHistory(grid, layer, history);
     }
 
     onPointerDown(event) {

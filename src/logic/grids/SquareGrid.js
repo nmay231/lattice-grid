@@ -8,6 +8,7 @@ export class SquareGrid {
         this.height = params.height;
         this.x0 = 0;
         this.y0 = 0;
+        this.id = Symbol();
     }
 
     getCanvasRequirements() {
