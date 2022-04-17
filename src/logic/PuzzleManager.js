@@ -16,7 +16,7 @@ export class PuzzleManager {
         );
         this.settings = store.getState().settings;
 
-        this.grid = new SquareGrid(this.settings, { width: 10, height: 10 });
+        this.grid = new SquareGrid(this.settings, { width: 1, height: 1 });
         this.storage = new StorageManager(this);
         this.controls = new ControlsManager(this);
 
@@ -31,6 +31,7 @@ export class PuzzleManager {
         try {
             const data = JSON.parse(localStorage.getItem("_currentPuzzle"));
             this._loadPuzzle(data);
+            this.redrawScreen();
         } catch (err) {
             // TODO: Toast message to user saying something went wrong.
             console.error(err);
@@ -47,10 +48,16 @@ export class PuzzleManager {
                 { layerClass: "Selections" },
                 { layerClass: "Number" },
             ],
+            grid: { width: 10, height: 10 },
         });
+        this.redrawScreen();
     }
 
     _loadPuzzle(data) {
+        const { width, height } = data.grid;
+        this.grid.width = width;
+        this.grid.height = height;
+
         for (let { layerClass, rawSettings } of data.layers) {
             this.addLayer(availableLayers[layerClass], rawSettings);
         }
@@ -67,7 +74,7 @@ export class PuzzleManager {
         if (this.settings !== settings) {
             this.settings = settings;
             this.grid.settings = settings;
-            this.initializeGrid();
+            this.resizeCanvas();
             this.redrawScreen();
         }
     }
@@ -111,6 +118,7 @@ export class PuzzleManager {
         // TODO: change localStorage key and what's actually stored/how it's stored
         const data = {
             layers: [],
+            grid: { width: this.grid.width, height: this.grid.height },
         };
         for (let fakeLayer of fakeLayers) {
             const layer = this.layers[fakeLayer.id];

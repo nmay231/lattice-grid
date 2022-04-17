@@ -21,6 +21,51 @@ export class SquareGrid {
         };
     }
 
+    getCanvasResizers() {
+        const { cellSize, borderPadding } = this.settings;
+
+        return [
+            {
+                name: "Top",
+                x: ((this.width - this.x0) * cellSize) / 2,
+                y: (this.height - this.y0) * cellSize + borderPadding / 2,
+                rotate: "0",
+                resize: (amount) => {
+                    this.y0 -= amount;
+                    this.height += amount;
+                },
+            },
+            {
+                name: "Bottom",
+                x: ((this.width - this.x0) * cellSize) / 2,
+                y: (this.y0 - this.height) * cellSize + borderPadding / 2,
+                rotate: "0",
+                resize: (amount) => {
+                    this.height += amount;
+                },
+            },
+            {
+                name: "Left",
+                x: (this.x0 - this.width) * cellSize + borderPadding / 2,
+                y: ((this.height - this.y0) * cellSize) / 2,
+                rotate: "90",
+                resize: (amount) => {
+                    this.x0 -= amount;
+                    this.width += amount;
+                },
+            },
+            {
+                name: "Right",
+                x: (this.width - this.x0) * cellSize + borderPadding / 2,
+                y: ((this.height - this.y0) * cellSize) / 2,
+                rotate: "90",
+                resize: (amount) => {
+                    this.width += amount;
+                },
+            },
+        ];
+    }
+
     selectPointsWithCursor({
         cursor,
         pointTypes = [],
