@@ -54,11 +54,11 @@ export class ControlsManager {
             width: realWidth,
             height: realHeight,
         } = target.getBoundingClientRect();
-        const { width, height } = this.puzzle.grid.getCanvasRequirements();
-        const { borderPadding } = this.puzzle.settings;
+        const { minX, minY, width, height } =
+            this.puzzle.grid.getCanvasRequirements();
         // These transformations convert dom coordinates to svg coords
-        let x = (clientX - left) * (height / realHeight) - borderPadding,
-            y = (clientY - top) * (width / realWidth) - borderPadding;
+        let x = minX + (clientX - left) * (height / realHeight),
+            y = minY + (clientY - top) * (width / realWidth);
 
         // TODO: Should I actually remember which meta keys were held down on pointer down?
         const { altKey, ctrlKey, shiftKey } = event;
