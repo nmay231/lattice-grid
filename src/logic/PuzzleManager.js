@@ -84,10 +84,7 @@ export class PuzzleManager {
         const groups = {};
         const renderOrder = [];
 
-        const currentLayerIds = [
-            this.getCurrentLayer("storing").id,
-            this.getCurrentLayer("controlling").id,
-        ];
+        const currentLayerIds = this.getCurrentLayer().renderIds_TEMP || [];
 
         const fakeLayers = this.store.getState().puzzle.layers;
         for (let fakeLayer of fakeLayers) {
@@ -130,7 +127,6 @@ export class PuzzleManager {
         localStorage.setItem("_currentPuzzle", JSON.stringify(data));
     }
 
-    // TODO: This assumes the layer is a blittingLayer. How do I handle controlling- and storingLayers?
     addLayer(layerClass, settings) {
         if (layerClass.unique && layerClass.id in this.layers) {
             throw Error("Trying to add a duplicate layer!");
@@ -191,23 +187,10 @@ export class PuzzleManager {
         }
     }
 
-    // TODO
-    getCurrentLayer(type) {
-        let key;
-        if (type === "storing") {
-            key = "storingLayer";
-        } else if (type === "controlling") {
-            key = "controllingLayer";
-        } else {
-            throw Error(`Unknown current layer type: ${type}`);
-        }
-
+    // TODO: Might be unnecessary
+    getCurrentLayer() {
         const { currentLayerId } = this.store.getState().puzzle;
-        let layer = this.layers[currentLayerId];
-        while (layer[key] && layer[key] !== "custom") {
-            layer = layer[key];
-        }
-        return layer;
+        return this.layers[currentLayerId];
     }
 }
 

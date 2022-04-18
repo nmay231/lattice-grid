@@ -42,6 +42,7 @@ export class ControlsManager {
             type === "cancelAction" ||
             type === "delete"
         ) {
+            // Doing this with pointerUp is not acceptable
             return { ...event, type };
         }
         if (type !== "pointerDown" && type !== "pointerMove") {
@@ -91,7 +92,7 @@ export class ControlsManager {
         }
         const { grid, storage, settings } = this.puzzle;
         event = this.cleanPointerEvent(event, "pointerDown");
-        const layer = this.puzzle.getCurrentLayer("controlling");
+        const layer = this.puzzle.getCurrentLayer();
         const points = layer.gatherPoints({ grid, storage, settings, event });
 
         if (points) {
@@ -193,9 +194,8 @@ export class ControlsManager {
 
         const event = { type: "keyDown", shiftKey, ctrlKey, altKey, key, code };
         const { grid, storage, settings } = this.puzzle;
-        const layer = this.puzzle.getCurrentLayer("controlling");
+        const layer = this.puzzle.getCurrentLayer();
 
-        const storingLayer = this.puzzle.getCurrentLayer("storing");
         if (event.code === "Escape" || event.code === "Delete") {
             const cleanedEvent = this.cleanPointerEvent(
                 event,
@@ -206,8 +206,6 @@ export class ControlsManager {
                 storage,
                 settings,
                 event: cleanedEvent,
-                // The storing layer might be different than the controlling layer
-                storingLayer,
             });
             this.handleLayerActions(layer, actions);
         } else if (event.code === "Tab") {
@@ -215,6 +213,7 @@ export class ControlsManager {
             this.puzzle.store.dispatch(
                 selectLayer({ tab: event.shiftKey ? -1 : 1 }),
             );
+            this.puzzle.redrawScreen();
         } else if (event.ctrlKey && event.key === "z") {
             storage.undoHistory(grid.id);
         } else if (event.ctrlKey && event.key === "y") {
@@ -222,8 +221,6 @@ export class ControlsManager {
         } else {
             const actions = layer.handleEvent({
                 event,
-                // The storing layer might be different than the controlling layer
-                storingLayer,
                 grid,
                 storage,
                 settings,
@@ -240,7 +237,7 @@ export class ControlsManager {
         if (event.target?.id === "canvas-container") {
             const { grid, storage, settings } = this.puzzle;
             event = this.cleanPointerEvent({}, "cancelAction");
-            const layer = this.puzzle.getCurrentLayer("controlling");
+            const layer = this.puzzle.getCurrentLayer();
 
             const actions = layer.handleEvent({
                 grid,

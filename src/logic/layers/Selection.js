@@ -4,10 +4,15 @@ export class SelectionLayer {
     hidden = true;
 
     attachHandler(layer, options) {
-        // TODO: options
-        layer.controllingLayer = this;
-        // TODO: Get rid of the controlling/storing heirarchy and do this instead:
-        // layer.handleEvent = (args) => this.handleEvent({...args}, layer);
+        layer.gatherPoints = this.gatherPoints.bind(this);
+        layer.handleEvent = (args) =>
+            this.handleEvent.call(this, { ...args, storingLayer: layer });
+
+        // TODO: This is a temporary solution to handle renderOnlyWhenFocused
+        layer.renderIds_TEMP = layer.renderIds_TEMP || [];
+        if (layer.renderIds_TEMP.indexOf(this.id) === -1) {
+            layer.renderIds_TEMP.push(this.id);
+        }
     }
 
     gatherPoints({ grid, storage, event }) {
@@ -52,6 +57,7 @@ export class SelectionLayer {
                     discontinueInput: true,
                     history: stored.renderOrder.map((id) => ({
                         id,
+                        layerId: this.id,
                         object: null,
                     })),
                 };
@@ -64,16 +70,18 @@ export class SelectionLayer {
                 if (event.ctrlKey && event.key === "a") {
                     history = grid.getAllPoints("cells").map((id) => ({
                         id,
+                        layerId: this.id,
                         object: { state: 1, point: id },
                     }));
                 } else if (event.ctrlKey && event.key === "i") {
                     const all = grid.getAllPoints("cells");
                     history = all.map((id) => {
                         if (id in stored.objects) {
-                            return { id, object: null };
+                            return { id, layerId: this.id, object: null };
                         } else {
                             return {
                                 id,
+                                layerId: this.id,
                                 object: { state: 1, point: id },
                             };
                         }
@@ -86,7 +94,7 @@ export class SelectionLayer {
 
                 event.points = ids;
 
-                const { history: subLayerHistory, ...actions } =
+                const actions =
                     storingLayer.handleKeyDown?.({
                         grid,
                         storage,
@@ -97,10 +105,6 @@ export class SelectionLayer {
 
                 return {
                     ...actions,
-                    history: (subLayerHistory || []).map((object) => ({
-                        layerId: storingLayer.id,
-                        ...object,
-                    })),
                     discontinueInput: true,
                 };
             }
@@ -116,13 +120,14 @@ export class SelectionLayer {
                         const id = ids[0];
                         if (id in stored.objects) {
                             stored.temporary.targetState = null;
-                            history = [{ id, object: null }];
+                            history = [{ id, layerId: this.id, object: null }];
                         } else {
                             stored.groupNumber += 1;
                             stored.temporary.targetState = stored.groupNumber;
                             history = [
                                 {
                                     id,
+                                    layerId: this.id,
                                     object: {
                                         state: stored.groupNumber,
                                         point: id,
@@ -133,7 +138,11 @@ export class SelectionLayer {
                     } else if (stored.temporary.targetState === null) {
                         history = ids
                             .filter((id) => id in stored.objects)
-                            .map((id) => ({ id, object: null }));
+                            .map((id) => ({
+                                id,
+                                layerId: this.id,
+                                object: null,
+                            }));
                     } else {
                         const groupsToMerge = new Set(
                             ids.map((id) => stored.objects[id]?.state),
@@ -147,6 +156,7 @@ export class SelectionLayer {
                             );
                         history = allIds.map((id) => ({
                             id,
+                            layerId: this.id,
                             object: {
                                 state: stored.temporary.targetState,
                                 point: id,
@@ -167,6 +177,7 @@ export class SelectionLayer {
                             .filter((toDelete) => ids.indexOf(toDelete) === -1)
                             .map((toDelete) => ({
                                 id: toDelete,
+                                layerId: this.id,
                                 object: null,
                             }));
 
@@ -178,6 +189,7 @@ export class SelectionLayer {
                     history.push(
                         ...ids.map((id) => ({
                             id,
+                            layerId: this.id,
                             object: { state: stored.groupNumber, point: id },
                         })),
                     );
