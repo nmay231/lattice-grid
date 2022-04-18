@@ -42,7 +42,6 @@ export class ControlsManager {
             type === "cancelAction" ||
             type === "delete"
         ) {
-            // Doing this with pointerUp is not acceptable
             return { ...event, type };
         }
         if (type !== "pointerDown" && type !== "pointerMove") {
@@ -138,7 +137,7 @@ export class ControlsManager {
         }
 
         const { grid, storage, settings } = this.puzzle;
-        const event = this.cleanPointerEvent(rawEvent, "pointerUp");
+        const event = this.cleanPointerEvent({}, "pointerUp");
 
         const layer = this.puzzle.getCurrentLayer();
         const actions = layer.handleEvent({
@@ -157,7 +156,7 @@ export class ControlsManager {
         }
 
         const { grid, storage, settings } = this.puzzle;
-        const event = this.cleanPointerEvent(rawEvent, "cancelAction");
+        const event = this.cleanPointerEvent({}, "cancelAction");
 
         this.leaveCanvasTimeout = setTimeout(() => {
             const layer = this.puzzle.getCurrentLayer();
