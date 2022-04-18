@@ -15,13 +15,11 @@ export class SelectionLayer {
         }
     }
 
-    gatherPoints({ grid, storage, event }) {
-        const stored = storage.getStored({ grid, layer: this });
-
-        stored.temporary.blacklist = stored.temporary.blacklist ?? [];
+    gatherPoints({ grid, event, tempStorage }) {
+        tempStorage.blacklist = tempStorage.blacklist ?? [];
         let newPoints = grid.selectPointsWithCursor({
             cursor: event.cursor,
-            previousPoint: stored.temporary.previousPoint,
+            previousPoint: tempStorage.previousPoint,
             pointTypes: ["cells"],
             // TODO: Change deltas to Finite State Machine
             deltas: [
@@ -37,18 +35,18 @@ export class SelectionLayer {
         });
 
         if (!newPoints.length) return;
-        stored.temporary.previousPoint = newPoints[newPoints.length - 1];
+        tempStorage.previousPoint = newPoints[newPoints.length - 1];
         newPoints = newPoints.filter(
-            (id) => stored.temporary.blacklist.indexOf(id) === -1,
+            (id) => tempStorage.blacklist.indexOf(id) === -1,
         );
         if (!newPoints.length) return;
 
-        stored.temporary.blacklist.push(...newPoints);
+        tempStorage.blacklist.push(...newPoints);
 
         return newPoints;
     }
 
-    handleEvent({ grid, storage, settings, event, storingLayer }) {
+    handleEvent({ grid, storage, settings, event, storingLayer, tempStorage }) {
         const stored = storage.getStored({ grid, layer: this });
 
         switch (event.type) {
@@ -115,15 +113,15 @@ export class SelectionLayer {
 
                 let history;
                 if (event.ctrlKey || event.shiftKey) {
-                    if (stored.temporary.targetState === undefined) {
+                    if (tempStorage.targetState === undefined) {
                         // If targetState is undefined, there can only be one id
                         const id = ids[0];
                         if (id in stored.objects) {
-                            stored.temporary.targetState = null;
+                            tempStorage.targetState = null;
                             history = [{ id, layerId: this.id, object: null }];
                         } else {
                             stored.groupNumber += 1;
-                            stored.temporary.targetState = stored.groupNumber;
+                            tempStorage.targetState = stored.groupNumber;
                             history = [
                                 {
                                     id,
@@ -135,7 +133,7 @@ export class SelectionLayer {
                                 },
                             ];
                         }
-                    } else if (stored.temporary.targetState === null) {
+                    } else if (tempStorage.targetState === null) {
                         history = ids
                             .filter((id) => id in stored.objects)
                             .map((id) => ({
@@ -158,17 +156,16 @@ export class SelectionLayer {
                             id,
                             layerId: this.id,
                             object: {
-                                state: stored.temporary.targetState,
+                                state: tempStorage.targetState,
                                 point: id,
                             },
                         }));
                     }
                 } else {
-                    const removeOld =
-                        stored.temporary.targetState === undefined;
+                    const removeOld = tempStorage.targetState === undefined;
                     stored.groupNumber = 2;
-                    stored.temporary.targetState = stored.groupNumber;
-                    stored.temporary.removeSingle = false;
+                    tempStorage.targetState = stored.groupNumber;
+                    tempStorage.removeSingle = false;
                     history = [];
 
                     if (removeOld) {
@@ -182,7 +179,7 @@ export class SelectionLayer {
                             }));
 
                         if (oldIds.length === 1 && oldIds[0] === ids[0]) {
-                            stored.temporary.removeSingle = true;
+                            tempStorage.removeSingle = true;
                         }
                     }
 
@@ -198,7 +195,7 @@ export class SelectionLayer {
                 return { history };
             }
             case "pointerUp": {
-                if (stored.temporary.removeSingle) {
+                if (tempStorage.removeSingle) {
                     return {
                         discontinueInput: true,
                         history: [{ id: stored.renderOrder[0], object: null }],

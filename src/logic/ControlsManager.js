@@ -2,7 +2,7 @@ import { selectLayer } from "../redux/puzzle";
 
 export class ControlsManager {
     leaveCanvasTimeout = null;
-    currentLayer = null;
+    tempStorage = null;
 
     constructor(puzzle) {
         this.puzzle = puzzle;
@@ -67,19 +67,14 @@ export class ControlsManager {
     }
 
     resetControls() {
-        this.currentLayer = null;
+        this.tempStorage = null;
         this.leaveCanvasTimeout = null;
     }
 
     handleLayerActions(layer, { discontinueInput, history } = {}) {
         const { storage, grid } = this.puzzle;
         if (discontinueInput === true) {
-            // TODO
-            const stored = storage.getStored({ grid, layer });
-            stored.temporary = {};
-            this.currentLayer = null;
-        } else if (discontinueInput !== "noChange") {
-            this.currentLayer = layer;
+            this.resetControls();
         }
 
         storage.addToHistory(grid, layer, history);
@@ -92,78 +87,93 @@ export class ControlsManager {
         }
         const { grid, storage, settings } = this.puzzle;
         event = this.cleanPointerEvent(event, "pointerDown");
+
+        this.tempStorage = {};
+        const eventInfo = {
+            grid,
+            storage,
+            settings,
+            event,
+            tempStorage: this.tempStorage,
+        };
+
         const layer = this.puzzle.getCurrentLayer();
-        const points = layer.gatherPoints({ grid, storage, settings, event });
+        const points = layer.gatherPoints(eventInfo);
 
         if (points) {
             event.points = points;
-            const actions = layer.handleEvent({
-                grid,
-                storage,
-                settings,
-                event,
-            });
+            const actions = layer.handleEvent(eventInfo);
             this.handleLayerActions(layer, actions);
         }
     }
 
     onPointerMove(event) {
-        if (!event.isPrimary || !this.currentLayer) {
+        if (!event.isPrimary || !this.tempStorage) {
             return;
         }
 
-        const layer = this.currentLayer;
         const { grid, storage, settings } = this.puzzle;
         event = this.cleanPointerEvent(event, "pointerMove");
-        const points = layer.gatherPoints({ grid, storage, settings, event });
+        const eventInfo = {
+            grid,
+            storage,
+            settings,
+            event,
+            tempStorage: this.tempStorage,
+        };
+
+        const layer = this.puzzle.getCurrentLayer();
+        const points = layer.gatherPoints(eventInfo);
 
         if (points) {
             event.points = points;
-            const actions = layer.handleEvent({
-                grid,
-                storage,
-                settings,
-                event,
-            });
+            const actions = layer.handleEvent(eventInfo);
             this.handleLayerActions(layer, actions);
         }
     }
 
     onPointerUp(event) {
-        if (!event.isPrimary || !this.currentLayer) {
+        if (!event.isPrimary || !this.tempStorage) {
             return;
         }
 
-        const layer = this.currentLayer;
         const { grid, storage, settings } = this.puzzle;
         event = this.cleanPointerEvent(event, "pointerUp");
 
-        const actions = layer.handleEvent({ grid, storage, settings, event });
+        const layer = this.puzzle.getCurrentLayer();
+        const actions = layer.handleEvent({
+            grid,
+            storage,
+            settings,
+            event,
+            tempStorage: this.tempStorage,
+        });
         this.handleLayerActions(layer, actions);
     }
 
     onPointerLeave(event) {
-        if (!event.isPrimary || !this.currentLayer) {
+        if (!event.isPrimary || !this.tempStorage) {
             return;
         }
 
-        const layer = this.currentLayer;
         const { grid, storage, settings } = this.puzzle;
         event = this.cleanPointerEvent(event, "cancelAction");
 
         this.leaveCanvasTimeout = setTimeout(() => {
+            const layer = this.puzzle.getCurrentLayer();
             const actions = layer.handleEvent({
                 grid,
                 storage,
                 settings,
                 event,
+                tempStorage: this.tempStorage,
             });
             this.handleLayerActions(layer, actions);
         }, settings.actionWindowMs);
     }
 
     onPointerEnter(event) {
-        if (!event.isPrimary || !this.currentLayer) {
+        if (!event.isPrimary || !this.tempStorage) {
             return;
         }
 
@@ -176,7 +186,7 @@ export class ControlsManager {
 
     // Attached to the document body
     handleKeyDown(rawEvent) {
-        if (this.currentLayer) {
+        if (this.tempStorage) {
             // Ignore keyboard events if already handling pointer events
             return;
         }
@@ -237,13 +247,14 @@ export class ControlsManager {
         if (event.target?.id === "canvas-container") {
             const { grid, storage, settings } = this.puzzle;
             event = this.cleanPointerEvent({}, "cancelAction");
-            const layer = this.puzzle.getCurrentLayer();
 
+            const layer = this.puzzle.getCurrentLayer();
             const actions = layer.handleEvent({
                 grid,
                 storage,
                 settings,
                 event,
+                tempStorage: this.tempStorage,
             });
             this.handleLayerActions(layer, actions);
         }
