@@ -23,7 +23,7 @@ export const ResizeGridButton = () => {
             }}
         >
             {buttons.map(({ name, resize }) => (
-                <div>
+                <div key={name}>
                     <label htmlFor={name}>{name}:</label>
                     <button
                         id={name}

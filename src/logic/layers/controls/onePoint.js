@@ -1,24 +1,22 @@
 const pointGatherer =
     (layer, { pointTypes, deltas }) =>
-    ({ grid, storage, event }) => {
-        const stored = storage.getStored({ grid, layer });
-
-        stored.temporary.blacklist = stored.temporary.blacklist ?? [];
+    ({ grid, event, tempStorage }) => {
+        tempStorage.blacklist = tempStorage.blacklist ?? [];
         let newPoints = grid.selectPointsWithCursor({
             cursor: event.cursor,
             pointTypes,
             deltas,
-            previousPoint: stored.temporary.previousPoint,
+            previousPoint: tempStorage.previousPoint,
         });
 
         if (!newPoints.length) return;
-        stored.temporary.previousPoint = newPoints[newPoints.length - 1];
+        tempStorage.previousPoint = newPoints[newPoints.length - 1];
         newPoints = newPoints.filter(
-            (point) => stored.temporary.blacklist.indexOf(point) === -1,
+            (point) => tempStorage.blacklist.indexOf(point) === -1,
         );
 
         if (!newPoints.length) return;
-        stored.temporary.blacklist.push(...newPoints);
+        tempStorage.blacklist.push(...newPoints);
 
         return newPoints;
     };
@@ -33,7 +31,7 @@ export const handleEventsCycleStates = (
 
     layer.gatherPoints = pointGatherer(layer, { pointTypes, deltas });
 
-    layer.handleEvent = ({ grid, storage, event }) => {
+    layer.handleEvent = ({ grid, storage, event, tempStorage }) => {
         if (event.type !== "pointerDown" && event.type !== "pointerMove") {
             return { discontinueInput: true };
         }
@@ -42,8 +40,8 @@ export const handleEventsCycleStates = (
         const newPoints = event.points;
 
         let state;
-        if (stored.temporary.targetState !== undefined) {
-            state = stored.temporary.targetState;
+        if (tempStorage.targetState !== undefined) {
+            state = tempStorage.targetState;
         } else {
             if (newPoints[0] in stored.objects) {
                 const index =
@@ -52,7 +50,7 @@ export const handleEventsCycleStates = (
             } else {
                 state = states[0];
             }
-            stored.temporary.targetState = state;
+            tempStorage.targetState = state;
         }
 
         const history = newPoints.map((id) => ({
@@ -70,7 +68,7 @@ export const handleEventsCurrentSetting = (layer, { pointTypes, deltas }) => {
 
     layer.gatherPoints = pointGatherer(layer, { pointTypes, deltas });
 
-    layer.handleEvent = ({ grid, storage, event }) => {
+    layer.handleEvent = ({ grid, storage, event, tempStorage }) => {
         if (event.type !== "pointerDown" && event.type !== "pointerMove") {
             return { discontinueInput: true };
         }
@@ -78,17 +76,17 @@ export const handleEventsCurrentSetting = (layer, { pointTypes, deltas }) => {
         const stored = storage.getStored({ grid, layer });
         const newPoints = event.points;
 
-        if (stored.temporary.targetState === undefined) {
+        if (tempStorage.targetState === undefined) {
             if (newPoints[0] in stored.objects) {
                 const state = stored.objects[newPoints[0]].state;
-                stored.temporary.targetState =
+                tempStorage.targetState =
                     state === layer.settings.selectedState ? null : state;
             } else {
-                stored.temporary.targetState = layer.settings.selectedState;
+                tempStorage.targetState = layer.settings.selectedState;
             }
         }
 
-        const state = stored.temporary.targetState;
+        const state = tempStorage.targetState;
         const history = newPoints.map((id) => ({
             id,
             object: state === null ? null : { point: id, state },

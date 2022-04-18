@@ -21,28 +21,27 @@ export const handleEventsUnorderedSets = (
         { dx: -2, dy: 0 },
     ];
 
-    layer.gatherPoints = ({ grid, storage, event }) => {
+    layer.gatherPoints = ({ grid, event, tempStorage }) => {
         if (event.type !== "pointerDown" && event.type !== "pointerMove")
             return;
-        const stored = storage.getStored({ grid, layer });
 
-        stored.temporary.blacklist = stored.temporary.blacklist ?? [];
+        tempStorage.blacklist = tempStorage.blacklist ?? [];
         let newPoints = grid.selectPointsWithCursor({
             cursor: event.cursor,
             pointTypes,
             deltas,
-            previousPoint: stored.temporary.previousPoint,
+            previousPoint: tempStorage.previousPoint,
         });
         if (!newPoints.length) return;
 
-        const previousPoint = stored.temporary.previousPoint;
-        stored.temporary.previousPoint = newPoints[newPoints.length - 1];
+        const previousPoint = tempStorage.previousPoint;
+        tempStorage.previousPoint = newPoints[newPoints.length - 1];
 
         newPoints = newPoints.filter(
-            (id) => stored.temporary.blacklist.indexOf(id) === -1,
+            (id) => tempStorage.blacklist.indexOf(id) === -1,
         );
         if (!newPoints.length) return;
-        stored.temporary.blacklist.push(...newPoints);
+        tempStorage.blacklist.push(...newPoints);
 
         if (previousPoint) {
             newPoints.unshift(previousPoint);
@@ -52,7 +51,7 @@ export const handleEventsUnorderedSets = (
 
     // TODO: Should I allow multiple current objects? (so I can do `ctrl-a del` and things like that)
     // TODO: Handle moving objects with long presses (?)
-    layer.handleEvent = ({ grid, storage, event }) => {
+    layer.handleEvent = ({ grid, storage, event, tempStorage }) => {
         const stored = storage.getStored({ layer, grid });
         const currentObjectId = stored.currentObjectId;
         if (currentObjectId === undefined && event.type !== "pointerDown") {
@@ -102,7 +101,7 @@ export const handleEventsUnorderedSets = (
                     } else {
                         // Start drawing new object
                         stored.currentObjectId = point;
-                        stored.temporary.expanding = true;
+                        tempStorage.expanding = true;
                         return {
                             history: [
                                 // TODO: state=null vs state=layer.getState(null)
@@ -144,7 +143,7 @@ export const handleEventsUnorderedSets = (
                         // Create a new one
                         const id = startPoint;
                         stored.currentObjectId = id;
-                        stored.temporary.expanding = true;
+                        tempStorage.expanding = true;
                         history.push({
                             id,
                             object: { points: [id], state: null },
@@ -157,14 +156,14 @@ export const handleEventsUnorderedSets = (
                 }
                 // Here, we're definitely resizing the object
 
-                if (stored.temporary.expanding === undefined) {
+                if (tempStorage.expanding === undefined) {
                     // Only expand the object if the newPoints are not part of the old object
                     // Note that startPoint is actually the last point from the previous event
-                    stored.temporary.expanding =
+                    tempStorage.expanding =
                         points.indexOf(event.points[1]) === -1;
                 }
 
-                const updatedPoints = stored.temporary.expanding
+                const updatedPoints = tempStorage.expanding
                     ? points
                           .concat(
                               event.points.filter(
@@ -198,10 +197,10 @@ export const handleEventsUnorderedSets = (
                 }
 
                 const objectCopy = { ...object };
-                if (stored.temporary.expanding === undefined) {
+                if (tempStorage.expanding === undefined) {
                     // Remove the one cell that was selected
                     objectCopy.points = objectCopy.points.filter(
-                        (p) => p !== stored.temporary.previousPoint,
+                        (p) => p !== tempStorage.previousPoint,
                     );
 
                     if (!objectCopy.points.length) {

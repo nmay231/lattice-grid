@@ -1,8 +1,8 @@
 import { selectLayer } from "../redux/puzzle";
 
 export class ControlsManager {
-    leaveCanvasTimeout = null;
-    currentLayer = null;
+    blurCanvasTimeoutId = null;
+    tempStorage = null;
 
     constructor(puzzle) {
         this.puzzle = puzzle;
@@ -66,107 +66,117 @@ export class ControlsManager {
     }
 
     resetControls() {
-        this.currentLayer = null;
-        this.leaveCanvasTimeout = null;
+        this.tempStorage = null;
+        this.blurCanvasTimeoutId = null;
     }
 
     handleLayerActions(layer, { discontinueInput, history } = {}) {
         const { storage, grid } = this.puzzle;
         if (discontinueInput === true) {
-            // TODO
-            const stored = storage.getStored({ grid, layer });
-            stored.temporary = {};
-            this.currentLayer = null;
-        } else if (discontinueInput !== "noChange") {
-            this.currentLayer = layer;
+            this.resetControls();
         }
 
         storage.addToHistory(grid, layer, history);
     }
 
-    onPointerDown(event) {
+    onPointerDown(rawEvent) {
         // TODO: allow for two fingers to zoom
-        if (!event.isPrimary) {
+        if (!rawEvent.isPrimary) {
             return;
         }
         const { grid, storage, settings } = this.puzzle;
-        event = this.cleanPointerEvent(event, "pointerDown");
-        const layer = this.puzzle.getCurrentLayer("controlling");
-        const points = layer.gatherPoints({ grid, storage, settings, event });
+        const event = this.cleanPointerEvent(rawEvent, "pointerDown");
+
+        this.tempStorage = {};
+        const eventInfo = {
+            grid,
+            storage,
+            settings,
+            event,
+            tempStorage: this.tempStorage,
+        };
+
+        const layer = this.puzzle.getCurrentLayer();
+        const points = layer.gatherPoints(eventInfo);
 
         if (points) {
             event.points = points;
-            const actions = layer.handleEvent({
-                grid,
-                storage,
-                settings,
-                event,
-            });
+            const actions = layer.handleEvent(eventInfo);
             this.handleLayerActions(layer, actions);
         }
     }
 
-    onPointerMove(event) {
-        if (!event.isPrimary || !this.currentLayer) {
+    onPointerMove(rawEvent) {
+        if (!rawEvent.isPrimary || !this.tempStorage) {
             return;
         }
 
-        const layer = this.currentLayer;
         const { grid, storage, settings } = this.puzzle;
-        event = this.cleanPointerEvent(event, "pointerMove");
-        const points = layer.gatherPoints({ grid, storage, settings, event });
+        const event = this.cleanPointerEvent(rawEvent, "pointerMove");
+        const eventInfo = {
+            grid,
+            storage,
+            settings,
+            event,
+            tempStorage: this.tempStorage,
+        };
+
+        const layer = this.puzzle.getCurrentLayer();
+        const points = layer.gatherPoints(eventInfo);
 
         if (points) {
             event.points = points;
-            const actions = layer.handleEvent({
-                grid,
-                storage,
-                settings,
-                event,
-            });
+            const actions = layer.handleEvent(eventInfo);
             this.handleLayerActions(layer, actions);
         }
     }
 
-    onPointerUp(event) {
-        if (!event.isPrimary || !this.currentLayer) {
+    onPointerUp(rawEvent) {
+        if (!rawEvent.isPrimary || !this.tempStorage) {
             return;
         }
 
-        const layer = this.currentLayer;
         const { grid, storage, settings } = this.puzzle;
-        event = this.cleanPointerEvent(event, "pointerUp");
+        const event = this.cleanPointerEvent({}, "pointerUp");
 
-        const actions = layer.handleEvent({ grid, storage, settings, event });
+        const layer = this.puzzle.getCurrentLayer();
+        const actions = layer.handleEvent({
+            grid,
+            storage,
+            settings,
+            event,
+            tempStorage: this.tempStorage,
+        });
         this.handleLayerActions(layer, actions);
     }
 
-    onPointerLeave(event) {
-        if (!event.isPrimary || !this.currentLayer) {
+    onPointerLeave(rawEvent) {
+        if (!rawEvent.isPrimary || !this.tempStorage) {
             return;
         }
 
-        const layer = this.currentLayer;
         const { grid, storage, settings } = this.puzzle;
-        event = this.cleanPointerEvent(event, "cancelAction");
+        const event = this.cleanPointerEvent({}, "cancelAction");
 
-        this.leaveCanvasTimeout = setTimeout(() => {
+        this.blurCanvasTimeoutId = setTimeout(() => {
+            const layer = this.puzzle.getCurrentLayer();
             const actions = layer.handleEvent({
                 grid,
                 storage,
                 settings,
                 event,
+                tempStorage: this.tempStorage,
             });
             this.handleLayerActions(layer, actions);
         }, settings.actionWindowMs);
     }
 
     onPointerEnter(event) {
-        if (!event.isPrimary || !this.currentLayer) {
+        if (!event.isPrimary || !this.tempStorage) {
             return;
         }
 
-        clearTimeout(this.leaveCanvasTimeout);
+        clearTimeout(this.blurCanvasTimeoutId);
     }
 
     onContextMenu(event) {
@@ -175,7 +185,7 @@ export class ControlsManager {
 
     // Attached to the document body
     handleKeyDown(rawEvent) {
-        if (this.currentLayer) {
+        if (this.tempStorage) {
             // Ignore keyboard events if already handling pointer events
             return;
         }
@@ -193,9 +203,8 @@ export class ControlsManager {
 
         const event = { type: "keyDown", shiftKey, ctrlKey, altKey, key, code };
         const { grid, storage, settings } = this.puzzle;
-        const layer = this.puzzle.getCurrentLayer("controlling");
+        const layer = this.puzzle.getCurrentLayer();
 
-        const storingLayer = this.puzzle.getCurrentLayer("storing");
         if (event.code === "Escape" || event.code === "Delete") {
             const cleanedEvent = this.cleanPointerEvent(
                 event,
@@ -206,8 +215,6 @@ export class ControlsManager {
                 storage,
                 settings,
                 event: cleanedEvent,
-                // The storing layer might be different than the controlling layer
-                storingLayer,
             });
             this.handleLayerActions(layer, actions);
         } else if (event.code === "Tab") {
@@ -215,6 +222,7 @@ export class ControlsManager {
             this.puzzle.store.dispatch(
                 selectLayer({ tab: event.shiftKey ? -1 : 1 }),
             );
+            this.puzzle.redrawScreen();
         } else if (event.ctrlKey && event.key === "z") {
             storage.undoHistory(grid.id);
         } else if (event.ctrlKey && event.key === "y") {
@@ -222,8 +230,6 @@ export class ControlsManager {
         } else {
             const actions = layer.handleEvent({
                 event,
-                // The storing layer might be different than the controlling layer
-                storingLayer,
                 grid,
                 storage,
                 settings,
@@ -236,17 +242,18 @@ export class ControlsManager {
         }
     }
 
-    onPointerUpOutside(event) {
-        if (event.target?.id === "canvas-container") {
+    onPointerUpOutside(rawEvent) {
+        if (rawEvent.target?.id === "canvas-container") {
             const { grid, storage, settings } = this.puzzle;
-            event = this.cleanPointerEvent({}, "cancelAction");
-            const layer = this.puzzle.getCurrentLayer("controlling");
+            const event = this.cleanPointerEvent({}, "cancelAction");
 
+            const layer = this.puzzle.getCurrentLayer();
             const actions = layer.handleEvent({
                 grid,
                 storage,
                 settings,
                 event,
+                tempStorage: this.tempStorage,
             });
             this.handleLayerActions(layer, actions);
         }

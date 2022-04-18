@@ -8,26 +8,24 @@ export const handleEventsCurrentSetting = (
         throw Error("Was not provided parameters");
     }
 
-    layer.gatherPoints = ({ grid, storage, event }) => {
-        const stored = storage.getStored({ grid, layer });
-
+    layer.gatherPoints = ({ grid, event, tempStorage }) => {
         const newPoints = grid.selectPointsWithCursor({
             cursor: event.cursor,
             pointTypes,
             deltas,
-            previousPoint: stored.temporary.previousPoint,
+            previousPoint: tempStorage.previousPoint,
         });
-        if (stored.temporary.previousPoint) {
-            newPoints.unshift(stored.temporary.previousPoint);
+        if (tempStorage.previousPoint) {
+            newPoints.unshift(tempStorage.previousPoint);
         }
-        stored.temporary.previousPoint = newPoints[newPoints.length - 1];
+        tempStorage.previousPoint = newPoints[newPoints.length - 1];
 
         if (newPoints.length < 2) return [];
 
         return newPoints;
     };
 
-    layer.handleEvent = ({ grid, storage, event }) => {
+    layer.handleEvent = ({ grid, storage, event, tempStorage }) => {
         if (event.type !== "pointerDown" && event.type !== "pointerMove") {
             return { discontinueInput: true };
         } else if (!event.points.length) {
@@ -45,25 +43,25 @@ export const handleEventsCurrentSetting = (
             }
             const id = grid.convertIdAndPoints({ pointsToId: pair });
 
-            if (stored.temporary.targetState === undefined) {
+            if (tempStorage.targetState === undefined) {
                 const isSame = isEqual(
                     stored.objects[id]?.state,
                     layer.settings.selectedState,
                 );
 
-                stored.temporary.targetState = isSame
+                tempStorage.targetState = isSame
                     ? null
                     : layer.settings.selectedState;
             }
 
-            if (stored.temporary.targetState === null && id in stored.objects) {
+            if (tempStorage.targetState === null && id in stored.objects) {
                 history.push({ id, object: null });
-            } else if (stored.temporary.targetState !== null) {
+            } else if (tempStorage.targetState !== null) {
                 history.push({
                     id,
                     object: {
                         points: pair,
-                        state: stored.temporary.targetState,
+                        state: tempStorage.targetState,
                     },
                 });
             }
