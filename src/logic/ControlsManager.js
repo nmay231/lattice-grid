@@ -1,7 +1,7 @@
 import { selectLayer } from "../redux/puzzle";
 
 export class ControlsManager {
-    leaveCanvasTimeout = null;
+    blurCanvasTimeoutId = null;
     tempStorage = null;
 
     constructor(puzzle) {
@@ -67,7 +67,7 @@ export class ControlsManager {
 
     resetControls() {
         this.tempStorage = null;
-        this.leaveCanvasTimeout = null;
+        this.blurCanvasTimeoutId = null;
     }
 
     handleLayerActions(layer, { discontinueInput, history } = {}) {
@@ -158,7 +158,7 @@ export class ControlsManager {
         const { grid, storage, settings } = this.puzzle;
         const event = this.cleanPointerEvent({}, "cancelAction");
 
-        this.leaveCanvasTimeout = setTimeout(() => {
+        this.blurCanvasTimeoutId = setTimeout(() => {
             const layer = this.puzzle.getCurrentLayer();
             const actions = layer.handleEvent({
                 grid,
@@ -176,7 +176,7 @@ export class ControlsManager {
             return;
         }
 
-        clearTimeout(this.leaveCanvasTimeout);
+        clearTimeout(this.blurCanvasTimeoutId);
     }
 
     onContextMenu(event) {
