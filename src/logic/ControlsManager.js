@@ -80,13 +80,13 @@ export class ControlsManager {
         storage.addToHistory(grid, layer, history);
     }
 
-    onPointerDown(event) {
+    onPointerDown(rawEvent) {
         // TODO: allow for two fingers to zoom
-        if (!event.isPrimary) {
+        if (!rawEvent.isPrimary) {
             return;
         }
         const { grid, storage, settings } = this.puzzle;
-        event = this.cleanPointerEvent(event, "pointerDown");
+        const event = this.cleanPointerEvent(rawEvent, "pointerDown");
 
         this.tempStorage = {};
         const eventInfo = {
@@ -107,13 +107,13 @@ export class ControlsManager {
         }
     }
 
-    onPointerMove(event) {
-        if (!event.isPrimary || !this.tempStorage) {
+    onPointerMove(rawEvent) {
+        if (!rawEvent.isPrimary || !this.tempStorage) {
             return;
         }
 
         const { grid, storage, settings } = this.puzzle;
-        event = this.cleanPointerEvent(event, "pointerMove");
+        const event = this.cleanPointerEvent(rawEvent, "pointerMove");
         const eventInfo = {
             grid,
             storage,
@@ -132,13 +132,13 @@ export class ControlsManager {
         }
     }
 
-    onPointerUp(event) {
-        if (!event.isPrimary || !this.tempStorage) {
+    onPointerUp(rawEvent) {
+        if (!rawEvent.isPrimary || !this.tempStorage) {
             return;
         }
 
         const { grid, storage, settings } = this.puzzle;
-        event = this.cleanPointerEvent(event, "pointerUp");
+        const event = this.cleanPointerEvent(rawEvent, "pointerUp");
 
         const layer = this.puzzle.getCurrentLayer();
         const actions = layer.handleEvent({
@@ -151,13 +151,13 @@ export class ControlsManager {
         this.handleLayerActions(layer, actions);
     }
 
-    onPointerLeave(event) {
-        if (!event.isPrimary || !this.tempStorage) {
+    onPointerLeave(rawEvent) {
+        if (!rawEvent.isPrimary || !this.tempStorage) {
             return;
         }
 
         const { grid, storage, settings } = this.puzzle;
-        event = this.cleanPointerEvent(event, "cancelAction");
+        const event = this.cleanPointerEvent(rawEvent, "cancelAction");
 
         this.leaveCanvasTimeout = setTimeout(() => {
             const layer = this.puzzle.getCurrentLayer();
@@ -243,10 +243,10 @@ export class ControlsManager {
         }
     }
 
-    onPointerUpOutside(event) {
-        if (event.target?.id === "canvas-container") {
+    onPointerUpOutside(rawEvent) {
+        if (rawEvent.target?.id === "canvas-container") {
             const { grid, storage, settings } = this.puzzle;
-            event = this.cleanPointerEvent({}, "cancelAction");
+            const event = this.cleanPointerEvent({}, "cancelAction");
 
             const layer = this.puzzle.getCurrentLayer();
             const actions = layer.handleEvent({
