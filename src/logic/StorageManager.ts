@@ -1,5 +1,4 @@
 import { SquareGrid } from "./grids/SquareGrid";
-import { PuzzleManager } from "./PuzzleManager";
 
 // TODO: Group together temporarily decentralized types
 type Grid = SquareGrid; // | HexagonalGrid etc.
@@ -10,6 +9,7 @@ type GridAndLayer = { grid: Grid; layer: Layer };
 type PuzzleObject = {
     id: string;
     layerId?: string;
+    batchId: "ignore" | number;
     object: any;
 };
 type LayerStorage = {
@@ -25,6 +25,7 @@ type HistoryAction = {
 type HistorySlice = {
     id: string;
     layerId: string;
+    batchId?: number;
     undo: HistoryAction;
     redo: HistoryAction;
 };
@@ -37,12 +38,6 @@ export class StorageManager {
     all: Record<string | symbol, Record<string, LayerStorage>> = {};
 
     histories: Record<string | symbol, History> = {};
-
-    puzzle: PuzzleManager;
-
-    constructor(puzzle: PuzzleManager) {
-        this.puzzle = puzzle;
-    }
 
     addStorage({ grid, layer }: GridAndLayer) {
         this.all[grid.id] = this.all[grid.id] ?? {};
@@ -74,11 +69,14 @@ export class StorageManager {
 
         const history = this.histories[grid.id];
 
-        if (history.index < history.actions.length) {
-            history.actions.splice(history.index); // Prune any redo actions
-        }
+        const historyChanges = puzzleObjects.filter(
+            ({ batchId }) => batchId !== "ignore",
+        ).length;
 
-        history.index += puzzleObjects.length;
+        if (history.index < history.actions.length && historyChanges) {
+            // Only prune redo actions when actions will be added to history
+            history.actions.splice(history.index);
+        }
 
         for (let puzzleObject of puzzleObjects) {
             const layerId = puzzleObject.layerId || layer.id;
@@ -92,6 +90,29 @@ export class StorageManager {
                         : renderOrder.length,
             };
 
+            // Merge two actions if they are batched and affecting the same object
+            const lastSlice = history.actions[history.actions.length - 1];
+            if (
+                lastSlice &&
+                lastSlice.id === puzzleObject.id &&
+                lastSlice.layerId === puzzleObject.layerId &&
+                lastSlice.batchId === puzzleObject.batchId &&
+                lastSlice.batchId !== undefined
+            ) {
+                lastSlice.redo = redo;
+                this._ApplyHistoryAction(
+                    objects,
+                    renderOrder,
+                    lastSlice,
+                    "redo",
+                );
+
+                if (redo.object === null && lastSlice.undo.object === null) {
+                    // We can remove this action since it is a no-op
+                    history.actions.splice(history.actions.length - 1, 1);
+                }
+            }
+
             const undo: HistoryAction = {
                 object: objects[puzzleObject.id] || null,
                 renderIndex: renderOrder.indexOf(puzzleObject.id),
@@ -100,14 +121,16 @@ export class StorageManager {
             const slice: HistorySlice = {
                 id: puzzleObject.id,
                 layerId,
+                batchId: Number(puzzleObject.batchId),
                 redo,
                 undo,
             };
-            history.actions.push(slice);
             this._ApplyHistoryAction(objects, renderOrder, slice, "redo");
+            if (puzzleObject.batchId !== "ignore") {
+                history.actions.push(slice);
+                history.index++;
+            }
         }
-
-        this.puzzle.redrawScreen();
     }
 
     _ApplyHistoryAction(
@@ -141,12 +164,18 @@ export class StorageManager {
             return;
         }
 
-        history.index--;
-        const action = history.actions[history.index];
-        const { objects, renderOrder } = this.all[historyId][action.layerId];
+        let action;
+        do {
+            history.index--;
+            action = history.actions[history.index];
+            const { objects, renderOrder } =
+                this.all[historyId][action.layerId];
 
-        this._ApplyHistoryAction(objects, renderOrder, action, "undo");
-        this.puzzle.redrawScreen();
+            this._ApplyHistoryAction(objects, renderOrder, action, "undo");
+        } while (
+            action.batchId &&
+            action.batchId === history.actions[history.index - 1]?.batchId
+        );
     }
 
     redoHistory(historyId: string | symbol) {
@@ -155,11 +184,17 @@ export class StorageManager {
             return;
         }
 
-        const action = history.actions[history.index];
-        const { objects, renderOrder } = this.all[historyId][action.layerId];
-        history.index++;
+        let action;
+        do {
+            action = history.actions[history.index];
+            const { objects, renderOrder } =
+                this.all[historyId][action.layerId];
+            history.index++;
 
-        this._ApplyHistoryAction(objects, renderOrder, action, "redo");
-        this.puzzle.redrawScreen();
+            this._ApplyHistoryAction(objects, renderOrder, action, "redo");
+        } while (
+            action.batchId &&
+            action.batchId === history.actions[history.index]?.batchId
+        );
     }
 }

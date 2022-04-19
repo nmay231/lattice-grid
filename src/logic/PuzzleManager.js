@@ -17,7 +17,7 @@ export class PuzzleManager {
         this.settings = store.getState().settings;
 
         this.grid = new SquareGrid(this.settings, { width: 1, height: 1 });
-        this.storage = new StorageManager(this);
+        this.storage = new StorageManager();
         this.controls = new ControlsManager(this);
 
         this.loadPuzzle();
