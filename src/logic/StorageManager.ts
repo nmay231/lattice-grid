@@ -1,7 +1,5 @@
-import { SquareGrid } from "./grids/SquareGrid";
-
 // TODO: Group together temporarily decentralized types
-type Grid = SquareGrid; // | HexagonalGrid etc.
+type Grid = { id: string | symbol };
 type Layer = { id: string };
 
 type GridAndLayer = { grid: Grid; layer: Layer };
@@ -15,7 +13,6 @@ type PuzzleObject = {
 type LayerStorage = {
     renderOrder: string[];
     objects: Record<string, PuzzleObject>;
-    temporary: object;
 };
 
 type HistoryAction = {
@@ -35,17 +32,13 @@ type History = {
 };
 
 export class StorageManager {
-    all: Record<string | symbol, Record<string, LayerStorage>> = {};
+    objects: Record<string | symbol, Record<string, LayerStorage>> = {};
 
     histories: Record<string | symbol, History> = {};
 
     addStorage({ grid, layer }: GridAndLayer) {
-        this.all[grid.id] = this.all[grid.id] ?? {};
-        this.all[grid.id][layer.id] = {
-            renderOrder: [],
-            objects: {},
-            temporary: {},
-        };
+        this.objects[grid.id] = this.objects[grid.id] ?? {};
+        this.objects[grid.id][layer.id] = { renderOrder: [], objects: {} };
 
         this.histories[grid.id] = this.histories[grid.id] || {
             actions: [],
@@ -55,11 +48,11 @@ export class StorageManager {
 
     removeStorage({ grid, layer }: GridAndLayer) {
         // TODO: add an entry to history (so you can undo deleting a layer)? It might be a bit clunky then...
-        delete this.all[grid.id][layer.id];
+        delete this.objects[grid.id][layer.id];
     }
 
     getStored({ grid, layer }: GridAndLayer) {
-        return this.all[grid.id][layer.id];
+        return this.objects[grid.id][layer.id];
     }
 
     addToHistory(grid: Grid, layer: Layer, puzzleObjects?: PuzzleObject[]) {
@@ -80,7 +73,7 @@ export class StorageManager {
 
         for (let puzzleObject of puzzleObjects) {
             const layerId = puzzleObject.layerId || layer.id;
-            const { objects, renderOrder } = this.all[grid.id][layerId];
+            const { objects, renderOrder } = this.objects[grid.id][layerId];
 
             const redo: HistoryAction = {
                 object: puzzleObject.object,
@@ -169,7 +162,7 @@ export class StorageManager {
             history.index--;
             action = history.actions[history.index];
             const { objects, renderOrder } =
-                this.all[historyId][action.layerId];
+                this.objects[historyId][action.layerId];
 
             this._ApplyHistoryAction(objects, renderOrder, action, "undo");
         } while (
@@ -188,7 +181,7 @@ export class StorageManager {
         do {
             action = history.actions[history.index];
             const { objects, renderOrder } =
-                this.all[historyId][action.layerId];
+                this.objects[historyId][action.layerId];
             history.index++;
 
             this._ApplyHistoryAction(objects, renderOrder, action, "redo");
