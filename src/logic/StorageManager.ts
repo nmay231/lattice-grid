@@ -2,24 +2,24 @@
 type Grid = { id: string | symbol };
 type Layer = { id: string };
 
-type GridAndLayer = { grid: Grid; layer: Layer };
+export type GridAndLayer = { grid: Grid; layer: Layer };
 
-type PuzzleObject = {
-    id: string;
-    layerId?: string;
-    batchId: "ignore" | number;
-    object: any;
-};
 type LayerStorage = {
     renderOrder: string[];
-    objects: Record<string, PuzzleObject>;
+    objects: Record<string, object>;
 };
 
-type HistoryAction = {
-    object: PuzzleObject;
+export type IncompleteHistoryAction = {
+    id: string;
+    layerId?: string;
+    batchId?: "ignore" | number;
+    object: any;
+};
+export type HistoryAction = {
+    object: object | null;
     renderIndex: number;
 };
-type HistorySlice = {
+export type HistorySlice = {
     id: string;
     layerId: string;
     batchId?: number;
@@ -55,7 +55,11 @@ export class StorageManager {
         return this.objects[grid.id][layer.id];
     }
 
-    addToHistory(grid: Grid, layer: Layer, puzzleObjects?: PuzzleObject[]) {
+    addToHistory(
+        grid: Grid,
+        layer: Layer,
+        puzzleObjects?: IncompleteHistoryAction[],
+    ) {
         if (!puzzleObjects?.length) {
             return;
         }
@@ -146,7 +150,8 @@ export class StorageManager {
             delete objects[slice.id];
         } else {
             renderOrder.splice(action.renderIndex, 0, slice.id);
-            action.object.id = slice.id; // TODO: This should not be done here
+            // TODO: This should not be done here, but instead done by the layer: history: [createObject({ id, points })]
+            action.object = { ...action.object, id: slice.id };
             objects[slice.id] = action.object;
         }
     }
