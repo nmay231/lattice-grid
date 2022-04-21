@@ -198,7 +198,13 @@ export class SelectionLayer {
                 if (tempStorage.removeSingle) {
                     return {
                         discontinueInput: true,
-                        history: [{ id: stored.renderOrder[0], object: null }],
+                        history: [
+                            {
+                                id: stored.renderOrder[0],
+                                layerId: this.id,
+                                object: null,
+                            },
+                        ],
                     };
                 }
                 return { discontinueInput: true };
