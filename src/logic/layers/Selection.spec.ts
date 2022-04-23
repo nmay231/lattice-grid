@@ -35,7 +35,7 @@ describe("SelectionLayer", () => {
         expect(result.history[0]).toMatchObject({
             id: "point1",
             layerId: "Selection",
-
+            batchId: "ignore",
             object: {},
         });
         expect(result.discontinueInput).toBeFalsy();
@@ -73,7 +73,7 @@ describe("SelectionLayer", () => {
             {
                 id: "point1",
                 layerId: "Selection",
-
+                batchId: "ignore",
                 object: null,
             },
         ]);
@@ -100,13 +100,13 @@ describe("SelectionLayer", () => {
             {
                 id: "point2",
                 layerId: "Selection",
-
+                batchId: "ignore",
                 object: null,
             },
             {
                 id: "point1",
                 layerId: "Selection",
-
+                batchId: "ignore",
                 object: { point: "point1", state: 2 },
             },
         ]);
@@ -125,7 +125,44 @@ describe("SelectionLayer", () => {
         expect(result.discontinueInput).toBeTruthy();
     });
 
-    it.todo("should deselect a cell by clicking another one");
+    it("should deselect a cell when clicking another one", () => {
+        // Setup a grid with one cell selected
+        const selection = getFreshSelectionLayer();
+        const tempStorage = {};
+        const stored = {
+            objects: {
+                point1: { id: "point1", point: "point1", state: 2 },
+            } as Record<string, object>,
+            renderOrder: ["point1"],
+        };
+        const fakeEvent = makeFakeEvent({ stored, tempStorage });
+
+        // Start tapping/clicking a different cell
+        fakeEvent.event = { type: "pointerDown", points: ["point2"] };
+        let result = selection.handleEvent(fakeEvent);
+        expect(result.history).toMatchObject([
+            {
+                id: "point1",
+                layerId: "Selection",
+                batchId: "ignore",
+                object: null,
+            },
+            {
+                id: "point2",
+                layerId: "Selection",
+                batchId: "ignore",
+                object: { point: "point2", state: 2 },
+            },
+        ]);
+        expect(result.discontinueInput).toBeFalsy();
+
+        // Stop tapping/clicking a different cell
+        fakeEvent.event = { type: "pointerUp" };
+        result = selection.handleEvent(fakeEvent);
+        expect(result.history?.length).toBeFalsy();
+        expect(result.discontinueInput).toBeTruthy();
+    });
+
     it.todo("should select multiple disjoint cells when holding ctrl");
 
     it.todo("tests with gatherPoints maybe...");

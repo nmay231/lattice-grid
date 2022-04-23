@@ -56,6 +56,7 @@ export class SelectionLayer {
                     history: stored.renderOrder.map((id) => ({
                         id,
                         layerId: this.id,
+                        batchId: "ignore",
                         object: null,
                     })),
                 };
@@ -69,17 +70,24 @@ export class SelectionLayer {
                     history = grid.getAllPoints("cells").map((id) => ({
                         id,
                         layerId: this.id,
+                        batchId: "ignore",
                         object: { state: 1, point: id },
                     }));
                 } else if (event.ctrlKey && event.key === "i") {
                     const all = grid.getAllPoints("cells");
                     history = all.map((id) => {
                         if (id in stored.objects) {
-                            return { id, layerId: this.id, object: null };
+                            return {
+                                id,
+                                layerId: this.id,
+                                batchId: "ignore",
+                                object: null,
+                            };
                         } else {
                             return {
                                 id,
                                 layerId: this.id,
+                                batchId: "ignore",
                                 object: { state: 1, point: id },
                             };
                         }
@@ -118,7 +126,14 @@ export class SelectionLayer {
                         const id = ids[0];
                         if (id in stored.objects) {
                             tempStorage.targetState = null;
-                            history = [{ id, layerId: this.id, object: null }];
+                            history = [
+                                {
+                                    id,
+                                    layerId: this.id,
+                                    batchId: "ignore",
+                                    object: null,
+                                },
+                            ];
                         } else {
                             stored.groupNumber += 1;
                             tempStorage.targetState = stored.groupNumber;
@@ -126,6 +141,7 @@ export class SelectionLayer {
                                 {
                                     id,
                                     layerId: this.id,
+                                    batchId: "ignore",
                                     object: {
                                         state: stored.groupNumber,
                                         point: id,
@@ -139,6 +155,7 @@ export class SelectionLayer {
                             .map((id) => ({
                                 id,
                                 layerId: this.id,
+                                batchId: "ignore",
                                 object: null,
                             }));
                     } else {
@@ -155,6 +172,7 @@ export class SelectionLayer {
                         history = allIds.map((id) => ({
                             id,
                             layerId: this.id,
+                            batchId: "ignore",
                             object: {
                                 state: tempStorage.targetState,
                                 point: id,
@@ -175,6 +193,7 @@ export class SelectionLayer {
                             .map((toDelete) => ({
                                 id: toDelete,
                                 layerId: this.id,
+                                batchId: "ignore",
                                 object: null,
                             }));
 
@@ -187,6 +206,7 @@ export class SelectionLayer {
                         ...ids.map((id) => ({
                             id,
                             layerId: this.id,
+                            batchId: "ignore",
                             object: { state: stored.groupNumber, point: id },
                         })),
                     );
@@ -202,6 +222,7 @@ export class SelectionLayer {
                             {
                                 id: stored.renderOrder[0],
                                 layerId: this.id,
+                                batchId: "ignore",
                                 object: null,
                             },
                         ],
