@@ -29,19 +29,10 @@ describe("StorageManager", () => {
         };
         storage._ApplyHistoryAction(objects, renderOrder, slice, "redo");
 
-        expect(storage.objects["grid"]["layer1"]).toMatchInlineSnapshot(`
-            Object {
-              "objects": Object {
-                "objectId": Object {
-                  "asdf": "something",
-                  "id": "objectId",
-                },
-              },
-              "renderOrder": Array [
-                "objectId",
-              ],
-            }
-        `);
+        expect(storage.objects["grid"]["layer1"]).toEqual({
+            objects: { objectId: { asdf: "something", id: "objectId" } },
+            renderOrder: ["objectId"],
+        });
     });
 
     it("should delete an object correctly", () => {
@@ -58,12 +49,10 @@ describe("StorageManager", () => {
         };
         storage._ApplyHistoryAction(objects, renderOrder, slice, "redo");
 
-        expect(storage.objects["grid"]["layer1"]).toMatchInlineSnapshot(`
-            Object {
-              "objects": Object {},
-              "renderOrder": Array [],
-            }
-        `);
+        expect(storage.objects["grid"]["layer1"]).toEqual({
+            objects: {},
+            renderOrder: [],
+        });
     });
 
     it("object placement should be idempotent", () => {
@@ -81,19 +70,10 @@ describe("StorageManager", () => {
         storage._ApplyHistoryAction(objects, renderOrder, slice, "redo");
         storage._ApplyHistoryAction(objects, renderOrder, slice, "redo");
 
-        expect(storage.objects["grid"]["layer1"]).toMatchInlineSnapshot(`
-            Object {
-              "objects": Object {
-                "objectId": Object {
-                  "asdf": "something",
-                  "id": "objectId",
-                },
-              },
-              "renderOrder": Array [
-                "objectId",
-              ],
-            }
-        `);
+        expect(storage.objects["grid"]["layer1"]).toEqual({
+            objects: { objectId: { asdf: "something", id: "objectId" } },
+            renderOrder: ["objectId"],
+        });
     });
 
     it("object deletion should be idempotent", () => {
@@ -111,34 +91,22 @@ describe("StorageManager", () => {
         storage._ApplyHistoryAction(objects, renderOrder, slice, "redo");
         storage._ApplyHistoryAction(objects, renderOrder, slice, "redo");
 
-        expect(storage.objects["grid"]["layer1"]).toMatchInlineSnapshot(`
-            Object {
-              "objects": Object {},
-              "renderOrder": Array [],
-            }
-        `);
+        expect(storage.objects["grid"]["layer1"]).toEqual({
+            objects: {},
+            renderOrder: [],
+        });
     });
 
     it("should not undo or redo when empty", () => {
         const storage = getNormalStorage();
         storage.undoHistory("grid");
-        expect(storage.histories).toMatchInlineSnapshot(`
-            Object {
-              "grid": Object {
-                "actions": Array [],
-                "index": 0,
-              },
-            }
-        `);
+        expect(storage.histories).toEqual({
+            grid: { actions: [], index: 0 },
+        });
         storage.redoHistory("grid");
-        expect(storage.histories).toMatchInlineSnapshot(`
-            Object {
-              "grid": Object {
-                "actions": Array [],
-                "index": 0,
-              },
-            }
-        `);
+        expect(storage.histories).toEqual({
+            grid: { actions: [], index: 0 },
+        });
     });
 
     it("should undo/redo a batch of actions", () => {
@@ -153,95 +121,47 @@ describe("StorageManager", () => {
 
         storage.undoHistory("grid");
         // Ensure the initial state is good
-        expect(storage.objects).toMatchInlineSnapshot(`
-            Object {
-              "grid": Object {
-                "layer1": Object {
-                  "objects": Object {
-                    "id1": Object {
-                      "asdf": "something1",
-                      "id": "id1",
+        expect(storage.objects).toEqual({
+            grid: {
+                layer1: {
+                    objects: {
+                        id1: { asdf: "something1", id: "id1" },
+                        id2: { asdf: "something2", id: "id2" },
+                        id3: { asdf: "something3", id: "id3" },
                     },
-                    "id2": Object {
-                      "asdf": "something2",
-                      "id": "id2",
-                    },
-                    "id3": Object {
-                      "asdf": "something3",
-                      "id": "id3",
-                    },
-                  },
-                  "renderOrder": Array [
-                    "id1",
-                    "id2",
-                    "id3",
-                  ],
+                    renderOrder: ["id1", "id2", "id3"],
                 },
-                "layer2": Object {
-                  "objects": Object {},
-                  "renderOrder": Array [],
-                },
-              },
-            }
-        `);
+                layer2: { objects: {}, renderOrder: [] },
+            },
+        });
 
         storage.undoHistory("grid");
         // Undo a batch of actions
-        expect(storage.objects).toMatchInlineSnapshot(`
-            Object {
-              "grid": Object {
-                "layer1": Object {
-                  "objects": Object {
-                    "id1": Object {
-                      "asdf": "something1",
-                      "id": "id1",
-                    },
-                  },
-                  "renderOrder": Array [
-                    "id1",
-                  ],
+        expect(storage.objects).toEqual({
+            grid: {
+                layer1: {
+                    objects: { id1: { asdf: "something1", id: "id1" } },
+                    renderOrder: ["id1"],
                 },
-                "layer2": Object {
-                  "objects": Object {},
-                  "renderOrder": Array [],
-                },
-              },
-            }
-        `);
+                layer2: { objects: {}, renderOrder: [] },
+            },
+        });
 
         storage.redoHistory("grid");
         // Undo a batch of actions
-        expect(storage.objects).toMatchInlineSnapshot(`
-            Object {
-              "grid": Object {
-                "layer1": Object {
-                  "objects": Object {
-                    "id1": Object {
-                      "asdf": "something1",
-                      "id": "id1",
+        expect(storage.objects).toEqual({
+            grid: {
+                layer1: {
+                    objects: {
+                        id1: { asdf: "something1", id: "id1" },
+                        id2: { asdf: "something2", id: "id2" },
+                        id3: { asdf: "something3", id: "id3" },
                     },
-                    "id2": Object {
-                      "asdf": "something2",
-                      "id": "id2",
-                    },
-                    "id3": Object {
-                      "asdf": "something3",
-                      "id": "id3",
-                    },
-                  },
-                  "renderOrder": Array [
-                    "id1",
-                    "id2",
-                    "id3",
-                  ],
+                    renderOrder: ["id1", "id2", "id3"],
                 },
-                "layer2": Object {
-                  "objects": Object {},
-                  "renderOrder": Array [],
-                },
-              },
-            }
-        `);
+                layer2: { objects: {}, renderOrder: [] },
+            },
+        });
     });
 
     // TODO
