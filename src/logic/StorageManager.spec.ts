@@ -1,4 +1,4 @@
-import { HistorySlice, StorageManager } from "./StorageManager";
+import { HistoryAction, StorageManager } from "./StorageManager";
 
 describe("StorageManager", () => {
     const getNormalStorage = () => {
@@ -21,13 +21,13 @@ describe("StorageManager", () => {
             grid: { id: "grid" },
             layer: { id: "layer1" },
         });
-        const slice: HistorySlice = {
+        const action: HistoryAction = {
             id: "objectId",
             layerId: "layer1",
-            undo: { object: null, renderIndex: -1 },
-            redo: { object: { asdf: "something" }, renderIndex: 0 },
+            object: { asdf: "something" },
+            renderIndex: 0,
         };
-        storage._ApplyHistoryAction(objects, renderOrder, slice, "redo");
+        storage._ApplyHistoryAction(objects, renderOrder, action);
 
         expect(storage.objects["grid"]["layer1"]).toEqual({
             objects: { objectId: { asdf: "something", id: "objectId" } },
@@ -41,13 +41,13 @@ describe("StorageManager", () => {
             grid: { id: "grid" },
             layer: { id: "layer1" },
         });
-        const slice: HistorySlice = {
+        const action: HistoryAction = {
             id: "objectId",
             layerId: "layer1",
-            undo: { object: { asdf: "something" }, renderIndex: 0 },
-            redo: { object: null, renderIndex: -1 },
+            object: null,
+            renderIndex: -1,
         };
-        storage._ApplyHistoryAction(objects, renderOrder, slice, "redo");
+        storage._ApplyHistoryAction(objects, renderOrder, action);
 
         expect(storage.objects["grid"]["layer1"]).toEqual({
             objects: {},
@@ -61,14 +61,14 @@ describe("StorageManager", () => {
             grid: { id: "grid" },
             layer: { id: "layer1" },
         });
-        const slice: HistorySlice = {
+        const action: HistoryAction = {
             id: "objectId",
             layerId: "layer1",
-            undo: { object: null, renderIndex: -1 },
-            redo: { object: { asdf: "something" }, renderIndex: 0 },
+            object: { asdf: "something" },
+            renderIndex: 0,
         };
-        storage._ApplyHistoryAction(objects, renderOrder, slice, "redo");
-        storage._ApplyHistoryAction(objects, renderOrder, slice, "redo");
+        storage._ApplyHistoryAction(objects, renderOrder, action);
+        storage._ApplyHistoryAction(objects, renderOrder, action);
 
         expect(storage.objects["grid"]["layer1"]).toEqual({
             objects: { objectId: { asdf: "something", id: "objectId" } },
@@ -82,19 +82,51 @@ describe("StorageManager", () => {
             grid: { id: "grid" },
             layer: { id: "layer1" },
         });
-        const slice: HistorySlice = {
+        const action: HistoryAction = {
             id: "objectId",
             layerId: "layer1",
-            undo: { object: { asdf: "something" }, renderIndex: 0 },
-            redo: { object: null, renderIndex: -1 },
+            object: null,
+            renderIndex: -1,
         };
-        storage._ApplyHistoryAction(objects, renderOrder, slice, "redo");
-        storage._ApplyHistoryAction(objects, renderOrder, slice, "redo");
+        storage._ApplyHistoryAction(objects, renderOrder, action);
+        storage._ApplyHistoryAction(objects, renderOrder, action);
 
         expect(storage.objects["grid"]["layer1"]).toEqual({
             objects: {},
             renderOrder: [],
         });
+    });
+
+    it("should return the same object when inverted twice", () => {
+        const storage = getNormalStorage();
+        const { objects, renderOrder } = storage.getStored({
+            grid: { id: "grid" },
+            layer: { id: "layer1" },
+        });
+        const action: HistoryAction = {
+            id: "objectId",
+            layerId: "layer1",
+            object: { asdf: "something" },
+            renderIndex: 0,
+        };
+        const inverse = storage._ApplyHistoryAction(
+            objects,
+            renderOrder,
+            action,
+        );
+        expect(inverse).toEqual({
+            id: "objectId",
+            layerId: "layer1",
+            object: null,
+            renderIndex: -1,
+        });
+
+        const sameAction = storage._ApplyHistoryAction(
+            objects,
+            renderOrder,
+            action,
+        );
+        expect(sameAction).toEqual<HistoryAction>(action);
     });
 
     it("should not undo or redo when empty", () => {

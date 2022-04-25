@@ -16,18 +16,14 @@ export type IncompleteHistoryAction = {
     object: any;
 };
 export type HistoryAction = {
-    object: object | null;
-    renderIndex: number;
-};
-export type HistorySlice = {
     id: string;
     layerId: string;
     batchId?: number;
-    undo: HistoryAction;
-    redo: HistoryAction;
+    object: object | null;
+    renderIndex: number;
 };
 type History = {
-    actions: HistorySlice[];
+    actions: HistoryAction[];
     index: number;
 };
 
@@ -79,7 +75,10 @@ export class StorageManager {
             const layerId = puzzleObject.layerId || layer.id;
             const { objects, renderOrder } = this.objects[grid.id][layerId];
 
-            const redo: HistoryAction = {
+            const action: HistoryAction = {
+                id: puzzleObject.id,
+                layerId,
+                batchId: Number(puzzleObject.batchId),
                 object: puzzleObject.object,
                 renderIndex:
                     puzzleObject.id in objects
@@ -87,45 +86,30 @@ export class StorageManager {
                         : renderOrder.length,
             };
 
-            // Merge two actions if they are batched and affecting the same object
-            const lastSlice = history.actions[history.actions.length - 1];
-            if (
-                lastSlice &&
-                lastSlice.id === puzzleObject.id &&
-                lastSlice.layerId === puzzleObject.layerId &&
-                lastSlice.batchId === puzzleObject.batchId &&
-                lastSlice.batchId !== undefined
-            ) {
-                lastSlice.redo = redo;
-                this._ApplyHistoryAction(
-                    objects,
-                    renderOrder,
-                    lastSlice,
-                    "redo",
-                );
+            const undoAction = this._ApplyHistoryAction(
+                objects,
+                renderOrder,
+                action,
+            );
+            if (puzzleObject.batchId !== "ignore") {
+                history.actions.push(undoAction);
+                history.index++;
+            } else {
+                continue;
+            }
 
-                if (redo.object === null && lastSlice.undo.object === null) {
+            // Merge two actions if they are batched and affecting the same object
+            const lastAction = history.actions[history.actions.length - 1];
+            if (
+                lastAction?.batchId !== undefined &&
+                lastAction.id === puzzleObject.id &&
+                lastAction.layerId === puzzleObject.layerId &&
+                lastAction.batchId === puzzleObject.batchId
+            ) {
+                if (action.object === null && lastAction.object === null) {
                     // We can remove this action since it is a no-op
                     history.actions.splice(history.actions.length - 1, 1);
                 }
-            }
-
-            const undo: HistoryAction = {
-                object: objects[puzzleObject.id] || null,
-                renderIndex: renderOrder.indexOf(puzzleObject.id),
-            };
-
-            const slice: HistorySlice = {
-                id: puzzleObject.id,
-                layerId,
-                batchId: Number(puzzleObject.batchId),
-                redo,
-                undo,
-            };
-            this._ApplyHistoryAction(objects, renderOrder, slice, "redo");
-            if (puzzleObject.batchId !== "ignore") {
-                history.actions.push(slice);
-                history.index++;
             }
         }
     }
@@ -133,27 +117,32 @@ export class StorageManager {
     _ApplyHistoryAction(
         objects: LayerStorage["objects"],
         renderOrder: LayerStorage["renderOrder"],
-        slice: HistorySlice,
-        type: "undo" | "redo",
+        action: HistoryAction,
     ) {
-        const action = type === "undo" ? slice.undo : slice.redo;
-
         if (action.object === undefined) {
             throw Error("You stupid");
         }
 
-        if (slice.id in objects) {
-            renderOrder.splice(renderOrder.indexOf(slice.id), 1);
+        const undoAction: HistoryAction = {
+            ...action,
+            object: objects[action.id] || null,
+            renderIndex: renderOrder.indexOf(action.id),
+        };
+
+        if (action.id in objects) {
+            renderOrder.splice(renderOrder.indexOf(action.id), 1);
         }
 
         if (action.object === null) {
-            delete objects[slice.id];
+            delete objects[action.id];
         } else {
-            renderOrder.splice(action.renderIndex, 0, slice.id);
+            renderOrder.splice(action.renderIndex, 0, action.id);
             // TODO: This should not be done here, but instead done by the layer: history: [createObject({ id, points })]
-            action.object = { ...action.object, id: slice.id };
-            objects[slice.id] = action.object;
+            action.object = { ...action.object, id: action.id };
+            objects[action.id] = action.object;
         }
+
+        return undoAction;
     }
 
     undoHistory(historyId: string | symbol) {
@@ -169,7 +158,9 @@ export class StorageManager {
             const { objects, renderOrder } =
                 this.objects[historyId][action.layerId];
 
-            this._ApplyHistoryAction(objects, renderOrder, action, "undo");
+            const redo = this._ApplyHistoryAction(objects, renderOrder, action);
+            // Replace the action with its opposite
+            history.actions.splice(history.index, 1, redo);
         } while (
             action.batchId &&
             action.batchId === history.actions[history.index - 1]?.batchId
@@ -187,9 +178,11 @@ export class StorageManager {
             action = history.actions[history.index];
             const { objects, renderOrder } =
                 this.objects[historyId][action.layerId];
-            history.index++;
 
-            this._ApplyHistoryAction(objects, renderOrder, action, "redo");
+            const undo = this._ApplyHistoryAction(objects, renderOrder, action);
+            // Replace the action with its opposite
+            history.actions.splice(history.index, 1, undo);
+            history.index++;
         } while (
             action.batchId &&
             action.batchId === history.actions[history.index]?.batchId
