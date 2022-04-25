@@ -35,6 +35,7 @@ export const handleEventsCurrentSetting = (
         const stored = storage.getStored({ grid, layer });
         const newPoints = event.points;
 
+        tempStorage.batchId = tempStorage.batchId ?? storage.getNewBatchId();
         const history = [];
         for (let i = 0; i < newPoints.length - 1; i++) {
             const pair = newPoints.slice(i, i + 2);
@@ -55,10 +56,15 @@ export const handleEventsCurrentSetting = (
             }
 
             if (tempStorage.targetState === null && id in stored.objects) {
-                history.push({ id, object: null });
+                history.push({
+                    id,
+                    batchId: tempStorage.batchId,
+                    object: null,
+                });
             } else if (tempStorage.targetState !== null) {
                 history.push({
                     id,
+                    batchId: tempStorage.batchId,
                     object: {
                         points: pair,
                         state: tempStorage.targetState,

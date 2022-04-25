@@ -195,4 +195,9 @@ export class StorageManager {
             action.batchId === history.actions[history.index]?.batchId
         );
     }
+
+    _batchId = 1;
+    getNewBatchId() {
+        return this._batchId++;
+    }
 }

@@ -164,6 +164,14 @@ describe("StorageManager", () => {
         });
     });
 
+    it("should give truthy batchIds", () => {
+        const storage = getNormalStorage();
+        // Three just because
+        expect(storage.getNewBatchId()).toBeTruthy();
+        expect(storage.getNewBatchId()).toBeTruthy();
+        expect(storage.getNewBatchId()).toBeTruthy();
+    });
+
     // TODO
     it.todo("should not undo past the limits of history");
     it.todo("should not redo past the limits of history");
