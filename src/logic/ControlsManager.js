@@ -186,11 +186,6 @@ export class ControlsManager {
 
     // Attached to the document body
     handleKeyDown(rawEvent) {
-        if (this.tempStorage) {
-            // Ignore keyboard events if already handling pointer events
-            return;
-        }
-
         // This should be a very small whitelist for which key-strokes are allowed to be blocked
         const { shiftKey, ctrlKey, altKey, key, code } = rawEvent;
         if (
@@ -200,6 +195,11 @@ export class ControlsManager {
             (!shiftKey && !altKey && (key === "a" || key === "i"))
         ) {
             rawEvent.preventDefault();
+        }
+
+        if (this.tempStorage) {
+            // Ignore keyboard events if already handling pointer events
+            return;
         }
 
         const event = { type: "keyDown", shiftKey, ctrlKey, altKey, key, code };
