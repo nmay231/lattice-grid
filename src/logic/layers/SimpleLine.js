@@ -98,28 +98,45 @@ export class SimpleLineLayer {
     }
 
     getBlits({ grid, stored }) {
+        let allPoints = stored.renderOrder.flatMap(
+            (id) => stored.objects[id].points,
+        );
+        allPoints = allPoints.filter(
+            (point, index) => index === allPoints.indexOf(point),
+        );
+        const { [this.settings.pointType]: pointInfo } = grid.getPoints({
+            connections: { [this.settings.pointType]: { svgPoint: true } },
+            points: allPoints,
+        });
+
         const blits = {};
         for (let id of stored.renderOrder) {
-            const { points, state } = stored.objects[id];
-            blits[state.fill] = blits[state.fill] ?? {};
-
-            const { [this.settings.pointType]: pointInfo } = grid.getPoints({
-                connections: { [this.settings.pointType]: { svgPoint: true } },
+            const {
+                state: { fill },
                 points,
-            });
-            blits[state.fill][id] = points.map((p) => pointInfo[p].svgPoint);
+            } = stored.objects[id];
+            blits[id] = {
+                style: {
+                    stroke: fill, // Yes, this is a misnomer. Oh well
+                },
+                x1: pointInfo[points[0]].svgPoint[0],
+                y1: pointInfo[points[0]].svgPoint[1],
+                x2: pointInfo[points[1]].svgPoint[0],
+                y2: pointInfo[points[1]].svgPoint[1],
+            };
         }
 
-        return Object.keys(blits).map((key) => ({
-            id: key,
-            blitter: "line",
-            blits: blits[key],
-            // TODO: styling includes more than just color...
-            style: {
-                stroke: key,
-                strokeWidth: 4,
-                strokeLinecap: "round",
+        return [
+            {
+                id: "lines",
+                blitter: "line",
+                blits,
+                // TODO: styling includes more than just color...
+                style: {
+                    strokeWidth: 4,
+                    strokeLinecap: "round",
+                },
             },
-        }));
+        ];
     }
 }
