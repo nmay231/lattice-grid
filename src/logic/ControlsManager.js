@@ -77,6 +77,7 @@ export class ControlsManager {
         }
 
         storage.addToHistory(grid, layer, history);
+        this.puzzle.redrawScreen();
     }
 
     onPointerDown(rawEvent) {
@@ -225,8 +226,10 @@ export class ControlsManager {
             this.puzzle.redrawScreen();
         } else if (event.ctrlKey && event.key === "z") {
             storage.undoHistory(grid.id);
+            this.puzzle.redrawScreen();
         } else if (event.ctrlKey && event.key === "y") {
             storage.redoHistory(grid.id);
+            this.puzzle.redrawScreen();
         } else {
             const actions = layer.handleEvent({
                 event,
