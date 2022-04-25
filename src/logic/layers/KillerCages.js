@@ -80,8 +80,8 @@ export class KillerCagesLayer {
                 const point = sorted[0];
                 const { svgPoint, maxRadius } = cells[point];
                 const corner = [
-                    svgPoint[0] - 0.8 * maxRadius,
-                    svgPoint[1] - 0.8 * maxRadius,
+                    svgPoint[0] - 0.85 * maxRadius,
+                    svgPoint[1] - 0.85 * maxRadius,
                 ];
                 numberBlits[point] = {
                     text: object.state,
@@ -100,7 +100,7 @@ export class KillerCagesLayer {
                     strokeDasharray: "7 3",
                     strokeDashoffset: 3.5,
                     stroke: "#333",
-                    strokeWidth: 2,
+                    strokeWidth: 1.8,
                     strokeLinecap: "round",
                     fill: "none",
                 },

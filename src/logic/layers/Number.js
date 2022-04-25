@@ -132,7 +132,7 @@ export class NumberLayer {
             blits[id] = {
                 text: stored.objects[id].state,
                 point: cells[id].svgPoint,
-                size: cells[id].maxRadius * 1.8,
+                size: cells[id].maxRadius * 1.6,
             };
         }
 
