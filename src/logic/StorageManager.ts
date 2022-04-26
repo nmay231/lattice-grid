@@ -91,25 +91,30 @@ export class StorageManager {
                 renderOrder,
                 action,
             );
-            if (puzzleObject.batchId !== "ignore") {
-                history.actions.push(undoAction);
-                history.index++;
-            } else {
-                continue;
+
+            if (puzzleObject.batchId === "ignore") {
+                continue; // Do not include in history
             }
 
-            // Merge two actions if they are batched and affecting the same object
             const lastAction = history.actions[history.actions.length - 1];
+
+            // Merge two actions if they are batched and affecting the same object
             if (
-                lastAction?.batchId !== undefined &&
+                lastAction?.batchId &&
+                lastAction.layerId === layerId &&
                 lastAction.id === puzzleObject.id &&
-                lastAction.layerId === puzzleObject.layerId &&
                 lastAction.batchId === puzzleObject.batchId
             ) {
+                // By not pushing actions to history, the actions are merged
+
                 if (action.object === null && lastAction.object === null) {
-                    // We can remove this action since it is a no-op
+                    // We can remove the last action since it is a no-op
                     history.actions.splice(history.actions.length - 1, 1);
+                    history.index--;
                 }
+            } else {
+                history.actions.push(undoAction);
+                history.index++;
             }
         }
     }

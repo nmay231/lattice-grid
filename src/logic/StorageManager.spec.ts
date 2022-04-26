@@ -196,6 +196,35 @@ describe("StorageManager", () => {
         });
     });
 
+    it("should merge batched actions affecting the same object", () => {
+        const storage = getNormalStorage();
+
+        storage.addToHistory({ id: "grid" }, { id: "layer1" }, [
+            { id: "id1", object: { asdf: "something1" } },
+            { id: "id2", object: { asdf: "something2" }, batchId: 1 },
+            { id: "id2", object: { asdf: "changed" }, batchId: 1 },
+            { id: "id3", object: { asdf: "something3" } },
+        ]);
+
+        expect(storage.histories["grid"].actions.length).toBe(3);
+        expect(storage.histories["grid"].index).toBe(3);
+    });
+
+    it("should remove batched actions affecting the same object that are no-ops", () => {
+        const storage = getNormalStorage();
+
+        storage.addToHistory({ id: "grid" }, { id: "layer1" }, [
+            { id: "id1", object: { asdf: "something1" } },
+            { id: "id2", object: { asdf: "something2" }, batchId: 1 },
+            { id: "id2", object: { asdf: "changed" }, batchId: 1 },
+            { id: "id2", object: null, batchId: 1 },
+            { id: "id3", object: { asdf: "something3" } },
+        ]);
+
+        expect(storage.histories["grid"].actions.length).toBe(2);
+        expect(storage.histories["grid"].index).toBe(2);
+    });
+
     it("should give truthy batchIds", () => {
         const storage = getNormalStorage();
         // Three just because
