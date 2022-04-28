@@ -3,6 +3,8 @@
     width: 100vw;
     height: 100vh;
     display: flex;
+    /* TODO: Hide the scroll bars for now. This issue should be fixed when the canvas is not fit to the screen, but scrolled */
+    overflow: hidden;
 }
 
 .canvasContainer {
