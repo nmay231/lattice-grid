@@ -41,9 +41,10 @@ export class CellOutlineLayer {
                     edges[edge] = false;
                 } else {
                     const corners = cells[cell].edges[edge].corners;
-                    edges[edge] = Object.values(corners).map(
+                    const [[x1, y1], [x2, y2]] = Object.values(corners).map(
                         ({ svgPoint }) => svgPoint,
                     );
+                    edges[edge] = { x1, y1, x2, y2 };
                 }
             }
         }

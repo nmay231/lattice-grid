@@ -1,5 +1,6 @@
+import { setBlitGroups } from "../atoms/blits";
 import { setCanvasSize } from "../atoms/canvasSize";
-import { setBlitGroups } from "../redux/blits";
+import { initialSettings } from "../atoms/settings";
 import { addLayer, newPuzzle, removeLayer } from "../redux/puzzle";
 import { ControlsManager } from "./ControlsManager";
 import { SquareGrid } from "./grids/SquareGrid";
@@ -11,10 +12,8 @@ export class PuzzleManager {
 
     constructor(store) {
         this.store = store;
-        this.unsubscribeToStore = this.store.subscribe(
-            this.subscribeToStore.bind(this),
-        );
-        this.settings = store.getState().settings;
+        // TODO: consider adding a .setSettings that will call setAtomSettings
+        this.settings = initialSettings;
 
         this.grid = new SquareGrid(this.settings, { width: 1, height: 1 });
         this.storage = new StorageManager();
@@ -68,17 +67,6 @@ export class PuzzleManager {
         setCanvasSize(requirements);
     }
 
-    subscribeToStore() {
-        // TODO: This is not fully comprehensive
-        const { settings } = this.store.getState();
-        if (this.settings !== settings) {
-            this.settings = settings;
-            this.grid.settings = settings;
-            this.resizeCanvas();
-            this.redrawScreen();
-        }
-    }
-
     redrawScreen(changes = []) {
         /* changes are a list of things being added or removed. It contains information like which layer the changes belong to, which points are relevant (position), if they are hidden or invalid, etc. Do NOT use it now. In fact, it might not even be necessary. */
         const groups = {};
@@ -110,7 +98,7 @@ export class PuzzleManager {
                 groups[group.id] = group;
             }
         }
-        this.store.dispatch(setBlitGroups({ groups, renderOrder }));
+        setBlitGroups({ groups, renderOrder });
 
         // TODO: change localStorage key and what's actually stored/how it's stored
         const data = {

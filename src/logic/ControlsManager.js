@@ -10,6 +10,7 @@ export class ControlsManager {
         // Note: interpretKeyDown and onPointerUpOutside are not event listeners attached to the SVGCanvas
         this.handleKeyDown = this.handleKeyDown.bind(this);
         this.onPointerUpOutside = this.onPointerUpOutside.bind(this);
+        this.onPageBlur = this.onPageBlur.bind(this);
 
         this.eventListeners = {
             onPointerDown: this.onPointerDown.bind(this),
@@ -67,7 +68,6 @@ export class ControlsManager {
 
     resetControls() {
         this.tempStorage = null;
-        this.blurCanvasTimeoutId = null;
     }
 
     handleLayerActions(layer, { discontinueInput, history } = {}) {
@@ -157,8 +157,9 @@ export class ControlsManager {
         }
 
         const { grid, storage, settings } = this.puzzle;
-        const event = this.cleanPointerEvent({}, "cancelAction");
+        const event = this.cleanPointerEvent({}, "pointerUp");
 
+        clearTimeout(this.blurCanvasTimeoutId);
         this.blurCanvasTimeoutId = setTimeout(() => {
             const layer = this.puzzle.getCurrentLayer();
             const actions = layer.handleEvent({
@@ -186,11 +187,6 @@ export class ControlsManager {
 
     // Attached to the document body
     handleKeyDown(rawEvent) {
-        if (this.tempStorage) {
-            // Ignore keyboard events if already handling pointer events
-            return;
-        }
-
         // This should be a very small whitelist for which key-strokes are allowed to be blocked
         const { shiftKey, ctrlKey, altKey, key, code } = rawEvent;
         if (
@@ -200,6 +196,11 @@ export class ControlsManager {
             (!shiftKey && !altKey && (key === "a" || key === "i"))
         ) {
             rawEvent.preventDefault();
+        }
+
+        if (this.tempStorage) {
+            // Ignore keyboard events if already handling pointer events
+            return;
         }
 
         const event = { type: "keyDown", shiftKey, ctrlKey, altKey, key, code };
@@ -246,7 +247,7 @@ export class ControlsManager {
     }
 
     onPointerUpOutside(rawEvent) {
-        if (rawEvent.target?.id === "canvas-container") {
+        if (rawEvent.isPrimary && rawEvent.target?.id === "canvas-container") {
             const { grid, storage, settings } = this.puzzle;
             const event = this.cleanPointerEvent({}, "cancelAction");
 
@@ -260,5 +261,26 @@ export class ControlsManager {
             });
             this.handleLayerActions(layer, actions);
         }
+    }
+
+    onPageBlur(rawEvent) {
+        if (!rawEvent.isPrimary || !this.tempStorage) {
+            return;
+        }
+
+        const { grid, storage, settings } = this.puzzle;
+        const event = this.cleanPointerEvent({}, "pointerUp");
+
+        const layer = this.puzzle.getCurrentLayer();
+        const actions = layer.handleEvent({
+            grid,
+            storage,
+            settings,
+            event,
+            tempStorage: this.tempStorage,
+        });
+
+        this.handleLayerActions(layer, actions);
+        clearTimeout(this.blurCanvasTimeoutId);
     }
 }
