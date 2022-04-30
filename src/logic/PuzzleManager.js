@@ -1,5 +1,6 @@
 import { setBlitGroups } from "../atoms/blits";
 import { setCanvasSize } from "../atoms/canvasSize";
+import { initialSettings } from "../atoms/settings";
 import { addLayer, newPuzzle, removeLayer } from "../redux/puzzle";
 import { ControlsManager } from "./ControlsManager";
 import { SquareGrid } from "./grids/SquareGrid";
@@ -11,10 +12,8 @@ export class PuzzleManager {
 
     constructor(store) {
         this.store = store;
-        this.unsubscribeToStore = this.store.subscribe(
-            this.subscribeToStore.bind(this),
-        );
-        this.settings = store.getState().settings;
+        // TODO: consider adding a .setSettings that will call setAtomSettings
+        this.settings = initialSettings;
 
         this.grid = new SquareGrid(this.settings, { width: 1, height: 1 });
         this.storage = new StorageManager();
@@ -66,17 +65,6 @@ export class PuzzleManager {
     resizeCanvas() {
         const requirements = this.grid.getCanvasRequirements();
         setCanvasSize(requirements);
-    }
-
-    subscribeToStore() {
-        // TODO: This is not fully comprehensive
-        const { settings } = this.store.getState();
-        if (this.settings !== settings) {
-            this.settings = settings;
-            this.grid.settings = settings;
-            this.resizeCanvas();
-            this.redrawScreen();
-        }
     }
 
     redrawScreen(changes = []) {
