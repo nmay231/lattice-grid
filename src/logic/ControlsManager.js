@@ -68,7 +68,6 @@ export class ControlsManager {
 
     resetControls() {
         this.tempStorage = null;
-        this.blurCanvasTimeoutId = null;
     }
 
     handleLayerActions(layer, { discontinueInput, history } = {}) {
@@ -158,8 +157,9 @@ export class ControlsManager {
         }
 
         const { grid, storage, settings } = this.puzzle;
-        const event = this.cleanPointerEvent({}, "cancelAction");
+        const event = this.cleanPointerEvent({}, "pointerUp");
 
+        clearTimeout(this.blurCanvasTimeoutId);
         this.blurCanvasTimeoutId = setTimeout(() => {
             const layer = this.puzzle.getCurrentLayer();
             const actions = layer.handleEvent({
@@ -269,7 +269,7 @@ export class ControlsManager {
         }
 
         const { grid, storage, settings } = this.puzzle;
-        const event = this.cleanPointerEvent({}, "cancelAction");
+        const event = this.cleanPointerEvent({}, "pointerUp");
 
         const layer = this.puzzle.getCurrentLayer();
         const actions = layer.handleEvent({
