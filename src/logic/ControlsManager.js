@@ -10,6 +10,7 @@ export class ControlsManager {
         // Note: interpretKeyDown and onPointerUpOutside are not event listeners attached to the SVGCanvas
         this.handleKeyDown = this.handleKeyDown.bind(this);
         this.onPointerUpOutside = this.onPointerUpOutside.bind(this);
+        this.onPageBlur = this.onPageBlur.bind(this);
 
         this.eventListeners = {
             onPointerDown: this.onPointerDown.bind(this),
@@ -246,7 +247,7 @@ export class ControlsManager {
     }
 
     onPointerUpOutside(rawEvent) {
-        if (rawEvent.target?.id === "canvas-container") {
+        if (rawEvent.isPrimary && rawEvent.target?.id === "canvas-container") {
             const { grid, storage, settings } = this.puzzle;
             const event = this.cleanPointerEvent({}, "cancelAction");
 
@@ -260,5 +261,26 @@ export class ControlsManager {
             });
             this.handleLayerActions(layer, actions);
         }
+    }
+
+    onPageBlur(rawEvent) {
+        if (!rawEvent.isPrimary || !this.tempStorage) {
+            return;
+        }
+
+        const { grid, storage, settings } = this.puzzle;
+        const event = this.cleanPointerEvent({}, "cancelAction");
+
+        const layer = this.puzzle.getCurrentLayer();
+        const actions = layer.handleEvent({
+            grid,
+            storage,
+            settings,
+            event,
+            tempStorage: this.tempStorage,
+        });
+
+        this.handleLayerActions(layer, actions);
+        clearTimeout(this.blurCanvasTimeoutId);
     }
 }

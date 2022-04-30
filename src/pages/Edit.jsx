@@ -12,12 +12,15 @@ export const EditPage = () => {
 
     useEffect(() => {
         const handleKeyDown = puzzle.controls.handleKeyDown;
+        const onPageBlur = puzzle.controls.onPageBlur;
         if (handleKeyDown && !isOpen) {
             document.body.addEventListener("keydown", handleKeyDown);
+            document.body.addEventListener("pointerleave", onPageBlur);
         }
 
         return () => {
             document.body.removeEventListener("keydown", handleKeyDown);
+            document.body.removeEventListener("pointerleave", onPageBlur);
         };
     }, [isOpen, puzzle]);
 
