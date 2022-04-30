@@ -1,5 +1,5 @@
+import { setBlitGroups } from "../atoms/blits";
 import { setCanvasSize } from "../atoms/canvasSize";
-import { setBlitGroups } from "../redux/blits";
 import { addLayer, newPuzzle, removeLayer } from "../redux/puzzle";
 import { ControlsManager } from "./ControlsManager";
 import { SquareGrid } from "./grids/SquareGrid";
@@ -110,7 +110,7 @@ export class PuzzleManager {
                 groups[group.id] = group;
             }
         }
-        this.store.dispatch(setBlitGroups({ groups, renderOrder }));
+        setBlitGroups({ groups, renderOrder });
 
         // TODO: change localStorage key and what's actually stored/how it's stored
         const data = {
