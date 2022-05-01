@@ -1,7 +1,7 @@
 import { setBlitGroups } from "../atoms/blits";
 import { setCanvasSize } from "../atoms/canvasSize";
+import { addLayer, getLayers, removeLayer, setLayers } from "../atoms/layers";
 import { initialSettings } from "../atoms/settings";
-import { addLayer, newPuzzle, removeLayer } from "../redux/puzzle";
 import { ControlsManager } from "./ControlsManager";
 import { SquareGrid } from "./grids/SquareGrid";
 import { availableLayers } from "./layers";
@@ -26,7 +26,7 @@ export class PuzzleManager {
 
     loadPuzzle() {
         this.layers = {};
-        this.store.dispatch(newPuzzle());
+        setLayers([]);
         try {
             const data = JSON.parse(localStorage.getItem("_currentPuzzle"));
             this._loadPuzzle(data);
@@ -40,7 +40,7 @@ export class PuzzleManager {
 
     freshPuzzle() {
         this.layers = {};
-        this.store.dispatch(newPuzzle());
+        setLayers([]);
         this._loadPuzzle({
             layers: [
                 { layerClass: "Cell Outline" },
@@ -74,7 +74,7 @@ export class PuzzleManager {
 
         const currentLayerIds = this.getCurrentLayer().renderIds_TEMP || [];
 
-        const fakeLayers = this.store.getState().puzzle.layers;
+        const fakeLayers = getLayers().layers;
         for (let fakeLayer of fakeLayers) {
             const layer = this.layers[fakeLayer.id];
             let layerBlitGroups = layer.getBlits({
@@ -135,20 +135,18 @@ export class PuzzleManager {
             settings || layerClass.defaultSettings,
         );
 
-        this.store.dispatch(
-            addLayer({
-                id: layer.id,
-                hidden: layer.hidden,
-                layerType: layerClass.id,
-            }),
-        );
+        addLayer({
+            id: layer.id,
+            hidden: layer.hidden,
+            layerType: layerClass.id,
+        });
         return layer.id;
     }
 
     removeLayer(id) {
         if (id in this.layers) {
             delete this.layers[id];
-            this.store.dispatch(removeLayer(id));
+            removeLayer(id);
             this.redrawScreen();
         }
     }
@@ -177,8 +175,7 @@ export class PuzzleManager {
 
     // TODO: Might be unnecessary
     getCurrentLayer() {
-        const { currentLayerId } = this.store.getState().puzzle;
-        return this.layers[currentLayerId];
+        return this.layers[getLayers().currentLayerId];
     }
 }
 

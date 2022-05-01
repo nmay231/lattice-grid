@@ -12,8 +12,8 @@ import {
     sortableKeyboardCoordinates,
     verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { useDispatch, useSelector } from "react-redux";
-import { reorderLayers, selectLayer } from "../../../redux/puzzle";
+import { useAtomValue } from "jotai";
+import { layersAtom, selectLayer, setLayers } from "../../../atoms/layers";
 import { blurActiveElement } from "../../../utils/DOMUtils";
 import { usePuzzle } from "../../PuzzleContext/PuzzleContext";
 import { SortableItem } from "../../SortableItem";
@@ -26,17 +26,14 @@ export const LayerList = () => {
             coordinateGetter: sortableKeyboardCoordinates,
         }),
     );
-
-    const dispatch = useDispatch();
-    const layers = useSelector((state) => state.puzzle.layers);
-    const currentLayerId = useSelector((state) => state.puzzle.currentLayerId);
+    const { layers, currentLayerId } = useAtomValue(layersAtom);
 
     const handleDragEnd = ({ active, over }) => {
         if (active.id !== over?.id) {
             const ids = layers.map(({ id }) => id);
             const oldIndex = ids.indexOf(active.id);
             const newIndex = ids.indexOf(over?.id);
-            dispatch(reorderLayers(arrayMove(layers, oldIndex, newIndex)));
+            setLayers(arrayMove(layers, oldIndex, newIndex));
             puzzle.redrawScreen();
         }
         blurActiveElement();
@@ -44,7 +41,7 @@ export const LayerList = () => {
 
     const handleSelect = (id) => (event) => {
         event.stopPropagation();
-        dispatch(selectLayer({ id }));
+        selectLayer({ id });
         puzzle.redrawScreen();
         blurActiveElement();
     };

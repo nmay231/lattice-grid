@@ -1,7 +1,7 @@
-import { useAtom } from "jotai";
+import { useAtom, useAtomValue } from "jotai";
 import { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
 import { constraintSettingsAtom } from "../../../atoms/constraintSettings";
+import { layersAtom } from "../../../atoms/layers";
 import { availableLayers } from "../../../logic/layers";
 import { blurActiveElement } from "../../../utils/DOMUtils";
 import { JsonFormsWrapper } from "../../JsonFormsWrapper";
@@ -9,8 +9,7 @@ import { usePuzzle } from "../../PuzzleContext/PuzzleContext";
 
 export const LayerControlSettings = () => {
     const puzzle = usePuzzle();
-    const layers = useSelector((state) => state.puzzle.layers);
-    const id = useSelector((state) => state.puzzle.currentLayerId);
+    const { layers, currentLayerId: id } = useAtomValue(layersAtom);
     const layer = puzzle.layers[id];
 
     const [data, setData] = useState(null);

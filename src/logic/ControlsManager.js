@@ -1,4 +1,4 @@
-import { selectLayer } from "../redux/puzzle";
+import { selectLayer } from "../atoms/layers";
 
 export class ControlsManager {
     blurCanvasTimeoutId = null;
@@ -221,9 +221,7 @@ export class ControlsManager {
             this.handleLayerActions(layer, actions);
         } else if (event.code === "Tab") {
             // TODO: allow layers to have sublayers that you can tab through (e.g. for sudoku). This should be handled by a separate api than .handleEvent() though to prevent serious bugs and to allow UI indicators.
-            this.puzzle.store.dispatch(
-                selectLayer({ tab: event.shiftKey ? -1 : 1 }),
-            );
+            selectLayer({ tab: event.shiftKey ? -1 : 1 });
             this.puzzle.redrawScreen();
         } else if (event.ctrlKey && event.key === "z") {
             storage.undoHistory(grid.id);
