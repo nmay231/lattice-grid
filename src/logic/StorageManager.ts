@@ -1,3 +1,5 @@
+import { selectLayer } from "../atoms/layers";
+
 // TODO: Group together temporarily decentralized types
 type Grid = { id: string | symbol };
 type Layer = { id: string };
@@ -156,7 +158,7 @@ export class StorageManager {
             return;
         }
 
-        let action;
+        let action: HistoryAction;
         do {
             history.index--;
             action = history.actions[history.index];
@@ -170,6 +172,8 @@ export class StorageManager {
             action.batchId &&
             action.batchId === history.actions[history.index - 1]?.batchId
         );
+
+        selectLayer({ id: action.layerId });
     }
 
     redoHistory(historyId: string | symbol) {
@@ -178,7 +182,7 @@ export class StorageManager {
             return;
         }
 
-        let action;
+        let action: HistoryAction;
         do {
             action = history.actions[history.index];
             const { objects, renderOrder } =
@@ -192,6 +196,8 @@ export class StorageManager {
             action.batchId &&
             action.batchId === history.actions[history.index]?.batchId
         );
+
+        selectLayer({ id: action.layerId });
     }
 
     _batchId = 1;
