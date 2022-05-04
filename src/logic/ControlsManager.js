@@ -1,4 +1,4 @@
-import { selectLayer } from "../redux/puzzle";
+import { selectLayer } from "../atoms/layers";
 
 export class ControlsManager {
     blurCanvasTimeoutId = null;
@@ -37,8 +37,9 @@ export class ControlsManager {
         event.stopPropagation();
     }
 
-    cleanPointerEvent(event, type) {
+    cleanLayerEvent(event, type) {
         if (
+            type === "undoRedo" ||
             type === "pointerUp" ||
             type === "cancelAction" ||
             type === "delete"
@@ -86,7 +87,7 @@ export class ControlsManager {
             return;
         }
         const { grid, storage, settings } = this.puzzle;
-        const event = this.cleanPointerEvent(rawEvent, "pointerDown");
+        const event = this.cleanLayerEvent(rawEvent, "pointerDown");
 
         this.tempStorage = {};
         const eventInfo = {
@@ -113,7 +114,7 @@ export class ControlsManager {
         }
 
         const { grid, storage, settings } = this.puzzle;
-        const event = this.cleanPointerEvent(rawEvent, "pointerMove");
+        const event = this.cleanLayerEvent(rawEvent, "pointerMove");
         const eventInfo = {
             grid,
             storage,
@@ -138,7 +139,7 @@ export class ControlsManager {
         }
 
         const { grid, storage, settings } = this.puzzle;
-        const event = this.cleanPointerEvent({}, "pointerUp");
+        const event = this.cleanLayerEvent({}, "pointerUp");
 
         const layer = this.puzzle.getCurrentLayer();
         const actions = layer.handleEvent({
@@ -148,7 +149,10 @@ export class ControlsManager {
             event,
             tempStorage: this.tempStorage,
         });
-        this.handleLayerActions(layer, actions);
+        this.handleLayerActions(layer, {
+            discontinueInput: true, // Layer's have to explicitly request to not discontinue input
+            ...actions,
+        });
     }
 
     onPointerLeave(rawEvent) {
@@ -157,7 +161,7 @@ export class ControlsManager {
         }
 
         const { grid, storage, settings } = this.puzzle;
-        const event = this.cleanPointerEvent({}, "pointerUp");
+        const event = this.cleanLayerEvent({}, "pointerUp");
 
         clearTimeout(this.blurCanvasTimeoutId);
         this.blurCanvasTimeoutId = setTimeout(() => {
@@ -169,7 +173,10 @@ export class ControlsManager {
                 event,
                 tempStorage: this.tempStorage,
             });
-            this.handleLayerActions(layer, actions);
+            this.handleLayerActions(layer, {
+                discontinueInput: true, // Layer's have to explicitly request to not discontinue input
+                ...actions,
+            });
         }, settings.actionWindowMs);
     }
 
@@ -205,10 +212,10 @@ export class ControlsManager {
 
         const event = { type: "keyDown", shiftKey, ctrlKey, altKey, key, code };
         const { grid, storage, settings } = this.puzzle;
-        const layer = this.puzzle.getCurrentLayer();
+        let layer = this.puzzle.getCurrentLayer();
 
         if (event.code === "Escape" || event.code === "Delete") {
-            const cleanedEvent = this.cleanPointerEvent(
+            const cleanedEvent = this.cleanLayerEvent(
                 event,
                 event.code === "Escape" ? "cancelAction" : "delete",
             );
@@ -221,15 +228,43 @@ export class ControlsManager {
             this.handleLayerActions(layer, actions);
         } else if (event.code === "Tab") {
             // TODO: allow layers to have sublayers that you can tab through (e.g. for sudoku). This should be handled by a separate api than .handleEvent() though to prevent serious bugs and to allow UI indicators.
-            this.puzzle.store.dispatch(
-                selectLayer({ tab: event.shiftKey ? -1 : 1 }),
-            );
+            selectLayer({ tab: event.shiftKey ? -1 : 1 });
             this.puzzle.redrawScreen();
         } else if (event.ctrlKey && event.key === "z") {
-            storage.undoHistory(grid.id);
+            // TODO: Eventually, I want layers to be able to switch the current layer (specifically SelectionLayer for sudoku ctrl/shift behavior)
+            // Perhaps, I can use that mechanism for storage to switch the current layer when undoing/redoing
+            const historyActions = storage.undoHistory(grid.id);
+            if (historyActions.length) {
+                const cleanedEvent = this.cleanLayerEvent(
+                    { actions: historyActions },
+                    "undoRedo",
+                );
+                layer = this.puzzle.getCurrentLayer();
+                const actions = layer.handleEvent({
+                    grid,
+                    storage,
+                    settings,
+                    event: cleanedEvent,
+                });
+                this.handleLayerActions(layer, actions);
+            }
             this.puzzle.redrawScreen();
         } else if (event.ctrlKey && event.key === "y") {
-            storage.redoHistory(grid.id);
+            const historyActions = storage.redoHistory(grid.id);
+            if (historyActions.length) {
+                const cleanedEvent = this.cleanLayerEvent(
+                    { actions: historyActions },
+                    "undoRedo",
+                );
+                layer = this.puzzle.getCurrentLayer();
+                const actions = layer.handleEvent({
+                    grid,
+                    storage,
+                    settings,
+                    event: cleanedEvent,
+                });
+                this.handleLayerActions(layer, actions);
+            }
             this.puzzle.redrawScreen();
         } else {
             const actions = layer.handleEvent({
@@ -249,7 +284,7 @@ export class ControlsManager {
     onPointerUpOutside(rawEvent) {
         if (rawEvent.isPrimary && rawEvent.target?.id === "canvas-container") {
             const { grid, storage, settings } = this.puzzle;
-            const event = this.cleanPointerEvent({}, "cancelAction");
+            const event = this.cleanLayerEvent({}, "cancelAction");
 
             const layer = this.puzzle.getCurrentLayer();
             const actions = layer.handleEvent({
@@ -269,7 +304,7 @@ export class ControlsManager {
         }
 
         const { grid, storage, settings } = this.puzzle;
-        const event = this.cleanPointerEvent({}, "pointerUp");
+        const event = this.cleanLayerEvent({}, "pointerUp");
 
         const layer = this.puzzle.getCurrentLayer();
         const actions = layer.handleEvent({
@@ -280,7 +315,10 @@ export class ControlsManager {
             tempStorage: this.tempStorage,
         });
 
-        this.handleLayerActions(layer, actions);
+        this.handleLayerActions(layer, {
+            discontinueInput: true, // Layer's have to explicitly request to not discontinue input
+            ...actions,
+        });
         clearTimeout(this.blurCanvasTimeoutId);
     }
 }

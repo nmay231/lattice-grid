@@ -1,20 +1,27 @@
 import { atom } from "jotai";
 
 type SubscriptionContainer<T extends object = any> = {
-    subs: Array<(newValue: T) => void>;
+    subs: Array<(value: T | ((old: T) => T)) => void>;
     value: T;
+};
+
+// This is simpler to implement than isFunction
+const isNotFunction = <T>(arg: any): arg is T => {
+    return typeof arg !== "function";
 };
 
 const setAtom =
     <T extends object>(subscriptions: SubscriptionContainer<T>) =>
-    (value: T) => {
+    (value: T | ((old: T) => T)) => {
         subscriptions.subs.forEach((setValue) => setValue(value));
-        subscriptions.value = value;
+        subscriptions.value = isNotFunction<T>(value)
+            ? value
+            : (value as (old: T) => T)(subscriptions.value);
     };
 
 export const modifiableAtom = <T extends object = any>(initialValue: T) => {
     const atom_ = atom(initialValue);
-    const subscriptions: SubscriptionContainer = {
+    const subscriptions: SubscriptionContainer<T> = {
         subs: [],
         value: initialValue,
     };
@@ -27,6 +34,7 @@ export const modifiableAtom = <T extends object = any>(initialValue: T) => {
             subscriptions.subs.splice(subscriptions.subs.indexOf(setValue), 1);
         };
     };
+    const getValue = () => subscriptions.value;
 
-    return { atom: atom_, setValue: setAtom<T>(subscriptions) };
+    return { atom: atom_, setValue: setAtom<T>(subscriptions), getValue };
 };

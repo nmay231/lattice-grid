@@ -106,11 +106,17 @@ export class SelectionLayer {
                         storage,
                         settings,
                         event,
-                        storingLayer,
                     }) || {};
+
+                const batchId = storage.getNewBatchId();
 
                 return {
                     ...actions,
+                    history: (actions.history || []).map((action) => ({
+                        ...action,
+                        // Batch all of the storingLayer's actions together
+                        batchId,
+                    })),
                     discontinueInput: true,
                 };
             }
@@ -229,6 +235,32 @@ export class SelectionLayer {
                     };
                 }
                 return { discontinueInput: true };
+            }
+            case "undoRedo": {
+                const newIds = event.actions.map(({ id }) => id);
+                // Clear old selection
+                const history = stored.renderOrder
+                    // TODO: This doesn't account for actions that do not apply to storingLayer. Do I need to fix?
+                    .filter((oldId) => newIds.indexOf(oldId) === -1)
+                    .map((oldId) => ({
+                        id: oldId,
+                        layerId: this.id,
+                        batchId: "ignore",
+                        object: null,
+                    }));
+
+                stored.groupNumber = 2;
+                // Select the objects being modified in the undo/redo actions
+                history.push(
+                    ...newIds.map((id) => ({
+                        id,
+                        layerId: this.id,
+                        batchId: "ignore",
+                        // TODO: This implicitly removes group information (b/c state=2). However, it seems really difficult to resolve unless selections are kept in history, but that opens up a whole can of worms.
+                        object: { state: 2, point: id },
+                    })),
+                );
+                return { history, discontinueInput: true };
             }
             default: {
                 throw new Error(`Unknown event.type=${event.type}`);
