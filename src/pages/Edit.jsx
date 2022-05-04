@@ -1,19 +1,16 @@
 import { useEffect } from "react";
-import { useSelector } from "react-redux";
-import { ModalManager } from "../components/ModalManager";
 import { usePuzzle } from "../components/PuzzleContext/PuzzleContext";
 import { SideBar } from "../components/SideBar";
 import { SVGCanvas } from "../components/SVGCanvas";
 import styles from "./Puzzle.module.css";
 
 export const EditPage = () => {
-    const isOpen = useSelector((state) => state.modal.isOpen);
     const puzzle = usePuzzle();
 
     useEffect(() => {
         const handleKeyDown = puzzle.controls.handleKeyDown;
         const onPageBlur = puzzle.controls.onPageBlur;
-        if (handleKeyDown && !isOpen) {
+        if (handleKeyDown) {
             document.body.addEventListener("keydown", handleKeyDown);
             document.body.addEventListener("pointerleave", onPageBlur);
         }
@@ -22,7 +19,7 @@ export const EditPage = () => {
             document.body.removeEventListener("keydown", handleKeyDown);
             document.body.removeEventListener("pointerleave", onPageBlur);
         };
-    }, [isOpen, puzzle]);
+    }, [puzzle]);
 
     return (
         <div className={styles.mainContainer}>
@@ -38,7 +35,6 @@ export const EditPage = () => {
             <div className={styles.sideBar}>
                 <SideBar />
             </div>
-            {isOpen && <ModalManager />}
         </div>
     );
 };

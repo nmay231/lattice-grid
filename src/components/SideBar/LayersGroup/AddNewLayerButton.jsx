@@ -1,11 +1,8 @@
-import { useDispatch } from "react-redux";
 import { availableLayers } from "../../../logic/layers";
-import { awaitModalFormSubmission, openModal } from "../../../redux/modal";
 import { usePuzzle } from "../../PuzzleContext/PuzzleContext";
 
 export const AddNewLayerButton = () => {
     const puzzle = usePuzzle();
-    const dispatch = useDispatch();
 
     const handleAddNewLayer = async () => {
         // Generate the JsonForms schema, uischema, and data required then open a modal
@@ -43,33 +40,33 @@ export const AddNewLayerButton = () => {
             });
         }
 
-        dispatch(
-            openModal({
-                data: initialData,
-                schema: {
-                    type: "object",
-                    properties: schemaProperties,
-                },
-                uischema: {
-                    type: "VerticalLayout",
-                    elements: [
-                        {
-                            type: "Control",
-                            label: "Layer",
-                            scope: "#/properties/layerType",
-                        },
-                        ...uiGroups,
-                    ],
-                },
-            }),
-        );
+        // dispatch(
+        //     openModal({
+        //         data: initialData,
+        //         schema: {
+        //             type: "object",
+        //             properties: schemaProperties,
+        //         },
+        //         uischema: {
+        //             type: "VerticalLayout",
+        //             elements: [
+        //                 {
+        //                     type: "Control",
+        //                     label: "Layer",
+        //                     scope: "#/properties/layerType",
+        //                 },
+        //                 ...uiGroups,
+        //             ],
+        //         },
+        //     }),
+        // );
 
-        const { data, result } = await awaitModalFormSubmission();
-        if (result === "cancel") {
-            return;
-        }
-        puzzle.addLayer(availableLayers[data.layerType], data[data.layerType]);
-        puzzle.redrawScreen();
+        // const { data, result } = await awaitModalFormSubmission();
+        // if (result === "cancel") {
+        //     return;
+        // }
+        // puzzle.addLayer(availableLayers[data.layerType], data[data.layerType]);
+        // puzzle.redrawScreen();
     };
 
     return <button onPointerDown={handleAddNewLayer}>Add new layer</button>;
