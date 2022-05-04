@@ -228,6 +228,12 @@ export const handleEventsUnorderedSets = (
                     ],
                 };
             }
+            case "undoRedo": {
+                // TODO: Update this when I change multiPoint controls
+                // TODO: I should add something to force a rerender without polluting history
+                // It's not quite necessary, because undo/redo makes changes, but still.
+                return { discontinueInput: true };
+            }
             default: {
                 throw Error(`Unknown event.type=${event.type}`);
             }
