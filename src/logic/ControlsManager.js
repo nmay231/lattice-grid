@@ -37,7 +37,7 @@ export class ControlsManager {
         event.stopPropagation();
     }
 
-    cleanPointerEvent(event, type) {
+    cleanLayerEvent(event, type) {
         if (
             type === "undoRedo" ||
             type === "pointerUp" ||
@@ -87,7 +87,7 @@ export class ControlsManager {
             return;
         }
         const { grid, storage, settings } = this.puzzle;
-        const event = this.cleanPointerEvent(rawEvent, "pointerDown");
+        const event = this.cleanLayerEvent(rawEvent, "pointerDown");
 
         this.tempStorage = {};
         const eventInfo = {
@@ -114,7 +114,7 @@ export class ControlsManager {
         }
 
         const { grid, storage, settings } = this.puzzle;
-        const event = this.cleanPointerEvent(rawEvent, "pointerMove");
+        const event = this.cleanLayerEvent(rawEvent, "pointerMove");
         const eventInfo = {
             grid,
             storage,
@@ -139,7 +139,7 @@ export class ControlsManager {
         }
 
         const { grid, storage, settings } = this.puzzle;
-        const event = this.cleanPointerEvent({}, "pointerUp");
+        const event = this.cleanLayerEvent({}, "pointerUp");
 
         const layer = this.puzzle.getCurrentLayer();
         const actions = layer.handleEvent({
@@ -158,7 +158,7 @@ export class ControlsManager {
         }
 
         const { grid, storage, settings } = this.puzzle;
-        const event = this.cleanPointerEvent({}, "pointerUp");
+        const event = this.cleanLayerEvent({}, "pointerUp");
 
         clearTimeout(this.blurCanvasTimeoutId);
         this.blurCanvasTimeoutId = setTimeout(() => {
@@ -209,7 +209,7 @@ export class ControlsManager {
         let layer = this.puzzle.getCurrentLayer();
 
         if (event.code === "Escape" || event.code === "Delete") {
-            const cleanedEvent = this.cleanPointerEvent(
+            const cleanedEvent = this.cleanLayerEvent(
                 event,
                 event.code === "Escape" ? "cancelAction" : "delete",
             );
@@ -229,7 +229,7 @@ export class ControlsManager {
             // Perhaps, I can use that mechanism for storage to switch the current layer when undoing/redoing
             const historyActions = storage.undoHistory(grid.id);
             if (historyActions.length) {
-                const cleanedEvent = this.cleanPointerEvent(
+                const cleanedEvent = this.cleanLayerEvent(
                     { actions: historyActions },
                     "undoRedo",
                 );
@@ -246,7 +246,7 @@ export class ControlsManager {
         } else if (event.ctrlKey && event.key === "y") {
             const historyActions = storage.redoHistory(grid.id);
             if (historyActions.length) {
-                const cleanedEvent = this.cleanPointerEvent(
+                const cleanedEvent = this.cleanLayerEvent(
                     { actions: historyActions },
                     "undoRedo",
                 );
@@ -278,7 +278,7 @@ export class ControlsManager {
     onPointerUpOutside(rawEvent) {
         if (rawEvent.isPrimary && rawEvent.target?.id === "canvas-container") {
             const { grid, storage, settings } = this.puzzle;
-            const event = this.cleanPointerEvent({}, "cancelAction");
+            const event = this.cleanLayerEvent({}, "cancelAction");
 
             const layer = this.puzzle.getCurrentLayer();
             const actions = layer.handleEvent({
@@ -298,7 +298,7 @@ export class ControlsManager {
         }
 
         const { grid, storage, settings } = this.puzzle;
-        const event = this.cleanPointerEvent({}, "pointerUp");
+        const event = this.cleanLayerEvent({}, "pointerUp");
 
         const layer = this.puzzle.getCurrentLayer();
         const actions = layer.handleEvent({
