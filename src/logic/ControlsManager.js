@@ -149,7 +149,10 @@ export class ControlsManager {
             event,
             tempStorage: this.tempStorage,
         });
-        this.handleLayerActions(layer, actions);
+        this.handleLayerActions(layer, {
+            discontinueInput: true, // Layer's have to explicitly request to not discontinue input
+            ...actions,
+        });
     }
 
     onPointerLeave(rawEvent) {
@@ -170,7 +173,10 @@ export class ControlsManager {
                 event,
                 tempStorage: this.tempStorage,
             });
-            this.handleLayerActions(layer, actions);
+            this.handleLayerActions(layer, {
+                discontinueInput: true, // Layer's have to explicitly request to not discontinue input
+                ...actions,
+            });
         }, settings.actionWindowMs);
     }
 
@@ -309,7 +315,10 @@ export class ControlsManager {
             tempStorage: this.tempStorage,
         });
 
-        this.handleLayerActions(layer, actions);
+        this.handleLayerActions(layer, {
+            discontinueInput: true, // Layer's have to explicitly request to not discontinue input
+            ...actions,
+        });
         clearTimeout(this.blurCanvasTimeoutId);
     }
 }
