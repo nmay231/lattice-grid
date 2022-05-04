@@ -155,10 +155,11 @@ export class StorageManager {
     undoHistory(historyId: string | symbol) {
         const history = this.histories[historyId];
         if (history.index <= 0) {
-            return;
+            return [];
         }
 
         let action: HistoryAction;
+        const returnedActions: HistoryAction[] = [];
         do {
             history.index--;
             action = history.actions[history.index];
@@ -168,21 +169,25 @@ export class StorageManager {
             const redo = this._ApplyHistoryAction(objects, renderOrder, action);
             // Replace the action with its opposite
             history.actions.splice(history.index, 1, redo);
+
+            returnedActions.push(action);
         } while (
             action.batchId &&
             action.batchId === history.actions[history.index - 1]?.batchId
         );
 
         selectLayer({ id: action.layerId });
+        return returnedActions;
     }
 
     redoHistory(historyId: string | symbol) {
         const history = this.histories[historyId];
         if (history.index >= history.actions.length) {
-            return;
+            return [];
         }
 
         let action: HistoryAction;
+        const returnedActions: HistoryAction[] = [];
         do {
             action = history.actions[history.index];
             const { objects, renderOrder } =
@@ -192,12 +197,15 @@ export class StorageManager {
             // Replace the action with its opposite
             history.actions.splice(history.index, 1, undo);
             history.index++;
+
+            returnedActions.push(action);
         } while (
             action.batchId &&
             action.batchId === history.actions[history.index]?.batchId
         );
 
         selectLayer({ id: action.layerId });
+        return returnedActions;
     }
 
     _batchId = 1;

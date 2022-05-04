@@ -387,4 +387,62 @@ describe("StorageManager", () => {
 
         selectLayerSpy.mockRestore();
     });
+
+    it("should return the actions applied when undoing/redoing", () => {
+        const storage = getNormalStorage();
+        storage.addToHistory({ id: "grid" }, { id: "layer1" }, [
+            { id: "id1", object: { asdf: "something1" } },
+        ]);
+        storage.addToHistory({ id: "grid" }, { id: "layer2" }, [
+            { id: "id2", object: { asdf: "something2" } },
+        ]);
+
+        let result: HistoryAction[];
+
+        result = storage.undoHistory("grid");
+        expect(result).toMatchObject<HistoryAction[]>([
+            {
+                id: "id2",
+                layerId: "layer2",
+                object: null,
+                renderIndex: -1,
+            },
+        ]);
+
+        result = storage.undoHistory("grid");
+        expect(result).toMatchObject<HistoryAction[]>([
+            {
+                id: "id1",
+                layerId: "layer1",
+                object: null,
+                renderIndex: -1,
+            },
+        ]);
+
+        result = storage.undoHistory("grid");
+        expect(result).toEqual<HistoryAction[]>([]);
+
+        result = storage.redoHistory("grid");
+        expect(result).toMatchObject<HistoryAction[]>([
+            {
+                id: "id1",
+                layerId: "layer1",
+                object: { asdf: "something1", id: "id1" },
+                renderIndex: 0,
+            },
+        ]);
+
+        result = storage.redoHistory("grid");
+        expect(result).toMatchObject<HistoryAction[]>([
+            {
+                id: "id2",
+                layerId: "layer2",
+                object: { asdf: "something2", id: "id2" },
+                renderIndex: 0,
+            },
+        ]);
+
+        result = storage.redoHistory("grid");
+        expect(result).toEqual<HistoryAction[]>([]);
+    });
 });
