@@ -230,6 +230,30 @@ export class SelectionLayer {
                 }
                 return { discontinueInput: true };
             }
+            case "undoRedo": {
+                const newIds = event.actions.map(({ id }) => id);
+                // Clear old selection
+                const history = stored.renderOrder
+                    .filter((oldId) => newIds.indexOf(oldId) === -1)
+                    .map((oldId) => ({
+                        id: oldId,
+                        layerId: this.id,
+                        batchId: "ignore",
+                        object: null,
+                    }));
+
+                stored.groupNumber = 2;
+                // Select the objects being modified in the undo/redo actions
+                history.push(
+                    ...newIds.map((id) => ({
+                        id,
+                        layerId: this.id,
+                        batchId: "ignore",
+                        object: { state: 2, point: id },
+                    })),
+                );
+                return { history, discontinueInput: true };
+            }
             default: {
                 throw new Error(`Unknown event.type=${event.type}`);
             }

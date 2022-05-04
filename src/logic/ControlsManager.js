@@ -39,6 +39,7 @@ export class ControlsManager {
 
     cleanPointerEvent(event, type) {
         if (
+            type === "undoRedo" ||
             type === "pointerUp" ||
             type === "cancelAction" ||
             type === "delete"
@@ -205,7 +206,7 @@ export class ControlsManager {
 
         const event = { type: "keyDown", shiftKey, ctrlKey, altKey, key, code };
         const { grid, storage, settings } = this.puzzle;
-        const layer = this.puzzle.getCurrentLayer();
+        let layer = this.puzzle.getCurrentLayer();
 
         if (event.code === "Escape" || event.code === "Delete") {
             const cleanedEvent = this.cleanPointerEvent(
@@ -224,10 +225,40 @@ export class ControlsManager {
             selectLayer({ tab: event.shiftKey ? -1 : 1 });
             this.puzzle.redrawScreen();
         } else if (event.ctrlKey && event.key === "z") {
-            storage.undoHistory(grid.id);
+            // TODO: Eventually, I want layers to be able to switch the current layer (specifically SelectionLayer for sudoku ctrl/shift behavior)
+            // Perhaps, I can use that mechanism for storage to switch the current layer when undoing/redoing
+            const historyActions = storage.undoHistory(grid.id);
+            if (historyActions.length) {
+                const cleanedEvent = this.cleanPointerEvent(
+                    { actions: historyActions },
+                    "undoRedo",
+                );
+                layer = this.puzzle.getCurrentLayer();
+                const actions = layer.handleEvent({
+                    grid,
+                    storage,
+                    settings,
+                    event: cleanedEvent,
+                });
+                this.handleLayerActions(layer, actions);
+            }
             this.puzzle.redrawScreen();
         } else if (event.ctrlKey && event.key === "y") {
-            storage.redoHistory(grid.id);
+            const historyActions = storage.redoHistory(grid.id);
+            if (historyActions.length) {
+                const cleanedEvent = this.cleanPointerEvent(
+                    { actions: historyActions },
+                    "undoRedo",
+                );
+                layer = this.puzzle.getCurrentLayer();
+                const actions = layer.handleEvent({
+                    grid,
+                    storage,
+                    settings,
+                    event: cleanedEvent,
+                });
+                this.handleLayerActions(layer, actions);
+            }
             this.puzzle.redrawScreen();
         } else {
             const actions = layer.handleEvent({
