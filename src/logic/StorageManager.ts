@@ -6,7 +6,7 @@ type Layer = { id: string };
 
 export type GridAndLayer = { grid: Grid; layer: Layer };
 
-type LayerStorage = {
+export type LayerStorage = {
     renderOrder: string[];
     objects: Record<string, object>;
 };
@@ -24,7 +24,7 @@ export type HistoryAction = {
     object: object | null;
     renderIndex: number;
 };
-type History = {
+export type History = {
     actions: HistoryAction[];
     index: number;
 };
