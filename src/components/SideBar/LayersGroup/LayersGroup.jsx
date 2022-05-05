@@ -1,4 +1,5 @@
 import { usePuzzle } from "../../../atoms/puzzle";
+import { blurActiveElement } from "../../../utils/DOMUtils";
 import { Group } from "../Group";
 import { AddNewLayerButton } from "./AddNewLayerButton";
 import { LayerConstraintSettings } from "./LayerConstraintSettings";
@@ -15,6 +16,7 @@ export const LayersGroup = () => {
                     puzzle.freshPuzzle();
                     puzzle.resizeCanvas();
                     puzzle.redrawScreen();
+                    blurActiveElement();
                 }}
             >
                 Reset Puzzle

@@ -1,34 +1,38 @@
+import { useState } from "react";
 import { usePuzzle } from "../../../atoms/puzzle";
 import { availableLayers } from "../../../logic/layers";
+import { blurActiveElement } from "../../../utils/DOMUtils";
 
 const DEFAULT_VALUE = "Add New Layer";
 
 export const AddNewLayerButton = () => {
     const puzzle = usePuzzle();
+    const [layerType, setLayerType] = useState(DEFAULT_VALUE);
 
-    const handleSelectChange: React.ChangeEventHandler<HTMLSelectElement> = (
-        event,
-    ) => {
-        // if (event.target.value === DEFAULT_VALUE) {
-        //     return;
-        // }
-        // const asdf = 1;
-        // puzzle.addLayer(availableLayers[data.layerType], data[data.layerType]);
-        // puzzle.redrawScreen();
-        //
-    };
+    const handleSelectChange = ((event) => {
+        const value = event.target.value;
+        if (value === DEFAULT_VALUE) {
+            return;
+        }
+        puzzle.addLayer((availableLayers as any)[value]);
+        puzzle.redrawScreen();
+        setLayerType(value);
+        // TODO: Accessibility might be an issue if we add a layer when the dropdown changes.
+        blurActiveElement();
+    }) as React.ChangeEventHandler<HTMLSelectElement>;
 
     const layerIds = Object.keys(availableLayers);
     layerIds.sort();
 
     return (
-        <select onChange={handleSelectChange}>
-            {/* <option value={DEFAULT_VALUE}>{DEFAULT_VALUE}</option>
+        <select onChange={handleSelectChange} value={layerType}>
+            <option value={DEFAULT_VALUE}>{DEFAULT_VALUE}</option>
+
             {layerIds.map((id) => (
                 <option value={id} key={id}>
                     {id}
                 </option>
-            ))} */}
+            ))}
         </select>
     );
 };
