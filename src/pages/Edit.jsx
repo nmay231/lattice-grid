@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { usePuzzle } from "../components/PuzzleContext/PuzzleContext";
+import { usePuzzle } from "../atoms/puzzle";
 import { SideBar } from "../components/SideBar";
 import { SVGCanvas } from "../components/SVGCanvas";
 import styles from "./Puzzle.module.css";

@@ -1,4 +1,4 @@
-import { usePuzzle } from "../../PuzzleContext";
+import { usePuzzle } from "../../../atoms/puzzle";
 import { Group } from "../Group";
 import { AddNewLayerButton } from "./AddNewLayerButton";
 import { LayerConstraintSettings } from "./LayerConstraintSettings";

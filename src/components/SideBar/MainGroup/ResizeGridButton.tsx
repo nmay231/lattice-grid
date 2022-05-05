@@ -1,9 +1,8 @@
 import { useMemo } from "react";
-import { PuzzleManager } from "../../../logic/PuzzleManager";
-import { usePuzzle } from "../../PuzzleContext";
+import { usePuzzle } from "../../../atoms/puzzle";
 
 export const ResizeGridButton = () => {
-    const puzzle = usePuzzle() as any as PuzzleManager;
+    const puzzle = usePuzzle();
 
     // TODO: For placing the button on an overlay over the grid:
     // buttonX = (x + settings.borderPadding) * (svg.height / grid.height) + target.left

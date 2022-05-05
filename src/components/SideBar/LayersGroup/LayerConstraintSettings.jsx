@@ -3,10 +3,10 @@ import { isEqual } from "lodash";
 import { useEffect } from "react";
 import { constraintSettingsAtom } from "../../../atoms/constraintSettings";
 import { layersAtom } from "../../../atoms/layers";
+import { usePuzzle } from "../../../atoms/puzzle";
 import { availableLayers } from "../../../logic/layers";
 import { blurActiveElement } from "../../../utils/DOMUtils";
 import { JsonFormsWrapper } from "../../JsonFormsWrapper";
-import { usePuzzle } from "../../PuzzleContext/PuzzleContext";
 
 export const LayerConstraintSettings = () => {
     const puzzle = usePuzzle();
