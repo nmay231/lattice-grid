@@ -14,8 +14,8 @@ import {
 } from "@dnd-kit/sortable";
 import { useAtomValue } from "jotai";
 import { layersAtom, selectLayer, setLayers } from "../../../atoms/layers";
+import { usePuzzle } from "../../../atoms/puzzle";
 import { blurActiveElement } from "../../../utils/DOMUtils";
-import { usePuzzle } from "../../PuzzleContext/PuzzleContext";
 import { SortableItem } from "../../SortableItem";
 
 export const LayerList = () => {

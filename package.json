@@ -9,12 +9,10 @@
         "@jsonforms/core": "^2.5.2",
         "@jsonforms/react": "^2.5.2",
         "@jsonforms/vanilla-renderers": "^2.5.2",
-        "@reduxjs/toolkit": "^1.6.1",
         "jotai": "^1.6.2",
         "lodash": "^4.17.21",
         "react": "^17.0.0",
         "react-dom": "^17.0.0",
-        "react-redux": "^7.2.5",
         "react-router-dom": "^5.3.0",
         "react-scripts": "4.0.3",
         "web-vitals": "^1.0.1"

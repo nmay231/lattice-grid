@@ -1,7 +1,7 @@
 import { useAtomValue } from "jotai";
 import { blitsAtom } from "../../atoms/blits";
 import { canvasSizeAtom } from "../../atoms/canvasSize";
-import { usePuzzle } from "../PuzzleContext/PuzzleContext";
+import { usePuzzle } from "../../atoms/puzzle";
 import { Line } from "./Line";
 import { Polygon } from "./Polygon";
 import styling from "./SVGCanvas.module.css";

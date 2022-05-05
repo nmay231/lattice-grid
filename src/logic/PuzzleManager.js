@@ -10,8 +10,7 @@ import { StorageManager } from "./StorageManager";
 export class PuzzleManager {
     layers = {};
 
-    constructor(store) {
-        this.store = store;
+    constructor() {
         // TODO: consider adding a .setSettings that will call setAtomSettings
         this.settings = initialSettings;
 
