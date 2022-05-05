@@ -15,7 +15,7 @@ export const LayersGroup = () => {
                     // Temporary in it's current form
                     puzzle.freshPuzzle();
                     puzzle.resizeCanvas();
-                    puzzle.redrawScreen();
+                    puzzle.renderChange({ type: "draw", layerIds: "all" });
                     blurActiveElement();
                 }}
             >

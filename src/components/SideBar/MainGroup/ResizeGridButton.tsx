@@ -10,7 +10,7 @@ export const ResizeGridButton = () => {
     const buttons = useMemo(() => puzzle.grid.getCanvasResizers(), [puzzle]);
     const redraw = () => {
         puzzle.resizeCanvas();
-        puzzle.redrawScreen();
+        puzzle.renderChange({ type: "draw", layerIds: "all" });
     };
 
     return (

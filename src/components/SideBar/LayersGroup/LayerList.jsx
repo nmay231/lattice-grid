@@ -34,7 +34,7 @@ export const LayerList = () => {
             const oldIndex = ids.indexOf(active.id);
             const newIndex = ids.indexOf(over?.id);
             setLayers(arrayMove(layers, oldIndex, newIndex));
-            puzzle.redrawScreen();
+            puzzle.renderChange({ type: "reorder" });
         }
         blurActiveElement();
     };
@@ -42,7 +42,7 @@ export const LayerList = () => {
     const handleSelect = (id) => (event) => {
         event.stopPropagation();
         selectLayer({ id });
-        puzzle.redrawScreen();
+        puzzle.renderChange({ type: "draw", layerIds: [id, currentLayerId] });
         blurActiveElement();
     };
 

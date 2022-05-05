@@ -78,7 +78,7 @@ export class ControlsManager {
         }
 
         storage.addToHistory(grid, layer, history);
-        this.puzzle.redrawScreen();
+        this.puzzle.renderChange({ type: "draw", layerIds: [layer.id] });
     }
 
     onPointerDown(rawEvent) {
@@ -229,11 +229,16 @@ export class ControlsManager {
         } else if (event.code === "Tab") {
             // TODO: allow layers to have sublayers that you can tab through (e.g. for sudoku). This should be handled by a separate api than .handleEvent() though to prevent serious bugs and to allow UI indicators.
             selectLayer({ tab: event.shiftKey ? -1 : 1 });
-            this.puzzle.redrawScreen();
+            this.puzzle.renderChange({
+                type: "draw",
+                // We have to rerender both the previously selected layer and the current layer
+                layerIds: [layer.id, this.puzzle.getCurrentLayer().id],
+            });
         } else if (event.ctrlKey && event.key === "z") {
             // TODO: Eventually, I want layers to be able to switch the current layer (specifically SelectionLayer for sudoku ctrl/shift behavior)
             // Perhaps, I can use that mechanism for storage to switch the current layer when undoing/redoing
             const historyActions = storage.undoHistory(grid.id);
+            const oldLayer = layer;
             if (historyActions.length) {
                 const cleanedEvent = this.cleanLayerEvent(
                     { actions: historyActions },
@@ -248,9 +253,13 @@ export class ControlsManager {
                 });
                 this.handleLayerActions(layer, actions);
             }
-            this.puzzle.redrawScreen();
+            this.puzzle.renderChange({
+                type: "draw",
+                layerIds: [oldLayer.id, layer.id],
+            });
         } else if (event.ctrlKey && event.key === "y") {
             const historyActions = storage.redoHistory(grid.id);
+            const oldLayer = layer;
             if (historyActions.length) {
                 const cleanedEvent = this.cleanLayerEvent(
                     { actions: historyActions },
@@ -265,7 +274,10 @@ export class ControlsManager {
                 });
                 this.handleLayerActions(layer, actions);
             }
-            this.puzzle.redrawScreen();
+            this.puzzle.renderChange({
+                type: "draw",
+                layerIds: [oldLayer.id, layer.id],
+            });
         } else {
             const actions = layer.handleEvent({
                 event,

@@ -1,4 +1,4 @@
-import { setBlitGroups } from "../atoms/blits";
+import { getBlitGroups, setBlitGroups } from "../atoms/blits";
 import { setCanvasSize } from "../atoms/canvasSize";
 import { addLayer, getLayers, removeLayer, setLayers } from "../atoms/layers";
 import { initialSettings } from "../atoms/settings";
@@ -6,6 +6,11 @@ import { ControlsManager } from "./ControlsManager";
 import { SquareGrid } from "./grids/SquareGrid";
 import { availableLayers } from "./layers";
 import { StorageManager } from "./StorageManager";
+
+type RenderChange =
+    | { type: "draw", layerIds: string[] | "all" }
+    | { type: "delete", layerId: string }
+    | { type: "reorder" };
 
 export class PuzzleManager {
     layers = {};
@@ -20,7 +25,7 @@ export class PuzzleManager {
 
         this.loadPuzzle();
         this.resizeCanvas();
-        this.redrawScreen();
+        this.renderChange({ type: "draw", layerIds: "all" });
     }
 
     loadPuzzle() {
@@ -29,7 +34,7 @@ export class PuzzleManager {
         try {
             const data = JSON.parse(localStorage.getItem("_currentPuzzle"));
             this._loadPuzzle(data);
-            this.redrawScreen();
+            this.renderChange({ type: "draw", layerIds: "all" });
         } catch (err) {
             // TODO: Toast message to user saying something went wrong.
             console.error(err);
@@ -48,7 +53,7 @@ export class PuzzleManager {
             ],
             grid: { width: 10, height: 10 },
         });
-        this.redrawScreen();
+        this.renderChange({ type: "draw", layerIds: "all" });
     }
 
     _loadPuzzle(data) {
@@ -66,45 +71,64 @@ export class PuzzleManager {
         setCanvasSize(requirements);
     }
 
-    redrawScreen(changes = []) {
-        /* changes are a list of things being added or removed. It contains information like which layer the changes belong to, which points are relevant (position), if they are hidden or invalid, etc. Do NOT use it now. In fact, it might not even be necessary. */
-        const groups = {};
-        const renderOrder = [];
+    renderChange(change: RenderChange) {
+        if (change.type === "reorder") {
+            // I don't need to do anything because render order is handled by layersAtom
+            // TODO: Remove this change event?
+        } else if (change.type === "delete") {
+            const blitGroups = { ...getBlitGroups() };
+            delete blitGroups[change.layerId];
+            setBlitGroups(blitGroups);
+        } else if (change.type === "draw") {
+            // TODO: Temporary solution for renderOnlyWhenFocused
+            const currentLayerIds = this.getCurrentLayer().renderIds_TEMP || [];
+            const allBlitGroups = { ...getBlitGroups() };
 
-        const currentLayerIds = this.getCurrentLayer().renderIds_TEMP || [];
-
-        const fakeLayers = getLayers().layers;
-        for (let fakeLayer of fakeLayers) {
-            const layer = this.layers[fakeLayer.id];
-            let layerBlitGroups = layer.getBlits({
-                grid: this.grid,
-                stored: this.storage.getStored({ grid: this.grid, layer }),
-                settings: this.settings,
-                changes,
-            });
-            for (let group of layerBlitGroups) {
-                if (!group.id) {
-                    throw Error(`Expected blit group id of layer=${layer.id}`);
-                }
-                if (
-                    group.renderOnlyWhenFocused &&
-                    !currentLayerIds.includes(layer.id)
-                ) {
-                    continue;
-                }
-                group.id += layer.id;
-                renderOrder.push(group.id);
-                groups[group.id] = group;
+            // TODO: This is mostly used for resizing the grid. How to efficiently redraw layers that depend on the size of the grid. Are there even layers other than grids that need to rerender on resizes? If there are, should they have to explicitly subscribe to these events?
+            if (change.layerIds === "all") {
+                change.layerIds = getLayers().layers.map(({ id }) => id);
             }
-        }
-        setBlitGroups({ groups, renderOrder });
 
+            // TODO: This will be unnecessary once changeLayer events are implemented cause SelectionLayer can use that instead
+            const layerIds = new Set([
+                ...change.layerIds,
+                ...change.layerIds.flatMap(
+                    (id) => this.layers[id].renderIds_TEMP || [],
+                ),
+            ]);
+
+            for (let layerId of layerIds) {
+                const layer = this.layers[layerId];
+                let layerBlitGroups = layer.getBlits({
+                    grid: this.grid,
+                    stored: this.storage.getStored({ grid: this.grid, layer }),
+                    settings: this.settings,
+                });
+
+                layerBlitGroups = layerBlitGroups.filter(
+                    (group) =>
+                        !group.renderOnlyWhenFocused ||
+                        currentLayerIds.includes(layer.id),
+                );
+
+                allBlitGroups[layer.id] = layerBlitGroups;
+            }
+
+            setBlitGroups(allBlitGroups);
+        } else {
+            throw Error(`sadface ${JSON.stringify(change)}`);
+        }
+
+        this._saveToLocalStorage();
+    }
+
+    _saveToLocalStorage() {
         // TODO: change localStorage key and what's actually stored/how it's stored
         const data = {
             layers: [],
             grid: { width: this.grid.width, height: this.grid.height },
         };
-        for (let fakeLayer of fakeLayers) {
+        for (let fakeLayer of getLayers().layers) {
             const layer = this.layers[fakeLayer.id];
             data.layers.push({
                 layerClass: Object.getPrototypeOf(layer).constructor.id,
@@ -114,7 +138,7 @@ export class PuzzleManager {
         localStorage.setItem("_currentPuzzle", JSON.stringify(data));
     }
 
-    addLayer(layerClass, settings) {
+    addLayer(layerClass, settings): string {
         if (layerClass.unique && layerClass.id in this.layers) {
             throw Error("Trying to add a duplicate layer!");
         }
@@ -146,7 +170,7 @@ export class PuzzleManager {
         if (id in this.layers) {
             delete this.layers[id];
             removeLayer(id);
-            this.redrawScreen();
+            this.renderChange({ type: "delete", layerId: id });
         }
     }
 

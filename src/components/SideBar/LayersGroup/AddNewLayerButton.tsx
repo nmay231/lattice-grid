@@ -14,8 +14,8 @@ export const AddNewLayerButton = () => {
         if (value === DEFAULT_VALUE) {
             return;
         }
-        puzzle.addLayer((availableLayers as any)[value]);
-        puzzle.redrawScreen();
+        const newId = puzzle.addLayer((availableLayers as any)[value]);
+        puzzle.renderChange({ type: "draw", layerIds: [newId] });
         setLayerType(value);
         // TODO: Accessibility might be an issue if we add a layer when the dropdown changes.
         blurActiveElement();
