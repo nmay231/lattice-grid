@@ -13,7 +13,7 @@ import {
     verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { useAtomValue } from "jotai";
-import { layersAtom, selectLayer, setLayers } from "../../../atoms/layers";
+import { layersAtom, setLayers } from "../../../atoms/layers";
 import { usePuzzle } from "../../../atoms/puzzle";
 import { blurActiveElement } from "../../../utils/DOMUtils";
 import { SortableItem } from "../../SortableItem";
@@ -41,9 +41,10 @@ export const LayerList = () => {
 
     const handleSelect = (id) => (event) => {
         event.stopPropagation();
-        selectLayer({ id });
-        puzzle.renderChange({ type: "draw", layerIds: [id, currentLayerId] });
         blurActiveElement();
+        if (id !== currentLayerId) {
+            puzzle.controls.selectLayer({ id });
+        }
     };
 
     const handleDelete = (id) => (event) => {
