@@ -5,14 +5,15 @@ export class SelectionLayer {
 
     attachHandler(layer, options) {
         layer.gatherPoints = this.gatherPoints.bind(this);
+
         layer.handleEvent = (args) =>
             this.handleEvent.call(this, { ...args, storingLayer: layer });
 
-        // TODO: This is a temporary solution to handle renderOnlyWhenFocused
-        layer.renderIds_TEMP = layer.renderIds_TEMP || [];
-        if (layer.renderIds_TEMP.indexOf(this.id) === -1) {
-            layer.renderIds_TEMP.push(this.id);
-        }
+        layer.getOverlayBlits = ({ grid, storage }) =>
+            this._getBlits({
+                grid,
+                stored: storage.getStored({ grid, layer: this }),
+            });
     }
 
     gatherPoints({ grid, event, tempStorage }) {
@@ -268,7 +269,7 @@ export class SelectionLayer {
         }
     }
 
-    getBlits({ grid, stored }) {
+    _getBlits({ grid, stored }) {
         const points = stored.renderOrder.filter(
             (key) => stored.objects[key].state,
         );

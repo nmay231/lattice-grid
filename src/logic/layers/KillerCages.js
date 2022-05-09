@@ -116,4 +116,8 @@ export class KillerCagesLayer {
             },
         ];
     }
+
+    getOverlayBlits() {
+        // TODO
+    }
 }

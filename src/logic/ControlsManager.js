@@ -87,10 +87,7 @@ export class ControlsManager {
         const newId = getLayers().currentLayerId;
         if (oldId !== newId) {
             // TODO: This will eventually just change out the overlay blits instead of this
-            this.puzzle.renderChange({
-                type: "draw",
-                layerIds: [oldId, newId],
-            });
+            this.puzzle.renderChange({ type: "switchLayer" });
         }
     }
 

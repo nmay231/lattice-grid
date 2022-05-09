@@ -14,3 +14,6 @@ const {
 export const blitsAtom = atom((get) => get(baseAtom));
 export const getBlitGroups = getValue;
 export const setBlitGroups = setValue;
+
+// TODO: Change this to a Symbol in the future?
+export const OVERLAY_LAYER_ID = "OVERLAY_BLITS_KEY";

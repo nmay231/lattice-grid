@@ -1,4 +1,4 @@
-import { getBlitGroups, setBlitGroups } from "../atoms/blits";
+import { getBlitGroups, OVERLAY_LAYER_ID, setBlitGroups } from "../atoms/blits";
 import { setCanvasSize } from "../atoms/canvasSize";
 import { addLayer, getLayers, removeLayer, setLayers } from "../atoms/layers";
 import { initialSettings } from "../atoms/settings";
@@ -10,6 +10,7 @@ import { StorageManager } from "./StorageManager";
 type RenderChange =
     | { type: "draw", layerIds: string[] | "all" }
     | { type: "delete", layerId: string }
+    | { type: "switchLayer", layerId: string }
     | { type: "reorder" };
 
 export class PuzzleManager {
@@ -50,6 +51,7 @@ export class PuzzleManager {
                 { layerClass: "Cell Outline" },
                 { layerClass: "Selections" },
                 { layerClass: "Number" },
+                { layerClass: OVERLAY_LAYER_ID },
             ],
             grid: { width: 10, height: 10 },
         });
@@ -79,42 +81,51 @@ export class PuzzleManager {
             const blitGroups = { ...getBlitGroups() };
             delete blitGroups[change.layerId];
             setBlitGroups(blitGroups);
+        } else if (change.type === "switchLayer") {
+            const blitGroups = { ...getBlitGroups() };
+            const layer = this.getCurrentLayer();
+
+            blitGroups[OVERLAY_LAYER_ID] =
+                layer.getOverlayBlits?.({
+                    grid: this.grid,
+                    storage: this.storage,
+                    settings: this.settings,
+                }) || [];
+            setBlitGroups(blitGroups);
         } else if (change.type === "draw") {
-            // TODO: Temporary solution for renderOnlyWhenFocused
-            const currentLayerIds = this.getCurrentLayer().renderIds_TEMP || [];
-            const allBlitGroups = { ...getBlitGroups() };
+            const blitGroups = { ...getBlitGroups() };
 
-            // TODO: This is mostly used for resizing the grid. How to efficiently redraw layers that depend on the size of the grid. Are there even layers other than grids that need to rerender on resizes? If there are, should they have to explicitly subscribe to these events?
-            if (change.layerIds === "all") {
-                change.layerIds = getLayers().layers.map(({ id }) => id);
-            }
+            const { layers, currentLayerId } = getLayers();
 
-            // TODO: This will be unnecessary once changeLayer events are implemented cause SelectionLayer can use that instead
-            const layerIds = new Set([
-                ...change.layerIds,
-                ...change.layerIds.flatMap(
-                    (id) => this.layers[id].renderIds_TEMP || [],
-                ),
-            ]);
+            // Only render the overlay blits of the current layer
+            blitGroups[OVERLAY_LAYER_ID] =
+                this.layers[currentLayerId].getOverlayBlits?.({
+                    grid: this.grid,
+                    storage: this.storage,
+                    settings: this.settings,
+                }) || [];
+
+            // TODO: Allowing layerIds === "all" is mostly used for resizing the grid. How to efficiently redraw layers that depend on the size of the grid. Are there even layers other than grids that need to rerender on resizes? If there are, should they have to explicitly subscribe to these events?
+            const layerIds = new Set(
+                change.layerIds === "all"
+                    ? layers.map(({ id }) => id)
+                    : change.layerIds,
+            );
 
             for (let layerId of layerIds) {
                 const layer = this.layers[layerId];
-                let layerBlitGroups = layer.getBlits({
-                    grid: this.grid,
-                    stored: this.storage.getStored({ grid: this.grid, layer }),
-                    settings: this.settings,
-                });
-
-                layerBlitGroups = layerBlitGroups.filter(
-                    (group) =>
-                        !group.renderOnlyWhenFocused ||
-                        currentLayerIds.includes(layer.id),
-                );
-
-                allBlitGroups[layer.id] = layerBlitGroups;
+                blitGroups[layer.id] =
+                    layer.getBlits?.({
+                        grid: this.grid,
+                        stored: this.storage.getStored({
+                            grid: this.grid,
+                            layer,
+                        }),
+                        settings: this.settings,
+                    }) || [];
             }
 
-            setBlitGroups(allBlitGroups);
+            setBlitGroups(blitGroups);
         } else {
             throw Error(`sadface ${JSON.stringify(change)}`);
         }

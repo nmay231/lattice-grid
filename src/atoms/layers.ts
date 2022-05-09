@@ -38,7 +38,7 @@ export const makeLayersAtom = () => {
         addLayer: (layer: FakeLayer) => {
             setValue((value) => ({
                 layers: [...value.layers, layer],
-                currentLayerId: layer.id,
+                currentLayerId: layer.hidden ? value.currentLayerId : layer.id,
             }));
         },
 

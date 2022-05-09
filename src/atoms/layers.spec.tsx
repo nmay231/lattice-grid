@@ -198,9 +198,35 @@ describe("layers atom", () => {
         expect(result.current.currentLayerId).toEqual("layer1");
     });
 
-    it.todo("should reset to initial state if all layers are removed");
+    it("should reset to initial state if all layers are removed", () => {
+        const { layersAtom, addLayer, setLayers } = makeLayersAtom();
+        const { result } = renderHook(() => useAtomValue(layersAtom));
 
-    it.todo(
-        "should handle adding a hidden layer after a normal layer (the hidden layer should not be selected)",
-    );
+        act(() => {
+            for (let layer of fourLayers) {
+                addLayer({ ...layer });
+            }
+        });
+
+        // Clear layers
+        act(() => setLayers([]));
+        expect(result.current).toEqual(initialValue);
+    });
+
+    it("should not select a hidden layer when adding it", () => {
+        const { layersAtom, addLayer } = makeLayersAtom();
+        const { result } = renderHook(() => useAtomValue(layersAtom));
+
+        act(() => {
+            // Make sure the last layer added is hidden
+            for (let layer of fourLayers.slice(0, 2)) {
+                addLayer({ ...layer });
+            }
+        });
+
+        expect(result.current).toEqual<LayersAtomValue>({
+            layers: fourLayers.slice(0, 2),
+            currentLayerId: "layer1",
+        });
+    });
 });
