@@ -6,6 +6,9 @@ import { ControlsManager } from "./ControlsManager";
 import { SquareGrid } from "./grids/SquareGrid";
 import { availableLayers } from "./layers";
 import { ILayer } from "./layers/baseLayer";
+import { CellOutlineLayer } from "./layers/CellOutline";
+import { OverlayLayer } from "./layers/Overlay";
+import { SelectionLayer } from "./layers/Selection";
 import { StorageManager } from "./StorageManager";
 
 type RenderChange =
@@ -15,7 +18,7 @@ type RenderChange =
     | { type: "reorder" };
 
 export class PuzzleManager {
-    layers = {};
+    layers: Record<string, ILayer> = {};
 
     constructor() {
         // TODO: consider adding a .setSettings that will call setAtomSettings
@@ -30,9 +33,19 @@ export class PuzzleManager {
         this.renderChange({ type: "draw", layerIds: "all" });
     }
 
-    loadPuzzle() {
-        this.layers = {};
+    _resetLayers() {
         setLayers([]);
+        this.layers = {};
+
+        // Guarantee that these layers will be present even if the saved puzzle tries to add them
+        const requiredLayers = [CellOutlineLayer, SelectionLayer, OverlayLayer];
+        for (let layer of requiredLayers) {
+            this.addLayer(layer);
+        }
+    }
+
+    loadPuzzle() {
+        this._resetLayers();
         try {
             const data = JSON.parse(localStorage.getItem("_currentPuzzle"));
             this._loadPuzzle(data);
@@ -45,8 +58,7 @@ export class PuzzleManager {
     }
 
     freshPuzzle() {
-        this.layers = {};
-        setLayers([]);
+        this._resetLayers();
         this._loadPuzzle({
             layers: [
                 { layerClass: "Cell Outline" },
@@ -150,9 +162,9 @@ export class PuzzleManager {
         localStorage.setItem("_currentPuzzle", JSON.stringify(data));
     }
 
-    addLayer(layerClass: ILayer, settings): string {
+    addLayer(layerClass: ILayer, settings?: object): string {
         if (layerClass.unique && layerClass.id in this.layers) {
-            throw Error("Trying to add a duplicate layer!");
+            this.changeLayerSettings(layerClass.id, settings);
         }
 
         const layer = Object.create(layerClass);
