@@ -1,7 +1,7 @@
 export class SelectionLayer {
     static id = "Selections";
     static unique = true;
-    hidden = true;
+    ethereal = true;
 
     attachHandler(layer, options) {
         layer.gatherPoints = this.gatherPoints.bind(this);

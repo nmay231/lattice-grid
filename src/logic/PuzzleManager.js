@@ -171,7 +171,7 @@ export class PuzzleManager {
 
         addLayer({
             id: layer.id,
-            hidden: layer.hidden,
+            ethereal: layer.ethereal,
             layerType: layerClass.id,
         });
         return layer.id;

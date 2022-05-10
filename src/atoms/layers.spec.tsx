@@ -4,10 +4,10 @@ import { initialValue, LayersAtomValue, makeLayersAtom } from "./layers";
 
 describe("layers atom", () => {
     const fourLayers: LayersAtomValue["layers"] = [
-        { id: "layer1", layerType: "class1", hidden: false },
-        { id: "layer2", layerType: "class2", hidden: true },
-        { id: "layer3", layerType: "class1", hidden: false },
-        { id: "layer4", layerType: "class3", hidden: false },
+        { id: "layer1", layerType: "class1", ethereal: false },
+        { id: "layer2", layerType: "class2", ethereal: true },
+        { id: "layer3", layerType: "class1", ethereal: false },
+        { id: "layer4", layerType: "class3", ethereal: false },
     ];
 
     it("should synchronize component and external state", () => {
@@ -16,7 +16,7 @@ describe("layers atom", () => {
 
         const expected: LayersAtomValue = {
             currentLayerId: "layerId",
-            layers: [{ id: "layerId", layerType: "asdf", hidden: false }],
+            layers: [{ id: "layerId", layerType: "asdf", ethereal: false }],
         };
 
         act(() => addLayer({ ...expected.layers[0] }));
@@ -89,7 +89,7 @@ describe("layers atom", () => {
         const ids = [
             "layer4", // Initial
             "layer1", // Wrap from the end to the beginning
-            "layer3", // Skip the hidden second layer
+            "layer3", // Skip the second ethereal layer
             "layer4", // Tab forward one layer
         ];
 
@@ -112,7 +112,7 @@ describe("layers atom", () => {
         const ids = [
             "layer4", // Initial
             "layer3", // Tab backward one layer
-            "layer1", // Skip the hidden 2 layer
+            "layer1", // Skip the ethereal 2 layer
             "layer4", // Wrap from the beginning to the end
         ];
 
@@ -177,7 +177,7 @@ describe("layers atom", () => {
 
         expect(result.current.currentLayerId).toEqual("layer1");
         act(() => removeLayer("layer1"));
-        // Removing the layer should select the next non-hidden layer
+        // Removing the layer should select the next non-ethereal layer
         expect(result.current.currentLayerId).toEqual("layer3");
     });
 
@@ -194,7 +194,7 @@ describe("layers atom", () => {
 
         expect(result.current.currentLayerId).toEqual("layer3");
         act(() => removeLayer("layer3"));
-        // Removing the layer should select the next non-hidden layer
+        // Removing the layer should select the next non-ethereal layer
         expect(result.current.currentLayerId).toEqual("layer1");
     });
 
@@ -213,12 +213,12 @@ describe("layers atom", () => {
         expect(result.current).toEqual(initialValue);
     });
 
-    it("should not select a hidden layer when adding it", () => {
+    it("should not select a ethereal layer when adding it", () => {
         const { layersAtom, addLayer } = makeLayersAtom();
         const { result } = renderHook(() => useAtomValue(layersAtom));
 
         act(() => {
-            // Make sure the last layer added is hidden
+            // Make sure the last layer added is ethereal
             for (let layer of fourLayers.slice(0, 2)) {
                 addLayer({ ...layer });
             }

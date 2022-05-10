@@ -3,7 +3,7 @@ import { handleEventsCurrentSetting } from "./controls/onePoint";
 export class BackgroundColorLayer {
     static id = "Background Color";
     static unique = false;
-    hidden = false;
+    ethereal = false;
 
     static defaultSettings = { selectedState: "blue" };
 

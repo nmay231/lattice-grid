@@ -1,7 +1,7 @@
 export class NumberLayer {
     static id = "Number";
     static unique = false;
-    hidden = false;
+    ethereal = false;
 
     handleKeyDown({ event, grid, storage, settings }) {
         const ids = event.points;

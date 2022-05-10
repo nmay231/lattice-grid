@@ -64,8 +64,8 @@ export const LayerList = () => {
                 strategy={verticalListSortingStrategy}
             >
                 {layers.map(
-                    ({ id, hidden }) =>
-                        !hidden && (
+                    ({ id, ethereal }) =>
+                        !ethereal && (
                             <SortableItem key={id} id={id}>
                                 {/* TODO: Change the element to be the whole sortableItem but excluding the itemHandle (and maybe not just a simple onPointDown) */}
                                 <p onPointerDown={handleSelect(id)}>

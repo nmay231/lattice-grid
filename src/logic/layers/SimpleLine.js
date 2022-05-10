@@ -8,7 +8,7 @@ const pointTypes = {
 export class SimpleLineLayer {
     static id = "Line";
     static unique = false;
-    hidden = false;
+    ethereal = false;
 
     static defaultSettings = {
         fill: "green",

@@ -1,7 +1,7 @@
 export class ToggleCharactersLayer {
     static id = "Toggle Characters";
     static unique = false;
-    hidden = false;
+    ethereal = false;
 
     static defaultSettings = {
         // caseSwap allows upper- and lower-case letters to be used as separate characters but to be merged if there's no ambiguity.

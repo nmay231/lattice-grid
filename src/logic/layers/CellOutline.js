@@ -3,7 +3,7 @@ import { handleEventsCycleStates } from "./controls/onePoint";
 export class CellOutlineLayer {
     static id = "Cell Outline";
     static unique = true;
-    hidden = true;
+    ethereal = true;
 
     newSettings() {
         handleEventsCycleStates(this, {

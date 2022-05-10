@@ -3,7 +3,7 @@ import { handleEventsUnorderedSets } from "./controls/multiPoint";
 export class KillerCagesLayer {
     static id = "Killer Cages";
     static unique = false;
-    hidden = false;
+    ethereal = false;
 
     _handleKeyDown({ event, grid, storage }) {
         const stored = storage.getStored({ layer: this, grid });
