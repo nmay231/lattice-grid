@@ -155,7 +155,7 @@ export class PuzzleManager {
         for (let fakeLayer of getLayers().layers) {
             const layer = this.layers[fakeLayer.id];
             data.layers.push({
-                layerClass: Object.getPrototypeOf(layer).constructor.id,
+                layerClass: Object.getPrototypeOf(layer).id,
                 rawSettings: layer.rawSettings,
             });
         }
@@ -165,6 +165,7 @@ export class PuzzleManager {
     addLayer(layerClass: ILayer, settings?: object): string {
         if (layerClass.unique && layerClass.id in this.layers) {
             this.changeLayerSettings(layerClass.id, settings);
+            return;
         }
 
         const layer = Object.create(layerClass);
