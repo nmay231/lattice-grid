@@ -1,9 +1,11 @@
+import { BaseLayer, ILayer } from "./baseLayer";
 import { handleEventsCycleStates } from "./controls/onePoint";
 
-export class CellOutlineLayer {
-    static id = "Cell Outline";
-    static unique = true;
-    ethereal = true;
+export const CellOutlineLayer: ILayer = {
+    ...BaseLayer,
+    id: "Cell Outline",
+    unique: true,
+    ethereal: true,
 
     newSettings() {
         handleEventsCycleStates(this, {
@@ -17,7 +19,7 @@ export class CellOutlineLayer {
                 { dx: -2, dy: 0 },
             ],
         });
-    }
+    },
 
     getBlits({ grid, stored }) {
         const blacklist = stored.renderOrder.filter(
@@ -83,5 +85,5 @@ export class CellOutlineLayer {
                 },
             },
         ];
-    }
-}
+    },
+};

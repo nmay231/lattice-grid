@@ -1,9 +1,11 @@
+import { BaseLayer, ILayer } from "./baseLayer";
 import { handleEventsUnorderedSets } from "./controls/multiPoint";
 
-export class KillerCagesLayer {
-    static id = "Killer Cages";
-    static unique = false;
-    ethereal = false;
+export const KillerCagesLayer: ILayer = {
+    ...BaseLayer,
+    id: "Killer Cages",
+    unique: false,
+    ethereal: false,
 
     _handleKeyDown({ event, grid, storage }) {
         const stored = storage.getStored({ layer: this, grid });
@@ -11,7 +13,7 @@ export class KillerCagesLayer {
         const object = { ...stored.objects[id] };
         object.state = this._nextState(object.state ?? "", event);
         return { history: [{ id, object }] };
-    }
+    },
 
     _nextState(state, event) {
         // TODO: Add match() to settings? Or better yet, extract the logic of typing in numbers (from the Number layer) and have both use that
@@ -33,7 +35,7 @@ export class KillerCagesLayer {
                 state
             );
         }
-    }
+    },
 
     newSettings({ newSettings, grid, storage }) {
         // this.rawSettings = newSettings;
@@ -45,7 +47,7 @@ export class KillerCagesLayer {
             allowOverlap: true, // TODO: Change to false when properly implemented
             overwriteOthers: false,
         });
-    }
+    },
 
     getBlits({ grid, stored }) {
         const cageBlits = {};
@@ -115,9 +117,9 @@ export class KillerCagesLayer {
                 },
             },
         ];
-    }
+    },
 
     getOverlayBlits() {
         // TODO
-    }
-}
+    },
+};

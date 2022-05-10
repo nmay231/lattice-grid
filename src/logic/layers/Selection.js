@@ -1,7 +1,10 @@
-export class SelectionLayer {
-    static id = "Selections";
-    static unique = true;
-    ethereal = true;
+import { BaseLayer, ILayer } from "./baseLayer";
+
+export const SelectionLayer: ILayer = {
+    ...BaseLayer,
+    id: "Selections",
+    unique: true,
+    ethereal: true,
 
     attachHandler(layer, options) {
         layer.gatherPoints = this.gatherPoints.bind(this);
@@ -14,7 +17,7 @@ export class SelectionLayer {
                 grid,
                 stored: storage.getStored({ grid, layer: this }),
             });
-    }
+    },
 
     gatherPoints({ grid, event, tempStorage }) {
         tempStorage.blacklist = tempStorage.blacklist ?? [];
@@ -45,7 +48,7 @@ export class SelectionLayer {
         tempStorage.blacklist.push(...newPoints);
 
         return newPoints;
-    }
+    },
 
     handleEvent({ grid, storage, settings, event, storingLayer, tempStorage }) {
         const stored = storage.getStored({ grid, layer: this });
@@ -267,7 +270,7 @@ export class SelectionLayer {
                 throw new Error(`Unknown event.type=${event.type}`);
             }
         }
-    }
+    },
 
     _getBlits({ grid, stored }) {
         const points = stored.renderOrder.filter(
@@ -313,5 +316,5 @@ export class SelectionLayer {
                 renderOnlyWhenFocused: true,
             },
         ];
-    }
-}
+    },
+};

@@ -1,6 +1,6 @@
 // TODO: Group together temporarily decentralized types
-type Grid = { id: string | symbol };
-type Layer = { id: string };
+export type Grid = { id: string | symbol };
+export type Layer = { id: string };
 
 export type GridAndLayer = { grid: Grid; layer: Layer };
 

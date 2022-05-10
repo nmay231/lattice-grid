@@ -1,7 +1,10 @@
-export class NumberLayer {
-    static id = "Number";
-    static unique = false;
-    ethereal = false;
+import { BaseLayer, ILayer } from "./baseLayer";
+
+export const NumberLayer: ILayer = {
+    ...BaseLayer,
+    id: "Number",
+    unique: false,
+    ethereal: false,
 
     handleKeyDown({ event, grid, storage, settings }) {
         const ids = event.points;
@@ -39,7 +42,7 @@ export class NumberLayer {
                 id,
             })),
         };
-    }
+    },
 
     _nextState(state, oldState, event) {
         const match = this.settings.match;
@@ -59,11 +62,11 @@ export class NumberLayer {
         } else {
             return undefined; // Change nothing
         }
-    }
+    },
 
-    static defaultSettings = { min: 1, max: 9 };
+    defaultSettings: { min: 1, max: 9 },
 
-    static constraints = {
+    constraints: {
         schema: {
             type: "object",
             properties: { min: { type: "integer" }, max: { type: "integer" } },
@@ -80,14 +83,14 @@ export class NumberLayer {
                 scope: "#/properties/max",
             },
         ],
-    };
+    },
 
     _newSettings(min, max) {
         return {
             match: (number, alternate) =>
                 min <= number && number <= max ? number.toString() : alternate,
         };
-    }
+    },
 
     newSettings({ newSettings, grid, storage, attachSelectionsHandler }) {
         this.settings = this._newSettings(newSettings.min, newSettings.max);
@@ -114,7 +117,7 @@ export class NumberLayer {
         }
 
         return { history };
-    }
+    },
 
     getBlits({ grid, stored }) {
         const { cells } = grid.getPoints({
@@ -147,5 +150,5 @@ export class NumberLayer {
                 },
             },
         ];
-    }
-}
+    },
+};

@@ -5,6 +5,7 @@ import { initialSettings } from "../atoms/settings";
 import { ControlsManager } from "./ControlsManager";
 import { SquareGrid } from "./grids/SquareGrid";
 import { availableLayers } from "./layers";
+import { ILayer } from "./layers/baseLayer";
 import { StorageManager } from "./StorageManager";
 
 type RenderChange =
@@ -149,12 +150,12 @@ export class PuzzleManager {
         localStorage.setItem("_currentPuzzle", JSON.stringify(data));
     }
 
-    addLayer(layerClass, settings): string {
+    addLayer(layerClass: ILayer, settings): string {
         if (layerClass.unique && layerClass.id in this.layers) {
             throw Error("Trying to add a duplicate layer!");
         }
 
-        const layer = new layerClass();
+        const layer = Object.create(layerClass);
         layer.id = layerClass.id;
         let idNumber = 2;
         while (layer.id in this.layers) {
