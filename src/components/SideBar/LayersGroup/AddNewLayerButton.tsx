@@ -17,11 +17,13 @@ export const AddNewLayerButton = () => {
         const newId = puzzle.addLayer((availableLayers as any)[value]);
         puzzle.renderChange({ type: "draw", layerIds: [newId] });
         setLayerType(value);
-        // TODO: Accessibility might be an issue if we add a layer when the dropdown changes.
+        // TODO: Accessibility might be an issue if we add a layer when the dropdown changes. Particularly when using arrow keys to select (not to mention possible issues with mobile)
         blurActiveElement();
     }) as React.ChangeEventHandler<HTMLSelectElement>;
 
-    const layerIds = Object.keys(availableLayers);
+    const layerIds = Object.keys(availableLayers).filter(
+        (id) => !availableLayers[id].ethereal,
+    );
     layerIds.sort();
 
     return (
