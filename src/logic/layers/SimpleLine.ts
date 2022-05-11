@@ -1,17 +1,36 @@
 import { BaseLayer, ILayer } from "./baseLayer";
 import { handleEventsCurrentSetting } from "./controls/twoPoint";
 
+type SimpleLineSettings = {
+    pointType: string;
+    selectedState: { fill: string };
+};
+type SimpleLineProps = {
+    settings: SimpleLineSettings;
+};
+
+type ObjectState = {
+    state: { fill: string };
+    points: string[];
+};
+type RawSettings = { connections: keyof typeof pointTypes; fill: string };
+
 const pointTypes = {
     "Cell to Cell": "cells",
     "Corner to Corner": "corners",
 };
 
-export const SimpleLineLayer: ILayer = {
+export const SimpleLineLayer: ILayer<ObjectState, RawSettings> &
+    SimpleLineProps = {
     ...BaseLayer,
     id: "Line",
     unique: false,
     ethereal: false,
 
+    rawSettings: {
+        fill: "green",
+        connections: "Cell to Cell",
+    },
     defaultSettings: {
         fill: "green",
         connections: "Cell to Cell",
@@ -63,6 +82,8 @@ export const SimpleLineLayer: ILayer = {
         ],
     },
 
+    settings: { pointType: "cells", selectedState: { fill: "green" } },
+
     newSettings({ newSettings, storage, grid }) {
         this.rawSettings = this.rawSettings || {};
         let history = null;
@@ -111,7 +132,7 @@ export const SimpleLineLayer: ILayer = {
             points: allPoints,
         });
 
-        const blits = {};
+        const blits: Record<string, object> = {};
         for (let id of stored.renderOrder) {
             const {
                 state: { fill },

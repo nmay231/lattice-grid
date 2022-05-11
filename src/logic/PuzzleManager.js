@@ -14,7 +14,7 @@ import { StorageManager } from "./StorageManager";
 type RenderChange =
     | { type: "draw", layerIds: string[] | "all" }
     | { type: "delete", layerId: string }
-    | { type: "switchLayer", layerId: string }
+    | { type: "switchLayer" }
     | { type: "reorder" };
 
 export class PuzzleManager {
@@ -130,6 +130,7 @@ export class PuzzleManager {
                 blitGroups[layer.id] =
                     layer.getBlits?.({
                         grid: this.grid,
+                        storage: this.storage,
                         stored: this.storage.getStored({
                             grid: this.grid,
                             layer,

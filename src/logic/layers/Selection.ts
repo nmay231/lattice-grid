@@ -1,25 +1,53 @@
-import { BaseLayer, ILayer } from "./baseLayer";
+import { IncompleteHistoryAction } from "../StorageManager";
+import {
+    BaseLayer,
+    ILayer,
+    Keypress,
+    LayerEventEssentials,
+    LayerHandlerResult,
+} from "./baseLayer";
 
-export const SelectionLayer: ILayer = {
+export type KeyDownEventHandler<IObjectState = object> = {
+    handleKeyDown: (
+        arg: LayerEventEssentials<IObjectState> &
+            Keypress & { points: string[] },
+    ) => LayerHandlerResult;
+};
+
+type SelectionProps = {
+    attachHandler: (layer: ILayer & KeyDownEventHandler, options: {}) => void;
+    _getBlits: NonNullable<ILayer["getBlits"]>;
+};
+
+type ObjectState = { state: number };
+
+export const SelectionLayer: ILayer & SelectionProps = {
     ...BaseLayer,
     id: "Selections",
     unique: true,
     ethereal: true,
 
-    attachHandler(layer, options) {
+    attachHandler(layer) {
         layer.gatherPoints = this.gatherPoints.bind(this);
 
         layer.handleEvent = (args) =>
             this.handleEvent.call(this, { ...args, storingLayer: layer });
 
-        layer.getOverlayBlits = ({ grid, storage }) =>
+        layer.getOverlayBlits = ({ grid, storage, ...rest }) =>
             this._getBlits({
+                ...rest,
                 grid,
+                storage,
                 stored: storage.getStored({ grid, layer: this }),
             });
     },
 
-    gatherPoints({ grid, event, tempStorage }) {
+    gatherPoints(event) {
+        const { type, grid, tempStorage } = event;
+
+        if (type !== "pointerDown" && type !== "pointerMove") {
+            return [];
+        }
         tempStorage.blacklist = tempStorage.blacklist ?? [];
         let newPoints = grid.selectPointsWithCursor({
             cursor: event.cursor,
@@ -38,20 +66,21 @@ export const SelectionLayer: ILayer = {
             ],
         });
 
-        if (!newPoints.length) return;
+        if (!newPoints.length) return [];
         tempStorage.previousPoint = newPoints[newPoints.length - 1];
         newPoints = newPoints.filter(
             (id) => tempStorage.blacklist.indexOf(id) === -1,
         );
-        if (!newPoints.length) return;
+        if (!newPoints.length) return [];
 
         tempStorage.blacklist.push(...newPoints);
 
         return newPoints;
     },
 
-    handleEvent({ grid, storage, settings, event, storingLayer, tempStorage }) {
-        const stored = storage.getStored({ grid, layer: this });
+    handleEvent(event) {
+        const { grid, storage, tempStorage } = event;
+        const stored = storage.getStored<ObjectState>({ grid, layer: this });
 
         switch (event.type) {
             case "cancelAction": {
@@ -60,7 +89,7 @@ export const SelectionLayer: ILayer = {
                     history: stored.renderOrder.map((id) => ({
                         id,
                         layerId: this.id,
-                        batchId: "ignore",
+                        batchId: "ignore" as const,
                         object: null,
                     })),
                 };
@@ -70,28 +99,28 @@ export const SelectionLayer: ILayer = {
                 const ids = stored.renderOrder;
 
                 let history = null;
-                if (event.ctrlKey && event.key === "a") {
-                    history = grid.getAllPoints("cells").map((id) => ({
+                if (event.keypress === "ctrl-a") {
+                    history = grid.getAllPoints("cells").map((id: string) => ({
                         id,
                         layerId: this.id,
-                        batchId: "ignore",
+                        batchId: "ignore" as const,
                         object: { state: 1, point: id },
                     }));
-                } else if (event.ctrlKey && event.key === "i") {
+                } else if (event.keypress === "ctrl-i") {
                     const all = grid.getAllPoints("cells");
-                    history = all.map((id) => {
+                    history = all.map((id: string) => {
                         if (id in stored.objects) {
                             return {
                                 id,
                                 layerId: this.id,
-                                batchId: "ignore",
+                                batchId: "ignore" as const,
                                 object: null,
                             };
                         } else {
                             return {
                                 id,
                                 layerId: this.id,
-                                batchId: "ignore",
+                                batchId: "ignore" as const,
                                 object: { state: 1, point: id },
                             };
                         }
@@ -102,14 +131,14 @@ export const SelectionLayer: ILayer = {
                     return { history };
                 }
 
-                event.points = ids;
+                const storingLayer: ILayer & KeyDownEventHandler = (
+                    event as any
+                ).storingLayer;
 
                 const actions =
                     storingLayer.handleKeyDown?.({
-                        grid,
-                        storage,
-                        settings,
-                        event,
+                        ...event,
+                        points: ids,
                     }) || {};
 
                 const batchId = storage.getNewBatchId();
@@ -129,7 +158,7 @@ export const SelectionLayer: ILayer = {
                 stored.groupNumber = stored.groupNumber || 1;
                 const ids = event.points;
 
-                let history;
+                let history: IncompleteHistoryAction[];
                 if (event.ctrlKey || event.shiftKey) {
                     if (tempStorage.targetState === undefined) {
                         // If targetState is undefined, there can only be one id
@@ -140,7 +169,7 @@ export const SelectionLayer: ILayer = {
                                 {
                                     id,
                                     layerId: this.id,
-                                    batchId: "ignore",
+                                    batchId: "ignore" as const,
                                     object: null,
                                 },
                             ];
@@ -151,7 +180,7 @@ export const SelectionLayer: ILayer = {
                                 {
                                     id,
                                     layerId: this.id,
-                                    batchId: "ignore",
+                                    batchId: "ignore" as const,
                                     object: {
                                         state: stored.groupNumber,
                                         point: id,
@@ -165,7 +194,7 @@ export const SelectionLayer: ILayer = {
                             .map((id) => ({
                                 id,
                                 layerId: this.id,
-                                batchId: "ignore",
+                                batchId: "ignore" as const,
                                 object: null,
                             }));
                     } else {
@@ -182,7 +211,7 @@ export const SelectionLayer: ILayer = {
                         history = allIds.map((id) => ({
                             id,
                             layerId: this.id,
-                            batchId: "ignore",
+                            batchId: "ignore" as const,
                             object: {
                                 state: tempStorage.targetState,
                                 point: id,
@@ -203,7 +232,7 @@ export const SelectionLayer: ILayer = {
                             .map((toDelete) => ({
                                 id: toDelete,
                                 layerId: this.id,
-                                batchId: "ignore",
+                                batchId: "ignore" as const,
                                 object: null,
                             }));
 
@@ -216,7 +245,7 @@ export const SelectionLayer: ILayer = {
                         ...ids.map((id) => ({
                             id,
                             layerId: this.id,
-                            batchId: "ignore",
+                            batchId: "ignore" as const,
                             object: { state: stored.groupNumber, point: id },
                         })),
                     );
@@ -232,7 +261,7 @@ export const SelectionLayer: ILayer = {
                             {
                                 id: stored.renderOrder[0],
                                 layerId: this.id,
-                                batchId: "ignore",
+                                batchId: "ignore" as const,
                                 object: null,
                             },
                         ],
@@ -243,13 +272,13 @@ export const SelectionLayer: ILayer = {
             case "undoRedo": {
                 const newIds = event.actions.map(({ id }) => id);
                 // Clear old selection
-                const history = stored.renderOrder
+                const history: IncompleteHistoryAction[] = stored.renderOrder
                     // TODO: This doesn't account for actions that do not apply to storingLayer. Do I need to fix?
                     .filter((oldId) => newIds.indexOf(oldId) === -1)
                     .map((oldId) => ({
                         id: oldId,
                         layerId: this.id,
-                        batchId: "ignore",
+                        batchId: "ignore" as const,
                         object: null,
                     }));
 
@@ -259,7 +288,7 @@ export const SelectionLayer: ILayer = {
                     ...newIds.map((id) => ({
                         id,
                         layerId: this.id,
-                        batchId: "ignore",
+                        batchId: "ignore" as const,
                         // TODO: This implicitly removes group information (b/c state=2). However, it seems really difficult to resolve unless selections are kept in history, but that opens up a whole can of worms.
                         object: { state: 2, point: id },
                     })),
@@ -267,18 +296,19 @@ export const SelectionLayer: ILayer = {
                 return { history, discontinueInput: true };
             }
             default: {
-                throw new Error(`Unknown event.type=${event.type}`);
+                throw new Error(`Unknown event.type=${(event as any).type}`);
             }
         }
     },
 
-    _getBlits({ grid, stored }) {
+    _getBlits({ grid, storage }) {
+        const stored = storage.getStored<ObjectState>({ grid, layer: this });
         const points = stored.renderOrder.filter(
             (key) => stored.objects[key].state,
         );
         const states = points.map((id) => stored.objects[id].state);
 
-        let blits = {};
+        let blits: Record<string, any> = {};
         if (points.length) {
             for (let group of new Set(states)) {
                 const { selectionCage } = grid.getPoints({

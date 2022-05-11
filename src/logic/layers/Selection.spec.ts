@@ -1,4 +1,5 @@
 import { LayerStorage, StorageManager } from "../StorageManager";
+import { LayerEventEssentials } from "./baseLayer";
 import { SelectionLayer } from "./Selection";
 
 const getFreshSelectionLayer = () => {
@@ -8,7 +9,11 @@ const getFreshSelectionLayer = () => {
 
 const storingLayer = { id: "storingLayer", handleKeyDown: jest.fn() };
 
-const makeFakeEvent = ({ stored, event, tempStorage = {} }: any = {}) => {
+const makeFakeEvent = ({
+    stored,
+    event,
+    tempStorage = {},
+}: any = {}): LayerEventEssentials => {
     const grid = { getAllPoints: () => [] };
     const _stored: LayerStorage = stored || {
         objects: {},

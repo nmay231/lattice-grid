@@ -650,17 +650,4 @@ export class SquareGrid {
     getAllPoints(type) {
         return this._getAllGridPoints(type).map(({ x, y }) => `${x},${y}`);
     }
-
-    convertIdAndPoints({ pointsToId, idToPoints }) {
-        if (pointsToId) {
-            return pointsToId.join(",");
-        } else if (idToPoints) {
-            const nums = idToPoints.split(",");
-            const points = [];
-            while (nums.length) {
-                points.push(nums.splice(0, 2).join(","));
-            }
-            return points;
-        }
-    }
 }

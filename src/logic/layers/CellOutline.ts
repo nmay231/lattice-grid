@@ -1,7 +1,7 @@
 import { BaseLayer, ILayer } from "./baseLayer";
 import { handleEventsCycleStates } from "./controls/onePoint";
 
-export const CellOutlineLayer: ILayer = {
+export const CellOutlineLayer: ILayer<{ state: true }> = {
     ...BaseLayer,
     id: "Cell Outline",
     unique: true,
@@ -35,7 +35,10 @@ export const CellOutlineLayer: ILayer = {
             blacklist,
         });
 
-        const edges = {};
+        const edges: Record<
+            string,
+            boolean | { x1: number; x2: number; y1: number; y2: number }
+        > = {};
         for (let cell in cells) {
             for (let edge in cells[cell].edges) {
                 /* If a cell does not share an edge with another cell, use a thick line. */
@@ -44,7 +47,7 @@ export const CellOutlineLayer: ILayer = {
                 } else {
                     const corners = cells[cell].edges[edge].corners;
                     const [[x1, y1], [x2, y2]] = Object.values(corners).map(
-                        ({ svgPoint }) => svgPoint,
+                        ({ svgPoint }: any) => svgPoint,
                     );
                     edges[edge] = { x1, y1, x2, y2 };
                 }
@@ -57,7 +60,7 @@ export const CellOutlineLayer: ILayer = {
             }
         }
 
-        const outline = {};
+        const outline: Record<string, any> = {};
         for (let key in gridEdge.svgPolygons) {
             outline[key] = { points: gridEdge.svgPolygons[key] };
         }

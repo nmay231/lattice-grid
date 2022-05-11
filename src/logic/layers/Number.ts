@@ -1,36 +1,54 @@
 import { BaseLayer, ILayer } from "./baseLayer";
+import { KeyDownEventHandler } from "./Selection";
 
-export const NumberLayer: ILayer = {
+type ObjectState = {
+    state: number;
+};
+type RawSettings = { min: number; max: number };
+
+type NumberSettings = {
+    match: (
+        number: number,
+        alternate?: string | null,
+    ) => string | null | undefined;
+};
+type NumberProps = {
+    settings: NumberSettings;
+    _newSettings: (arg: { min: number; max: number }) => NumberSettings;
+    _nextState: (state: any, oldState: any, event: any) => any;
+};
+
+export const NumberLayer: ILayer<ObjectState, RawSettings> &
+    KeyDownEventHandler<ObjectState> &
+    NumberProps = {
     ...BaseLayer,
     id: "Number",
     unique: false,
     ethereal: false,
 
-    handleKeyDown({ event, grid, storage, settings }) {
-        const ids = event.points;
+    handleKeyDown({ points: ids, keypress, stored, settings }) {
         if (!ids.length) {
             return {};
         }
-        const stored = storage.getStored({ grid, layer: this });
 
         const timeDelay = Date.now() - (stored.lastTime || 0);
         stored.lastTime = Date.now();
 
         const selectionChanged =
-            grid.convertIdAndPoints({ pointsToId: stored.lastIds || [] }) !==
-            grid.convertIdAndPoints({ pointsToId: ids });
+            (stored.lastIds || []).join(";") !== ids.join(";");
         stored.lastIds = ids.slice();
 
         const states = ids.map((id) => stored.objects[id]?.state);
         const theSame =
             states[states.length - 1] ===
-            states.reduce((prev, next) => (prev === next ? next : {}));
+            // Floating point numbers are not allowed in the NumberLayer
+            states.reduce((prev, next) => (prev === next ? next : 0.1));
 
         let state = theSame ? states[0] : "";
         if (timeDelay > settings.actionWindowMs || selectionChanged) {
-            state = this._nextState("", state, event);
+            state = this._nextState("", state, keypress);
         } else {
-            state = this._nextState(state, state, event);
+            state = this._nextState(state, state, keypress);
         }
 
         if (state === undefined) {
@@ -45,7 +63,7 @@ export const NumberLayer: ILayer = {
     },
 
     _nextState(state, oldState, event) {
-        const match = this.settings.match;
+        const match = this.settings?.match;
         if (event.code === "Backspace") {
             return match(oldState.toString().slice(0, -1), null);
         } else if (event.code === "Delete") {
@@ -65,6 +83,7 @@ export const NumberLayer: ILayer = {
     },
 
     defaultSettings: { min: 1, max: 9 },
+    rawSettings: { min: 1, max: 9 },
 
     constraints: {
         schema: {
@@ -85,7 +104,11 @@ export const NumberLayer: ILayer = {
         ],
     },
 
-    _newSettings(min, max) {
+    settings: {
+        match: () => "",
+    },
+
+    _newSettings({ min, max }) {
         return {
             match: (number, alternate) =>
                 min <= number && number <= max ? number.toString() : alternate,
@@ -93,12 +116,12 @@ export const NumberLayer: ILayer = {
     },
 
     newSettings({ newSettings, grid, storage, attachSelectionsHandler }) {
-        this.settings = this._newSettings(newSettings.min, newSettings.max);
+        this.settings = this._newSettings(newSettings);
         this.rawSettings = newSettings;
 
         attachSelectionsHandler(this, {});
 
-        const { objects, renderOrder } = storage.getStored({
+        const { objects, renderOrder } = storage.getStored<ObjectState>({
             grid,
             layer: this,
         });
@@ -119,7 +142,8 @@ export const NumberLayer: ILayer = {
         return { history };
     },
 
-    getBlits({ grid, stored }) {
+    getBlits({ grid, storage }) {
+        const stored = storage.getStored<ObjectState>({ grid, layer: this });
         const { cells } = grid.getPoints({
             connections: {
                 cells: {
@@ -130,7 +154,7 @@ export const NumberLayer: ILayer = {
             points: stored.renderOrder,
         });
 
-        const blits = {};
+        const blits: Record<string, object> = {};
         for (let id of stored.renderOrder) {
             blits[id] = {
                 text: stored.objects[id].state,
