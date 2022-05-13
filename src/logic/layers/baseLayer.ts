@@ -43,7 +43,7 @@ export type LayerEvent<ObjectState = object> = CleanedDOMEvent &
     LayerEventEssentials<ObjectState>;
 
 export type NewSettingsEvent<ObjectState, RawSettings> =
-    LayerEvent<ObjectState> & {
+    LayerEventEssentials<ObjectState> & {
         newSettings: RawSettings;
         attachSelectionsHandler: any;
     };
@@ -66,7 +66,7 @@ export type ILayer<ObjectState = object, RawSettings = object> = {
     constraints?: object;
     newSettings?: (
         layerEvent: NewSettingsEvent<ObjectState, RawSettings>,
-    ) => void;
+    ) => LayerHandlerResult | undefined;
     gatherPoints: (layerEvent: LayerEvent<ObjectState>) => string[];
     handleEvent: (layerEvent: LayerEvent<ObjectState>) => LayerHandlerResult;
     getBlits?: (layerEvent: LayerEventEssentials<ObjectState>) => object[];

@@ -19,7 +19,7 @@ type SelectionProps = {
     _getBlits: NonNullable<ILayer["getBlits"]>;
 };
 
-type ObjectState = { state: number };
+export type ObjectState = { state: number };
 
 export const SelectionLayer: ILayer & SelectionProps = {
     ...BaseLayer,

@@ -1,9 +1,7 @@
 import { BaseLayer, ILayer } from "./baseLayer";
 import { KeyDownEventHandler } from "./Selection";
 
-type ObjectState = {
-    state: number;
-};
+export type ObjectState = { state: string; point: string };
 type RawSettings = { min: number; max: number };
 
 type NumberSettings = {
@@ -41,8 +39,7 @@ export const NumberLayer: ILayer<ObjectState, RawSettings> &
         const states = ids.map((id) => stored.objects[id]?.state);
         const theSame =
             states[states.length - 1] ===
-            // Floating point numbers are not allowed in the NumberLayer
-            states.reduce((prev, next) => (prev === next ? next : 0.1));
+            states.reduce((prev, next) => (prev === next ? next : "DNE"));
 
         let state = theSame ? states[0] : "";
         if (timeDelay > settings.actionWindowMs || selectionChanged) {
@@ -62,21 +59,21 @@ export const NumberLayer: ILayer<ObjectState, RawSettings> &
         };
     },
 
-    _nextState(state, oldState, event) {
+    _nextState(state, oldState, keypress) {
         const match = this.settings?.match;
-        if (event.code === "Backspace") {
+        if (keypress === "Backspace") {
             return match(oldState.toString().slice(0, -1), null);
-        } else if (event.code === "Delete") {
+        } else if (keypress === "Delete") {
             return null;
-        } else if (event.code === "Minus") {
-            // TODO: keep the Minus sign as part of an inProgress object and remove it when we deselect things.
+        } else if (keypress === "-") {
+            // TODO: Keep the minus sign as part of an inProgress object and remove it when we deselect things.
             return match(-1 * parseInt(oldState)) ?? "-";
-        } else if (event.code === "Plus" || event.code === "Equal") {
+        } else if (keypress === "+" || keypress === "=") {
             return match(oldState && Math.abs(parseInt(oldState)), undefined);
-        } else if ("1234567890".indexOf(event.key) !== -1) {
-            return match(parseInt(state + event.key), oldState);
-        } else if (/^[a-fA-F]$/.test(event.key)) {
-            return match(parseInt(event.key.toLowerCase(), 36), oldState);
+        } else if (/^[0-9]$/.test(keypress)) {
+            return match(parseInt(state + keypress), oldState);
+        } else if (/^[a-fA-F]$/.test(keypress)) {
+            return match(parseInt(keypress.toLowerCase(), 36), oldState);
         } else {
             return undefined; // Change nothing
         }
@@ -132,8 +129,8 @@ export const NumberLayer: ILayer<ObjectState, RawSettings> &
         for (let id of renderOrder) {
             const object = objects[id];
             if (
-                object.state < newSettings.min ||
-                object.state > newSettings.max
+                parseInt(object.state) < newSettings.min ||
+                parseInt(object.state) > newSettings.max
             ) {
                 history.push({ object: null, id });
             }
