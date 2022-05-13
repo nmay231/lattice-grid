@@ -79,10 +79,6 @@ export class ControlsManager {
     }
 
     applyLayerEvent(layer: ILayer, event: CleanedDOMEvent) {
-        if (!this.tempStorage) {
-            return;
-        }
-
         const { grid, storage, settings } = this.puzzle;
         const layerEvent: LayerEvent = {
             ...event,
@@ -90,7 +86,7 @@ export class ControlsManager {
             storage,
             stored: storage.getStored({ grid, layer }),
             settings,
-            tempStorage: this.tempStorage,
+            tempStorage: this.tempStorage || {},
         };
 
         if (
@@ -140,6 +136,7 @@ export class ControlsManager {
             return;
         }
         const layer = this.puzzle.getCurrentLayer();
+        this.tempStorage = {};
         const event = this.cleanPointerEvent("pointerDown", rawEvent);
         this.applyLayerEvent(layer, event);
     }

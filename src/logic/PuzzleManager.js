@@ -212,13 +212,11 @@ export class PuzzleManager {
                 // TODO: If anything, I should prevent the issue where CellOutline is added before Selections therefore requiring the following optional chain. That's why I thought pre-instantiating it would be a good idea.
                 attachSelectionsHandler:
                     Selections?.attachHandler?.bind?.(Selections),
-            }) || [];
+            }) || {};
 
         if (history?.length) {
-            this.controls.handleLayerActions(layer, {
-                history,
-                discontinueInput: "noChange",
-            });
+            this.storage.addToHistory(this.grid, layer, history);
+            this.renderChange({ type: "draw", layerIds: [layer.id] });
         }
     }
 
