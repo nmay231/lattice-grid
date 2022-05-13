@@ -13,7 +13,7 @@ import {
     verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { useAtomValue } from "jotai";
-import { layersAtom, selectLayer, setLayers } from "../../../atoms/layers";
+import { layersAtom, setLayers } from "../../../atoms/layers";
 import { usePuzzle } from "../../../atoms/puzzle";
 import { blurActiveElement } from "../../../utils/DOMUtils";
 import { SortableItem } from "../../SortableItem";
@@ -34,16 +34,17 @@ export const LayerList = () => {
             const oldIndex = ids.indexOf(active.id);
             const newIndex = ids.indexOf(over?.id);
             setLayers(arrayMove(layers, oldIndex, newIndex));
-            puzzle.redrawScreen();
+            puzzle.renderChange({ type: "reorder" });
         }
         blurActiveElement();
     };
 
     const handleSelect = (id) => (event) => {
         event.stopPropagation();
-        selectLayer({ id });
-        puzzle.redrawScreen();
         blurActiveElement();
+        if (id !== currentLayerId) {
+            puzzle.controls.selectLayer({ id });
+        }
     };
 
     const handleDelete = (id) => (event) => {
@@ -63,8 +64,8 @@ export const LayerList = () => {
                 strategy={verticalListSortingStrategy}
             >
                 {layers.map(
-                    ({ id, hidden }) =>
-                        !hidden && (
+                    ({ id, ethereal }) =>
+                        !ethereal && (
                             <SortableItem key={id} id={id}>
                                 {/* TODO: Change the element to be the whole sortableItem but excluding the itemHandle (and maybe not just a simple onPointDown) */}
                                 <p onPointerDown={handleSelect(id)}>

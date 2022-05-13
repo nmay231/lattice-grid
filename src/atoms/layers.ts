@@ -2,7 +2,7 @@ import { modifiableAtom } from "./modifiableAtom";
 
 type FakeLayer = {
     id: string;
-    hidden: boolean;
+    ethereal: boolean;
     layerType: string;
 };
 
@@ -38,7 +38,9 @@ export const makeLayersAtom = () => {
         addLayer: (layer: FakeLayer) => {
             setValue((value) => ({
                 layers: [...value.layers, layer],
-                currentLayerId: layer.id,
+                currentLayerId: layer.ethereal
+                    ? value.currentLayerId
+                    : layer.id,
             }));
         },
 
@@ -56,7 +58,7 @@ export const makeLayersAtom = () => {
 
                     // We try to select the next layer without wrapping to the other end
                     for (let layer of layers.slice(index)) {
-                        if (layer.hidden) continue;
+                        if (layer.ethereal) continue;
                         nextId = layer.id;
                         break;
                     }
@@ -65,7 +67,7 @@ export const makeLayersAtom = () => {
                     if (nextId === null) {
                         for (let i = index - 1; i >= 0; i--) {
                             const layer = layers[i];
-                            if (layer.hidden) continue;
+                            if (layer.ethereal) continue;
                             nextId = layer.id;
                             break;
                         }
@@ -91,7 +93,7 @@ export const makeLayersAtom = () => {
 
                     for (let count = 0; count < layers.length; count++) {
                         index = (layers.length + index + one) % layers.length;
-                        if (!layers[index].hidden) {
+                        if (!layers[index].ethereal) {
                             return { layers, currentLayerId: layers[index].id };
                         }
                     }

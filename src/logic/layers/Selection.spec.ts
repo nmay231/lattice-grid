@@ -2,8 +2,7 @@ import { LayerStorage, StorageManager } from "../StorageManager";
 import { SelectionLayer } from "./Selection";
 
 const getFreshSelectionLayer = () => {
-    const selection = new SelectionLayer();
-    (selection as any).id = "Selection";
+    const selection = Object.create(SelectionLayer);
     return selection;
 };
 
@@ -40,7 +39,7 @@ describe("SelectionLayer", () => {
         expect(result.history.length).toBe(1);
         expect(result.history[0]).toMatchObject({
             id: "point1",
-            layerId: "Selection",
+            layerId: "Selections",
             batchId: "ignore",
             object: {},
         });
@@ -78,7 +77,7 @@ describe("SelectionLayer", () => {
         expect(result.history).toMatchObject([
             {
                 id: "point1",
-                layerId: "Selection",
+                layerId: "Selections",
                 batchId: "ignore",
                 object: null,
             },
@@ -105,13 +104,13 @@ describe("SelectionLayer", () => {
         expect(result.history).toMatchObject([
             {
                 id: "point2",
-                layerId: "Selection",
+                layerId: "Selections",
                 batchId: "ignore",
                 object: null,
             },
             {
                 id: "point1",
-                layerId: "Selection",
+                layerId: "Selections",
                 batchId: "ignore",
                 object: { point: "point1", state: 2 },
             },
@@ -149,13 +148,13 @@ describe("SelectionLayer", () => {
         expect(result.history).toMatchObject([
             {
                 id: "point1",
-                layerId: "Selection",
+                layerId: "Selections",
                 batchId: "ignore",
                 object: null,
             },
             {
                 id: "point2",
-                layerId: "Selection",
+                layerId: "Selections",
                 batchId: "ignore",
                 object: { point: "point2", state: 2 },
             },
@@ -193,7 +192,7 @@ describe("SelectionLayer", () => {
             {
                 batchId: "ignore",
                 id: "point4",
-                layerId: "Selection",
+                layerId: "Selections",
                 object: { point: "point4" },
             },
         ]);
@@ -210,13 +209,13 @@ describe("SelectionLayer", () => {
             {
                 batchId: "ignore",
                 id: "point5",
-                layerId: "Selection",
+                layerId: "Selections",
                 object: { point: "point5", state: 2 },
             },
             {
                 batchId: "ignore",
                 id: "point6",
-                layerId: "Selection",
+                layerId: "Selections",
                 object: { point: "point6", state: 2 },
             },
         ]);
@@ -252,7 +251,7 @@ describe("SelectionLayer", () => {
             {
                 batchId: "ignore",
                 id: "point3",
-                layerId: "Selection",
+                layerId: "Selections",
                 object: { point: "point3" },
             },
         ]);
@@ -270,13 +269,13 @@ describe("SelectionLayer", () => {
             {
                 batchId: "ignore",
                 id: "point1",
-                layerId: "Selection",
+                layerId: "Selections",
                 object: { point: "point1", state: 2 },
             },
             {
                 batchId: "ignore",
                 id: "point2",
-                layerId: "Selection",
+                layerId: "Selections",
                 object: { point: "point2", state: 2 },
             },
         ]);
@@ -340,19 +339,19 @@ describe("SelectionLayer", () => {
             {
                 batchId: "ignore",
                 id: "toDeselect",
-                layerId: "Selection",
+                layerId: "Selections",
                 object: null,
             },
             {
                 batchId: "ignore",
                 id: "toKeep",
-                layerId: "Selection",
+                layerId: "Selections",
                 object: { point: "toKeep", state: 2 },
             },
             {
                 batchId: "ignore",
                 id: "toSelect",
-                layerId: "Selection",
+                layerId: "Selections",
                 object: { point: "toSelect", state: 2 },
             },
         ]);

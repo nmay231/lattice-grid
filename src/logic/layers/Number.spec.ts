@@ -37,7 +37,7 @@ describe("Number Layer", () => {
 
     // Layer with numbers 1-9
     const settings1to9 = { min: 1, max: 9 };
-    const layer1to9 = new NumberLayer();
+    const layer1to9 = Object.create(NumberLayer);
     layer1to9.newSettings({
         newSettings: settings1to9,
         grid,
@@ -47,7 +47,7 @@ describe("Number Layer", () => {
 
     // Layer with numbers -9 to 64
     const settings9to64 = { min: -9, max: 64 };
-    const layer9to64 = new NumberLayer();
+    const layer9to64 = Object.create(NumberLayer);
     layer9to64.newSettings({
         newSettings: settings9to64,
         grid: null,

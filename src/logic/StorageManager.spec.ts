@@ -1,5 +1,4 @@
 import { cloneDeep } from "lodash";
-import * as layersImport from "../atoms/layers";
 import { HistoryAction, StorageManager } from "./StorageManager";
 
 describe("StorageManager", () => {
@@ -346,46 +345,6 @@ describe("StorageManager", () => {
         expect(storage.histories["grid"].index).toBe(0);
         storage.redoHistory("grid");
         expect(storage.histories["grid"].index).toBe(1);
-    });
-
-    it("should set the current layer when undoing/redoing", () => {
-        const storage = getNormalStorage();
-        storage.addToHistory({ id: "grid" }, { id: "layer1" }, [
-            { id: "id1", object: { asdf: "something1" }, batchId: 1 },
-            { id: "id2", object: { asdf: "something2" }, batchId: 1 },
-        ]);
-        storage.addToHistory({ id: "grid" }, { id: "layer2" }, [
-            { id: "id1", object: { asdf: "something1" }, batchId: 2 },
-            { id: "id2", object: { asdf: "something2" }, batchId: 2 },
-        ]);
-
-        const selectLayerSpy = jest
-            .spyOn(layersImport, "selectLayer")
-            .mockImplementation();
-        expect(selectLayerSpy).toBeCalledTimes(0);
-        expect(storage.histories["grid"].index).toBe(4);
-
-        storage.undoHistory("grid");
-        expect(selectLayerSpy).toBeCalledTimes(1);
-        expect(selectLayerSpy).toBeCalledWith({ id: "layer2" });
-        expect(storage.histories["grid"].index).toBe(2);
-
-        storage.undoHistory("grid");
-        expect(selectLayerSpy).toBeCalledTimes(2);
-        expect(selectLayerSpy).toBeCalledWith({ id: "layer1" });
-        expect(storage.histories["grid"].index).toBe(0);
-
-        storage.redoHistory("grid");
-        expect(selectLayerSpy).toBeCalledTimes(3);
-        expect(selectLayerSpy).toBeCalledWith({ id: "layer1" });
-        expect(storage.histories["grid"].index).toBe(2);
-
-        storage.redoHistory("grid");
-        expect(selectLayerSpy).toBeCalledTimes(4);
-        expect(selectLayerSpy).toBeCalledWith({ id: "layer2" });
-        expect(storage.histories["grid"].index).toBe(4);
-
-        selectLayerSpy.mockRestore();
     });
 
     it("should return the actions applied when undoing/redoing", () => {

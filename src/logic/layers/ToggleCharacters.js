@@ -1,17 +1,20 @@
-export class ToggleCharactersLayer {
-    static id = "Toggle Characters";
-    static unique = false;
-    hidden = false;
+import { BaseLayer, ILayer } from "./baseLayer";
 
-    static defaultSettings = {
+export const ToggleCharactersLayer: ILayer = {
+    ...BaseLayer,
+    id: "Toggle Characters",
+    unique: false,
+    ethereal: false,
+
+    defaultSettings: {
         // caseSwap allows upper- and lower-case letters to be used as separate characters but to be merged if there's no ambiguity.
         caseSwap: [..."0123456789"],
         characters: "0123456789",
         // "center", "topBottom", "circle", "tapa"
         displayStyle: "center",
-    };
+    },
 
-    static constraints = {
+    constraints: {
         schema: {
             type: "object",
             properties: {
@@ -43,7 +46,7 @@ export class ToggleCharactersLayer {
                 scope: "#/properties/displayStyle",
             },
         ],
-    };
+    },
 
     _newSettings({ characters, displayStyle }) {
         const caseSwap = {};
@@ -71,7 +74,7 @@ export class ToggleCharactersLayer {
             characters,
             displayStyle,
         };
-    }
+    },
 
     newSettings({ newSettings, grid, storage, attachSelectionsHandler }) {
         this.settings = this._newSettings(newSettings);
@@ -101,7 +104,7 @@ export class ToggleCharactersLayer {
         }
 
         return { history };
-    }
+    },
 
     handleKeyDown({ event, grid, storage }) {
         const ids = event.points;
@@ -152,7 +155,7 @@ export class ToggleCharactersLayer {
                     : { id, point: id, state: newStates[index] },
             })),
         };
-    }
+    },
 
     getBlits({ grid, stored }) {
         const ids = stored.renderOrder.filter((id) => stored.objects[id].state);
@@ -215,5 +218,5 @@ export class ToggleCharactersLayer {
                 style,
             },
         ];
-    }
-}
+    },
+};

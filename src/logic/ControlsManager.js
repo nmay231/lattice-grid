@@ -1,4 +1,4 @@
-import { selectLayer } from "../atoms/layers";
+import { getLayers, selectLayer } from "../atoms/layers";
 
 export class ControlsManager {
     blurCanvasTimeoutId = null;
@@ -7,7 +7,7 @@ export class ControlsManager {
     constructor(puzzle) {
         this.puzzle = puzzle;
 
-        // Note: interpretKeyDown and onPointerUpOutside are not event listeners attached to the SVGCanvas
+        // Note: these are not event listeners attached to the SVGCanvas
         this.handleKeyDown = this.handleKeyDown.bind(this);
         this.onPointerUpOutside = this.onPointerUpOutside.bind(this);
         this.onPageBlur = this.onPageBlur.bind(this);
@@ -78,7 +78,17 @@ export class ControlsManager {
         }
 
         storage.addToHistory(grid, layer, history);
-        this.puzzle.redrawScreen();
+        this.puzzle.renderChange({ type: "draw", layerIds: [layer.id] });
+    }
+
+    selectLayer(...arg: Parameters<typeof selectLayer>) {
+        const oldId = getLayers().currentLayerId;
+        selectLayer(...arg);
+        const newId = getLayers().currentLayerId;
+        if (oldId !== newId) {
+            // TODO: This will eventually just change out the overlay blits instead of this
+            this.puzzle.renderChange({ type: "switchLayer" });
+        }
     }
 
     onPointerDown(rawEvent) {
@@ -192,7 +202,6 @@ export class ControlsManager {
         event.preventDefault();
     }
 
-    // Attached to the document body
     handleKeyDown(rawEvent) {
         // This should be a very small whitelist for which key-strokes are allowed to be blocked
         const { shiftKey, ctrlKey, altKey, key, code } = rawEvent;
@@ -228,17 +237,25 @@ export class ControlsManager {
             this.handleLayerActions(layer, actions);
         } else if (event.code === "Tab") {
             // TODO: allow layers to have sublayers that you can tab through (e.g. for sudoku). This should be handled by a separate api than .handleEvent() though to prevent serious bugs and to allow UI indicators.
-            selectLayer({ tab: event.shiftKey ? -1 : 1 });
-            this.puzzle.redrawScreen();
-        } else if (event.ctrlKey && event.key === "z") {
+            this.selectLayer({ tab: event.shiftKey ? -1 : 1 });
+        } else if (event.ctrlKey && (event.key === "z" || event.key === "y")) {
             // TODO: Eventually, I want layers to be able to switch the current layer (specifically SelectionLayer for sudoku ctrl/shift behavior)
             // Perhaps, I can use that mechanism for storage to switch the current layer when undoing/redoing
-            const historyActions = storage.undoHistory(grid.id);
-            if (historyActions.length) {
+            const appliedActions =
+                event.key === "z"
+                    ? storage.undoHistory(grid.id)
+                    : storage.redoHistory(grid.id);
+
+            if (appliedActions.length) {
+                const newLayerId =
+                    appliedActions[appliedActions.length - 1].layerId;
+                this.selectLayer({ id: newLayerId });
+
                 const cleanedEvent = this.cleanLayerEvent(
-                    { actions: historyActions },
+                    { actions: appliedActions },
                     "undoRedo",
                 );
+
                 layer = this.puzzle.getCurrentLayer();
                 const actions = layer.handleEvent({
                     grid,
@@ -248,24 +265,6 @@ export class ControlsManager {
                 });
                 this.handleLayerActions(layer, actions);
             }
-            this.puzzle.redrawScreen();
-        } else if (event.ctrlKey && event.key === "y") {
-            const historyActions = storage.redoHistory(grid.id);
-            if (historyActions.length) {
-                const cleanedEvent = this.cleanLayerEvent(
-                    { actions: historyActions },
-                    "undoRedo",
-                );
-                layer = this.puzzle.getCurrentLayer();
-                const actions = layer.handleEvent({
-                    grid,
-                    storage,
-                    settings,
-                    event: cleanedEvent,
-                });
-                this.handleLayerActions(layer, actions);
-            }
-            this.puzzle.redrawScreen();
         } else {
             const actions = layer.handleEvent({
                 event,

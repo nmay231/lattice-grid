@@ -1,3 +1,4 @@
+import { BaseLayer, ILayer } from "./baseLayer";
 import { handleEventsCurrentSetting } from "./controls/twoPoint";
 
 const pointTypes = {
@@ -5,17 +6,18 @@ const pointTypes = {
     "Corner to Corner": "corners",
 };
 
-export class SimpleLineLayer {
-    static id = "Line";
-    static unique = false;
-    hidden = false;
+export const SimpleLineLayer: ILayer = {
+    ...BaseLayer,
+    id: "Line",
+    unique: false,
+    ethereal: false,
 
-    static defaultSettings = {
+    defaultSettings: {
         fill: "green",
         connections: "Cell to Cell",
-    };
+    },
 
-    static constraints = {
+    constraints: {
         schema: {
             type: "object",
             properties: {
@@ -32,9 +34,9 @@ export class SimpleLineLayer {
                 scope: "#/properties/connections",
             },
         ],
-    };
+    },
 
-    static controls = {
+    controls: {
         schema: {
             type: "object",
             properties: {
@@ -59,7 +61,7 @@ export class SimpleLineLayer {
                 scope: "#/properties/fill",
             },
         ],
-    };
+    },
 
     newSettings({ newSettings, storage, grid }) {
         this.rawSettings = this.rawSettings || {};
@@ -95,7 +97,7 @@ export class SimpleLineLayer {
         if (history) {
             return { history };
         }
-    }
+    },
 
     getBlits({ grid, stored }) {
         let allPoints = stored.renderOrder.flatMap(
@@ -138,5 +140,5 @@ export class SimpleLineLayer {
                 },
             },
         ];
-    }
-}
+    },
+};

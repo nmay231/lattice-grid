@@ -1,6 +1,7 @@
 import { useAtomValue } from "jotai";
 import { blitsAtom } from "../../atoms/blits";
 import { canvasSizeAtom } from "../../atoms/canvasSize";
+import { layersAtom } from "../../atoms/layers";
 import { usePuzzle } from "../../atoms/puzzle";
 import { Line } from "./Line";
 import { Polygon } from "./Polygon";
@@ -15,7 +16,8 @@ const blitters = {
 
 export const SVGCanvas = () => {
     const controls = usePuzzle().controls;
-    const { groups: blitGroups, renderOrder } = useAtomValue(blitsAtom);
+    const blitGroups = useAtomValue(blitsAtom);
+    const layers = useAtomValue(layersAtom).layers;
     const { minX, minY, width, height } = useAtomValue(canvasSizeAtom);
 
     // TODO: As neat as staying in a square is, I'll probably need to switch to using a scrollbar since users can have multiple grids and I shouldn't break users expectations...
@@ -32,15 +34,25 @@ export const SVGCanvas = () => {
                 className={styling.svg}
                 viewBox={`${minX} ${minY} ${width} ${height}`}
             >
-                {renderOrder.map((id) => {
-                    const {
-                        blitter: blitterKey,
-                        blits,
-                        style,
-                    } = blitGroups[id];
-                    const Blitter = blitters[blitterKey];
-                    return <Blitter blits={blits} style={style} key={id} />;
-                })}
+                {layers.flatMap(({ id }) =>
+                    blitGroups[id].map(
+                        ({
+                            id: groupId,
+                            blitter: blitterKey,
+                            blits,
+                            style,
+                        }) => {
+                            const Blitter = blitters[blitterKey];
+                            return (
+                                <Blitter
+                                    blits={blits}
+                                    style={style}
+                                    key={id + groupId}
+                                />
+                            );
+                        },
+                    ),
+                )}
             </svg>
         </div>
     );

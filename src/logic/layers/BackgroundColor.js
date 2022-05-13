@@ -1,11 +1,13 @@
+import { BaseLayer, ILayer } from "./baseLayer";
 import { handleEventsCurrentSetting } from "./controls/onePoint";
 
-export class BackgroundColorLayer {
-    static id = "Background Color";
-    static unique = false;
-    hidden = false;
+export const BackgroundColorLayer: ILayer = {
+    ...BaseLayer,
+    id: "Background Color",
+    unique: false,
+    ethereal: false,
 
-    static defaultSettings = { selectedState: "blue" };
+    defaultSettings: { selectedState: "blue" },
 
     newSettings({ newSettings }) {
         this.rawSettings = newSettings;
@@ -23,7 +25,7 @@ export class BackgroundColorLayer {
                 { dx: -2, dy: 0 },
             ],
         });
-    }
+    },
 
     getBlits({ grid, stored }) {
         const { cells } = grid.getPoints({
@@ -44,5 +46,5 @@ export class BackgroundColorLayer {
             style: { fill: color },
             blits: objectsByColor[color],
         }));
-    }
-}
+    },
+};
