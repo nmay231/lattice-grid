@@ -1,7 +1,7 @@
 import { BaseLayer, ILayer } from "./baseLayer";
 import { handleEventsCurrentSetting } from "./controls/twoPoint";
 
-type SimpleLineSettings = {
+export type SimpleLineSettings = {
     pointType: string;
     selectedState: { fill: string };
 };
@@ -9,11 +9,14 @@ type SimpleLineProps = {
     settings: SimpleLineSettings;
 };
 
-type ObjectState = {
+export type ObjectState = {
     state: { fill: string };
     points: string[];
 };
-type RawSettings = { connections: keyof typeof pointTypes; fill: string };
+export type RawSettings = {
+    connections: keyof typeof pointTypes;
+    fill: string;
+};
 
 const pointTypes = {
     "Cell to Cell": "cells",
@@ -101,7 +104,7 @@ export const SimpleLineLayer: ILayer<ObjectState, RawSettings> &
             },
         };
 
-        handleEventsCurrentSetting(this, {
+        handleEventsCurrentSetting<ObjectState, RawSettings>(this, {
             // TODO: Directional true/false is ambiguous. There are three types: lines and arrows with/without overlap
             directional: false,
             pointTypes: [this.settings.pointType],

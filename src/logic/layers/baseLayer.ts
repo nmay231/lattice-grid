@@ -53,26 +53,25 @@ export type LayerHandlerResult = {
     history?: IncompleteHistoryAction[];
 };
 
+// TODO: More specific types
+type JSONSchema = { schema: object; uischemaElements: any[] };
+type BlitGroup = object;
+
 export type ILayer<ObjectState = object, RawSettings = object> = {
     id: string;
     unique: boolean;
     ethereal: boolean;
     rawSettings: RawSettings;
     defaultSettings: RawSettings;
-    controls?: {
-        schema: object;
-        uischemaElements: any[];
-    };
-    constraints?: object;
+    controls?: JSONSchema;
+    constraints?: JSONSchema;
     newSettings?: (
-        layerEvent: NewSettingsEvent<ObjectState, RawSettings>,
+        settingsChange: NewSettingsEvent<ObjectState, RawSettings>,
     ) => LayerHandlerResult | undefined;
     gatherPoints: (layerEvent: LayerEvent<ObjectState>) => string[];
     handleEvent: (layerEvent: LayerEvent<ObjectState>) => LayerHandlerResult;
-    getBlits?: (layerEvent: LayerEventEssentials<ObjectState>) => object[];
-    getOverlayBlits?: (
-        layerEvent: LayerEventEssentials<ObjectState>,
-    ) => object[];
+    getBlits?: (data: LayerEventEssentials<ObjectState>) => BlitGroup[];
+    getOverlayBlits?: (data: LayerEventEssentials<ObjectState>) => BlitGroup[];
 };
 
 const throwError =

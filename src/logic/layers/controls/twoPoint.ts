@@ -1,14 +1,34 @@
 import { isEqual } from "lodash";
+import { ILayer } from "../baseLayer";
 
-export const handleEventsCurrentSetting = (
-    layer,
-    { directional, pointTypes, stopOnFirstPoint, deltas } = {},
+type Options = Partial<{
+    directional: boolean;
+    pointTypes: string[];
+    stopOnFirstPoint: boolean;
+    // TODO: Replace deltas with FSM
+    deltas: { dx: number; dy: number }[];
+}>;
+
+export type MinimalSettings = { selectedState: object };
+
+export type MinimalState = { points: string[]; state: any };
+
+export const handleEventsCurrentSetting = <
+    ObjectState extends MinimalState,
+    RawSettings = object,
+>(
+    layer: ILayer<ObjectState, RawSettings> & { settings: MinimalSettings },
+    { directional, pointTypes, stopOnFirstPoint, deltas }: Options = {},
 ) => {
     if (!pointTypes?.length || !deltas?.length) {
         throw Error("Was not provided parameters");
     }
 
-    layer.gatherPoints = ({ grid, event, tempStorage }) => {
+    layer.gatherPoints = (event) => {
+        const { grid, type, tempStorage } = event;
+        if (type !== "pointerDown" && type !== "pointerMove") {
+            return [];
+        }
         const newPoints = grid.selectPointsWithCursor({
             cursor: event.cursor,
             pointTypes,
@@ -25,14 +45,15 @@ export const handleEventsCurrentSetting = (
         return newPoints;
     };
 
-    layer.handleEvent = ({ grid, storage, event, tempStorage }) => {
-        if (event.type !== "pointerDown" && event.type !== "pointerMove") {
+    layer.handleEvent = (event) => {
+        const { grid, storage, type, tempStorage } = event;
+        if (type !== "pointerDown" && type !== "pointerMove") {
             return { discontinueInput: true };
         } else if (!event.points.length) {
-            return;
+            return {};
         }
 
-        const stored = storage.getStored({ grid, layer });
+        const stored = storage.getStored<ObjectState>({ grid, layer });
         const newPoints = event.points;
 
         tempStorage.batchId = tempStorage.batchId ?? storage.getNewBatchId();
@@ -42,7 +63,7 @@ export const handleEventsCurrentSetting = (
             if (!directional) {
                 pair.sort();
             }
-            const id = grid.convertIdAndPoints({ pointsToId: pair });
+            const id = pair.join(";");
 
             if (tempStorage.targetState === undefined) {
                 const isSame = isEqual(
