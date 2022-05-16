@@ -25,10 +25,7 @@ export const handleEventsCurrentSetting = <
     }
 
     layer.gatherPoints = (event) => {
-        const { grid, type, tempStorage } = event;
-        if (type !== "pointerDown" && type !== "pointerMove") {
-            return [];
-        }
+        const { grid, tempStorage } = event;
         const newPoints = grid.selectPointsWithCursor({
             cursor: event.cursor,
             pointTypes,

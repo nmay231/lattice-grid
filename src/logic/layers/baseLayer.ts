@@ -68,7 +68,9 @@ export type ILayer<ObjectState = object, RawSettings = object> = {
     newSettings?: (
         settingsChange: NewSettingsEvent<ObjectState, RawSettings>,
     ) => LayerHandlerResult | void;
-    gatherPoints: (layerEvent: LayerEvent<ObjectState>) => string[];
+    gatherPoints: (
+        layerEvent: PointerMoveOrDown & LayerEventEssentials<ObjectState>,
+    ) => string[];
     handleEvent: (layerEvent: LayerEvent<ObjectState>) => LayerHandlerResult;
     getBlits?: (data: LayerEventEssentials<ObjectState>) => BlitGroup[];
     getOverlayBlits?: (data: LayerEventEssentials<ObjectState>) => BlitGroup[];

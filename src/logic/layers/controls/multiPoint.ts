@@ -38,9 +38,7 @@ export const handleEventsUnorderedSets = <
     ];
 
     layer.gatherPoints = (event) => {
-        const { grid, type, tempStorage } = event;
-        if (type !== "pointerDown" && type !== "pointerMove") return [];
-
+        const { grid, tempStorage } = event;
         tempStorage.blacklist = tempStorage.blacklist ?? [];
         let newPoints = grid.selectPointsWithCursor({
             cursor: event.cursor,
