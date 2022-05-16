@@ -1,10 +1,26 @@
-export const handleEventsUnorderedSets = (
-    layer,
+// 1.5?) Figure out how to show current killercages (I added getOverlayBlits)? Then again, the current system should still work, but the blits won't be guaranteed to be above everything else (which is actually not a desired behavior. maybe I never want to change to that...)
+// 2) Convert to typescript and basically rewrite from scratch.
+
+import { ILayer } from "../baseLayer";
+import { KeyDownEventHandler } from "../Selection";
+
+export type MinimalState = {
+    id: string;
+    points: string[];
+    state: unknown;
+};
+
+export const handleEventsUnorderedSets = <
+    ObjectState extends MinimalState = MinimalState,
+>(
+    layer: ILayer<ObjectState>,
     {
         // TODO: In user settings, rename allowOverlap to "Allow partial overlap"
         allowOverlap = false,
-        handleKeyDown,
-        pointTypes,
+        handleKeyDown = null as
+            | null
+            | KeyDownEventHandler<ObjectState>["handleKeyDown"],
+        pointTypes = [] as string[],
         overwriteOthers = false,
         ensureConnected = true,
     },
@@ -13,7 +29,7 @@ export const handleEventsUnorderedSets = (
         throw Error("Was not provided parameters");
     }
 
-    // TODO: Would this ever need to customizable by the layer? In any case, it shouldn't actually be static (it's dependent on which grid is in use).
+    // TODO: Allow this to be set by the layer once FSM (or a general gatherPoints method) is implemented.
     const deltas = [
         { dx: 0, dy: 2 },
         { dx: 0, dy: -2 },
@@ -21,9 +37,9 @@ export const handleEventsUnorderedSets = (
         { dx: -2, dy: 0 },
     ];
 
-    layer.gatherPoints = ({ grid, event, tempStorage }) => {
-        if (event.type !== "pointerDown" && event.type !== "pointerMove")
-            return;
+    layer.gatherPoints = (event) => {
+        const { grid, type, tempStorage } = event;
+        if (type !== "pointerDown" && type !== "pointerMove") return [];
 
         tempStorage.blacklist = tempStorage.blacklist ?? [];
         let newPoints = grid.selectPointsWithCursor({
@@ -32,7 +48,7 @@ export const handleEventsUnorderedSets = (
             deltas,
             previousPoint: tempStorage.previousPoint,
         });
-        if (!newPoints.length) return;
+        if (!newPoints.length) return [];
 
         const previousPoint = tempStorage.previousPoint;
         tempStorage.previousPoint = newPoints[newPoints.length - 1];
@@ -40,7 +56,7 @@ export const handleEventsUnorderedSets = (
         newPoints = newPoints.filter(
             (id) => tempStorage.blacklist.indexOf(id) === -1,
         );
-        if (!newPoints.length) return;
+        if (!newPoints.length) return [];
         tempStorage.blacklist.push(...newPoints);
 
         if (previousPoint) {
@@ -49,17 +65,19 @@ export const handleEventsUnorderedSets = (
         return newPoints;
     };
 
-    // TODO: Should I allow multiple current objects? (so I can do `ctrl-a del` and things like that)
+    // TODO: Should I allow multiple current objects? (so I can do `ctrl-a, del` and things like that)
     // TODO: Handle moving objects with long presses (?)
-    layer.handleEvent = ({ grid, storage, event, tempStorage }) => {
-        const stored = storage.getStored({ layer, grid });
+    layer.handleEvent = (event) => {
+        const { grid, storage, type, tempStorage } = event;
+
+        const stored = storage.getStored<ObjectState>({ layer, grid });
         const currentObjectId = stored.currentObjectId;
-        if (currentObjectId === undefined && event.type !== "pointerDown") {
-            return;
+        if (currentObjectId === undefined && type !== "pointerDown") {
+            return {};
         }
         const object = stored.objects[currentObjectId];
 
-        switch (event.type) {
+        switch (type) {
             case "delete": {
                 stored.currentObjectId = undefined;
 
@@ -75,7 +93,7 @@ export const handleEventsUnorderedSets = (
                 return { discontinueInput: true, history };
             }
             case "keyDown": {
-                return handleKeyDown?.({ event, grid, storage });
+                return handleKeyDown?.({ ...event, points: [] }) || {};
             }
             case "pointerDown":
             case "pointerMove": {
@@ -116,14 +134,12 @@ export const handleEventsUnorderedSets = (
 
                 const points = object.points;
                 if (
-                    event.type === "pointerDown" &&
+                    type === "pointerDown" &&
                     points.indexOf(startPoint) === -1
                 ) {
                     let discontinueInput = false;
                     const history = [];
-                    const newId = grid.convertIdAndPoints({
-                        pointsToId: object.points,
-                    });
+                    const newId = object.points.join(";");
                     if (currentObjectId !== newId) {
                         history.push(
                             { id: currentObjectId, object: null },
@@ -150,9 +166,9 @@ export const handleEventsUnorderedSets = (
                         });
                     }
                     return { history, discontinueInput };
-                } else if (event.type === "pointerDown") {
+                } else if (type === "pointerDown") {
                     // We start to resize the current object, but we don't know yet if it's expanding or shrinking
-                    return;
+                    return {};
                 }
                 // Here, we're definitely resizing the object
 
@@ -212,9 +228,7 @@ export const handleEventsUnorderedSets = (
                 }
 
                 const oldId = currentObjectId;
-                const newId = grid.convertIdAndPoints({
-                    pointsToId: objectCopy.points,
-                });
+                const newId = objectCopy.points.join(";");
                 if (oldId === newId) {
                     return { discontinueInput: true };
                 }
@@ -235,7 +249,7 @@ export const handleEventsUnorderedSets = (
                 return { discontinueInput: true };
             }
             default: {
-                throw Error(`Unknown event.type=${event.type}`);
+                throw Error(`Unknown event.type=${type}`);
             }
         }
     };

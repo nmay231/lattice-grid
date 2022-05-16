@@ -1,46 +1,61 @@
 import { BaseLayer, ILayer } from "./baseLayer";
-import { handleEventsUnorderedSets } from "./controls/multiPoint";
+import { handleEventsUnorderedSets, MinimalState } from "./controls/multiPoint";
+import { KeyDownEventHandler } from "./Selection";
 
-export const KillerCagesLayer: ILayer = {
+export type ObjectState = MinimalState & { state: string | null };
+
+export type KillerCagesProps = {
+    _handleKeyDown: KeyDownEventHandler["handleKeyDown"];
+    _nextState: (state: string, keypress: string) => string | number | null;
+};
+
+export const KillerCagesLayer: ILayer<ObjectState> & KillerCagesProps = {
     ...BaseLayer,
     id: "Killer Cages",
     unique: false,
     ethereal: false,
 
-    _handleKeyDown({ event, grid, storage }) {
-        const stored = storage.getStored({ layer: this, grid });
+    _handleKeyDown({ type, keypress, grid, storage }) {
+        const stored = storage.getStored<ObjectState>({ layer: this, grid });
         const id = stored.currentObjectId;
         const object = { ...stored.objects[id] };
-        object.state = this._nextState(object.state ?? "", event);
+
+        if (type === "delete") {
+            if (object.state === null) return {};
+            return { history: [{ id, object: { ...object, state: null } }] };
+        }
+
+        const state = this._nextState(object.state ?? "", keypress);
+
+        if (state === object.state) {
+            return {}; // No change necessary
+        }
+
+        object.state = state === null ? null : state.toString();
         return { history: [{ id, object }] };
     },
 
-    _nextState(state, event) {
-        // TODO: Add match() to settings? Or better yet, extract the logic of typing in numbers (from the Number layer) and have both use that
-        const match = (num) => num;
-        if (event.code === "Backspace") {
-            return match(state.toString().slice(0, -1));
-        } else if (event.code === "Delete") {
+    _nextState(state, keypress) {
+        if (keypress === "Backspace") {
+            return state.toString().slice(0, -1) || null;
+        } else if (keypress === "Delete") {
             return null;
-        } else if (event.code === "Minus") {
-            return match(-1 * state) || "-";
-        } else if (event.code === "Plus" || event.code === "Equal") {
-            return match(state && Math.abs(state));
-        } else if ("1234567890".indexOf(event.key) === -1) {
-            return match(parseInt(event.key, 36)) || state;
+        } else if (keypress === "-") {
+            // TODO: Keep the minus sign as part of an inProgress object and remove it when we deselect things.
+            return -1 * parseInt(state) || "-";
+        } else if (keypress === "+" || keypress === "=") {
+            return Math.abs(parseInt(state)) || null;
+        } else if (/^[0-9]$/.test(keypress)) {
+            return parseInt(state + keypress);
+        } else if (/^[a-fA-F]$/.test(keypress)) {
+            return parseInt(keypress.toLowerCase(), 16);
         } else {
-            return (
-                match(parseInt(state + event.key)) ||
-                match(parseInt(event.key)) ||
-                state
-            );
+            return state || null;
         }
     },
 
-    newSettings({ newSettings, grid, storage }) {
-        // this.rawSettings = newSettings;
-
-        handleEventsUnorderedSets(this, {
+    newSettings() {
+        handleEventsUnorderedSets<ObjectState>(this, {
             handleKeyDown: this._handleKeyDown.bind(this),
             pointTypes: ["cells"],
             ensureConnected: false, // TODO: Change to true when properly implemented
@@ -50,8 +65,8 @@ export const KillerCagesLayer: ILayer = {
     },
 
     getBlits({ grid, stored }) {
-        const cageBlits = {};
-        const numberBlits = {};
+        const cageBlits: Record<string, object> = {};
+        const numberBlits: Record<string, object> = {};
         for (let id of stored.renderOrder) {
             const object = stored.objects[id];
             const { cageOutline, cells, sorted } = grid.getPoints({
@@ -120,6 +135,7 @@ export const KillerCagesLayer: ILayer = {
     },
 
     getOverlayBlits() {
-        // TODO
+        // TODO: Only render the current Killer Cage when focused
+        return [];
     },
 };

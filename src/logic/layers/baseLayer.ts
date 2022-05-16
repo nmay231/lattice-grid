@@ -67,7 +67,7 @@ export type ILayer<ObjectState = object, RawSettings = object> = {
     constraints?: JSONSchema;
     newSettings?: (
         settingsChange: NewSettingsEvent<ObjectState, RawSettings>,
-    ) => LayerHandlerResult | undefined;
+    ) => LayerHandlerResult | void;
     gatherPoints: (layerEvent: LayerEvent<ObjectState>) => string[];
     handleEvent: (layerEvent: LayerEvent<ObjectState>) => LayerHandlerResult;
     getBlits?: (data: LayerEventEssentials<ObjectState>) => BlitGroup[];
