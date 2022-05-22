@@ -60,7 +60,11 @@ export const handleEventsUnorderedSets = <
 
         const stored = storage.getStored<ObjectState>({ layer, grid });
         const currentObjectId = stored.currentObjectId;
-        if (currentObjectId === undefined && type !== "pointerDown") {
+        if (
+            currentObjectId === undefined &&
+            type !== "pointerDown" &&
+            type !== "undoRedo"
+        ) {
             return {}; // Other events only matter if there is an object selected
         }
         const object = stored.objects[currentObjectId];
@@ -201,9 +205,17 @@ export const handleEventsUnorderedSets = <
                 };
             }
             case "undoRedo": {
-                // TODO: Update this when I change multiPoint controls
-                // TODO: I should add something to force a rerender without polluting history
-                // It's not quite necessary, because undo/redo makes changes, but still.
+                // TODO: layer might have sub-layers and action.layerId !== layer.id
+                const last = event.actions[event.actions.length - 1];
+                if (last.object !== null) {
+                    stored.currentObjectId = last.id;
+                    return {
+                        discontinueInput: true,
+                        // TODO: Force render
+                        history: [{ ...last, batchId: "ignore" }],
+                    };
+                }
+                stored.currentObjectId = undefined;
                 return { discontinueInput: true };
             }
             default: {
