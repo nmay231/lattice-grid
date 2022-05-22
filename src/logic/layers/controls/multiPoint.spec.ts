@@ -228,6 +228,10 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         expect(result.discontinueInput).toBeTruthy();
     });
 
+    it.todo(
+        "should not remove a point from an object if it was not the current object",
+    );
+
     it("should not remove the starting point from an object if points were added/deleted", () => {
         const layer = getFakeLayer();
         applySettings(layer);

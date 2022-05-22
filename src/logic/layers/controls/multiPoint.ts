@@ -107,7 +107,10 @@ export const handleEventsUnorderedSets = <
                 if (overlap.length) {
                     // Select the topmost existing object
                     const id = overlap[overlap.length - 1];
-                    tempStorage.removeSingle = true;
+                    if (id === currentObjectId) {
+                        // Only remove a cell if the object was already selected
+                        tempStorage.removeSingle = true;
+                    }
                     stored.currentObjectId = id;
 
                     // Force a rerender without polluting history
