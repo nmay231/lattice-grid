@@ -525,9 +525,12 @@ export class SquareGrid {
 
         // Points are converted to strings to allow easy comparison
         cells = cells.map((cell) => cell.toString());
+        let maxIteration = 100 * cells.length; // Prevent infinite loops
         const result = [];
 
-        while (Object.keys(edgesLeft).length) {
+        while (Object.keys(edgesLeft).length && maxIteration > 0) {
+            maxIteration--;
+
             const edgeKey = Object.keys(edgesLeft)[0];
             const firstEdge = edgeKey.split(",").map((i) => parseInt(i));
 
@@ -549,7 +552,11 @@ export class SquareGrid {
             const edgeLoop = [];
 
             // Collect the edges around a contiguous group of cells
-            while (edge.toString() !== edgeLoop[0]?.toString()) {
+            while (
+                edge.toString() !== edgeLoop[0]?.toString() &&
+                maxIteration > 0
+            ) {
+                maxIteration--;
                 next = [current[0] + 2 * dx, current[1] + 2 * dy];
 
                 if (cellAcrossBoundary(next)) {
@@ -567,6 +574,12 @@ export class SquareGrid {
                     [dx, dy] = [dy, -dx];
                 }
             }
+            if (maxIteration <= 0) {
+                throw new Error(
+                    "Reached iteration limit in shrinkwrap inner loop",
+                );
+            }
+
             edgeLoop.pop();
 
             // Convert the edges of the loop to corners and add the inset
@@ -595,6 +608,10 @@ export class SquareGrid {
             }
             result.push(cornerLoop);
         }
+        if (maxIteration <= 0) {
+            throw new Error("Reached iteration limit in shrinkwrap outer loop");
+        }
+
         return result;
     }
 
@@ -649,18 +666,5 @@ export class SquareGrid {
 
     getAllPoints(type) {
         return this._getAllGridPoints(type).map(({ x, y }) => `${x},${y}`);
-    }
-
-    convertIdAndPoints({ pointsToId, idToPoints }) {
-        if (pointsToId) {
-            return pointsToId.join(",");
-        } else if (idToPoints) {
-            const nums = idToPoints.split(",");
-            const points = [];
-            while (nums.length) {
-                points.push(nums.splice(0, 2).join(","));
-            }
-            return points;
-        }
     }
 }

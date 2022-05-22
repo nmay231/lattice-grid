@@ -14,7 +14,7 @@ import { StorageManager } from "./StorageManager";
 type RenderChange =
     | { type: "draw", layerIds: string[] | "all" }
     | { type: "delete", layerId: string }
-    | { type: "switchLayer", layerId: string }
+    | { type: "switchLayer" }
     | { type: "reorder" };
 
 export class PuzzleManager {
@@ -130,6 +130,7 @@ export class PuzzleManager {
                 blitGroups[layer.id] =
                     layer.getBlits?.({
                         grid: this.grid,
+                        storage: this.storage,
                         stored: this.storage.getStored({
                             grid: this.grid,
                             layer,
@@ -211,13 +212,11 @@ export class PuzzleManager {
                 // TODO: If anything, I should prevent the issue where CellOutline is added before Selections therefore requiring the following optional chain. That's why I thought pre-instantiating it would be a good idea.
                 attachSelectionsHandler:
                     Selections?.attachHandler?.bind?.(Selections),
-            }) || [];
+            }) || {};
 
         if (history?.length) {
-            this.controls.handleLayerActions(layer, {
-                history,
-                discontinueInput: "noChange",
-            });
+            this.storage.addToHistory(this.grid, layer, history);
+            this.renderChange({ type: "draw", layerIds: [layer.id] });
         }
     }
 

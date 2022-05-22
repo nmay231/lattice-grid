@@ -4,9 +4,11 @@ export type Layer = { id: string };
 
 export type GridAndLayer = { grid: Grid; layer: Layer };
 
-export type LayerStorage = {
+export type LayerStorage<ObjectType = object> = {
     renderOrder: string[];
-    objects: Record<string, object>;
+    objects: Record<string, ObjectType>;
+    // TODO: Should I remove this or nest this property to avoid any confusion?
+    [key: string]: any;
 };
 
 export type IncompleteHistoryAction = {
@@ -47,8 +49,11 @@ export class StorageManager {
         delete this.objects[grid.id][layer.id];
     }
 
-    getStored({ grid, layer }: GridAndLayer) {
-        return this.objects[grid.id][layer.id];
+    getStored<ObjectType extends object = object>({
+        grid,
+        layer,
+    }: GridAndLayer) {
+        return this.objects[grid.id][layer.id] as LayerStorage<ObjectType>;
     }
 
     addToHistory(

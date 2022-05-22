@@ -8,7 +8,7 @@ import { SelectionLayer } from "./Selection";
 import { SimpleLineLayer } from "./SimpleLine";
 import { ToggleCharactersLayer } from "./ToggleCharacters";
 
-const layers: ILayer[] = [
+const layers: ILayer<any, any>[] = [
     BackgroundColorLayer,
     CellOutlineLayer,
     KillerCagesLayer,
