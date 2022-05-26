@@ -1,6 +1,6 @@
 import { useMemo } from "react";
+import { usePuzzle } from "../../atoms/puzzle";
 import { compile, testCode, testCode2 } from "../../logic/userComputation/run";
-import { usePuzzle } from "../PuzzleContext";
 import { Group } from "./Group";
 
 export const CodeGroup = () => {

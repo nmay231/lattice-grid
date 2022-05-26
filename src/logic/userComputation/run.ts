@@ -14,7 +14,7 @@ interface PointSelector {
 
 const pointSelectorExpression = (
     ctx: Context,
-    userCode: PointSelector
+    userCode: PointSelector,
 ): Variable => {
     return {
         getValue: () => ctx.grid.getAllPoints(userCode.pointType),
@@ -31,7 +31,7 @@ interface ObjectSelector {
 
 const objectSelectorExpression = (
     ctx: Context,
-    userCode: ObjectSelector
+    userCode: ObjectSelector,
 ): Variable => {
     return {
         getValue: () => {
@@ -51,7 +51,7 @@ interface MarkIncomplete {
 
 const markIncompleteStatement = (
     ctx: Context,
-    userCode: MarkIncomplete
+    userCode: MarkIncomplete,
 ): CompiledCode => {
     const x = compileVariable(ctx, userCode.expression);
     return {
@@ -110,7 +110,7 @@ interface UserVariable {
 
 const userVariableStatement = (
     ctx: Context,
-    userCode: UserVariable
+    userCode: UserVariable,
 ): CompiledCode => {
     const variable = compileVariable(ctx, userCode.expression);
     return {
@@ -127,7 +127,7 @@ interface ReadVariable {
 
 const readVariableExpression = (
     ctx: Context,
-    userCode: ReadVariable
+    userCode: ReadVariable,
 ): Variable => {
     return {
         getValue: () => {
@@ -221,7 +221,7 @@ type Expression = PointSelector | ObjectSelector | Compare | Int | ReadVariable;
 type PuzzleErrorMessage = {
     message: string;
     objects: any[];
-    // TODO: This might be better?
+    // TODO: This might be better? I also need layerId and gridId.
     // objectIds: string[];
 };
 
@@ -256,7 +256,7 @@ const compileVariable = (ctx: Context, expression: Expression): Variable => {
 
 export const compile = (
     ctx: Context,
-    userCode: UserCodeStatement[]
+    userCode: UserCodeStatement[],
 ): CompiledCode => {
     const thingsToRun: CompiledCode[] = [];
     for (let code of userCode) {
@@ -360,18 +360,12 @@ export const testCode: UserCodeStatement[] = [
     {
         type: "userVariable",
         name: "five",
-        expression: {
-            type: "int",
-            value: 5,
-        },
+        expression: { type: "int", value: 5 },
     },
     {
         type: "userVariable",
         name: "four",
-        expression: {
-            type: "int",
-            value: 4,
-        },
+        expression: { type: "int", value: 4 },
     },
     {
         type: "userVariable",
@@ -379,26 +373,14 @@ export const testCode: UserCodeStatement[] = [
         expression: {
             type: "compare",
             compareType: "<",
-            left: {
-                type: "readVariable",
-                variableName: "four",
-            },
-            right: {
-                type: "readVariable",
-                variableName: "four",
-            },
+            left: { type: "readVariable", variableName: "four" },
+            right: { type: "readVariable", variableName: "four" },
         },
     },
-    {
-        type: "debug",
-        variable: "bool",
-    },
+    { type: "debug", variable: "bool" },
     {
         type: "markIncomplete",
-        expression: {
-            type: "int",
-            value: 42,
-        },
+        expression: { type: "int", value: 42 },
         userMessage: "Not really the answer to life...",
     },
     {
@@ -410,10 +392,7 @@ export const testCode: UserCodeStatement[] = [
             layerId: "Number",
         },
         codeBody: [
-            {
-                type: "debug",
-                variable: "myVar",
-            },
+            { type: "debug", variable: "myVar" },
             // {
             //     type: "markIncomplete",
             //     expression: {
