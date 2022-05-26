@@ -27,19 +27,6 @@ export const getEventEssentials = <ObjectState = object>(
             ...new StorageManager(),
             getStored: jest.fn(() => _stored),
             getNewBatchId: jest.fn(),
-            convertIdAndPoints: ({
-                pointsToId,
-                idToPoints,
-            }: {
-                pointsToId: string[];
-                idToPoints: string;
-            }) => {
-                if (pointsToId) {
-                    return pointsToId.join(";");
-                } else {
-                    return idToPoints.split(";");
-                }
-            },
         } as any as StorageManager,
         stored: _stored,
         tempStorage,
