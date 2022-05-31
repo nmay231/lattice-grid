@@ -1,222 +1,14 @@
 import { SquareGrid } from "../grids/SquareGrid";
 import { StorageManager } from "../StorageManager";
-
-type PointType = "cells" | "edges" | "corners";
-
-interface Variable {
-    getValue: () => any;
-}
-
-interface PointSelector {
-    type: "pointSelector";
-    pointType: PointType;
-}
-
-const pointSelectorExpression = (
-    ctx: Context,
-    userCode: PointSelector,
-): Variable => {
-    return {
-        getValue: () => ctx.grid.getAllPoints(userCode.pointType),
-    };
-};
-
-interface ObjectSelector {
-    type: "objectSelector";
-    // TODO: I think it's reasonable that the object selector would have access to the raw id.
-    layerId: string;
-    // TODO: How should filters be structured? Should there be multiple distinct filters, or should it just be a codeBody that returns whatever? I think it should be the latter because I need to have a Variable interface similar to CompiledCode that has a function(s) to get different values. But not right now lol.
-    // filters: any,
-}
-
-const objectSelectorExpression = (
-    ctx: Context,
-    userCode: ObjectSelector,
-): Variable => {
-    return {
-        getValue: () => {
-            return ctx.storage.getStored({
-                layer: ctx.layers[userCode.layerId],
-                grid: ctx.grid,
-            })?.objects;
-        },
-    };
-};
-
-interface MarkIncomplete {
-    type: "markIncomplete";
-    expression: Expression;
-    userMessage?: string;
-}
-
-const markIncompleteStatement = (
-    ctx: Context,
-    userCode: MarkIncomplete,
-): CompiledCode => {
-    const x = compileVariable(ctx, userCode.expression);
-    return {
-        run: () => {
-            ctx.puzzleWarnings.push({
-                message: userCode.userMessage || "",
-                objects: x.getValue(),
-            });
-        },
-    };
-};
-
-interface ForEach {
-    type: "forEach";
-    // TODO: Would I allow the user to name their variables? Why even have variable names when they can just be numbers. Then again, I guess they'll probably demand it anyways. I'll just strip out var names when generating the final/shorted code that's shared.
-    // What needs to be part of the context(s)? Do I need both runtime and compile time contexts?
-    // Do I need another selector besides objectSelector? Like I can select points or I can select (certain types of) objects of a layer.
-    // How would blocks like MarkIncomplete affect the display of the grid? It needs access to it from the context.
-    variableName: string;
-    expression: Expression;
-    codeBody: UserCodeStatement[];
-}
-
-const forEachStatement = (ctx: Context, userCode: ForEach): CompiledCode => {
-    const compiled = compile(ctx, userCode.codeBody);
-    const variable = compileVariable(ctx, userCode.expression);
-    return {
-        run: () => {
-            ctx.variables[userCode.variableName] = variable;
-            compiled.run();
-            delete ctx.variables[userCode.variableName];
-        },
-    };
-};
-
-interface Int {
-    type: "int";
-    value: number;
-}
-
-const intExpression = (ctx: Context, userCode: Int): Variable => {
-    if (typeof userCode.value !== "number" || userCode.value % 1 !== 0) {
-        throw Error(`${userCode.value} is not an integer`);
-    }
-    return {
-        getValue: () => userCode.value,
-    };
-};
-
-// A user variable is a variable that a user sets directly (as opposed to a variable make automatically like in a for-loop)
-interface UserVariable {
-    type: "userVariable";
-    name: string;
-    expression: Expression;
-}
-
-const userVariableStatement = (
-    ctx: Context,
-    userCode: UserVariable,
-): CompiledCode => {
-    const variable = compileVariable(ctx, userCode.expression);
-    return {
-        run: () => {
-            ctx.variables[userCode.name] = variable;
-        },
-    };
-};
-
-interface ReadVariable {
-    type: "readVariable";
-    variableName: string;
-}
-
-const readVariableExpression = (
-    ctx: Context,
-    userCode: ReadVariable,
-): Variable => {
-    return {
-        getValue: () => {
-            return ctx.variables[userCode.variableName].getValue();
-        },
-    };
-};
-
-interface Compare {
-    type: "compare";
-    compareType: ">" | "<";
-    left: Expression;
-    right: Expression;
-}
-
-const compareExpression = (ctx: Context, userCode: Compare): Variable => {
-    const left = compileVariable(ctx, userCode.left);
-    const right = compileVariable(ctx, userCode.right);
-    return {
-        getValue: () => {
-            switch (userCode.compareType) {
-                case "<":
-                    return left.getValue() < right.getValue();
-                case ">":
-                    return left.getValue() > right.getValue();
-            }
-        },
-    };
-};
-
-const convertToBool = (variable: Variable) => {
-    const x = variable.getValue();
-    let bool: boolean | null = null;
-    if (Array.isArray(x) && x.length) {
-        bool = true;
-    } else if (typeof x === "boolean") {
-        bool = x;
-    }
-
-    if (bool === null) {
-        // TODO: move this exception to the calling function?
-        throw Error(`Invalid value for expression: ${x}`);
-    }
-    return bool;
-};
-
-interface IfElse {
-    type: "ifElse";
-    expression: Expression;
-    ifTrue: UserCodeStatement[];
-    ifFalse: UserCodeStatement[];
-}
-
-const ifElseStatement = (ctx: Context, userCode: IfElse): CompiledCode => {
-    const variable = compileVariable(ctx, userCode.expression);
-    const ifTrue = compile(ctx, userCode.ifTrue);
-    const ifFalse = compile(ctx, userCode.ifFalse);
-    return {
-        run: () => {
-            const bool = convertToBool(variable);
-            if (bool) {
-                ifTrue.run();
-            } else {
-                ifFalse.run();
-            }
-        },
-    };
-};
-
-interface Debug {
-    type: "debug";
-    variable: string;
-}
-
-const debugStatement = (ctx: Context, userCode: Debug): CompiledCode => {
-    return {
-        run: () => {
-            console.log(ctx.variables[userCode.variable].getValue());
-        },
-    };
-};
-
-type UserCodeStatement =
-    | ForEach
-    | Debug
-    | MarkIncomplete
-    | IfElse
-    | UserVariable;
-type Expression = PointSelector | ObjectSelector | Compare | Int | ReadVariable;
+import { Variable } from "./expressions";
+import {
+    debugStatement,
+    forEachStatement,
+    ifElseStatement,
+    markIncompleteStatement,
+    UserCodeStatement,
+    userVariableStatement,
+} from "./statements";
 
 type PuzzleErrorMessage = {
     message: string;
@@ -225,7 +17,7 @@ type PuzzleErrorMessage = {
     // objectIds: string[];
 };
 
-interface Context {
+export interface Context {
     grid: SquareGrid;
     storage: StorageManager;
     layers: { [layerId: string]: any };
@@ -234,25 +26,9 @@ interface Context {
     puzzleWarnings: PuzzleErrorMessage[];
 }
 
-interface CompiledCode {
+export interface CompiledCode {
     run: () => any;
 }
-
-const compileVariable = (ctx: Context, expression: Expression): Variable => {
-    if (expression.type === "pointSelector") {
-        return pointSelectorExpression(ctx, expression);
-    } else if (expression.type === "objectSelector") {
-        return objectSelectorExpression(ctx, expression);
-    } else if (expression.type === "compare") {
-        return compareExpression(ctx, expression);
-    } else if (expression.type === "int") {
-        return intExpression(ctx, expression);
-    } else if (expression.type === "readVariable") {
-        return readVariableExpression(ctx, expression);
-    } else {
-        throw Error("you failed");
-    }
-};
 
 export const compile = (
     ctx: Context,
@@ -276,8 +52,8 @@ export const compile = (
     }
     return {
         run: () => {
-            for (let things of thingsToRun) {
-                things.run();
+            for (let thing of thingsToRun) {
+                thing.run();
             }
         },
     };
