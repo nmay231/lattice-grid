@@ -14,7 +14,7 @@ export type KeyDownEventHandler<LP extends LayerProps = LayerProps> = {
     ) => LayerHandlerResult;
 };
 
-type SelectionExtraProps = {
+export type SelectionExtraProps = {
     attachHandler: <LP extends LayerProps = LayerProps>(
         layer: ILayer<LP> & KeyDownEventHandler<LP>,
         options: {},
@@ -24,6 +24,13 @@ type SelectionExtraProps = {
 
 export interface SelectionProps extends LayerProps {
     ObjectState: { state: number };
+    ExtraLayerStorageProps: { groupNumber: number };
+    TempStorage: {
+        blacklist: string[];
+        previousPoint: string;
+        targetState: null | number;
+        removeSingle: boolean;
+    };
 }
 
 export const SelectionLayer: ILayer<SelectionProps> & SelectionExtraProps = {
@@ -32,23 +39,26 @@ export const SelectionLayer: ILayer<SelectionProps> & SelectionExtraProps = {
     unique: true,
     ethereal: true,
 
+    // TODO: Figuring the types for this will be complicated. I don't know how to approach types for multiple layers at the same time.
     attachHandler(layer) {
-        layer.gatherPoints = this.gatherPoints.bind(this);
+        layer.gatherPoints = this.gatherPoints.bind(this) as any;
 
         layer.handleEvent = (args) =>
-            this.handleEvent.call(this, { ...args, storingLayer: layer });
+            this.handleEvent.call(this, {
+                ...args,
+                storingLayer: layer,
+            } as any);
 
         layer.getOverlayBlits = ({ grid, storage, ...rest }) =>
             this._getBlits({
                 ...rest,
                 grid,
                 storage,
-            });
+            } as any);
     },
 
     gatherPoints(event) {
         const { grid, tempStorage } = event;
-        tempStorage.blacklist = tempStorage.blacklist ?? [];
         let newPoints = grid.selectPointsWithCursor({
             cursor: event.cursor,
             previousPoint: tempStorage.previousPoint,
@@ -68,9 +78,10 @@ export const SelectionLayer: ILayer<SelectionProps> & SelectionExtraProps = {
 
         if (!newPoints.length) return [];
         tempStorage.previousPoint = newPoints[newPoints.length - 1];
-        newPoints = newPoints.filter(
-            (id) => tempStorage.blacklist.indexOf(id) === -1,
-        );
+
+        const blacklist = tempStorage.blacklist || [];
+        tempStorage.blacklist = blacklist;
+        newPoints = newPoints.filter((id) => blacklist.indexOf(id) === -1);
         if (!newPoints.length) return [];
 
         tempStorage.blacklist.push(...newPoints);

@@ -1,8 +1,8 @@
-import { ILayer, RenderChange } from "../../globals";
 import { getBlitGroups, OVERLAY_LAYER_ID, setBlitGroups } from "../atoms/blits";
 import { setCanvasSize } from "../atoms/canvasSize";
 import { addLayer, getLayers, removeLayer, setLayers } from "../atoms/layers";
 import { initialSettings } from "../atoms/settings";
+import { ILayer, RenderChange } from "../globals";
 import { ControlsManager } from "./ControlsManager";
 import { SquareGrid } from "./grids/SquareGrid";
 import { availableLayers } from "./layers";

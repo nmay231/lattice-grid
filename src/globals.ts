@@ -1,4 +1,5 @@
 import { initialSettings } from "./atoms/settings";
+import { SelectionExtraProps } from "./logic/layers/Selection";
 import { StorageManager } from "./logic/StorageManager";
 
 // ======== Explicit Type Names ========
@@ -6,7 +7,7 @@ import { StorageManager } from "./logic/StorageManager";
 // TODO: Replace all relevant instances of the plain types with these explicit types.
 // It helps with changing all of the types if necessary, and also with being explicit with how composite types are used.
 export type LayerId = string;
-export type GridId = string;
+export type GridId = string | symbol;
 export type Point = string;
 
 // ======== Layers ========
@@ -30,14 +31,10 @@ export type CleanedDOMEvent =
     | PointerMoveOrDown;
 
 export type LayerEventEssentials<LP extends LayerProps> = {
-    grid: Grid & {
-        getPoints: any;
-        getAllPoints: any;
-        selectPointsWithCursor: (...args: any) => string[];
-    };
+    grid: Grid;
     storage: StorageManager;
     settings: typeof initialSettings;
-    tempStorage: Record<string, any>;
+    tempStorage: Partial<LP["TempStorage"]>;
 };
 
 export type LayerEvent<LP extends LayerProps> = CleanedDOMEvent &
@@ -46,7 +43,7 @@ export type LayerEvent<LP extends LayerProps> = CleanedDOMEvent &
 export type NewSettingsEvent<LP extends LayerProps> =
     LayerEventEssentials<LP> & {
         newSettings: LP["RawSettings"];
-        attachSelectionsHandler: any;
+        attachSelectionsHandler: SelectionExtraProps["attachHandler"];
     };
 
 export type LayerHandlerResult = {
@@ -58,9 +55,11 @@ export type LayerHandlerResult = {
 type JSONSchema = { schema: object; uischemaElements: any[] };
 
 export type LayerProps = {
-    RawSettings: object;
     // TODO: Try allowing settings and rawSettings to be optional
+    RawSettings: object;
     ObjectState: object;
+    ExtraLayerStorageProps: object;
+    TempStorage: object;
 };
 
 export type ILayer<LP extends LayerProps = LayerProps> = {
@@ -84,7 +83,13 @@ export type ILayer<LP extends LayerProps = LayerProps> = {
 
 // ======== Undo-Redo History ========
 
-export type Grid = { id: string | symbol };
+export type Grid = {
+    id: GridId;
+    // TODO: More specific types
+    getPoints: any;
+    getAllPoints: any;
+    selectPointsWithCursor: (...args: any) => string[];
+};
 export type Layer = { id: string };
 
 export type GridAndLayer = { grid: Grid; layer: Layer };
@@ -92,15 +97,14 @@ export type GridAndLayer = { grid: Grid; layer: Layer };
 export type LayerStorage<LP extends LayerProps = LayerProps> = {
     renderOrder: string[];
     objects: Record<string, LP["ObjectState"]>;
-    // TODO: Should I remove this or nest this property to avoid any confusion?
-    // TODO: Add the shape of this object to LayerProps
-    [key: string]: any;
-};
+    // TODO: Should I nest this property to avoid any future conflicts?
+} & Partial<LP["ExtraLayerStorageProps"]>;
 
 export type IncompleteHistoryAction = {
     id: string;
     layerId?: string;
     batchId?: "ignore" | number;
+    // TODO: More specific types
     object: any;
 };
 export type HistoryAction = {

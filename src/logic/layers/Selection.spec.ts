@@ -22,6 +22,7 @@ const eventEssentials = (arg: GetEventEssentialsArg<SelectionProps> = {}) => {
     return {
         ...getEventEssentials<SelectionProps>(arg),
         storingLayer,
+        // TODO: More specific types for storingLayer
     } as LayerEventEssentials<SelectionProps> & { storingLayer: any };
 };
 
@@ -157,14 +158,13 @@ describe("SelectionLayer", () => {
     it("should deselect a cell when clicking another one", () => {
         // Setup a grid with one cell selected
         const selection = getFreshSelectionLayer();
-        const tempStorage = {};
         const stored = {
             objects: {
                 point1: { id: "point1", point: "point1", state: 2 },
             },
             renderOrder: ["point1"],
         } as LayerStorage<SelectionProps>;
-        const essentials = eventEssentials({ stored, tempStorage });
+        const essentials = eventEssentials({ stored });
 
         // Start tapping/clicking a different cell
         let fakeEvent: LayerEvent<SelectionProps> = {

@@ -3,7 +3,7 @@ import { StorageManager } from "../logic/StorageManager";
 
 export type GetEventEssentialsArg<LP extends LayerProps> = {
     stored?: LayerStorage<LP>;
-    tempStorage?: any;
+    tempStorage?: Partial<LP["TempStorage"]>;
 };
 
 export const getEventEssentials = <LP extends LayerProps = LayerProps>(

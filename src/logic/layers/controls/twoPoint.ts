@@ -3,6 +3,11 @@ import { ILayer, LayerProps } from "../../../globals";
 
 export interface TwoPointProps extends LayerProps {
     ObjectState: { id: string; points: string[]; state: unknown };
+    TempStorage: {
+        previousPoint: string;
+        batchId: number;
+        targetState: null | object;
+    };
 }
 
 export type MinimalSettings = { selectedState: object };

@@ -4,6 +4,12 @@ import { KeyDownEventHandler } from "../Selection";
 
 export interface MultiPointLayerProps extends LayerProps {
     ObjectState: { id: string; points: string[]; state: unknown };
+    ExtraLayerStorageProps: { currentObjectId: string };
+    TempStorage: {
+        previousPoint: string;
+        batchId: number;
+        removeSingle: boolean;
+    };
 }
 
 export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
@@ -53,12 +59,8 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
         const { grid, storage, type, tempStorage } = event;
 
         const stored = storage.getStored<LP>({ layer, grid });
-        const currentObjectId = stored.currentObjectId;
-        if (
-            currentObjectId === undefined &&
-            type !== "pointerDown" &&
-            type !== "undoRedo"
-        ) {
+        const currentObjectId = stored.currentObjectId || "";
+        if (!currentObjectId && type !== "pointerDown" && type !== "undoRedo") {
             return {}; // Other events only matter if there is an object selected
         }
         const object = stored.objects[currentObjectId];

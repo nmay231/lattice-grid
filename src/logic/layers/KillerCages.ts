@@ -27,6 +27,9 @@ export const KillerCagesLayer: ILayer<KillerCagesProps> &
             layer: this,
             grid,
         });
+
+        if (!stored.currentObjectId) return {};
+
         const id = stored.currentObjectId;
         const object = { ...stored.objects[id] };
 

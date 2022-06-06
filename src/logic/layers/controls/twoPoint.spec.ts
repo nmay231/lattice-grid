@@ -13,7 +13,7 @@ import {
 } from "./twoPoint";
 
 type TwoPointLayer = ILayer<TwoPointProps> & {
-    settings: MinimalSettings & { [k: string]: any };
+    settings: MinimalSettings;
 };
 
 describe("twoPoint.handleEventsCurrentSetting", () => {

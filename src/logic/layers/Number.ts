@@ -5,6 +5,7 @@ import { KeyDownEventHandler } from "./Selection";
 export interface NumberProps extends LayerProps {
     ObjectState: { state: string; point: string };
     RawSettings: { min: number; max: number };
+    ExtraLayerStorageProps: { lastTime: number; lastIds: string[] };
 }
 
 type NumberSettings = {
@@ -17,6 +18,7 @@ type NumberSettings = {
 type NumberExtraProps = {
     settings: NumberSettings;
     _newSettings: (arg: { min: number; max: number }) => NumberSettings;
+    // TODO: More specific types
     _nextState: (state: any, oldState: any, event: any) => any;
 };
 
