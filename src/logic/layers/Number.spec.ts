@@ -1,16 +1,15 @@
+import { LayerHandlerResult, LayerStorage } from "../../globals";
 import {
     getEventEssentials,
     GetEventEssentialsArg,
 } from "../../utils/testUtils";
-import { LayerStorage } from "../StorageManager";
-import { LayerHandlerResult } from "./baseLayer";
-import { NumberLayer, ObjectState } from "./Number";
+import { NumberLayer, NumberProps } from "./Number";
 
 describe("Number Layer", () => {
-    const eventEssentials = (arg: GetEventEssentialsArg<ObjectState> = {}) =>
-        getEventEssentials<ObjectState>(arg);
+    const eventEssentials = (arg: GetEventEssentialsArg<NumberProps> = {}) =>
+        getEventEssentials(arg);
 
-    const EMPTY_STORED: LayerStorage<ObjectState> = {
+    const EMPTY_STORED: LayerStorage<NumberProps> = {
         renderOrder: [],
         objects: {},
     };
@@ -75,7 +74,7 @@ describe("Number Layer", () => {
     });
 
     it("should not delete objects when the number range increases", () => {
-        const stored: LayerStorage<ObjectState> = {
+        const stored: LayerStorage<NumberProps> = {
             renderOrder: ["1,1", "2,2", "3,3"],
             objects: {
                 "1,1": { point: "1,1", state: "1" },
@@ -99,7 +98,7 @@ describe("Number Layer", () => {
     });
 
     it("should delete objects when the number range decreases", () => {
-        const stored: LayerStorage<ObjectState> = {
+        const stored: LayerStorage<NumberProps> = {
             renderOrder: ["1,1", "2,2", "3,3"],
             objects: {
                 "1,1": { point: "1,1", state: "1" },
@@ -133,7 +132,7 @@ describe("Number Layer", () => {
             .spyOn(Date, "now")
             .mockImplementation(() => fakeNow);
 
-        const stored: LayerStorage<ObjectState> = {
+        const stored: LayerStorage<NumberProps> = {
             renderOrder: ["id"],
             objects: { id: { point: "id", state: "4" } },
             // TODO: This test depends on internals and should eventually be modified so it doesn't
@@ -162,7 +161,7 @@ describe("Number Layer", () => {
             .spyOn(Date, "now")
             .mockImplementation(() => fakeNow);
 
-        const stored: LayerStorage<ObjectState> = {
+        const stored: LayerStorage<NumberProps> = {
             renderOrder: ["id"],
             objects: { id: { point: "id", state: "4" } },
             // TODO: INTERNALS!
@@ -191,7 +190,7 @@ describe("Number Layer", () => {
             .spyOn(Date, "now")
             .mockImplementation(() => fakeNow);
 
-        const stored: LayerStorage<ObjectState> = {
+        const stored: LayerStorage<NumberProps> = {
             renderOrder: ["id", "id2"],
             objects: {
                 id: { point: "id", state: "4" },
@@ -225,7 +224,7 @@ describe("Number Layer", () => {
             .spyOn(Date, "now")
             .mockImplementation(() => fakeNow);
 
-        const stored: LayerStorage<ObjectState> = {
+        const stored: LayerStorage<NumberProps> = {
             renderOrder: ["id", "id2"],
             objects: {
                 id: { point: "id", state: "4" },

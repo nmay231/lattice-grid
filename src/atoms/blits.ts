@@ -1,8 +1,6 @@
 import { atom } from "jotai";
+import { BlitGroup, LayerId } from "../globals";
 import { modifiableAtom } from "./modifiableAtom";
-
-type LayerId = string;
-export type BlitGroup = object;
 
 const {
     atom: baseAtom,

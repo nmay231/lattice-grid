@@ -1,33 +1,13 @@
-// TODO: Group together temporarily decentralized types
-export type Grid = { id: string | symbol };
-export type Layer = { id: string };
-
-export type GridAndLayer = { grid: Grid; layer: Layer };
-
-export type LayerStorage<ObjectType = object> = {
-    renderOrder: string[];
-    objects: Record<string, ObjectType>;
-    // TODO: Should I remove this or nest this property to avoid any confusion?
-    [key: string]: any;
-};
-
-export type IncompleteHistoryAction = {
-    id: string;
-    layerId?: string;
-    batchId?: "ignore" | number;
-    object: any;
-};
-export type HistoryAction = {
-    id: string;
-    layerId: string;
-    batchId?: number;
-    object: object | null;
-    renderIndex: number;
-};
-export type History = {
-    actions: HistoryAction[];
-    index: number;
-};
+import {
+    Grid,
+    GridAndLayer,
+    History,
+    HistoryAction,
+    IncompleteHistoryAction,
+    Layer,
+    LayerProps,
+    LayerStorage,
+} from "../globals";
 
 export class StorageManager {
     objects: Record<string | symbol, Record<string, LayerStorage>> = {};
@@ -49,11 +29,11 @@ export class StorageManager {
         delete this.objects[grid.id][layer.id];
     }
 
-    getStored<ObjectType extends object = object>({
+    getStored<LP extends LayerProps = LayerProps>({
         grid,
         layer,
     }: GridAndLayer) {
-        return this.objects[grid.id][layer.id] as LayerStorage<ObjectType>;
+        return this.objects[grid.id][layer.id] as LayerStorage<LP>;
     }
 
     addToHistory(

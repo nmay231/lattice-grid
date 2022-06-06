@@ -1,8 +1,11 @@
-import { BaseLayer, ILayer } from "./baseLayer";
+import { ILayer, LayerProps } from "../../globals";
+import { BaseLayer } from "./baseLayer";
 import { KeyDownEventHandler } from "./Selection";
 
-export type ObjectState = { state: string; point: string };
-type RawSettings = { min: number; max: number };
+export interface NumberProps extends LayerProps {
+    ObjectState: { state: string; point: string };
+    RawSettings: { min: number; max: number };
+}
 
 type NumberSettings = {
     match: (
@@ -10,21 +13,23 @@ type NumberSettings = {
         alternate?: string | null,
     ) => string | null | undefined;
 };
-type NumberProps = {
+
+type NumberExtraProps = {
     settings: NumberSettings;
     _newSettings: (arg: { min: number; max: number }) => NumberSettings;
     _nextState: (state: any, oldState: any, event: any) => any;
 };
 
-export const NumberLayer: ILayer<ObjectState, RawSettings> &
-    KeyDownEventHandler<ObjectState> &
-    NumberProps = {
+export const NumberLayer: ILayer<NumberProps> &
+    KeyDownEventHandler<NumberProps> &
+    NumberExtraProps = {
     ...BaseLayer,
     id: "Number",
     unique: false,
     ethereal: false,
 
-    handleKeyDown({ points: ids, keypress, stored, settings }) {
+    handleKeyDown({ points: ids, keypress, storage, grid, settings }) {
+        const stored = storage.getStored<NumberProps>({ grid, layer: this });
         if (!ids.length) {
             return {};
         }
@@ -118,7 +123,7 @@ export const NumberLayer: ILayer<ObjectState, RawSettings> &
 
         attachSelectionsHandler(this, {});
 
-        const { objects, renderOrder } = storage.getStored<ObjectState>({
+        const { objects, renderOrder } = storage.getStored<NumberProps>({
             grid,
             layer: this,
         });
@@ -140,7 +145,7 @@ export const NumberLayer: ILayer<ObjectState, RawSettings> &
     },
 
     getBlits({ grid, storage }) {
-        const stored = storage.getStored<ObjectState>({ grid, layer: this });
+        const stored = storage.getStored<NumberProps>({ grid, layer: this });
         const { cells } = grid.getPoints({
             connections: {
                 cells: {

@@ -1,11 +1,14 @@
+import { LayerStorage } from "../../globals";
 import { getEventEssentials } from "../../utils/testUtils";
-import { LayerStorage } from "../StorageManager";
-import { ObjectState, RawSettings, SimpleLineLayer } from "./SimpleLine";
+import { SimpleLineLayer, SimpleLineProps } from "./SimpleLine";
 
 describe("SimpleLine", () => {
     const attachSelectionsHandler = jest.fn();
 
-    type Arg = { stored?: LayerStorage<ObjectState>; settings?: RawSettings };
+    type Arg = {
+        stored?: LayerStorage<SimpleLineProps>;
+        settings?: SimpleLineProps["RawSettings"];
+    };
     const getSimpleLine = ({ stored, settings }: Arg) => {
         const simpleLine: typeof SimpleLineLayer =
             Object.create(SimpleLineLayer);
@@ -25,9 +28,11 @@ describe("SimpleLine", () => {
     };
 
     it("should delete all objects when changing connection types", () => {
-        const stored: LayerStorage<ObjectState> = {
+        const stored: LayerStorage<SimpleLineProps> = {
             renderOrder: ["something"],
-            objects: { something: { points: [], state: { fill: "" } } },
+            objects: {
+                something: { id: "something", points: [], state: { fill: "" } },
+            },
         };
         const simpleLine = getSimpleLine({
             stored,
@@ -47,9 +52,11 @@ describe("SimpleLine", () => {
     });
 
     it("should delete all objects when changing anything but connection types", () => {
-        const stored: LayerStorage<ObjectState> = {
+        const stored: LayerStorage<SimpleLineProps> = {
             renderOrder: ["something"],
-            objects: { something: { points: [], state: { fill: "" } } },
+            objects: {
+                something: { id: "something", points: [], state: { fill: "" } },
+            },
         };
         const simpleLine = getSimpleLine({
             stored,

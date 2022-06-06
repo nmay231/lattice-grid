@@ -1,4 +1,5 @@
-import { BaseLayer, ILayer } from "./baseLayer";
+import { ILayer } from "../../globals";
+import { BaseLayer } from "./baseLayer";
 
 export const ToggleCharactersLayer: ILayer = {
     ...BaseLayer,
@@ -157,7 +158,10 @@ export const ToggleCharactersLayer: ILayer = {
         };
     },
 
-    getBlits({ grid, stored }) {
+    getBlits({ storage, grid }) {
+        const stored = storage.getStored({ grid, layer: this });
+        // const stored = storage.getStored<ToggleCharactersProps>({ grid, layer: this });
+
         const ids = stored.renderOrder.filter((id) => stored.objects[id].state);
 
         const { cells } = grid.getPoints({

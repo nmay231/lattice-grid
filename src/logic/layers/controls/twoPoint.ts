@@ -1,7 +1,13 @@
 import { isEqual } from "lodash";
-import { ILayer } from "../baseLayer";
+import { ILayer, LayerProps } from "../../../globals";
 
-type Options = Partial<{
+export interface TwoPointProps extends LayerProps {
+    ObjectState: { id: string; points: string[]; state: unknown };
+}
+
+export type MinimalSettings = { selectedState: object };
+
+type Arg = Partial<{
     directional: boolean;
     pointTypes: string[];
     stopOnFirstPoint: boolean;
@@ -9,16 +15,9 @@ type Options = Partial<{
     deltas: { dx: number; dy: number }[];
 }>;
 
-export type MinimalSettings = { selectedState: object };
-
-export type MinimalState = { points: string[]; state: any };
-
-export const handleEventsCurrentSetting = <
-    ObjectState extends MinimalState,
-    RawSettings = object,
->(
-    layer: ILayer<ObjectState, RawSettings> & { settings: MinimalSettings },
-    { directional, pointTypes, stopOnFirstPoint, deltas }: Options = {},
+export const handleEventsCurrentSetting = <LP extends TwoPointProps>(
+    layer: ILayer<LP> & { settings: MinimalSettings },
+    { directional, pointTypes, stopOnFirstPoint, deltas }: Arg = {},
 ) => {
     if (!pointTypes?.length || !deltas?.length) {
         throw Error("Was not provided parameters");
@@ -50,7 +49,7 @@ export const handleEventsCurrentSetting = <
             return {};
         }
 
-        const stored = storage.getStored<ObjectState>({ grid, layer });
+        const stored = storage.getStored<LP>({ grid, layer });
         const newPoints = event.points;
 
         tempStorage.batchId = tempStorage.batchId ?? storage.getNewBatchId();

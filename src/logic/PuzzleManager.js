@@ -1,3 +1,4 @@
+import { ILayer, RenderChange } from "../../globals";
 import { getBlitGroups, OVERLAY_LAYER_ID, setBlitGroups } from "../atoms/blits";
 import { setCanvasSize } from "../atoms/canvasSize";
 import { addLayer, getLayers, removeLayer, setLayers } from "../atoms/layers";
@@ -5,17 +6,10 @@ import { initialSettings } from "../atoms/settings";
 import { ControlsManager } from "./ControlsManager";
 import { SquareGrid } from "./grids/SquareGrid";
 import { availableLayers } from "./layers";
-import { ILayer } from "./layers/baseLayer";
 import { CellOutlineLayer } from "./layers/CellOutline";
 import { OverlayLayer } from "./layers/Overlay";
 import { SelectionLayer } from "./layers/Selection";
 import { StorageManager } from "./StorageManager";
-
-type RenderChange =
-    | { type: "draw", layerIds: string[] | "all" }
-    | { type: "delete", layerId: string }
-    | { type: "switchLayer" }
-    | { type: "reorder" };
 
 export class PuzzleManager {
     layers: Record<string, ILayer> = {};

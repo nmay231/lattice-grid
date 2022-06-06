@@ -1,12 +1,13 @@
 import { PointerEvent } from "react";
 import { getLayers, selectLayer } from "../atoms/layers";
-import { keypressString } from "../utils/stringUtils";
 import {
     CleanedDOMEvent,
     ILayer,
     LayerEvent,
+    LayerProps,
     PointerMoveOrDown,
-} from "./layers/baseLayer";
+} from "../globals";
+import { keypressString } from "../utils/stringUtils";
 import { PuzzleManager } from "./PuzzleManager";
 
 export class ControlsManager {
@@ -80,11 +81,10 @@ export class ControlsManager {
 
     applyLayerEvent(layer: ILayer, event: CleanedDOMEvent) {
         const { grid, storage, settings } = this.puzzle;
-        const layerEvent: LayerEvent = {
+        const layerEvent: LayerEvent<LayerProps> = {
             ...event,
             grid,
             storage,
-            stored: storage.getStored({ grid, layer }),
             settings,
             tempStorage: this.tempStorage || {},
         };

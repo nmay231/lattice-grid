@@ -1,4 +1,4 @@
-import { ILayer } from "./baseLayer";
+import { ILayer } from "../../globals";
 
 // The settings type is described separately from ILayer to allow easier custom typing.
 type Settings = { onlyUsedInternally: string; canContainFunctions: Function };

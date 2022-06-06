@@ -1,4 +1,5 @@
-import { BaseLayer, ILayer } from "./baseLayer";
+import { ILayer } from "../../globals";
+import { BaseLayer } from "./baseLayer";
 import { handleEventsCurrentSetting } from "./controls/onePoint";
 
 export const BackgroundColorLayer: ILayer = {
@@ -27,7 +28,8 @@ export const BackgroundColorLayer: ILayer = {
         });
     },
 
-    getBlits({ grid, stored }) {
+    getBlits({ storage, grid }) {
+        const stored = storage.getStored({ grid, layer: this });
         const { cells } = grid.getPoints({
             connections: { cells: { svgOutline: true } },
             points: [...stored.renderOrder],

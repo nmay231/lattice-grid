@@ -1,5 +1,6 @@
 import { OVERLAY_LAYER_ID } from "../../atoms/blits";
-import { BaseLayer, ILayer } from "./baseLayer";
+import { ILayer } from "../../globals";
+import { BaseLayer } from "./baseLayer";
 
 export const OverlayLayer: ILayer = {
     ...BaseLayer,

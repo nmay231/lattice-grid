@@ -1,22 +1,22 @@
-import { LayerEventEssentials } from "../logic/layers/baseLayer";
-import { LayerStorage, StorageManager } from "../logic/StorageManager";
+import { LayerEventEssentials, LayerProps, LayerStorage } from "../globals";
+import { StorageManager } from "../logic/StorageManager";
 
-export type GetEventEssentialsArg<S> = {
-    stored?: LayerStorage<S>;
+export type GetEventEssentialsArg<LP extends LayerProps> = {
+    stored?: LayerStorage<LP>;
     tempStorage?: any;
 };
 
-export const getEventEssentials = <ObjectState = object>(
-    event = {} as GetEventEssentialsArg<ObjectState>,
-): LayerEventEssentials<ObjectState> => {
+export const getEventEssentials = <LP extends LayerProps = LayerProps>(
+    event = {} as GetEventEssentialsArg<LP>,
+): LayerEventEssentials<LP> => {
     const { stored, tempStorage = {} } = event;
-    const grid: LayerEventEssentials<ObjectState>["grid"] = {
+    const grid: LayerEventEssentials<LP>["grid"] = {
         id: "grid",
         getAllPoints: () => [],
         getPoints: null,
         selectPointsWithCursor: () => [],
     };
-    const _stored: LayerStorage<ObjectState> = stored || {
+    const _stored: LayerStorage<LP> = stored || {
         objects: {},
         renderOrder: [],
     };
@@ -28,7 +28,6 @@ export const getEventEssentials = <ObjectState = object>(
             getStored: jest.fn(() => _stored),
             getNewBatchId: jest.fn(),
         } as any as StorageManager,
-        stored: _stored,
         tempStorage,
         settings: {
             borderPadding: 60,

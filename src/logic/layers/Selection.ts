@@ -1,27 +1,32 @@
-import { IncompleteHistoryAction } from "../StorageManager";
 import {
-    BaseLayer,
     ILayer,
+    IncompleteHistoryAction,
     Keypress,
     LayerEventEssentials,
     LayerHandlerResult,
-} from "./baseLayer";
+    LayerProps,
+} from "../../globals";
+import { BaseLayer } from "./baseLayer";
 
-export type KeyDownEventHandler<IObjectState = object> = {
+export type KeyDownEventHandler<LP extends LayerProps = LayerProps> = {
     handleKeyDown: (
-        arg: LayerEventEssentials<IObjectState> &
-            Keypress & { points: string[] },
+        arg: LayerEventEssentials<LP> & Keypress & { points: string[] },
     ) => LayerHandlerResult;
 };
 
-type SelectionProps = {
-    attachHandler: (layer: ILayer & KeyDownEventHandler, options: {}) => void;
-    _getBlits: NonNullable<ILayer["getBlits"]>;
+type SelectionExtraProps = {
+    attachHandler: <LP extends LayerProps = LayerProps>(
+        layer: ILayer<LP> & KeyDownEventHandler<LP>,
+        options: {},
+    ) => void;
+    _getBlits: NonNullable<ILayer<SelectionProps>["getBlits"]>;
 };
 
-export type ObjectState = { state: number };
+export interface SelectionProps extends LayerProps {
+    ObjectState: { state: number };
+}
 
-export const SelectionLayer: ILayer & SelectionProps = {
+export const SelectionLayer: ILayer<SelectionProps> & SelectionExtraProps = {
     ...BaseLayer,
     id: "Selections",
     unique: true,
@@ -38,7 +43,6 @@ export const SelectionLayer: ILayer & SelectionProps = {
                 ...rest,
                 grid,
                 storage,
-                stored: storage.getStored({ grid, layer: this }),
             });
     },
 
@@ -76,7 +80,7 @@ export const SelectionLayer: ILayer & SelectionProps = {
 
     handleEvent(event) {
         const { grid, storage, tempStorage } = event;
-        const stored = storage.getStored<ObjectState>({ grid, layer: this });
+        const stored = storage.getStored<SelectionProps>({ grid, layer: this });
 
         switch (event.type) {
             case "cancelAction": {
@@ -298,7 +302,7 @@ export const SelectionLayer: ILayer & SelectionProps = {
     },
 
     _getBlits({ grid, storage }) {
-        const stored = storage.getStored<ObjectState>({ grid, layer: this });
+        const stored = storage.getStored<SelectionProps>({ grid, layer: this });
         const points = stored.renderOrder.filter(
             (key) => stored.objects[key].state,
         );

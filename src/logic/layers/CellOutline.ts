@@ -1,7 +1,12 @@
-import { BaseLayer, ILayer } from "./baseLayer";
+import { ILayer, LayerProps } from "../../globals";
+import { BaseLayer } from "./baseLayer";
 import { handleEventsCycleStates } from "./controls/onePoint";
 
-export const CellOutlineLayer: ILayer<{ state: true }> = {
+export interface CellOutlineProps extends LayerProps {
+    ObjectState: { state: true };
+}
+
+export const CellOutlineLayer: ILayer<CellOutlineProps> = {
     ...BaseLayer,
     id: "Cell Outline",
     unique: true,
@@ -21,7 +26,12 @@ export const CellOutlineLayer: ILayer<{ state: true }> = {
         });
     },
 
-    getBlits({ grid, stored }) {
+    getBlits({ storage, grid }) {
+        const stored = storage.getStored<CellOutlineProps>({
+            grid,
+            layer: this,
+        });
+
         const blacklist = stored.renderOrder.filter(
             (key) => stored.objects[key].state,
         );
