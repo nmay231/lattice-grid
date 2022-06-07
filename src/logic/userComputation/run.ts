@@ -10,11 +10,16 @@ import {
     userVariableStatement,
 } from "./statements";
 
-type PuzzleErrorMessage = {
+type PuzzleError = {
     message: string;
     objects: any[];
     // TODO: This might be better? I also need layerId and gridId.
     // objectIds: string[];
+};
+
+type CompilerError = {
+    message: string;
+    // codeBlockIds: string[]
 };
 
 export interface Context {
@@ -22,8 +27,9 @@ export interface Context {
     storage: StorageManager;
     layers: { [layerId: string]: any };
     variables: { [key: string]: Variable };
-    puzzleErrors: PuzzleErrorMessage[];
-    puzzleWarnings: PuzzleErrorMessage[];
+    compilerErrors: CompilerError[];
+    puzzleErrors: PuzzleError[];
+    puzzleWarnings: PuzzleError[];
 }
 
 export interface CompiledCode {

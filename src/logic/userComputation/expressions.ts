@@ -1,6 +1,10 @@
 import { Context } from "./run";
 
 export interface Variable {
+    // For now, I think I'll take after the MatLab style of every variable being a nested array of a scalar type.
+    scalarType: "boolean" | "integer" | "point" | "object";
+    rank: number;
+    // TODO: Eventually, I want a convenient function that will return values in the specified rank
     getValue: () => any;
 }
 
@@ -24,7 +28,19 @@ export const compareExpression = (
 ): Variable => {
     const left = compileVariable(ctx, userCode.left);
     const right = compileVariable(ctx, userCode.right);
+
+    if (
+        left.rank !== 0 ||
+        right.rank !== 0 ||
+        left.scalarType !== right.scalarType ||
+        left.scalarType !== "integer"
+    ) {
+        ctx.compilerErrors.push({ message: "issue with compare expression" });
+    }
+
     return {
+        scalarType: "boolean",
+        rank: 0,
         getValue: () => {
             switch (userCode.compareType) {
                 case "<":
@@ -36,6 +52,7 @@ export const compareExpression = (
     };
 };
 
+// TODO: Rename this to Integer to be more consistent with the TS naming convention.
 export interface Int {
     type: "int";
     value: number;
@@ -46,6 +63,8 @@ export const intExpression = (ctx: Context, userCode: Int): Variable => {
         throw Error(`${userCode.value} is not an integer`);
     }
     return {
+        scalarType: "integer",
+        rank: 0,
         getValue: () => userCode.value,
     };
 };
@@ -63,6 +82,8 @@ export const objectSelectorExpression = (
     userCode: ObjectSelector,
 ): Variable => {
     return {
+        scalarType: "object",
+        rank: 0,
         getValue: () => {
             return ctx.storage.getStored({
                 layer: ctx.layers[userCode.layerId],
@@ -84,6 +105,8 @@ export const pointSelectorExpression = (
     userCode: PointSelector,
 ): Variable => {
     return {
+        scalarType: "point",
+        rank: 0,
         getValue: () => ctx.grid.getAllPoints(userCode.pointType),
     };
 };
@@ -97,9 +120,12 @@ export const readVariableExpression = (
     ctx: Context,
     userCode: ReadVariable,
 ): Variable => {
+    const variable = ctx.variables[userCode.variableName];
     return {
+        scalarType: variable.scalarType,
+        rank: 0,
         getValue: () => {
-            return ctx.variables[userCode.variableName].getValue();
+            return variable.getValue();
         },
     };
 };

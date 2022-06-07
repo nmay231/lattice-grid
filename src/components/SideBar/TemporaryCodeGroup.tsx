@@ -1,16 +1,22 @@
 import { useMemo } from "react";
 import { usePuzzle } from "../../atoms/puzzle";
-import { compile, testCode, testCode2 } from "../../logic/userComputation/run";
+import {
+    compile,
+    Context,
+    testCode,
+    testCode2,
+} from "../../logic/userComputation/run";
 import { Group } from "./Group";
 
 export const CodeGroup = () => {
     const puzzle = usePuzzle();
     const [run, run2] = useMemo(() => {
-        const context = {
+        const context: Context = {
             grid: puzzle.grid,
             storage: puzzle.storage,
             layers: puzzle.layers,
             variables: {},
+            compilerErrors: [],
             puzzleErrors: [],
             puzzleWarnings: [],
         };
@@ -19,6 +25,11 @@ export const CodeGroup = () => {
             compile(context, testCode2).run,
         ].map((runFunc) => {
             return () => {
+                if (context.compilerErrors.length) {
+                    console.log("Warning:", context.compilerErrors);
+                    context.compilerErrors = [];
+                    return;
+                }
                 runFunc();
                 if (context.puzzleWarnings.length) {
                     console.log("Warning:", context.puzzleWarnings);
