@@ -1,14 +1,27 @@
+import { PolygonBlits } from "../../components/SVGCanvas/Polygon";
 import { ILayer } from "../../globals";
 import { BaseLayer } from "./baseLayer";
-import { handleEventsCurrentSetting } from "./controls/onePoint";
+import { handleEventsCurrentSetting, OnePointProps } from "./controls/onePoint";
 
-export const BackgroundColorLayer: ILayer = {
+interface BackgroundColorProps extends OnePointProps {
+    ObjectState: { id: string; points: string[]; state: string };
+    RawSettings: { selectedState: string };
+}
+
+type BackgroundColorExtraProps = {
+    settings: BackgroundColorProps["RawSettings"];
+};
+
+export const BackgroundColorLayer: ILayer<BackgroundColorProps> &
+    BackgroundColorExtraProps = {
     ...BaseLayer,
     id: "Background Color",
     unique: false,
     ethereal: false,
 
     defaultSettings: { selectedState: "blue" },
+    rawSettings: { selectedState: "blue" },
+    settings: { selectedState: "blue" },
 
     newSettings({ newSettings }) {
         this.rawSettings = newSettings;
@@ -29,13 +42,16 @@ export const BackgroundColorLayer: ILayer = {
     },
 
     getBlits({ storage, grid }) {
-        const stored = storage.getStored({ grid, layer: this });
+        const stored = storage.getStored<BackgroundColorProps>({
+            grid,
+            layer: this,
+        });
         const { cells } = grid.getPoints({
             connections: { cells: { svgOutline: true } },
             points: [...stored.renderOrder],
         });
 
-        const objectsByColor = {};
+        const objectsByColor: Record<string, PolygonBlits["blits"]> = {};
         for (let id of stored.renderOrder) {
             const { state } = stored.objects[id];
             objectsByColor[state] = objectsByColor[state] ?? {};

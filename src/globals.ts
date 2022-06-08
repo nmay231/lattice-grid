@@ -13,6 +13,8 @@ export type LayerId = string;
 export type GridId = string | symbol;
 export type Point = string;
 
+export type PointType = "cells" | "edges" | "corners";
+
 // ======== Layers ========
 
 export type PointerMoveOrDown = {

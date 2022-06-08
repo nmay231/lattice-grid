@@ -1,9 +1,9 @@
-import { ILayer, LayerProps } from "../../globals";
+import { ILayer } from "../../globals";
 import { BaseLayer } from "./baseLayer";
-import { handleEventsCycleStates } from "./controls/onePoint";
+import { handleEventsCycleStates, OnePointProps } from "./controls/onePoint";
 
-export interface CellOutlineProps extends LayerProps {
-    ObjectState: { state: true };
+export interface CellOutlineProps extends OnePointProps {
+    ObjectState: { id: string; points: string[]; state: true };
 }
 
 export const CellOutlineLayer: ILayer<CellOutlineProps> = {
