@@ -12,7 +12,7 @@ const blitters = {
     polygon: Polygon,
     line: Line,
     text: Text,
-};
+} as const;
 
 export const SVGCanvas = () => {
     const controls = usePuzzle().controls;
@@ -35,23 +35,17 @@ export const SVGCanvas = () => {
                 viewBox={`${minX} ${minY} ${width} ${height}`}
             >
                 {layers.flatMap(({ id }) =>
-                    blitGroups[id].map(
-                        ({
-                            id: groupId,
-                            blitter: blitterKey,
-                            blits,
-                            style,
-                        }) => {
-                            const Blitter = blitters[blitterKey];
-                            return (
-                                <Blitter
-                                    blits={blits}
-                                    style={style}
-                                    key={id + groupId}
-                                />
-                            );
-                        },
-                    ),
+                    blitGroups[id].map((group) => {
+                        const Blitter = blitters[group.blitter];
+                        return (
+                            <Blitter
+                                blits={group.blits}
+                                // I was hoping typescript would be smarter...
+                                style={group.style as any}
+                                key={id + group.id}
+                            />
+                        );
+                    }),
                 )}
             </svg>
         </div>

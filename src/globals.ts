@@ -1,4 +1,7 @@
 import { initialSettings } from "./atoms/settings";
+import { LineBlits } from "./components/SVGCanvas/Line";
+import { PolygonBlits } from "./components/SVGCanvas/Polygon";
+import { TextBlits } from "./components/SVGCanvas/Text";
 import { SelectionExtraProps } from "./logic/layers/Selection";
 import { StorageManager } from "./logic/StorageManager";
 
@@ -128,4 +131,4 @@ export type RenderChange =
     | { type: "reorder" };
 
 // TODO: More specific types
-export type BlitGroup = object;
+export type BlitGroup = LineBlits | TextBlits | PolygonBlits;

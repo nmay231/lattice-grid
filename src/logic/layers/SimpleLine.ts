@@ -1,3 +1,4 @@
+import { LineBlits } from "../../components/SVGCanvas/Line";
 import { ILayer } from "../../globals";
 import { BaseLayer } from "./baseLayer";
 import { handleEventsCurrentSetting, TwoPointProps } from "./controls/twoPoint";
@@ -143,7 +144,7 @@ export const SimpleLineLayer: ILayer<SimpleLineProps> & SimpleLineExtraProps = {
             points: allPoints,
         });
 
-        const blits: Record<string, object> = {};
+        const blits: LineBlits["blits"] = {};
         for (let id of stored.renderOrder) {
             const {
                 state: { fill },

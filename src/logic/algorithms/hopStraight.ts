@@ -1,5 +1,12 @@
-const atan = (x, y) => (x < 0 ? -1 : 1) * Math.atan(y / x);
-const euclidean = (x1, y1, x2, y2) => ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5;
+const atan = (x: number, y: number) => (x < 0 ? -1 : 1) * Math.atan(y / x);
+const euclidean = (x1: number, y1: number, x2: number, y2: number) =>
+    ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5;
+
+type Arg = {
+    cursor: [number, number];
+    previousPoint: [number, number];
+    deltas: { dx: number; dy: number }[];
+};
 
 /**
  *
@@ -9,11 +16,11 @@ const euclidean = (x1, y1, x2, y2) => ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5;
  * @param {{dx: number, dy: number}[]} args.deltas - The path must use these set of "hops" or vectors
  * @yields {null | [number, number]}
  */
-export function* hopStraight({ cursor, previousPoint, deltas }) {
+export function* hopStraight({ cursor, previousPoint, deltas }: Arg) {
     let [startX, startY] = previousPoint;
     const [targetX, targetY] = cursor;
 
-    deltas = deltas
+    const vectors = deltas
         .filter(
             ({ dx, dy }) =>
                 Math.abs(
@@ -21,11 +28,11 @@ export function* hopStraight({ cursor, previousPoint, deltas }) {
                 ) <= Math.PI,
         )
         .map(({ dx, dy }) => [dx, dy]);
-    if (!deltas.length) {
+    if (!vectors.length) {
         yield null;
         return;
     }
-    const toMinimize = (x, y) => {
+    const toMinimize = (x: number, y: number) => {
         const bx = targetX - startX;
         const by = targetY - startY;
         const ax = x - startX;
@@ -44,7 +51,7 @@ export function* hopStraight({ cursor, previousPoint, deltas }) {
 
     while (euclidean(newX, newY, startX, startY) < cursorDistance) {
         // eslint-disable-next-line no-loop-func
-        const bestDelta = deltas.reduce(([dx1, dy1], [dx2, dy2]) =>
+        const bestDelta = vectors.reduce(([dx1, dy1], [dx2, dy2]) =>
             toMinimize(newX + dx1, newY + dy1) <
             toMinimize(newX + dx2, newY + dy2)
                 ? [dx1, dy1]

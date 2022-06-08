@@ -10,9 +10,9 @@ import { JsonFormsWrapper } from "../../JsonFormsWrapper";
 export const LayerControlSettings = () => {
     const puzzle = usePuzzle();
     const { layers, currentLayerId: id } = useAtomValue(layersAtom);
-    const layer = puzzle.layers[id];
+    const layer = puzzle.layers[id || ""];
 
-    const [data, setData] = useState(null);
+    const [data, setData] = useState<object | null>(null);
     const [constraintSettings, setConstraintSettings] = useAtom(
         constraintSettingsAtom,
     );
@@ -28,7 +28,7 @@ export const LayerControlSettings = () => {
         // Putting constraintSettings as a render dependency is necessary to update this component's `data`
     }, [layer, setData, constraintSettings]);
 
-    if (!data || !layer) {
+    if (!data || !layer || !id) {
         return <></>;
     }
 
@@ -42,7 +42,7 @@ export const LayerControlSettings = () => {
         <div {...puzzle.controls.stopPropagation}>
             <JsonFormsWrapper
                 data={data}
-                setData={(newData) => {
+                setData={(newData: any) => {
                     setData(newData);
                     // Constraint settings cannot be left out of date
                     setConstraintSettings(newData);

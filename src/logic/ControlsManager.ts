@@ -1,4 +1,3 @@
-import { PointerEvent } from "react";
 import { getLayers, selectLayer } from "../atoms/layers";
 import {
     CleanedDOMEvent,
@@ -52,7 +51,7 @@ export class ControlsManager {
 
     cleanPointerEvent(
         type: "pointerDown" | "pointerMove",
-        event: PointerEvent,
+        event: React.PointerEvent,
     ): PointerMoveOrDown {
         const { clientX, clientY, currentTarget } = event;
         const {
@@ -130,7 +129,7 @@ export class ControlsManager {
         }
     }
 
-    onPointerDown(rawEvent: PointerEvent) {
+    onPointerDown(rawEvent: React.PointerEvent) {
         // TODO: allow for two fingers to zoom
         if (!rawEvent.isPrimary) {
             return;
@@ -141,7 +140,7 @@ export class ControlsManager {
         this.applyLayerEvent(layer, event);
     }
 
-    onPointerMove(rawEvent: PointerEvent) {
+    onPointerMove(rawEvent: React.PointerEvent) {
         if (!rawEvent.isPrimary || !this.tempStorage) {
             return;
         }
@@ -151,7 +150,7 @@ export class ControlsManager {
         this.applyLayerEvent(layer, event);
     }
 
-    onPointerUp(rawEvent: PointerEvent) {
+    onPointerUp(rawEvent: React.PointerEvent) {
         if (!rawEvent.isPrimary || !this.tempStorage) {
             return;
         }
@@ -160,7 +159,7 @@ export class ControlsManager {
         this.applyLayerEvent(layer, { type: "pointerUp" });
     }
 
-    onPointerLeave(rawEvent: PointerEvent) {
+    onPointerLeave(rawEvent: React.PointerEvent) {
         if (!rawEvent.isPrimary || !this.tempStorage) {
             return;
         }
@@ -173,7 +172,7 @@ export class ControlsManager {
         }, timeoutDelay) as unknown as number;
     }
 
-    onPointerEnter(event: PointerEvent) {
+    onPointerEnter(event: React.PointerEvent) {
         if (!event.isPrimary || !this.tempStorage) {
             return;
         }
@@ -181,11 +180,11 @@ export class ControlsManager {
         clearTimeout(this.blurCanvasTimeoutId);
     }
 
-    onContextMenu(event: MouseEvent) {
+    onContextMenu(event: React.MouseEvent) {
         event.preventDefault();
     }
 
-    handleKeyDown(rawEvent: KeyboardEvent) {
+    handleKeyDown(rawEvent: React.KeyboardEvent) {
         const keypress = keypressString(rawEvent);
 
         if (
@@ -235,7 +234,7 @@ export class ControlsManager {
         }
     }
 
-    onPointerUpOutside(rawEvent: PointerEvent) {
+    onPointerUpOutside(rawEvent: React.PointerEvent) {
         if (
             rawEvent.isPrimary &&
             (rawEvent.target as any)?.id === "canvas-container"
@@ -245,7 +244,7 @@ export class ControlsManager {
         }
     }
 
-    onPageBlur(rawEvent: FocusEvent) {
+    onPageBlur(rawEvent: React.FocusEvent) {
         // TODO: Why am I asking if the rawEvent isPrimary?
         if (!(rawEvent as any).isPrimary || !this.tempStorage) {
             return;

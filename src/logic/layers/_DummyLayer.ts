@@ -37,10 +37,10 @@ export const DummyLayer: ILayer & { settings: Settings } = {
     // defaultRenderOrder: 2,
 
     // The main purpose of this function is to return all objects of the layer decomposed into individual "blits". Blits are simply ways to decompose objects into drawable parts. For example, a sudoku arrow is made of a circle and multiple lines marking the arrow's path and tip. Blits are grouped into objects for a couple of reasons. For one, they can have styles applied to every blit in the group. Also, grouped can be ordered to hide blemishes (it's easier to draw a good looking sudoku arrow by drawing the circle over the lines).
-    getBlits: () => [{ id: "my blit group" }],
+    getBlits: () => [],
 
     // Overlay blits are used for objects only shown when that layer is in focus, e.g. SelectionLayer overrides this function to show its blits when NumberLayer is focused.
-    getOverlayBlits: () => [{ id: "shown above all other blits" }],
+    getOverlayBlits: () => [],
 
     // gatherPoints is called on pointerDown and pointerMove events, so it is optimized to only run code that is necessary. It simply returns a list of points that will be passed to handleEvent to interpret. If the array is empty (no new points have been selected), handleEvent is not even called. Technically, gatherPoints can return an array of anything, but that will only be used in instances where controls don't snap to the grid, like free-form bezier drawing.
     gatherPoints: () => [],

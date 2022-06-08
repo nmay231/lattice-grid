@@ -45,15 +45,13 @@ export const CellOutlineLayer: ILayer<CellOutlineProps> = {
             blacklist,
         });
 
-        const edges: Record<
-            string,
-            boolean | { x1: number; x2: number; y1: number; y2: number }
-        > = {};
+        const Nothing = { x1: 0, x2: 0, y1: 0, y2: 0 };
+        const edges: Record<string, typeof Nothing> = {};
         for (let cell in cells) {
             for (let edge in cells[cell].edges) {
                 /* If a cell does not share an edge with another cell, use a thick line. */
                 if (edges[edge] === undefined) {
-                    edges[edge] = false;
+                    edges[edge] = Nothing;
                 } else {
                     const corners = cells[cell].edges[edge].corners;
                     const [[x1, y1], [x2, y2]] = Object.values(corners).map(
@@ -65,7 +63,7 @@ export const CellOutlineLayer: ILayer<CellOutlineProps> = {
         }
 
         for (let id in edges) {
-            if (!edges[id]) {
+            if (edges[id] === Nothing) {
                 delete edges[id];
             }
         }
@@ -93,7 +91,7 @@ export const CellOutlineLayer: ILayer<CellOutlineProps> = {
                 style: {
                     stroke: "black",
                     strokeWidth: 10,
-                    strokeLinejoin: "square",
+                    strokeLinejoin: "miter",
                     fill: "none",
                 },
             },
