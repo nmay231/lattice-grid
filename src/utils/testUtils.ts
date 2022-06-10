@@ -13,7 +13,7 @@ export const getEventEssentials = <LP extends LayerProps = LayerProps>(
     const grid: LayerEventEssentials<LP>["grid"] = {
         id: "grid",
         getAllPoints: () => [],
-        getPoints: null,
+        getPoints: () => [],
         selectPointsWithCursor: () => [],
     };
     const _stored: LayerStorage<LP> = stored || {

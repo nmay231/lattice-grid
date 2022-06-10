@@ -1,4 +1,3 @@
-import { atom } from "jotai";
 import { modifiableAtom } from "./modifiableAtom";
 
 // TODO: Consider not defining the initial settings here but somewhere in PuzzleManager
@@ -12,9 +11,13 @@ export const initialSettings = {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const { atom: baseAtom, setValue } = modifiableAtom(initialSettings);
+const { atom, setValue, getValue } = modifiableAtom(initialSettings);
 
-// Make it read only by not including a setter function
-export const settingsAtom = atom((get) => get(baseAtom));
+// For use in components
+export const settingsAtom = atom;
+
+// For use outside of components
+export const setSettings = setValue;
+export const getSettings = getValue;
 
 // TODO: have a puzzle.setSettings that will call setAtomSettings that will be defined here using setValue()

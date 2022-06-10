@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import { usePuzzle } from "../atoms/puzzle";
 import { SideBar } from "../components/SideBar";
 import { SVGCanvas } from "../components/SVGCanvas";
@@ -11,13 +11,16 @@ export const EditPage = () => {
         const handleKeyDown = puzzle.controls.handleKeyDown;
         const onPageBlur = puzzle.controls.onPageBlur;
         if (handleKeyDown) {
-            document.body.addEventListener("keydown", handleKeyDown);
-            document.body.addEventListener("pointerleave", onPageBlur);
+            document.body.addEventListener("keydown", handleKeyDown as any);
+            document.body.addEventListener("pointerleave", onPageBlur as any);
         }
 
         return () => {
-            document.body.removeEventListener("keydown", handleKeyDown);
-            document.body.removeEventListener("pointerleave", onPageBlur);
+            document.body.removeEventListener("keydown", handleKeyDown as any);
+            document.body.removeEventListener(
+                "pointerleave",
+                onPageBlur as any,
+            );
         };
     }, [puzzle]);
 

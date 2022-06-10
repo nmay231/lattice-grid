@@ -1,27 +1,29 @@
 import { SquareGrid } from "./SquareGrid";
 
 describe("SquareGrid", () => {
-    const settings = {
-        cellSize: 60,
-        borderPadding: 10,
-    };
-    const smallGrid = new SquareGrid(settings, { width: 2, height: 2 });
-    const mediumGrid = new SquareGrid(settings, { width: 10, height: 10 });
+    const smallGrid = new SquareGrid({ width: 2, height: 2 });
+    const mediumGrid = new SquareGrid({ width: 10, height: 10 });
 
     it("knows points are within bounds", () => {
-        expect(mediumGrid._outOfBounds({ x: 1, y: 1 })).toEqual(false);
-        expect(mediumGrid._outOfBounds({ x: 1, y: 19 })).toEqual(false);
-        expect(mediumGrid._outOfBounds({ x: 19, y: 1 })).toEqual(false);
-        expect(mediumGrid._outOfBounds({ x: 19, y: 19 })).toEqual(false);
+        expect([
+            mediumGrid._outOfBounds({ x: 1, y: 1, type: "cells" }),
+            mediumGrid._outOfBounds({ x: 1, y: 19, type: "cells" }),
+            mediumGrid._outOfBounds({ x: 19, y: 1, type: "cells" }),
+            mediumGrid._outOfBounds({ x: 19, y: 19, type: "cells" }),
+        ]).toEqual([false, false, false, false]);
     });
 
     it("knows points are outside bounds", () => {
-        expect(mediumGrid._outOfBounds({ x: -1, y: -1 })).toEqual(true);
-        expect(mediumGrid._outOfBounds({ x: 10, y: 21 })).toEqual(true);
-        expect(mediumGrid._outOfBounds({ x: 21, y: 10 })).toEqual(true);
-        expect(mediumGrid._outOfBounds({ x: 1000000, y: 1000000 })).toEqual(
-            true,
-        );
+        expect([
+            mediumGrid._outOfBounds({ x: -1, y: -1, type: "cells" }),
+            mediumGrid._outOfBounds({ x: 10, y: 21, type: "edges" }),
+            mediumGrid._outOfBounds({ x: 21, y: 10, type: "edges" }),
+            mediumGrid._outOfBounds({
+                x: 1000000,
+                y: 1000000,
+                type: "corners",
+            }),
+        ]).toEqual([true, true, true, true]);
     });
 
     it("generates all cell grid points", () => {

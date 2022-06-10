@@ -1,10 +1,10 @@
 import { LineBlits } from "../../components/SVGCanvas/Line";
-import { ILayer } from "../../globals";
+import { ILayer, PointType } from "../../globals";
 import { BaseLayer } from "./baseLayer";
 import { handleEventsCurrentSetting, TwoPointProps } from "./controls/twoPoint";
 
 export type SimpleLineSettings = {
-    pointType: string;
+    pointType: PointType;
     selectedState: { fill: string };
 };
 type SimpleLineExtraProps = {
@@ -26,7 +26,7 @@ export interface SimpleLineProps extends TwoPointProps {
 const pointTypes = {
     "Cell to Cell": "cells",
     "Corner to Corner": "corners",
-};
+} as const;
 
 export const SimpleLineLayer: ILayer<SimpleLineProps> & SimpleLineExtraProps = {
     ...BaseLayer,

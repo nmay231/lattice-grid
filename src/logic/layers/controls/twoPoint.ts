@@ -1,5 +1,5 @@
 import { isEqual } from "lodash";
-import { ILayer, LayerProps } from "../../../globals";
+import { ILayer, LayerProps, PointType } from "../../../globals";
 
 export interface TwoPointProps extends LayerProps {
     ObjectState: { id: string; points: string[]; state: unknown };
@@ -14,7 +14,7 @@ export type MinimalSettings = { selectedState: object };
 
 type Arg = Partial<{
     directional: boolean;
-    pointTypes: string[];
+    pointTypes: PointType[];
     stopOnFirstPoint: boolean;
     // TODO: Replace deltas with FSM
     deltas: { dx: number; dy: number }[];

@@ -1,18 +1,19 @@
 import {
     Grid,
-    GridAndLayer,
     History,
     HistoryAction,
+    ILayer,
     IncompleteHistoryAction,
-    Layer,
     LayerProps,
     LayerStorage,
 } from "../globals";
 
-export class StorageManager {
-    objects: Record<string | symbol, Record<string, LayerStorage>> = {};
+type GridAndLayer = { grid: Pick<Grid, "id">; layer: Pick<ILayer, "id"> };
 
-    histories: Record<string | symbol, History> = {};
+export class StorageManager {
+    objects: Record<Grid["id"], Record<string, LayerStorage>> = {};
+
+    histories: Record<Grid["id"], History> = {};
 
     addStorage({ grid, layer }: GridAndLayer) {
         this.objects[grid.id] = this.objects[grid.id] ?? {};
@@ -37,8 +38,8 @@ export class StorageManager {
     }
 
     addToHistory(
-        grid: Grid,
-        layer: Layer,
+        grid: Pick<Grid, "id">,
+        layer: Pick<ILayer, "id">,
         puzzleObjects?: IncompleteHistoryAction[],
     ) {
         if (!puzzleObjects?.length) {
@@ -135,7 +136,7 @@ export class StorageManager {
         return undoAction;
     }
 
-    undoHistory(historyId: string | symbol) {
+    undoHistory(historyId: Grid["id"]) {
         const history = this.histories[historyId];
         if (history.index <= 0) {
             return [];
@@ -162,7 +163,7 @@ export class StorageManager {
         return returnedActions;
     }
 
-    redoHistory(historyId: string | symbol) {
+    redoHistory(historyId: Grid["id"]) {
         const history = this.histories[historyId];
         if (history.index >= history.actions.length) {
             return [];

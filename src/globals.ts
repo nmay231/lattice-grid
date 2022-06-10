@@ -2,6 +2,7 @@ import { initialSettings } from "./atoms/settings";
 import { LineBlits } from "./components/SVGCanvas/Line";
 import { PolygonBlits } from "./components/SVGCanvas/Polygon";
 import { TextBlits } from "./components/SVGCanvas/Text";
+import { availableLayers } from "./logic/layers";
 import { SelectionExtraProps } from "./logic/layers/Selection";
 import { StorageManager } from "./logic/StorageManager";
 
@@ -9,11 +10,46 @@ import { StorageManager } from "./logic/StorageManager";
 
 // TODO: Replace all relevant instances of the plain types with these explicit types.
 // It helps with changing all of the types if necessary, and also with being explicit with how composite types are used.
-export type LayerId = string;
-export type GridId = string | symbol;
 export type Point = string;
+export type Delta = { dx: number; dy: number };
 
 export type PointType = "cells" | "edges" | "corners";
+
+// ======== Grids ========
+
+export type Grid = {
+    id: string;
+    // TODO: More specific types
+    getPoints: (arg: {
+        points?: string[];
+        connections: any;
+        blacklist?: string[]; // TODO: Is this needed?
+        includeOutOfBounds?: boolean;
+        excludePreviousPoints?: boolean;
+    }) => any;
+    getAllPoints: any;
+    selectPointsWithCursor: (arg: {
+        // TODO: Change to [number, number]
+        cursor: { x: number; y: number };
+        pointTypes: PointType[];
+        // TODO: implement deltas as Finite State Machines for more capabilities and better cross-compatibility between grid types
+        deltas: Delta[];
+        previousPoint?: string | null;
+    }) => string[];
+    getCanvasRequirements: () => {
+        minX: number;
+        minY: number;
+        width: number;
+        height: number;
+    };
+    getCanvasResizers: () => {
+        name: string;
+        x: number;
+        y: number;
+        rotate: number;
+        resize: (amount: number) => void;
+    }[];
+};
 
 // ======== Layers ========
 
@@ -36,7 +72,10 @@ export type CleanedDOMEvent =
     | PointerMoveOrDown;
 
 export type LayerEventEssentials<LP extends LayerProps> = {
-    grid: Grid;
+    grid: Pick<
+        Grid,
+        "id" | "getAllPoints" | "getPoints" | "selectPointsWithCursor"
+    >;
     storage: StorageManager;
     settings: typeof initialSettings;
     tempStorage: Partial<LP["TempStorage"]>;
@@ -82,22 +121,15 @@ export type ILayer<LP extends LayerProps = LayerProps> = {
         layerEvent: PointerMoveOrDown & LayerEventEssentials<LP>,
     ) => string[];
     handleEvent: (layerEvent: LayerEvent<LP>) => LayerHandlerResult;
-    getBlits?: (data: LayerEventEssentials<LP>) => BlitGroup[];
-    getOverlayBlits?: (data: LayerEventEssentials<LP>) => BlitGroup[];
+    getBlits?: (
+        data: Omit<LayerEventEssentials<LP>, "tempStorage">,
+    ) => BlitGroup[];
+    getOverlayBlits?: (
+        data: Omit<LayerEventEssentials<LP>, "tempStorage">,
+    ) => BlitGroup[];
 };
 
 // ======== Undo-Redo History ========
-
-export type Grid = {
-    id: GridId;
-    // TODO: More specific types
-    getPoints: any;
-    getAllPoints: any;
-    selectPointsWithCursor: (...args: any) => string[];
-};
-export type Layer = { id: string };
-
-export type GridAndLayer = { grid: Grid; layer: Layer };
 
 export type LayerStorage<LP extends LayerProps = LayerProps> = {
     renderOrder: string[];
@@ -134,3 +166,13 @@ export type RenderChange =
 
 // TODO: More specific types
 export type BlitGroup = LineBlits | TextBlits | PolygonBlits;
+
+// ======== Parsing ========
+
+export type LocalStorageData = {
+    grid: { width: number; height: number };
+    layers: {
+        layerClass: keyof typeof availableLayers;
+        rawSettings?: object;
+    }[];
+};

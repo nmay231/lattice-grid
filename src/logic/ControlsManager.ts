@@ -1,4 +1,5 @@
 import { getLayers, selectLayer } from "../atoms/layers";
+import { getSettings } from "../atoms/settings";
 import {
     CleanedDOMEvent,
     ILayer,
@@ -49,6 +50,14 @@ export class ControlsManager {
         event.stopPropagation();
     }
 
+    getCurrentLayer() {
+        const currentLayerId = getLayers().currentLayerId;
+
+        return currentLayerId === null
+            ? null
+            : this.puzzle.layers[currentLayerId];
+    }
+
     cleanPointerEvent(
         type: "pointerDown" | "pointerMove",
         event: React.PointerEvent,
@@ -79,12 +88,12 @@ export class ControlsManager {
     }
 
     applyLayerEvent(layer: ILayer, event: CleanedDOMEvent) {
-        const { grid, storage, settings } = this.puzzle;
+        const { grid, storage } = this.puzzle;
         const layerEvent: LayerEvent<LayerProps> = {
             ...event,
             grid,
             storage,
-            settings,
+            settings: getSettings(),
             tempStorage: this.tempStorage || {},
         };
 
@@ -134,7 +143,8 @@ export class ControlsManager {
         if (!rawEvent.isPrimary) {
             return;
         }
-        const layer = this.puzzle.getCurrentLayer();
+        const layer = this.getCurrentLayer();
+        if (!layer) return;
         this.tempStorage = {};
         const event = this.cleanPointerEvent("pointerDown", rawEvent);
         this.applyLayerEvent(layer, event);
@@ -145,7 +155,8 @@ export class ControlsManager {
             return;
         }
 
-        const layer = this.puzzle.getCurrentLayer();
+        const layer = this.getCurrentLayer();
+        if (!layer) return;
         const event = this.cleanPointerEvent("pointerMove", rawEvent);
         this.applyLayerEvent(layer, event);
     }
@@ -155,7 +166,8 @@ export class ControlsManager {
             return;
         }
 
-        const layer = this.puzzle.getCurrentLayer();
+        const layer = this.getCurrentLayer();
+        if (!layer) return;
         this.applyLayerEvent(layer, { type: "pointerUp" });
     }
 
@@ -165,9 +177,10 @@ export class ControlsManager {
         }
 
         clearTimeout(this.blurCanvasTimeoutId);
-        const timeoutDelay = this.puzzle.settings.actionWindowMs;
+        const timeoutDelay = getSettings().actionWindowMs;
         this.blurCanvasTimeoutId = setTimeout(() => {
-            const layer = this.puzzle.getCurrentLayer();
+            const layer = this.getCurrentLayer();
+            if (!layer) return;
             this.applyLayerEvent(layer, { type: "pointerUp" });
         }, timeoutDelay) as unknown as number;
     }
@@ -200,7 +213,8 @@ export class ControlsManager {
             return;
         }
 
-        let layer = this.puzzle.getCurrentLayer();
+        let layer = this.getCurrentLayer();
+        if (!layer) return;
 
         if (keypress === "Escape") {
             this.applyLayerEvent(layer, { type: "cancelAction" });
@@ -223,11 +237,12 @@ export class ControlsManager {
                     appliedActions[appliedActions.length - 1].layerId;
                 this.selectLayer({ id: newLayerId });
 
-                layer = this.puzzle.getCurrentLayer();
-                this.applyLayerEvent(layer, {
-                    type: "undoRedo",
-                    actions: appliedActions,
-                });
+                layer = this.getCurrentLayer();
+                if (layer)
+                    this.applyLayerEvent(layer, {
+                        type: "undoRedo",
+                        actions: appliedActions,
+                    });
             }
         } else {
             this.applyLayerEvent(layer, { type: "keyDown", keypress });
@@ -239,7 +254,8 @@ export class ControlsManager {
             rawEvent.isPrimary &&
             (rawEvent.target as any)?.id === "canvas-container"
         ) {
-            const layer = this.puzzle.getCurrentLayer();
+            const layer = this.getCurrentLayer();
+            if (!layer) return;
             this.applyLayerEvent(layer, { type: "cancelAction" });
         }
     }
@@ -250,7 +266,8 @@ export class ControlsManager {
             return;
         }
 
-        const layer = this.puzzle.getCurrentLayer();
+        const layer = this.getCurrentLayer();
+        if (!layer) return;
         this.applyLayerEvent(layer, { type: "pointerUp" });
         clearTimeout(this.blurCanvasTimeoutId);
     }

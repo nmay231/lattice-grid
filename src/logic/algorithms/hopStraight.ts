@@ -1,3 +1,5 @@
+import { Delta } from "../../globals";
+
 const atan = (x: number, y: number) => (x < 0 ? -1 : 1) * Math.atan(y / x);
 const euclidean = (x1: number, y1: number, x2: number, y2: number) =>
     ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5;
@@ -5,7 +7,7 @@ const euclidean = (x1: number, y1: number, x2: number, y2: number) =>
 type Arg = {
     cursor: [number, number];
     previousPoint: [number, number];
-    deltas: { dx: number; dy: number }[];
+    deltas: Delta[];
 };
 
 /**
@@ -16,7 +18,11 @@ type Arg = {
  * @param {{dx: number, dy: number}[]} args.deltas - The path must use these set of "hops" or vectors
  * @yields {null | [number, number]}
  */
-export function* hopStraight({ cursor, previousPoint, deltas }: Arg) {
+export function* hopStraight({
+    cursor,
+    previousPoint,
+    deltas,
+}: Arg): Generator<[number, number] | null, void, [number, number]> {
     let [startX, startY] = previousPoint;
     const [targetX, targetY] = cursor;
 

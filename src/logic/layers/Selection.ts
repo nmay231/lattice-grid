@@ -332,8 +332,8 @@ export const SelectionLayer: ILayer<SelectionProps> & SelectionExtraProps = {
                         },
                     },
                     points: states
-                        .map((state, i) => (state === group ? points[i] : null))
-                        .filter((state) => state),
+                        .filter((state) => state === group)
+                        .map((_, i) => points[i]),
                 });
 
                 for (let key in selectionCage.svgPolygons) {
