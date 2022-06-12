@@ -1,22 +1,24 @@
+import {
+    ILayer,
+    LayerEvent,
+    LayerStorage,
+    PointerMoveOrDown,
+} from "../../../globals";
 import { getEventEssentials } from "../../../utils/testUtils";
-import { LayerStorage } from "../../StorageManager";
-import { ILayer, LayerEvent, PointerMoveOrDown } from "../baseLayer";
 import { DummyLayer } from "../_DummyLayer";
-import { handleEventsUnorderedSets, MinimalState } from "./multiPoint";
-
-type multiPointLayer<
-    ObjectState extends MinimalState = MinimalState,
-    RawSettings = object,
-> = ILayer<ObjectState, RawSettings>;
+import { handleEventsUnorderedSets, MultiPointLayerProps } from "./multiPoint";
 
 describe("multiPoint.handleEventsUnorderedSets", () => {
     const getFakeLayer = () => {
-        const layer = Object.create(DummyLayer) as multiPointLayer;
+        const layer = Object.create(DummyLayer) as ILayer<MultiPointLayerProps>;
         return layer;
     };
 
     type SecondArg = Parameters<typeof handleEventsUnorderedSets>[1];
-    const applySettings = (layer: multiPointLayer, arg?: SecondArg) =>
+    const applySettings = (
+        layer: ILayer<MultiPointLayerProps>,
+        arg?: SecondArg,
+    ) =>
         handleEventsUnorderedSets(layer, {
             pointTypes: ["cells"],
             ...arg,
@@ -40,14 +42,18 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         const layer = getFakeLayer();
         applySettings(layer);
 
+        const stored: LayerStorage<MultiPointLayerProps> = {
+            renderOrder: [],
+            objects: {},
+        };
         const selectPoints = jest.fn();
         const getBatchId = jest.fn();
-        const essentials = getEventEssentials<MinimalState>();
+        const essentials = getEventEssentials({ stored });
         essentials.grid.selectPointsWithCursor = selectPoints;
         essentials.storage.getNewBatchId = getBatchId;
 
         selectPoints.mockReturnValueOnce(["a"]);
-        let fakeEvent: LayerEvent<MinimalState> = {
+        let fakeEvent: LayerEvent<MultiPointLayerProps> = {
             ...essentials,
             ...getPointerEvent({ type: "pointerDown" }),
         };
@@ -62,8 +68,8 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         ]);
         expect(result.discontinueInput).toBeFalsy();
 
-        essentials.stored.objects.a = result.history?.[0].object;
-        essentials.stored.renderOrder.push("a");
+        stored.objects.a = result.history?.[0].object;
+        stored.renderOrder.push("a");
 
         result = layer.handleEvent({ ...fakeEvent, type: "pointerUp" });
         expect(result.history?.length).toBeFalsy();
@@ -74,21 +80,21 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         const layer = getFakeLayer();
         applySettings(layer);
 
-        const stored: LayerStorage<MinimalState> = {
+        const stored: LayerStorage<MultiPointLayerProps> = {
             objects: { a: { id: "a", points: ["a"], state: null } },
             renderOrder: ["a"],
         };
         const selectPoints = jest.fn();
         const getBatchId = jest.fn();
-        const essentials = getEventEssentials<MinimalState>({ stored });
+        const essentials = getEventEssentials({ stored });
         essentials.grid.selectPointsWithCursor = selectPoints;
         essentials.storage.getNewBatchId = getBatchId;
 
         // Select the existing object
-        essentials.stored.currentObjectId = "a";
+        stored.currentObjectId = "a";
 
         selectPoints.mockReturnValueOnce(["b"]);
-        let fakeEvent: LayerEvent<MinimalState> = {
+        let fakeEvent: LayerEvent<MultiPointLayerProps> = {
             ...essentials,
             ...getPointerEvent({ type: "pointerDown" }),
         };
@@ -101,8 +107,8 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
             { batchId: 1, id: "b", object: { points: ["b"], state: null } },
         ]);
         expect(result.discontinueInput).toBeFalsy();
-        essentials.stored.objects.b = result.history?.[0].object;
-        essentials.stored.renderOrder.push("b");
+        stored.objects.b = result.history?.[0].object;
+        stored.renderOrder.push("b");
 
         result = layer.handleEvent({ ...fakeEvent, type: "pointerUp" });
         expect(result.history?.length).toBeFalsy();
@@ -113,15 +119,19 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         const layer = getFakeLayer();
         applySettings(layer);
 
+        const stored: LayerStorage<MultiPointLayerProps> = {
+            renderOrder: [],
+            objects: {},
+        };
         const selectPoints = jest.fn();
         const getBatchId = jest.fn();
-        const essentials = getEventEssentials<MinimalState>();
+        const essentials = getEventEssentials({ stored });
         essentials.grid.selectPointsWithCursor = selectPoints;
         essentials.storage.getNewBatchId = getBatchId;
 
         // Start drawing the object
         selectPoints.mockReturnValueOnce(["b"]);
-        let fakeEvent: LayerEvent<MinimalState> = {
+        let fakeEvent: LayerEvent<MultiPointLayerProps> = {
             ...essentials,
             ...getPointerEvent({ type: "pointerDown" }),
         };
@@ -136,8 +146,8 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         ]);
         expect(result.discontinueInput).toBeFalsy();
 
-        essentials.stored.objects.b = result.history?.[0].object;
-        essentials.stored.renderOrder.push("b");
+        stored.objects.b = result.history?.[0].object;
+        stored.renderOrder.push("b");
 
         // Expand the object
         selectPoints.mockReturnValueOnce(["c", "a"]);
@@ -152,7 +162,7 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         ]);
         expect(result.discontinueInput).toBeFalsy();
 
-        essentials.stored.objects.b = result.history?.[0].object;
+        stored.objects.b = result.history?.[0].object;
 
         // Shrink the object
         selectPoints.mockReturnValueOnce(["b"]);
@@ -167,7 +177,7 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         ]);
         expect(result.discontinueInput).toBeFalsy();
 
-        essentials.stored.objects.b = result.history?.[0].object;
+        stored.objects.b = result.history?.[0].object;
 
         result = layer.handleEvent({ ...fakeEvent, type: "pointerUp" });
         expect(result.history).toEqual([
@@ -185,19 +195,19 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         const layer = getFakeLayer();
         applySettings(layer);
 
-        const stored: LayerStorage<MinimalState> = {
+        const stored: LayerStorage<MultiPointLayerProps> = {
             objects: { "a;b": { id: "a;b", points: ["a", "b"], state: null } },
             renderOrder: ["a;b"],
             currentObjectId: "a;b",
         };
         const selectPoints = jest.fn();
         const getBatchId = jest.fn();
-        const essentials = getEventEssentials<MinimalState>({ stored });
+        const essentials = getEventEssentials({ stored });
         essentials.grid.selectPointsWithCursor = selectPoints;
         essentials.storage.getNewBatchId = getBatchId;
 
         selectPoints.mockReturnValueOnce(["b"]);
-        let fakeEvent: LayerEvent<MinimalState> = {
+        let fakeEvent: LayerEvent<MultiPointLayerProps> = {
             ...essentials,
             ...getPointerEvent({ type: "pointerDown" }),
         };
@@ -236,20 +246,20 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         const layer = getFakeLayer();
         applySettings(layer);
 
-        const stored: LayerStorage<MinimalState> = {
+        const stored: LayerStorage<MultiPointLayerProps> = {
             objects: { "a;b": { id: "a;b", points: ["a", "b"], state: null } },
             renderOrder: ["a;b"],
             currentObjectId: "a;b",
         };
         const selectPoints = jest.fn();
         const getBatchId = jest.fn();
-        const essentials = getEventEssentials<MinimalState>({ stored });
+        const essentials = getEventEssentials<MultiPointLayerProps>({ stored });
         essentials.grid.selectPointsWithCursor = selectPoints;
         essentials.storage.getNewBatchId = getBatchId;
 
         // Select the starting point
         selectPoints.mockReturnValueOnce(["b"]);
-        let fakeEvent: LayerEvent<MinimalState> = {
+        let fakeEvent: LayerEvent<MultiPointLayerProps> = {
             ...essentials,
             ...getPointerEvent({ type: "pointerDown" }),
         };
@@ -264,14 +274,14 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         points = layer.gatherPoints(fakeEvent);
 
         result = layer.handleEvent({ ...fakeEvent, points });
-        essentials.stored.objects["a;b"] = result.history?.[0].object;
+        stored.objects["a;b"] = result.history?.[0].object;
 
         // Shrink
         selectPoints.mockReturnValueOnce(["d", "b"]);
         points = layer.gatherPoints(fakeEvent);
 
         result = layer.handleEvent({ ...fakeEvent, points });
-        essentials.stored.objects["a;b"] = result.history?.[0].object;
+        stored.objects["a;b"] = result.history?.[0].object;
 
         // End on the starting point
         result = layer.handleEvent({ ...fakeEvent, type: "pointerUp" });

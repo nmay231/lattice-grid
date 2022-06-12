@@ -1,5 +1,6 @@
 import {
     DndContext,
+    DragEndEvent,
     KeyboardSensor,
     PointerSensor,
     useSensor,
@@ -28,18 +29,18 @@ export const LayerList = () => {
     );
     const { layers, currentLayerId } = useAtomValue(layersAtom);
 
-    const handleDragEnd = ({ active, over }) => {
-        if (active.id !== over?.id) {
+    const handleDragEnd = ({ active, over }: DragEndEvent) => {
+        if (over?.id && active.id !== over.id) {
             const ids = layers.map(({ id }) => id);
             const oldIndex = ids.indexOf(active.id);
-            const newIndex = ids.indexOf(over?.id);
+            const newIndex = ids.indexOf(over.id);
             setLayers(arrayMove(layers, oldIndex, newIndex));
             puzzle.renderChange({ type: "reorder" });
         }
         blurActiveElement();
     };
 
-    const handleSelect = (id) => (event) => {
+    const handleSelect = (id: string) => (event: React.PointerEvent) => {
         event.stopPropagation();
         blurActiveElement();
         if (id !== currentLayerId) {
@@ -47,7 +48,7 @@ export const LayerList = () => {
         }
     };
 
-    const handleDelete = (id) => (event) => {
+    const handleDelete = (id: string) => (event: React.PointerEvent) => {
         event.stopPropagation();
         puzzle.removeLayer(id);
         blurActiveElement();

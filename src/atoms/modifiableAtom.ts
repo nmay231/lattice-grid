@@ -1,6 +1,6 @@
 import { atom } from "jotai";
 
-type SubscriptionContainer<T extends object = any> = {
+type SubscriptionContainer<T extends object> = {
     subs: Array<(value: T | ((old: T) => T)) => void>;
     value: T;
 };

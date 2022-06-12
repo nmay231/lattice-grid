@@ -1,22 +1,35 @@
-import { BaseLayer, ILayer } from "./baseLayer";
-import { handleEventsUnorderedSets, MinimalState } from "./controls/multiPoint";
+import { ILayer } from "../../globals";
+import { BaseLayer } from "./baseLayer";
+import {
+    handleEventsUnorderedSets,
+    MultiPointLayerProps,
+} from "./controls/multiPoint";
 import { KeyDownEventHandler } from "./Selection";
 
-export type ObjectState = MinimalState & { state: string | null };
+export interface KillerCagesProps extends MultiPointLayerProps {
+    ObjectState: MultiPointLayerProps["ObjectState"] & { state: string | null };
+}
 
-export type KillerCagesProps = {
+export type KillerCagesExtraProps = {
     _handleKeyDown: KeyDownEventHandler["handleKeyDown"];
     _nextState: (state: string, keypress: string) => string | number | null;
 };
 
-export const KillerCagesLayer: ILayer<ObjectState> & KillerCagesProps = {
+export const KillerCagesLayer: ILayer<KillerCagesProps> &
+    KillerCagesExtraProps = {
     ...BaseLayer,
     id: "Killer Cages",
     unique: false,
     ethereal: false,
 
     _handleKeyDown({ type, keypress, grid, storage }) {
-        const stored = storage.getStored<ObjectState>({ layer: this, grid });
+        const stored = storage.getStored<KillerCagesProps>({
+            layer: this,
+            grid,
+        });
+
+        if (!stored.currentObjectId) return {};
+
         const id = stored.currentObjectId;
         const object = { ...stored.objects[id] };
 
@@ -55,7 +68,7 @@ export const KillerCagesLayer: ILayer<ObjectState> & KillerCagesProps = {
     },
 
     newSettings() {
-        handleEventsUnorderedSets<ObjectState>(this, {
+        handleEventsUnorderedSets(this, {
             handleKeyDown: this._handleKeyDown.bind(this),
             pointTypes: ["cells"],
             ensureConnected: false, // TODO: Change to true when properly implemented
@@ -64,7 +77,12 @@ export const KillerCagesLayer: ILayer<ObjectState> & KillerCagesProps = {
         });
     },
 
-    getBlits({ grid, stored }) {
+    getBlits({ storage, grid }) {
+        const stored = storage.getStored<KillerCagesProps>({
+            grid,
+            layer: this,
+        });
+
         const cageBlits: Record<string, object> = {};
         const numberBlits: Record<string, object> = {};
         for (let id of stored.renderOrder) {

@@ -1,50 +1,64 @@
-import { IncompleteHistoryAction } from "../StorageManager";
 import {
-    BaseLayer,
     ILayer,
+    IncompleteHistoryAction,
     Keypress,
     LayerEventEssentials,
     LayerHandlerResult,
-} from "./baseLayer";
+    LayerProps,
+} from "../../globals";
+import { BaseLayer } from "./baseLayer";
 
-export type KeyDownEventHandler<IObjectState = object> = {
+export type KeyDownEventHandler<LP extends LayerProps = LayerProps> = {
     handleKeyDown: (
-        arg: LayerEventEssentials<IObjectState> &
-            Keypress & { points: string[] },
+        arg: LayerEventEssentials<LP> & Keypress & { points: string[] },
     ) => LayerHandlerResult;
 };
 
-type SelectionProps = {
-    attachHandler: (layer: ILayer & KeyDownEventHandler, options: {}) => void;
-    _getBlits: NonNullable<ILayer["getBlits"]>;
+export type SelectionExtraProps = {
+    attachHandler: <LP extends LayerProps = LayerProps>(
+        layer: ILayer<LP> & KeyDownEventHandler<LP>,
+        options: {},
+    ) => void;
+    _getBlits: NonNullable<ILayer<SelectionProps>["getBlits"]>;
 };
 
-export type ObjectState = { state: number };
+export interface SelectionProps extends LayerProps {
+    ObjectState: { state: number };
+    ExtraLayerStorageProps: { groupNumber: number };
+    TempStorage: {
+        blacklist: string[];
+        previousPoint: string;
+        targetState: null | number;
+        removeSingle: boolean;
+    };
+}
 
-export const SelectionLayer: ILayer & SelectionProps = {
+export const SelectionLayer: ILayer<SelectionProps> & SelectionExtraProps = {
     ...BaseLayer,
     id: "Selections",
     unique: true,
     ethereal: true,
 
+    // TODO: Figuring the types for this will be complicated. I don't know how to approach types for multiple layers at the same time.
     attachHandler(layer) {
-        layer.gatherPoints = this.gatherPoints.bind(this);
+        layer.gatherPoints = this.gatherPoints.bind(this) as any;
 
         layer.handleEvent = (args) =>
-            this.handleEvent.call(this, { ...args, storingLayer: layer });
+            this.handleEvent.call(this, {
+                ...args,
+                storingLayer: layer,
+            } as any);
 
         layer.getOverlayBlits = ({ grid, storage, ...rest }) =>
             this._getBlits({
                 ...rest,
                 grid,
                 storage,
-                stored: storage.getStored({ grid, layer: this }),
-            });
+            } as any);
     },
 
     gatherPoints(event) {
         const { grid, tempStorage } = event;
-        tempStorage.blacklist = tempStorage.blacklist ?? [];
         let newPoints = grid.selectPointsWithCursor({
             cursor: event.cursor,
             previousPoint: tempStorage.previousPoint,
@@ -64,9 +78,10 @@ export const SelectionLayer: ILayer & SelectionProps = {
 
         if (!newPoints.length) return [];
         tempStorage.previousPoint = newPoints[newPoints.length - 1];
-        newPoints = newPoints.filter(
-            (id) => tempStorage.blacklist.indexOf(id) === -1,
-        );
+
+        const blacklist = tempStorage.blacklist || [];
+        tempStorage.blacklist = blacklist;
+        newPoints = newPoints.filter((id) => blacklist.indexOf(id) === -1);
         if (!newPoints.length) return [];
 
         tempStorage.blacklist.push(...newPoints);
@@ -76,7 +91,7 @@ export const SelectionLayer: ILayer & SelectionProps = {
 
     handleEvent(event) {
         const { grid, storage, tempStorage } = event;
-        const stored = storage.getStored<ObjectState>({ grid, layer: this });
+        const stored = storage.getStored<SelectionProps>({ grid, layer: this });
 
         switch (event.type) {
             case "cancelAction": {
@@ -298,7 +313,7 @@ export const SelectionLayer: ILayer & SelectionProps = {
     },
 
     _getBlits({ grid, storage }) {
-        const stored = storage.getStored<ObjectState>({ grid, layer: this });
+        const stored = storage.getStored<SelectionProps>({ grid, layer: this });
         const points = stored.renderOrder.filter(
             (key) => stored.objects[key].state,
         );
@@ -317,8 +332,8 @@ export const SelectionLayer: ILayer & SelectionProps = {
                         },
                     },
                     points: states
-                        .map((state, i) => (state === group ? points[i] : null))
-                        .filter((state) => state),
+                        .filter((state) => state === group)
+                        .map((_, i) => points[i]),
                 });
 
                 for (let key in selectionCage.svgPolygons) {

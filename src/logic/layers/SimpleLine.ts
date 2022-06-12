@@ -1,30 +1,34 @@
-import { BaseLayer, ILayer } from "./baseLayer";
-import { handleEventsCurrentSetting } from "./controls/twoPoint";
+import { LineBlits } from "../../components/SVGCanvas/Line";
+import { ILayer, PointType } from "../../globals";
+import { BaseLayer } from "./baseLayer";
+import { handleEventsCurrentSetting, TwoPointProps } from "./controls/twoPoint";
 
 export type SimpleLineSettings = {
-    pointType: string;
+    pointType: PointType;
     selectedState: { fill: string };
 };
-type SimpleLineProps = {
+type SimpleLineExtraProps = {
     settings: SimpleLineSettings;
 };
 
-export type ObjectState = {
-    state: { fill: string };
-    points: string[];
-};
-export type RawSettings = {
-    connections: keyof typeof pointTypes;
-    fill: string;
-};
+export interface SimpleLineProps extends TwoPointProps {
+    ObjectState: {
+        id: string;
+        state: { fill: string };
+        points: string[];
+    };
+    RawSettings: {
+        connections: keyof typeof pointTypes;
+        fill: string;
+    };
+}
 
 const pointTypes = {
     "Cell to Cell": "cells",
     "Corner to Corner": "corners",
-};
+} as const;
 
-export const SimpleLineLayer: ILayer<ObjectState, RawSettings> &
-    SimpleLineProps = {
+export const SimpleLineLayer: ILayer<SimpleLineProps> & SimpleLineExtraProps = {
     ...BaseLayer,
     id: "Line",
     unique: false,
@@ -104,7 +108,7 @@ export const SimpleLineLayer: ILayer<ObjectState, RawSettings> &
             },
         };
 
-        handleEventsCurrentSetting<ObjectState, RawSettings>(this, {
+        handleEventsCurrentSetting<SimpleLineProps>(this, {
             // TODO: Directional true/false is ambiguous. There are three types: lines and arrows with/without overlap
             directional: false,
             pointTypes: [this.settings.pointType],
@@ -123,7 +127,12 @@ export const SimpleLineLayer: ILayer<ObjectState, RawSettings> &
         }
     },
 
-    getBlits({ grid, stored }) {
+    getBlits({ storage, grid }) {
+        const stored = storage.getStored<SimpleLineProps>({
+            grid,
+            layer: this,
+        });
+
         let allPoints = stored.renderOrder.flatMap(
             (id) => stored.objects[id].points,
         );
@@ -135,7 +144,7 @@ export const SimpleLineLayer: ILayer<ObjectState, RawSettings> &
             points: allPoints,
         });
 
-        const blits: Record<string, object> = {};
+        const blits: LineBlits["blits"] = {};
         for (let id of stored.renderOrder) {
             const {
                 state: { fill },

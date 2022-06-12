@@ -1,15 +1,15 @@
 import {
-    getEventEssentials,
-    GetEventEssentialsArg,
-} from "../../utils/testUtils";
-import { LayerStorage } from "../StorageManager";
-import {
     LayerEvent,
     LayerEventEssentials,
     LayerHandlerResult,
+    LayerStorage,
     PointerMoveOrDown,
-} from "./baseLayer";
-import { ObjectState, SelectionLayer } from "./Selection";
+} from "../../globals";
+import {
+    getEventEssentials,
+    GetEventEssentialsArg,
+} from "../../utils/testUtils";
+import { SelectionLayer, SelectionProps } from "./Selection";
 
 const getFreshSelectionLayer = () => {
     const selection = Object.create(SelectionLayer);
@@ -18,11 +18,12 @@ const getFreshSelectionLayer = () => {
 
 const storingLayer = { id: "storingLayer", handleKeyDown: jest.fn() };
 
-const eventEssentials = (arg: GetEventEssentialsArg<ObjectState> = {}) => {
+const eventEssentials = (arg: GetEventEssentialsArg<SelectionProps> = {}) => {
     return {
-        ...getEventEssentials<ObjectState>(arg),
+        ...getEventEssentials<SelectionProps>(arg),
         storingLayer,
-    } as LayerEventEssentials<ObjectState> & { storingLayer: any };
+        // TODO: More specific types for storingLayer
+    } as LayerEventEssentials<SelectionProps> & { storingLayer: any };
 };
 
 const partialPointerEvent: Omit<PointerMoveOrDown, "points" | "type"> = {
@@ -34,11 +35,15 @@ const partialPointerEvent: Omit<PointerMoveOrDown, "points" | "type"> = {
 
 describe("SelectionLayer", () => {
     it("should select one cell", () => {
+        const stored: LayerStorage<SelectionProps> = {
+            renderOrder: [],
+            objects: {},
+        };
         const selection = getFreshSelectionLayer();
-        const essentials = eventEssentials();
+        const essentials = eventEssentials({ stored });
 
         // Start tapping/clicking
-        let fakeEvent: LayerEvent<ObjectState> = {
+        let fakeEvent: LayerEvent<SelectionProps> = {
             ...essentials,
             ...partialPointerEvent,
             type: "pointerDown",
@@ -57,8 +62,8 @@ describe("SelectionLayer", () => {
         expect(result.discontinueInput).toBeFalsy();
 
         // Manually add the selected cell
-        fakeEvent.stored.objects.point1 = result.history[0].object;
-        fakeEvent.stored.renderOrder.push("point1");
+        stored.objects.point1 = result.history[0].object;
+        stored.renderOrder.push("point1");
 
         // Pointer up
         fakeEvent = { ...essentials, type: "pointerUp" };
@@ -77,7 +82,7 @@ describe("SelectionLayer", () => {
         const essentials = eventEssentials({ stored });
 
         // Tap/click that cell
-        let fakeEvent: LayerEvent<ObjectState> = {
+        let fakeEvent: LayerEvent<SelectionProps> = {
             ...essentials,
             ...partialPointerEvent,
             type: "pointerDown",
@@ -109,11 +114,11 @@ describe("SelectionLayer", () => {
                 point2: { id: "point2", point: "point2", state: 2 },
             },
             renderOrder: ["point1", "point2"],
-        } as LayerStorage<ObjectState>;
+        } as LayerStorage<SelectionProps>;
         const essentials = eventEssentials({ stored });
 
         // Start tapping/clicking the first cell
-        let fakeEvent: LayerEvent<ObjectState> = {
+        let fakeEvent: LayerEvent<SelectionProps> = {
             ...essentials,
             ...partialPointerEvent,
             type: "pointerDown",
@@ -153,17 +158,16 @@ describe("SelectionLayer", () => {
     it("should deselect a cell when clicking another one", () => {
         // Setup a grid with one cell selected
         const selection = getFreshSelectionLayer();
-        const tempStorage = {};
         const stored = {
             objects: {
                 point1: { id: "point1", point: "point1", state: 2 },
             },
             renderOrder: ["point1"],
-        } as LayerStorage<ObjectState>;
-        const essentials = eventEssentials({ stored, tempStorage });
+        } as LayerStorage<SelectionProps>;
+        const essentials = eventEssentials({ stored });
 
         // Start tapping/clicking a different cell
-        let fakeEvent: LayerEvent<ObjectState> = {
+        let fakeEvent: LayerEvent<SelectionProps> = {
             ...essentials,
             ...partialPointerEvent,
             type: "pointerDown",
@@ -203,11 +207,11 @@ describe("SelectionLayer", () => {
                 point3: { point: "point3", state: 100 },
             },
             renderOrder: ["point1", "point2", "point3"],
-        } as LayerStorage<ObjectState>;
+        } as LayerStorage<SelectionProps>;
         const essentials = eventEssentials({ stored });
 
         // Start tapping/clicking a different cell
-        let fakeEvent: LayerEvent<ObjectState> = {
+        let fakeEvent: LayerEvent<SelectionProps> = {
             ...essentials,
             ...partialPointerEvent,
             type: "pointerDown",
@@ -266,11 +270,11 @@ describe("SelectionLayer", () => {
                 point2: { point: "point2", state: 100 },
             },
             renderOrder: ["point1", "point2"],
-        } as LayerStorage<ObjectState>;
+        } as LayerStorage<SelectionProps>;
         const essentials = eventEssentials({ stored });
 
         // Start tapping/clicking a different cell
-        let fakeEvent: LayerEvent<ObjectState> = {
+        let fakeEvent: LayerEvent<SelectionProps> = {
             ...essentials,
             ...partialPointerEvent,
             type: "pointerDown",
@@ -326,7 +330,7 @@ describe("SelectionLayer", () => {
         const essentials = eventEssentials();
 
         // Have the storing layer return two objects
-        let fakeEvent: LayerEvent<ObjectState> = {
+        let fakeEvent: LayerEvent<SelectionProps> = {
             ...essentials,
             type: "keyDown",
             keypress: "your face",
@@ -358,11 +362,11 @@ describe("SelectionLayer", () => {
                 toKeep: { id: "toKeep", point: "toKeep", state: 1 },
             },
             renderOrder: ["toDeselect", "toKeep"],
-        } as LayerStorage<ObjectState>;
+        } as LayerStorage<SelectionProps>;
         const essentials = eventEssentials({ stored });
 
         // The event has two objects with one already selected and one not
-        let fakeEvent: LayerEvent<ObjectState> = {
+        let fakeEvent: LayerEvent<SelectionProps> = {
             ...essentials,
             type: "undoRedo",
             actions: [

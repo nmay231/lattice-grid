@@ -1,18 +1,19 @@
+import {
+    ILayer,
+    LayerEvent,
+    LayerStorage,
+    PointerMoveOrDown,
+} from "../../../globals";
 import { getEventEssentials } from "../../../utils/testUtils";
-import { LayerStorage } from "../../StorageManager";
-import { ILayer, LayerEvent, PointerMoveOrDown } from "../baseLayer";
 import { DummyLayer } from "../_DummyLayer";
 import {
     handleEventsCurrentSetting,
     MinimalSettings,
-    MinimalState,
+    TwoPointProps,
 } from "./twoPoint";
 
-type TwoPointLayer<
-    ObjectState extends MinimalState = MinimalState,
-    RawSettings = object,
-> = ILayer<ObjectState, RawSettings> & {
-    settings: MinimalSettings & { [k: string]: any };
+type TwoPointLayer = ILayer<TwoPointProps> & {
+    settings: MinimalSettings;
 };
 
 describe("twoPoint.handleEventsCurrentSetting", () => {
@@ -55,11 +56,11 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
         applySettings(layer);
 
         const selectPoints = jest.fn();
-        const essentials = getEventEssentials<MinimalState>();
+        const essentials = getEventEssentials<TwoPointProps>();
         essentials.grid.selectPointsWithCursor = selectPoints;
 
         selectPoints.mockReturnValueOnce(["a"]);
-        let fakeEvent: LayerEvent<MinimalState> = {
+        let fakeEvent: LayerEvent<TwoPointProps> = {
             ...essentials,
             ...getPointerEvent({ type: "pointerDown" }),
         };
@@ -92,11 +93,11 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
         applySettings(layer);
 
         const selectPoints = jest.fn();
-        const essentials = getEventEssentials<MinimalState>();
+        const essentials = getEventEssentials<TwoPointProps>();
         essentials.grid.selectPointsWithCursor = selectPoints;
 
         selectPoints.mockReturnValueOnce(["a"]);
-        let fakeEvent: LayerEvent<MinimalState> = {
+        let fakeEvent: LayerEvent<TwoPointProps> = {
             ...essentials,
             ...getPointerEvent({ type: "pointerDown" }),
         };
@@ -152,10 +153,10 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
         const layer = getFakeLayer();
         applySettings(layer);
 
-        const stored: LayerStorage<MinimalState> = {
+        const stored: LayerStorage<TwoPointProps> = {
             renderOrder: ["a;b"],
             objects: {
-                "a;b": { points: ["a", "b"], state: { x: 42 } },
+                "a;b": { id: "a;b", points: ["a", "b"], state: { x: 42 } },
             },
         };
         const essentials = getEventEssentials({ stored });
@@ -163,7 +164,7 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
         essentials.grid.selectPointsWithCursor = selectPoints;
 
         selectPoints.mockReturnValueOnce(["b"]);
-        let fakeEvent: LayerEvent<MinimalState> = {
+        let fakeEvent: LayerEvent<TwoPointProps> = {
             ...essentials,
             ...getPointerEvent({ type: "pointerDown" }),
         };
@@ -191,10 +192,14 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
         const layer = getFakeLayer();
         applySettings(layer);
 
-        const stored: LayerStorage<MinimalState> = {
+        const stored: LayerStorage<TwoPointProps> = {
             renderOrder: ["a;b"],
             objects: {
-                "a;b": { points: ["a", "b"], state: { different: true } },
+                "a;b": {
+                    id: "a;b",
+                    points: ["a", "b"],
+                    state: { different: true },
+                },
             },
         };
         const essentials = getEventEssentials({ stored });
@@ -202,7 +207,7 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
         essentials.grid.selectPointsWithCursor = selectPoints;
 
         selectPoints.mockReturnValueOnce(["b"]);
-        let fakeEvent: LayerEvent<MinimalState> = {
+        let fakeEvent: LayerEvent<TwoPointProps> = {
             ...essentials,
             ...getPointerEvent({ type: "pointerDown" }),
         };
@@ -234,10 +239,10 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
         const layer = getFakeLayer();
         applySettings(layer);
 
-        const stored: LayerStorage<MinimalState> = {
+        const stored: LayerStorage<TwoPointProps> = {
             renderOrder: ["1;2"],
             objects: {
-                "1;2": { points: ["1", "2"], state: { x: 42 } },
+                "1;2": { id: "1;2", points: ["1", "2"], state: { x: 42 } },
             },
         };
         const essentials = getEventEssentials({ stored });
@@ -245,7 +250,7 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
         essentials.grid.selectPointsWithCursor = selectPoints;
 
         selectPoints.mockReturnValueOnce(["3"]);
-        let fakeEvent: LayerEvent<MinimalState> = {
+        let fakeEvent: LayerEvent<TwoPointProps> = {
             ...essentials,
             ...getPointerEvent({ type: "pointerDown" }),
         };
@@ -293,10 +298,10 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
         const layer = getFakeLayer();
         applySettings(layer);
 
-        const stored: LayerStorage<MinimalState> = {
+        const stored: LayerStorage<TwoPointProps> = {
             renderOrder: ["1;2"],
             objects: {
-                "1;2": { points: ["1", "2"], state: { x: 42 } },
+                "1;2": { id: "1;2", points: ["1", "2"], state: { x: 42 } },
             },
         };
         const essentials = getEventEssentials({ stored });
@@ -304,7 +309,7 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
         essentials.grid.selectPointsWithCursor = selectPoints;
 
         selectPoints.mockReturnValueOnce(["1"]);
-        let fakeEvent: LayerEvent<MinimalState> = {
+        let fakeEvent: LayerEvent<TwoPointProps> = {
             ...essentials,
             ...getPointerEvent({ type: "pointerDown" }),
         };

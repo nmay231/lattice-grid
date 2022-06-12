@@ -1,12 +1,13 @@
-import { PointerEvent } from "react";
 import { getLayers, selectLayer } from "../atoms/layers";
-import { keypressString } from "../utils/stringUtils";
+import { getSettings } from "../atoms/settings";
 import {
     CleanedDOMEvent,
     ILayer,
     LayerEvent,
+    LayerProps,
     PointerMoveOrDown,
-} from "./layers/baseLayer";
+} from "../globals";
+import { keypressString } from "../utils/stringUtils";
 import { PuzzleManager } from "./PuzzleManager";
 
 export class ControlsManager {
@@ -49,9 +50,17 @@ export class ControlsManager {
         event.stopPropagation();
     }
 
+    getCurrentLayer() {
+        const currentLayerId = getLayers().currentLayerId;
+
+        return currentLayerId === null
+            ? null
+            : this.puzzle.layers[currentLayerId];
+    }
+
     cleanPointerEvent(
         type: "pointerDown" | "pointerMove",
-        event: PointerEvent,
+        event: React.PointerEvent,
     ): PointerMoveOrDown {
         const { clientX, clientY, currentTarget } = event;
         const {
@@ -79,13 +88,12 @@ export class ControlsManager {
     }
 
     applyLayerEvent(layer: ILayer, event: CleanedDOMEvent) {
-        const { grid, storage, settings } = this.puzzle;
-        const layerEvent: LayerEvent = {
+        const { grid, storage } = this.puzzle;
+        const layerEvent: LayerEvent<LayerProps> = {
             ...event,
             grid,
             storage,
-            stored: storage.getStored({ grid, layer }),
-            settings,
+            settings: getSettings(),
             tempStorage: this.tempStorage || {},
         };
 
@@ -130,50 +138,54 @@ export class ControlsManager {
         }
     }
 
-    onPointerDown(rawEvent: PointerEvent) {
+    onPointerDown(rawEvent: React.PointerEvent) {
         // TODO: allow for two fingers to zoom
         if (!rawEvent.isPrimary) {
             return;
         }
-        const layer = this.puzzle.getCurrentLayer();
+        const layer = this.getCurrentLayer();
+        if (!layer) return;
         this.tempStorage = {};
         const event = this.cleanPointerEvent("pointerDown", rawEvent);
         this.applyLayerEvent(layer, event);
     }
 
-    onPointerMove(rawEvent: PointerEvent) {
+    onPointerMove(rawEvent: React.PointerEvent) {
         if (!rawEvent.isPrimary || !this.tempStorage) {
             return;
         }
 
-        const layer = this.puzzle.getCurrentLayer();
+        const layer = this.getCurrentLayer();
+        if (!layer) return;
         const event = this.cleanPointerEvent("pointerMove", rawEvent);
         this.applyLayerEvent(layer, event);
     }
 
-    onPointerUp(rawEvent: PointerEvent) {
+    onPointerUp(rawEvent: React.PointerEvent) {
         if (!rawEvent.isPrimary || !this.tempStorage) {
             return;
         }
 
-        const layer = this.puzzle.getCurrentLayer();
+        const layer = this.getCurrentLayer();
+        if (!layer) return;
         this.applyLayerEvent(layer, { type: "pointerUp" });
     }
 
-    onPointerLeave(rawEvent: PointerEvent) {
+    onPointerLeave(rawEvent: React.PointerEvent) {
         if (!rawEvent.isPrimary || !this.tempStorage) {
             return;
         }
 
         clearTimeout(this.blurCanvasTimeoutId);
-        const timeoutDelay = this.puzzle.settings.actionWindowMs;
+        const timeoutDelay = getSettings().actionWindowMs;
         this.blurCanvasTimeoutId = setTimeout(() => {
-            const layer = this.puzzle.getCurrentLayer();
+            const layer = this.getCurrentLayer();
+            if (!layer) return;
             this.applyLayerEvent(layer, { type: "pointerUp" });
         }, timeoutDelay) as unknown as number;
     }
 
-    onPointerEnter(event: PointerEvent) {
+    onPointerEnter(event: React.PointerEvent) {
         if (!event.isPrimary || !this.tempStorage) {
             return;
         }
@@ -181,11 +193,11 @@ export class ControlsManager {
         clearTimeout(this.blurCanvasTimeoutId);
     }
 
-    onContextMenu(event: MouseEvent) {
+    onContextMenu(event: React.MouseEvent) {
         event.preventDefault();
     }
 
-    handleKeyDown(rawEvent: KeyboardEvent) {
+    handleKeyDown(rawEvent: React.KeyboardEvent) {
         const keypress = keypressString(rawEvent);
 
         if (
@@ -201,7 +213,8 @@ export class ControlsManager {
             return;
         }
 
-        let layer = this.puzzle.getCurrentLayer();
+        let layer = this.getCurrentLayer();
+        if (!layer) return;
 
         if (keypress === "Escape") {
             this.applyLayerEvent(layer, { type: "cancelAction" });
@@ -224,34 +237,37 @@ export class ControlsManager {
                     appliedActions[appliedActions.length - 1].layerId;
                 this.selectLayer({ id: newLayerId });
 
-                layer = this.puzzle.getCurrentLayer();
-                this.applyLayerEvent(layer, {
-                    type: "undoRedo",
-                    actions: appliedActions,
-                });
+                layer = this.getCurrentLayer();
+                if (layer)
+                    this.applyLayerEvent(layer, {
+                        type: "undoRedo",
+                        actions: appliedActions,
+                    });
             }
         } else {
             this.applyLayerEvent(layer, { type: "keyDown", keypress });
         }
     }
 
-    onPointerUpOutside(rawEvent: PointerEvent) {
+    onPointerUpOutside(rawEvent: React.PointerEvent) {
         if (
             rawEvent.isPrimary &&
             (rawEvent.target as any)?.id === "canvas-container"
         ) {
-            const layer = this.puzzle.getCurrentLayer();
+            const layer = this.getCurrentLayer();
+            if (!layer) return;
             this.applyLayerEvent(layer, { type: "cancelAction" });
         }
     }
 
-    onPageBlur(rawEvent: FocusEvent) {
+    onPageBlur(rawEvent: React.FocusEvent) {
         // TODO: Why am I asking if the rawEvent isPrimary?
         if (!(rawEvent as any).isPrimary || !this.tempStorage) {
             return;
         }
 
-        const layer = this.puzzle.getCurrentLayer();
+        const layer = this.getCurrentLayer();
+        if (!layer) return;
         this.applyLayerEvent(layer, { type: "pointerUp" });
         clearTimeout(this.blurCanvasTimeoutId);
     }

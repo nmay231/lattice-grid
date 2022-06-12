@@ -1,33 +1,24 @@
 import { getBlitGroups, OVERLAY_LAYER_ID, setBlitGroups } from "../atoms/blits";
 import { setCanvasSize } from "../atoms/canvasSize";
 import { addLayer, getLayers, removeLayer, setLayers } from "../atoms/layers";
-import { initialSettings } from "../atoms/settings";
+import { getSettings } from "../atoms/settings";
+import { Grid, ILayer, LocalStorageData, RenderChange } from "../globals";
 import { ControlsManager } from "./ControlsManager";
 import { SquareGrid } from "./grids/SquareGrid";
 import { availableLayers } from "./layers";
-import { ILayer } from "./layers/baseLayer";
 import { CellOutlineLayer } from "./layers/CellOutline";
 import { OverlayLayer } from "./layers/Overlay";
 import { SelectionLayer } from "./layers/Selection";
 import { StorageManager } from "./StorageManager";
 
-type RenderChange =
-    | { type: "draw", layerIds: string[] | "all" }
-    | { type: "delete", layerId: string }
-    | { type: "switchLayer" }
-    | { type: "reorder" };
-
 export class PuzzleManager {
     layers: Record<string, ILayer> = {};
 
+    grid: Grid = new SquareGrid({ width: 1, height: 1 });
+    storage = new StorageManager();
+    controls = new ControlsManager(this);
+
     constructor() {
-        // TODO: consider adding a .setSettings that will call setAtomSettings
-        this.settings = initialSettings;
-
-        this.grid = new SquareGrid(this.settings, { width: 1, height: 1 });
-        this.storage = new StorageManager();
-        this.controls = new ControlsManager(this);
-
         this.loadPuzzle();
         this.resizeCanvas();
         this.renderChange({ type: "draw", layerIds: "all" });
@@ -47,7 +38,9 @@ export class PuzzleManager {
     loadPuzzle() {
         this._resetLayers();
         try {
-            const data = JSON.parse(localStorage.getItem("_currentPuzzle"));
+            const data = JSON.parse(
+                localStorage.getItem("_currentPuzzle") || "{}",
+            );
             this._loadPuzzle(data);
             this.renderChange({ type: "draw", layerIds: "all" });
         } catch (err) {
@@ -71,10 +64,11 @@ export class PuzzleManager {
         this.renderChange({ type: "draw", layerIds: "all" });
     }
 
-    _loadPuzzle(data) {
+    _loadPuzzle(data: LocalStorageData) {
         const { width, height } = data.grid;
-        this.grid.width = width;
-        this.grid.height = height;
+        // TODO: Grid.initialize(). Also, data.grid will not always be {width, height} depending on the lattice.
+        (this.grid as any).width = width;
+        (this.grid as any).height = height;
 
         for (let { layerClass, rawSettings } of data.layers) {
             this.addLayer(availableLayers[layerClass], rawSettings);
@@ -87,6 +81,12 @@ export class PuzzleManager {
     }
 
     renderChange(change: RenderChange) {
+        const { layers, currentLayerId } = getLayers();
+        const settings = getSettings();
+        if (currentLayerId === null) {
+            return;
+        }
+
         if (change.type === "reorder") {
             // I don't need to do anything because render order is handled by layersAtom
             // TODO: Remove this change event?
@@ -96,26 +96,24 @@ export class PuzzleManager {
             setBlitGroups(blitGroups);
         } else if (change.type === "switchLayer") {
             const blitGroups = { ...getBlitGroups() };
-            const layer = this.getCurrentLayer();
+            const layer = this.layers[currentLayerId];
 
             blitGroups[OVERLAY_LAYER_ID] =
                 layer.getOverlayBlits?.({
                     grid: this.grid,
                     storage: this.storage,
-                    settings: this.settings,
+                    settings,
                 }) || [];
             setBlitGroups(blitGroups);
         } else if (change.type === "draw") {
             const blitGroups = { ...getBlitGroups() };
-
-            const { layers, currentLayerId } = getLayers();
 
             // Only render the overlay blits of the current layer
             blitGroups[OVERLAY_LAYER_ID] =
                 this.layers[currentLayerId].getOverlayBlits?.({
                     grid: this.grid,
                     storage: this.storage,
-                    settings: this.settings,
+                    settings,
                 }) || [];
 
             // TODO: Allowing layerIds === "all" is mostly used for resizing the grid. How to efficiently redraw layers that depend on the size of the grid. Are there even layers other than grids that need to rerender on resizes? If there are, should they have to explicitly subscribe to these events?
@@ -131,11 +129,7 @@ export class PuzzleManager {
                     layer.getBlits?.({
                         grid: this.grid,
                         storage: this.storage,
-                        stored: this.storage.getStored({
-                            grid: this.grid,
-                            layer,
-                        }),
-                        settings: this.settings,
+                        settings,
                     }) || [];
             }
 
@@ -150,8 +144,11 @@ export class PuzzleManager {
     _saveToLocalStorage() {
         // TODO: change localStorage key and what's actually stored/how it's stored
         const data = {
-            layers: [],
-            grid: { width: this.grid.width, height: this.grid.height },
+            layers: [] as { layerClass: string; rawSettings: any }[],
+            grid: {
+                width: (this.grid as any).width,
+                height: (this.grid as any).height,
+            },
         };
         for (let fakeLayer of getLayers().layers) {
             const layer = this.layers[fakeLayer.id];
@@ -166,7 +163,7 @@ export class PuzzleManager {
     addLayer(layerClass: ILayer, settings?: object): string {
         if (layerClass.unique && layerClass.id in this.layers) {
             this.changeLayerSettings(layerClass.id, settings);
-            return;
+            return layerClass.id;
         }
 
         const layer = Object.create(layerClass);
@@ -192,7 +189,7 @@ export class PuzzleManager {
         return layer.id;
     }
 
-    removeLayer(id) {
+    removeLayer(id: string) {
         if (id in this.layers) {
             delete this.layers[id];
             removeLayer(id);
@@ -200,9 +197,9 @@ export class PuzzleManager {
         }
     }
 
-    changeLayerSettings(layerId, newSettings) {
+    changeLayerSettings(layerId: string, newSettings: any) {
         // TODO: Should I even have the "Selections" layer be with the normal layers or should it always be attached to the puzzle or grid?
-        const Selections = this.layers["Selections"];
+        const Selections = this.layers["Selections"] as typeof SelectionLayer;
         const layer = this.layers[layerId];
         const { history } =
             layer.newSettings?.({
@@ -212,6 +209,8 @@ export class PuzzleManager {
                 // TODO: If anything, I should prevent the issue where CellOutline is added before Selections therefore requiring the following optional chain. That's why I thought pre-instantiating it would be a good idea.
                 attachSelectionsHandler:
                     Selections?.attachHandler?.bind?.(Selections),
+                settings: getSettings(),
+                tempStorage: {},
             }) || {};
 
         if (history?.length) {
@@ -219,15 +218,4 @@ export class PuzzleManager {
             this.renderChange({ type: "draw", layerIds: [layer.id] });
         }
     }
-
-    // TODO: Might be unnecessary
-    getCurrentLayer() {
-        return this.layers[getLayers().currentLayerId];
-    }
 }
-
-export const POINT_TYPES = {
-    CELL: "cells",
-    EDGE: "edges",
-    CORNER: "corners",
-};

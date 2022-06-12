@@ -1,7 +1,17 @@
 import { useState } from "react";
 import styling from "./Group.module.css";
 
-export const Group = ({ children, name, expanded = false }) => {
+type GroupProps = {
+    children: React.ReactNode;
+    name: string;
+    expanded?: boolean;
+};
+
+export const Group: React.FC<GroupProps> = ({
+    children,
+    name,
+    expanded = false,
+}) => {
     const [expand, setExpand] = useState(expanded);
     return (
         <div className={styling.groupContainer}>

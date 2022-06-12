@@ -1,4 +1,22 @@
-export const Line = ({ blits, style }) => {
+export type LineBlits = {
+    id: string;
+    blitter: "line";
+    blits: Record<
+        string,
+        {
+            x1: number;
+            y1: number;
+            x2: number;
+            y2: number;
+            style?: React.SVGAttributes<SVGGElement>["style"];
+        }
+    >;
+    style?: React.SVGAttributes<SVGGElement>["style"];
+};
+
+type LineProps = Pick<LineBlits, "blits" | "style">;
+
+export const Line: React.FC<LineProps> = ({ blits, style }) => {
     return (
         <g style={style}>
             {Object.keys(blits).map((key) => {

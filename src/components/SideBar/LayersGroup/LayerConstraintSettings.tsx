@@ -11,7 +11,7 @@ import { JsonFormsWrapper } from "../../JsonFormsWrapper";
 export const LayerConstraintSettings = () => {
     const puzzle = usePuzzle();
     const { layers, currentLayerId: id } = useAtomValue(layersAtom);
-    const layer = puzzle.layers[id];
+    const layer = puzzle.layers[id || ""];
 
     const [data, setData] = useAtom(constraintSettingsAtom);
 
@@ -21,7 +21,7 @@ export const LayerConstraintSettings = () => {
         }
     }, [layer, setData]);
 
-    if (!data || !layer) {
+    if (!data || !layer || !id) {
         return <></>;
     }
 
@@ -38,8 +38,9 @@ export const LayerConstraintSettings = () => {
 
     const changed = !isEqual(data, layer.rawSettings);
 
-    const handleSubmit = (event) => {
+    const handleSubmit: React.FormEventHandler = (event) => {
         event.preventDefault();
+
         puzzle.changeLayerSettings(id, data);
 
         setData({
@@ -67,7 +68,7 @@ export const LayerConstraintSettings = () => {
             <form action="#" onSubmit={handleSubmit}>
                 <JsonFormsWrapper
                     data={data}
-                    setData={(newData) => {
+                    setData={(newData: any) => {
                         setData(newData);
                     }}
                     schema={schema}

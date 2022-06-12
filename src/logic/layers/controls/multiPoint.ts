@@ -1,24 +1,24 @@
 import { cloneDeep } from "lodash";
-import { ILayer } from "../baseLayer";
+import { ILayer, LayerProps, PointType } from "../../../globals";
 import { KeyDownEventHandler } from "../Selection";
 
-export type MinimalState = {
-    id: string;
-    points: string[];
-    state: unknown;
-};
+export interface MultiPointLayerProps extends LayerProps {
+    ObjectState: { id: string; points: string[]; state: unknown };
+    ExtraLayerStorageProps: { currentObjectId: string };
+    TempStorage: {
+        previousPoint: string;
+        batchId: number;
+        removeSingle: boolean;
+    };
+}
 
-export const handleEventsUnorderedSets = <
-    ObjectState extends MinimalState = MinimalState,
->(
-    layer: ILayer<ObjectState>,
+export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
+    layer: ILayer<LP>,
     {
         // TODO: In user settings, rename allowOverlap to "Allow partial overlap"
         allowOverlap = false,
-        handleKeyDown = null as
-            | null
-            | KeyDownEventHandler<ObjectState>["handleKeyDown"],
-        pointTypes = [] as string[],
+        handleKeyDown = null as null | KeyDownEventHandler<LP>["handleKeyDown"],
+        pointTypes = [] as PointType[],
         overwriteOthers = false,
         ensureConnected = true,
     },
@@ -58,13 +58,9 @@ export const handleEventsUnorderedSets = <
     layer.handleEvent = (event) => {
         const { grid, storage, type, tempStorage } = event;
 
-        const stored = storage.getStored<ObjectState>({ layer, grid });
-        const currentObjectId = stored.currentObjectId;
-        if (
-            currentObjectId === undefined &&
-            type !== "pointerDown" &&
-            type !== "undoRedo"
-        ) {
+        const stored = storage.getStored<LP>({ layer, grid });
+        const currentObjectId = stored.currentObjectId || "";
+        if (!currentObjectId && type !== "pointerDown" && type !== "undoRedo") {
             return {}; // Other events only matter if there is an object selected
         }
         const object = stored.objects[currentObjectId];

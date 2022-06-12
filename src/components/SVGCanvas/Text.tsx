@@ -1,38 +1,50 @@
 import { useMemo } from "react";
 
-export const Text = ({ blits, style }) => {
+export type TextBlits = {
+    id: string;
+    blitter: "text";
+    blits: any;
+    style: {
+        originY: "top" | "center" | "bottom";
+        originX: "left" | "center" | "right";
+        size?: number;
+    };
+};
+
+type TextProps = Pick<TextBlits, "blits" | "style">;
+
+export const Text: React.FC<TextProps> = ({ blits, style }) => {
     const realStyle = useMemo(() => {
         const { originY = "center", originX = "center", size } = style;
-        let dominantBaseline;
+
+        const result: React.SVGAttributes<SVGGElement>["style"] = {
+            userSelect: "none",
+            direction: "ltr",
+            fontFamily: "sans-serif",
+            fontSize: size && `${size}px`,
+        };
+
         if (originY === "top") {
-            dominantBaseline = "hanging";
+            result.dominantBaseline = "hanging";
         } else if (originY === "center") {
-            dominantBaseline = "central";
+            result.dominantBaseline = "central";
         } else if (originY === "bottom") {
-            dominantBaseline = "alphabetic";
+            result.dominantBaseline = "alphabetic";
         } else {
             throw Error(`Invalid originY=${originY}`);
         }
 
-        let textAnchor;
         if (originX === "left") {
-            textAnchor = "start";
+            result.textAnchor = "start";
         } else if (originX === "center") {
-            textAnchor = "middle";
+            result.textAnchor = "middle";
         } else if (originX === "right") {
-            textAnchor = "end";
+            result.textAnchor = "end";
         } else {
             throw Error(`Invalid originX=${originX}`);
         }
 
-        return {
-            userSelect: "none",
-            direction: "ltr",
-            dominantBaseline,
-            textAnchor,
-            fontFamily: "sans-serif",
-            fontSize: `${size}px`,
-        };
+        return result;
     }, [style]);
 
     return (

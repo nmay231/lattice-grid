@@ -1,5 +1,5 @@
+import { ILayer } from "../../globals";
 import { BackgroundColorLayer } from "./BackgroundColor";
-import { ILayer } from "./baseLayer";
 import { CellOutlineLayer } from "./CellOutline";
 import { KillerCagesLayer } from "./KillerCages";
 import { NumberLayer } from "./Number";
@@ -8,7 +8,7 @@ import { SelectionLayer } from "./Selection";
 import { SimpleLineLayer } from "./SimpleLine";
 import { ToggleCharactersLayer } from "./ToggleCharacters";
 
-const layers: ILayer<any, any>[] = [
+const layers: ILayer<any>[] = [
     BackgroundColorLayer,
     CellOutlineLayer,
     KillerCagesLayer,
