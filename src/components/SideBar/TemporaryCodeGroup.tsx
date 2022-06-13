@@ -1,11 +1,7 @@
 import { useMemo } from "react";
 import { usePuzzle } from "../../atoms/puzzle";
-import {
-    compile,
-    Context,
-    testCode,
-    testCode2,
-} from "../../logic/userComputation/run";
+import { Context } from "../../logic/userComputation/run";
+import { ToggleBlocklyModal } from "../Blockly/BlocklyModal";
 import { Group } from "./Group";
 
 export const CodeGroup = () => {
@@ -20,10 +16,13 @@ export const CodeGroup = () => {
             puzzleErrors: [],
             puzzleWarnings: [],
         };
-        return [
-            compile(context, testCode).run,
-            compile(context, testCode2).run,
-        ].map((runFunc) => {
+        // TODO: Fix compiler errors
+        return (
+            [
+                // compile(context, testCode).run,
+                // compile(context, testCode2).run,
+            ] as any[]
+        ).map((runFunc) => {
             return () => {
                 if (context.compilerErrors.length) {
                     console.log("Warning:", context.compilerErrors);
@@ -47,6 +46,7 @@ export const CodeGroup = () => {
         <Group name="Your face" expanded>
             <button onClick={run}>Click to run code</button>
             <button onClick={run2}>Click to run the second code</button>
+            <ToggleBlocklyModal />
         </Group>
     );
 };

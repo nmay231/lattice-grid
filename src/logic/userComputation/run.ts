@@ -1,4 +1,4 @@
-import { SquareGrid } from "../grids/SquareGrid";
+import { Grid } from "../../globals";
 import { StorageManager } from "../StorageManager";
 import { Variable } from "./expressions";
 import {
@@ -23,7 +23,7 @@ type CompilerError = {
 };
 
 export interface Context {
-    grid: SquareGrid;
+    grid: Grid;
     storage: StorageManager;
     layers: { [layerId: string]: any };
     variables: { [key: string]: Variable };
