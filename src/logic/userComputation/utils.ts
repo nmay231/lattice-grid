@@ -1,7 +1,8 @@
-import { Variable } from "./expressions";
+import { NeedsUpdating } from "../../globals";
+import { IVariable } from "./compile";
 
-export const convertToBool = (variable: Variable) => {
-    const x = variable.getValue();
+export const convertToBool = (variable: IVariable) => {
+    const x = (variable as NeedsUpdating).getValue();
     let bool: boolean | null = null;
     if (Array.isArray(x) && x.length) {
         bool = true;

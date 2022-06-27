@@ -176,3 +176,8 @@ export type LocalStorageData = {
         rawSettings?: object;
     }[];
 };
+
+// ======== Refactoring ========
+
+// I think I will always keep this variable to make refactoring easier.
+export type NeedsUpdating = any;
