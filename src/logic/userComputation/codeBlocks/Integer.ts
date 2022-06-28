@@ -1,4 +1,4 @@
-import { CompileContext, ICodeBlock, IVariable } from "../compile";
+import { CompileContext, ICodeBlock, IVariable } from "../../../globals";
 
 export interface IInteger {
     id: string;

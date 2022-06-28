@@ -1,5 +1,4 @@
-import { PointType } from "../../../globals";
-import { CompileContext, ICodeBlock } from "../compile";
+import { CompileContext, ICodeBlock, PointType } from "../../../globals";
 
 // TODO: Might be completely unnecessary
 

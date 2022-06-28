@@ -1,5 +1,4 @@
-import { NeedsUpdating } from "../../../globals";
-import { CompileContext, ICodeBlock } from "../compile";
+import { CompileContext, ICodeBlock, NeedsUpdating } from "../../../globals";
 
 export interface ICompare {
     id: string;

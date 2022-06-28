@@ -1,4 +1,4 @@
-import { CompileContext, ICodeBlock } from "../compile";
+import { CompileContext, ICodeBlock } from "../../../globals";
 
 export interface IDebug {
     id: string;

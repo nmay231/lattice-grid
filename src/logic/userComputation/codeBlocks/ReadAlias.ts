@@ -1,15 +1,15 @@
-import { CompileContext, ICodeBlock } from "../compile";
+import { CompileContext, ICodeBlock } from "../../../globals";
 
-export interface IReadVariable {
+export interface IReadAlias {
     id: string;
-    type: "ReadVariable";
+    type: "ReadAlias";
     name: string;
 }
 
-export class ReadVariable implements ICodeBlock<IReadVariable> {
+export class ReadAlias implements ICodeBlock<IReadAlias> {
     _underlyingExpression?: ICodeBlock;
 
-    constructor(public ctx: CompileContext, public json: IReadVariable) {}
+    constructor(public ctx: CompileContext, public json: IReadAlias) {}
 
     expandVariables() {
         if (!(this.json.name in this.ctx.variables)) {

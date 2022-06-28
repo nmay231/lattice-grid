@@ -1,3 +1,5 @@
+import { NeedsUpdating } from "../../globals";
+import { UserCodeJSON } from "../../logic/userComputation/codeBlocks";
 import { Blockly } from "../../utils/Blockly";
 
 export const codeGen = new Blockly.Generator("TODO_BETTER_NAME");
@@ -10,7 +12,7 @@ const scrub_: Blockly.Generator["scrub_"] = (block, code, ignoreNext) => {
     }
     return code;
 };
-(codeGen as any).scrub_ = scrub_;
+(codeGen as NeedsUpdating).scrub_ = scrub_;
 
 const asString = (stringName: string) => JSON.stringify(stringName);
 
@@ -25,66 +27,79 @@ const indent = (codeBlock: string) =>
         ? `[\n${codeGen.prefixLines(codeBlock + "\n]", codeGen.INDENT)}`
         : "[]";
 
-(codeGen as any)["for_each"] = (block: Blockly.Block) => {
-    const variableNameText = block.getFieldValue("variableName");
-    const headerValue = codeGen.valueToCode(block, "header", 0);
-    const codeBodyStatements = codeGen.statementToCode(block, "codeBody");
+const generators = codeGen as NeedsUpdating as Record<
+    UserCodeJSON["id"],
+    (block: Blockly.Block) => string
+>;
+
+generators["ForEach"] = (block) => {
+    const variableNameText = block.getFieldValue("NAME");
+    const collectionValue = codeGen.valueToCode(block, "COLLECTION", 0);
+    const codeBodyStatements = codeGen.statementToCode(block, "CODE_BODY");
 
     return `{
     "id": ${asString(block.id)},
     "type": "ForEach",
     "variableName": ${asString(variableNameText)},
-    "expression": ${dedentFirstLine(headerValue)},
+    "expression": ${dedentFirstLine(collectionValue)},
     "codeBody": ${indent(codeBodyStatements)}
 }`;
 };
 
-(codeGen as any)["if_else"] = (block: Blockly.Block) => {
-    const nameValue = codeGen.valueToCode(block, "NAME", 0);
-    const thenStatements = codeGen.statementToCode(block, "then");
-    const elseStatements = codeGen.statementToCode(block, "else");
+generators["IfElse"] = (block) => {
+    const expressionValue = codeGen.valueToCode(block, "EXPRESSION", 0);
+    const ifStatements = codeGen.statementToCode(block, "IF");
+    const elseStatements = codeGen.statementToCode(block, "ELSE");
 
     return `{
     "id": ${asString(block.id)},
     "type": "IfElse",
-    "expression": ${dedentFirstLine(nameValue)},
-    "ifTrue": ${indent(thenStatements)},
+    "expression": ${dedentFirstLine(expressionValue)},
+    "ifTrue": ${indent(ifStatements)},
     "ifFalse": ${indent(elseStatements)}
 }`;
 };
 
-(codeGen as any)["mark_incomplete"] = (block: Blockly.Block) => {
-    const expressionValue = codeGen.valueToCode(block, "expression", 0);
-    // TODO: Is this field definition wrong?
-    // const usermessageText = block.getFieldValue("userMessage");
-    const userMessageValue = codeGen.valueToCode(block, "userMessage", 0);
+generators["MarkInvalid"] = (block) => {
+    const expressionValue = codeGen.valueToCode(block, "EXPRESSION", 0);
+    const userMessageValue = codeGen.valueToCode(block, "MESSAGE", 0);
+    const highlightedValue = codeGen.valueToCode(block, "HIGHLIGHTED", 0);
 
     return `{
     "id": ${asString(block.id)},
-    "type": "MarkIncomplete",
+    "type": "MarkInvalid",
     "expression": ${dedentFirstLine(expressionValue)},
     "userMessage": ${dedentFirstLine(userMessageValue)}
+    "highlighted": ${highlightedValue}
 }`;
 };
 
-(codeGen as any)["user_alias"] = (block: Blockly.Block) => {
-    const expressionValue = codeGen.valueToCode(block, "expression", 0);
-    // -const nameText = block.getFieldValue("name");
-    const aliasNameValue = codeGen.valueToCode(block, "aliasName", 0);
+generators["DefineAlias"] = (block) => {
+    const expressionValue = codeGen.valueToCode(block, "EXPRESSION", 0);
+    const nameValue = codeGen.valueToCode(block, "NAME", 0);
 
     return `{
     "id": ${asString(block.id)},
-    "type": "Alias",
-    "name": ${dedentFirstLine(aliasNameValue)},
+    "type": "DefineAlias",
+    "name": ${dedentFirstLine(nameValue)},
     "expression": ${dedentFirstLine(expressionValue)}
 }`;
 };
 
-(codeGen as any)["root_block"] = (block: Blockly.Block) => {
-    // -const typeDropdownGrid = block.getFieldValue("typeGrid");
-    // const layer1Dropdown = block.getFieldValue("layer1");
-    // TODO: mutator to add a list of layer types dynamically
-    const codeBodyStatements = codeGen.statementToCode(block, "codeBody");
+generators["ReadAlias"] = (block) => {
+    const nameValue = codeGen.valueToCode(block, "NAME", 0);
+
+    return `{
+    "id": ${asString(block.id)},
+    "type": "ReadAlias",
+    "name": ${dedentFirstLine(nameValue)},
+}`;
+};
+
+generators["RootBlock"] = (block) => {
+    // -const typeDropdownGrid = block.getFieldValue("GRID_TYPE");
+    // const layer1Dropdown = block.getFieldValue("LAYER_CONFIG");
+    const codeBodyStatements = codeGen.statementToCode(block, "CODE_BODY");
 
     return `{
     "id": ${asString(block.id)},

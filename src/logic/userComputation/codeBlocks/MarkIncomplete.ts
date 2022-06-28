@@ -1,11 +1,8 @@
-import { NeedsUpdating } from "../../../globals";
-import { CompileContext, ICodeBlock } from "../compile";
+import { CompileContext, ICodeBlock, NeedsUpdating } from "../../../globals";
 
-// TODO: Rename to mark invalid?
-
-export interface IMarkIncomplete {
+export interface IMarkInvalid {
     id: string;
-    type: "MarkIncomplete";
+    type: "MarkInvalid";
     expression: NeedsUpdating;
     userMessage?: string;
 }
@@ -25,6 +22,6 @@ export interface IMarkIncomplete {
 //     };
 // };
 
-export class MarkIncomplete implements ICodeBlock<IMarkIncomplete> {
-    constructor(public ctx: CompileContext, public json: IMarkIncomplete) {}
+export class MarkInvalid implements ICodeBlock<IMarkInvalid> {
+    constructor(public ctx: CompileContext, public json: IMarkInvalid) {}
 }

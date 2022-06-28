@@ -1,14 +1,15 @@
-import { CompileContext, ICodeBlock, UserCodeJSON } from "../compile";
+import { UserCodeJSON } from ".";
+import { CompileContext, ICodeBlock } from "../../../globals";
 
-export interface IAlias {
+export interface IDefineAlias {
     id: string;
-    type: "Alias";
+    type: "DefineAlias";
     name: string;
     expression: UserCodeJSON;
 }
 
-export class Alias implements ICodeBlock<IAlias> {
-    constructor(public ctx: CompileContext, public json: IAlias) {}
+export class DefineAlias implements ICodeBlock<IDefineAlias> {
+    constructor(public ctx: CompileContext, public json: IDefineAlias) {}
 
     registerVariableNames() {
         if (this.json.name in this.ctx.variables) {

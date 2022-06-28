@@ -1,5 +1,5 @@
-import { NeedsUpdating } from "../../../globals";
-import { CompileContext, ICodeBlock, UserCodeJSON } from "../compile";
+import { UserCodeJSON } from ".";
+import { CompileContext, ICodeBlock, NeedsUpdating } from "../../../globals";
 
 export interface IIfElse {
     id: string;

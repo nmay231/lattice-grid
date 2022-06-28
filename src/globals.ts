@@ -5,6 +5,66 @@ import { TextBlits } from "./components/SVGCanvas/Text";
 import { availableLayers } from "./logic/layers";
 import { SelectionExtraProps } from "./logic/layers/Selection";
 import { StorageManager } from "./logic/StorageManager";
+import { UserCodeJSON } from "./logic/userComputation/codeBlocks";
+
+// ======== Compilation ========
+
+type PuzzleError = {
+    message: string;
+    objects?: {
+        layerId: string;
+        gridId: string;
+        objectIds: string[];
+    };
+};
+
+type CompilerError = {
+    message: string;
+    internalError: boolean;
+    codeBlockIds: string[];
+};
+
+export interface CompileContext {
+    // TODO: Ensure that fields of this context are static after compilation and are not dynamic each code run
+    codeBlocks: Record<string, ICodeBlock>;
+    variables: { [key: string]: ICodeBlock };
+    compilerErrors: CompilerError[];
+
+    // That means that these should only be passed to computation at runtime
+    layers: { [layerId: string]: any };
+    grid: Grid;
+    storage: StorageManager;
+    // And even these should probably be so as well, I think
+    puzzleErrors: PuzzleError[];
+    puzzleWarnings: PuzzleError[];
+}
+
+export type ICodeBlock<T extends UserCodeJSON = UserCodeJSON> = {
+    json: T;
+
+    registerVariableNames?: () => void;
+    expandVariables?: () => void;
+    variableInfo?: () => IVariable | null;
+    validateInputs?: () => void;
+    // Figure out the requirements of this function. Should IVariable have getValue()?
+    // What about IVariable.effectiveRank?
+    // Should this be required?
+    runOnce?: () => void;
+
+    // validation: expression type+rank validation, variable scope checks, alias expansion ->
+    // optimization: unused code errors, optimization pattern matching, caching static values ->
+    // runtime: step-solver, puzzle solution validation ->
+    // stringify: compression (var name shorten, remove useless aliases), debug output (basically a memory dump)
+};
+
+export interface IVariable {
+    // For now, I think I'll take after the MatLab style of every variable being a nested array of a scalar type.
+    scalarType: "boolean" | "integer" | "point" | "object";
+    rank: number;
+    effectiveRank?: number; // TODO: Is this what I need to handle iteration in for-each loops?
+    // TODO: Eventually, I want a convenient function that will return values in the specified rank
+    // getValue: () => any;
+}
 
 // ======== Explicit Type Names ========
 

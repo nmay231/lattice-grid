@@ -1,4 +1,5 @@
-import { compile, CompileContext, ICodeBlock, UserCodeJSON } from "../compile";
+import { UserCodeJSON } from ".";
+import { CompileContext, ICodeBlock, NeedsUpdating } from "../../../globals";
 
 export interface IRootBlock {
     id: string;
@@ -9,7 +10,8 @@ export interface IRootBlock {
 export class RootBlock implements ICodeBlock<IRootBlock> {
     constructor(public ctx: CompileContext, public json: IRootBlock) {
         for (let code of json.codeBody) {
-            compile(ctx, code);
+            // -compile(ctx, code);
+            (1 as NeedsUpdating)(ctx, code);
         }
     }
 

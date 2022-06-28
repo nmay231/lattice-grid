@@ -3,12 +3,11 @@ import { useLocalStorage } from "@mantine/hooks";
 import { atom, useAtom, useSetAtom } from "jotai";
 import React, { useEffect, useRef, useState } from "react";
 import { usePuzzle } from "../../atoms/puzzle";
-import { addAliasCategoryToToolbox } from "../../logic/userComputation/compile";
-import { ComputationManager } from "../../logic/userComputation/ComputationManager";
+import { ComputeManager } from "../../logic/userComputation/ComputeManager";
+import { addAliasCategoryToToolbox } from "../../logic/userComputation/utils";
 import { Blockly } from "../../utils/Blockly";
 import "./blocklyUI";
 import { codeGen } from "./customCodeGen";
-// -import "./javascriptCodeGen";
 
 const modalAtom = atom(true);
 
@@ -40,12 +39,12 @@ export const BlocklyModal: React.FC = () => {
                     kind: "category",
                     name: "statements",
                     contents: [
-                        { kind: "block", type: "objects_of_layer" },
-                        { kind: "block", type: "if_else" },
-                        { kind: "block", type: "for_each" },
-                        { kind: "block", type: "mark_incomplete" },
-                        { kind: "block", type: "user_alias" },
-                        { kind: "block", type: "root_block" },
+                        // -{ kind: "block", type: "ObjectsOfLayer" },
+                        { kind: "block", type: "IfElse" },
+                        { kind: "block", type: "ForEach" },
+                        { kind: "block", type: "MarkInvalid" },
+                        { kind: "block", type: "DefineAlias" },
+                        { kind: "block", type: "RootBlock" },
                     ],
                 },
                 {
@@ -80,7 +79,7 @@ export const BlocklyModal: React.FC = () => {
     const compileAndRun = () => {
         const topBlocks = Blockly.getMainWorkspace()
             .getTopBlocks(true)
-            .filter((block) => block.type === "root_block");
+            .filter((block) => block.type === "RootBlock");
         if (!topBlocks.length) {
             console.error("no root blocks");
             return;
@@ -91,13 +90,8 @@ export const BlocklyModal: React.FC = () => {
 
         const s = codeGen.blockToCode(topBlocks[0]) as string;
         let json: any;
-        try {
-            json = JSON.parse(s);
-        } catch {
-            return console.error("failed to parse:", s);
-        }
 
-        const compute = new ComputationManager(puzzle);
+        const compute = new ComputeManager(puzzle);
         try {
             compute.compile(json);
             console.log("Errors:", ...compute.ctx.compilerErrors);
@@ -137,12 +131,14 @@ export const BlocklyModal: React.FC = () => {
     );
 };
 
-export const ToggleBlocklyModal: React.FC = () => {
+export const ToggleBlocklyModal: React.FC<{ children: string }> = ({
+    children,
+}) => {
     const setOpened = useSetAtom(modalAtom);
 
     return (
         <button onClick={() => setOpened((opened) => !opened)}>
-            Toggle Blockly
+            {children}
         </button>
     );
 };

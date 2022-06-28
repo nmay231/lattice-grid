@@ -4,7 +4,7 @@ import { Group } from "./Group";
 export const CodeGroup = () => {
     return (
         <Group name="Constraints" expanded>
-            <ToggleBlocklyModal />
+            <ToggleBlocklyModal>Show Constraints</ToggleBlocklyModal>
         </Group>
     );
 };

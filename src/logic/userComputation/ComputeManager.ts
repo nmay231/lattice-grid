@@ -1,5 +1,25 @@
+import { CompileContext, ICodeBlock, NeedsUpdating } from "../../globals";
 import { PuzzleManager } from "../PuzzleManager";
-import { compile, CompileContext, ICodeBlock } from "./compile";
+import { CodeBlocks, UserCodeJSON } from "./codeBlocks";
+
+const compile = (ctx: CompileContext, json: UserCodeJSON): void => {
+    try {
+        if (!(json.type in CodeBlocks)) {
+            throw Error("" as NeedsUpdating);
+        }
+        const codeBlock = new CodeBlocks[json.type](
+            ctx,
+            json as any,
+        ) as ICodeBlock;
+        ctx.codeBlocks[json.id] = codeBlock;
+    } catch {
+        ctx.compilerErrors.push({
+            message: `Failed to initialize "${json.type}" block`,
+            internalError: true,
+            codeBlockIds: [json.id],
+        });
+    }
+};
 
 type KeysMatching<Obj, Type> = keyof Obj extends infer K
     ? K extends keyof Obj
@@ -9,7 +29,9 @@ type KeysMatching<Obj, Type> = keyof Obj extends infer K
         : never
     : never;
 
-export class ComputationManager {
+export class ComputeManager {
+    codeBlocks: Record<string, ICodeBlock> = {}; // string = BlockId
+    variables: Record<string, ICodeBlock> = {}; // string = variable name
     ctx: CompileContext;
 
     constructor(private puzzle: PuzzleManager) {
