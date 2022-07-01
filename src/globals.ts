@@ -7,9 +7,8 @@ import { SelectionExtraProps } from "./logic/layers/Selection";
 import { StorageManager } from "./logic/StorageManager";
 import { UserCodeJSON } from "./logic/userComputation/codeBlocks";
 
-// ======== Compilation ========
-
-type PuzzleError = {
+// #region - Compilation
+export type PuzzleError = {
     message: string;
     objects?: {
         layerId: string;
@@ -18,26 +17,11 @@ type PuzzleError = {
     };
 };
 
-type CompilerError = {
+export type CompilerError = {
     message: string;
     internalError: boolean;
     codeBlockIds: string[];
 };
-
-export interface CompileContext {
-    // TODO: Ensure that fields of this context are static after compilation and are not dynamic each code run
-    codeBlocks: Record<string, ICodeBlock>;
-    variables: { [key: string]: ICodeBlock };
-    compilerErrors: CompilerError[];
-
-    // That means that these should only be passed to computation at runtime
-    layers: { [layerId: string]: any };
-    grid: Grid;
-    storage: StorageManager;
-    // And even these should probably be so as well, I think
-    puzzleErrors: PuzzleError[];
-    puzzleWarnings: PuzzleError[];
-}
 
 export type ICodeBlock<T extends UserCodeJSON = UserCodeJSON> = {
     json: T;
@@ -65,18 +49,18 @@ export interface IVariable {
     // TODO: Eventually, I want a convenient function that will return values in the specified rank
     // getValue: () => any;
 }
+// #endregion
 
-// ======== Explicit Type Names ========
-
+// #region - Explicit Type Names
 // TODO: Replace all relevant instances of the plain types with these explicit types.
 // It helps with changing all of the types if necessary, and also with being explicit with how composite types are used.
 export type Point = string;
 export type Delta = { dx: number; dy: number };
 
 export type PointType = "cells" | "edges" | "corners";
+// #endregion
 
-// ======== Grids ========
-
+// #region - Grids
 export type Grid = {
     id: string;
     // TODO: More specific types
@@ -110,9 +94,9 @@ export type Grid = {
         resize: (amount: number) => void;
     }[];
 };
+// #endregion
 
-// ======== Layers ========
-
+// #region - Layers
 export type PointerMoveOrDown = {
     type: "pointerDown" | "pointerMove";
     points: string[];
@@ -188,9 +172,9 @@ export type ILayer<LP extends LayerProps = LayerProps> = {
         data: Omit<LayerEventEssentials<LP>, "tempStorage">,
     ) => BlitGroup[];
 };
+// #endregion
 
-// ======== Undo-Redo History ========
-
+// #region - Undo-Redo History
 export type LayerStorage<LP extends LayerProps = LayerProps> = {
     renderOrder: string[];
     objects: Record<string, LP["ObjectState"]>;
@@ -215,9 +199,9 @@ export type History = {
     actions: HistoryAction[];
     index: number;
 };
+// #endregion
 
-// ======== Rendering ========
-
+// #region - Rendering
 export type RenderChange =
     | { type: "draw"; layerIds: string[] | "all" }
     | { type: "delete"; layerId: string }
@@ -226,9 +210,9 @@ export type RenderChange =
 
 // TODO: More specific types
 export type BlitGroup = LineBlits | TextBlits | PolygonBlits;
+// #endregion
 
-// ======== Parsing ========
-
+// #region - Parsing
 export type LocalStorageData = {
     grid: { width: number; height: number };
     layers: {
@@ -236,8 +220,9 @@ export type LocalStorageData = {
         rawSettings?: object;
     }[];
 };
+// #endregion
 
-// ======== Refactoring ========
-
+// #region - Refactoring
 // I think I will always keep this variable to make refactoring easier.
 export type NeedsUpdating = any;
+// #endregion

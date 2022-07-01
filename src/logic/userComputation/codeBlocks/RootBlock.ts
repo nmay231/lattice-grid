@@ -1,5 +1,6 @@
 import { UserCodeJSON } from ".";
-import { CompileContext, ICodeBlock, NeedsUpdating } from "../../../globals";
+import { ICodeBlock } from "../../../globals";
+import { ComputeManager } from "../ComputeManager";
 
 export interface IRootBlock {
     id: string;
@@ -8,16 +9,21 @@ export interface IRootBlock {
 }
 
 export class RootBlock implements ICodeBlock<IRootBlock> {
-    constructor(public ctx: CompileContext, public json: IRootBlock) {
-        for (let code of json.codeBody) {
-            // -compile(ctx, code);
-            (1 as NeedsUpdating)(ctx, code);
+    constructor(public compute: ComputeManager, public json: IRootBlock) {
+        if (!Array.isArray(json.codeBody)) {
+            compute.compilerErrors.push({
+                message: "RootBlock requires a codeBody attribute",
+                internalError: compute.weGeneratedTheCode,
+                codeBlockIds: [json.id],
+            });
+            return;
         }
+        json.codeBody.forEach((block) => compute.compileBlock(this, block));
     }
 
     validateInputs() {
         if (!this.json.codeBody.length) {
-            this.ctx.compilerErrors.push({
+            this.compute.compilerErrors.push({
                 message: "The root block must have at least one statement",
                 internalError: false,
                 codeBlockIds: [this.json.id],

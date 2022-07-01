@@ -1,5 +1,6 @@
 import { UserCodeJSON } from ".";
-import { CompileContext, ICodeBlock, NeedsUpdating } from "../../../globals";
+import { ICodeBlock, NeedsUpdating } from "../../../globals";
+import { ComputeManager } from "../ComputeManager";
 
 export interface IIfElse {
     id: string;
@@ -29,5 +30,12 @@ export interface IIfElse {
 // };
 
 export class IfElse implements ICodeBlock<IIfElse> {
-    constructor(public ctx: CompileContext, public json: IIfElse) {}
+    constructor(public compute: ComputeManager, public json: IIfElse) {
+        if (json.ifTrue?.length) {
+            json.ifTrue.forEach((block) => compute.compileBlock(this, block));
+        }
+        if (json.ifFalse?.length) {
+            json.ifFalse.forEach((block) => compute.compileBlock(this, block));
+        }
+    }
 }

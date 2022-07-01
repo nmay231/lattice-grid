@@ -1,4 +1,5 @@
-import { CompileContext, ICodeBlock } from "../../../globals";
+import { ICodeBlock } from "../../../globals";
+import { ComputeManager } from "../ComputeManager";
 
 export interface IObjectSelector {
     id: string;
@@ -8,7 +9,7 @@ export interface IObjectSelector {
     // filters: any,
 }
 
-// export const objectSelectorExpression = (
+// -export const objectSelectorExpression = (
 //     ctx: Context,
 //     userCode: ObjectSelector,
 // ): Variable => {
@@ -25,5 +26,5 @@ export interface IObjectSelector {
 // };
 
 export class ObjectSelector implements ICodeBlock<IObjectSelector> {
-    constructor(public ctx: CompileContext, public json: IObjectSelector) {}
+    constructor(public compute: ComputeManager, public json: IObjectSelector) {}
 }

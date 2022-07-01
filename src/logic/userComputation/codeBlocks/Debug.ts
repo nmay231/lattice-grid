@@ -1,4 +1,5 @@
-import { CompileContext, ICodeBlock } from "../../../globals";
+import { ICodeBlock } from "../../../globals";
+import { ComputeManager } from "../ComputeManager";
 
 export interface IDebug {
     id: string;
@@ -7,16 +8,16 @@ export interface IDebug {
 }
 
 export class Debug implements ICodeBlock<IDebug> {
-    constructor(public ctx: CompileContext, public json: IDebug) {}
+    constructor(public compute: ComputeManager, public json: IDebug) {}
 
     runOnce() {
-        if (!(this.json.variable in this.ctx.variables)) {
-            this.ctx.compilerErrors.push({
+        if (!(this.json.variable in this.compute.variables)) {
+            this.compute.compilerErrors.push({
                 message: `Missing variable name "${this.json.variable}"`,
                 internalError: false,
                 codeBlockIds: [this.json.id],
             });
         }
-        // -console.log(this.ctx.variables[this.json.variable].getValue?.());
+        // -console.log(this.compute .variables[this.json.variable].getValue?.());
     }
 }

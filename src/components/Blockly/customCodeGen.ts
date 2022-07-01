@@ -4,6 +4,7 @@ import { Blockly } from "../../utils/Blockly";
 
 export const codeGen = new Blockly.Generator("TODO_BETTER_NAME");
 codeGen.INDENT = "    ";
+const PRECEDENCE_ATOMIC = 0;
 
 const scrub_: Blockly.Generator["scrub_"] = (block, code, ignoreNext) => {
     const nextBlock = block.nextConnection?.targetBlock();
@@ -19,18 +20,32 @@ const asString = (stringName: string) => JSON.stringify(stringName);
 // TODO: To make indentation easier, I could require the parent element to include the wrapping parenthesis
 
 // This indents everything but the first line of the codeBlock
-const dedentFirstLine = (codeBlock: string) =>
-    codeBlock.slice(codeGen.INDENT.length) || null;
+const oneBlock = (codeBlock: string) =>
+    codeGen
+        .prefixLines(codeBlock, codeGen.INDENT)
+        .slice(codeGen.INDENT.length) || null;
 
-const indent = (codeBlock: string) =>
-    codeBlock
-        ? `[\n${codeGen.prefixLines(codeBlock + "\n]", codeGen.INDENT)}`
+const manyBlocks = (codeBlocks: string) =>
+    codeBlocks
+        ? `[\n${codeGen.prefixLines(codeBlocks + "\n]", codeGen.INDENT)}`
         : "[]";
 
 const generators = codeGen as NeedsUpdating as Record<
-    UserCodeJSON["id"],
-    (block: Blockly.Block) => string
+    UserCodeJSON["type"],
+    (block: Blockly.Block) => string | [string, any]
 >;
+
+generators["DefineAlias"] = (block) => {
+    const expressionValue = codeGen.valueToCode(block, "EXPRESSION", 0);
+    const nameValue = codeGen.valueToCode(block, "NAME", 0);
+
+    return `{
+    "id": ${asString(block.id)},
+    "type": "DefineAlias",
+    "name": ${asString(nameValue)},
+    "expression": ${oneBlock(expressionValue)}
+}`;
+};
 
 generators["ForEach"] = (block) => {
     const variableNameText = block.getFieldValue("NAME");
@@ -41,8 +56,8 @@ generators["ForEach"] = (block) => {
     "id": ${asString(block.id)},
     "type": "ForEach",
     "variableName": ${asString(variableNameText)},
-    "expression": ${dedentFirstLine(collectionValue)},
-    "codeBody": ${indent(codeBodyStatements)}
+    "expression": ${oneBlock(collectionValue)},
+    "codeBody": ${manyBlocks(codeBodyStatements)}
 }`;
 };
 
@@ -54,9 +69,9 @@ generators["IfElse"] = (block) => {
     return `{
     "id": ${asString(block.id)},
     "type": "IfElse",
-    "expression": ${dedentFirstLine(expressionValue)},
-    "ifTrue": ${indent(ifStatements)},
-    "ifFalse": ${indent(elseStatements)}
+    "expression": ${oneBlock(expressionValue)},
+    "ifTrue": ${manyBlocks(ifStatements)},
+    "ifFalse": ${manyBlocks(elseStatements)}
 }`;
 };
 
@@ -68,32 +83,23 @@ generators["MarkInvalid"] = (block) => {
     return `{
     "id": ${asString(block.id)},
     "type": "MarkInvalid",
-    "expression": ${dedentFirstLine(expressionValue)},
-    "userMessage": ${dedentFirstLine(userMessageValue)}
+    "expression": ${oneBlock(expressionValue)},
+    "userMessage": ${oneBlock(userMessageValue)}
     "highlighted": ${highlightedValue}
-}`;
-};
-
-generators["DefineAlias"] = (block) => {
-    const expressionValue = codeGen.valueToCode(block, "EXPRESSION", 0);
-    const nameValue = codeGen.valueToCode(block, "NAME", 0);
-
-    return `{
-    "id": ${asString(block.id)},
-    "type": "DefineAlias",
-    "name": ${dedentFirstLine(nameValue)},
-    "expression": ${dedentFirstLine(expressionValue)}
 }`;
 };
 
 generators["ReadAlias"] = (block) => {
     const nameValue = codeGen.valueToCode(block, "NAME", 0);
 
-    return `{
+    return [
+        `{
     "id": ${asString(block.id)},
     "type": "ReadAlias",
-    "name": ${dedentFirstLine(nameValue)},
-}`;
+    "name": ${asString(nameValue)}
+}`,
+        PRECEDENCE_ATOMIC,
+    ];
 };
 
 generators["RootBlock"] = (block) => {
@@ -104,6 +110,6 @@ generators["RootBlock"] = (block) => {
     return `{
     "id": ${asString(block.id)},
     "type": "RootBlock",
-    "codeBody": ${indent(codeBodyStatements)}
+    "codeBody": ${manyBlocks(codeBodyStatements)}
 }`;
 };

@@ -1,4 +1,5 @@
-import { CompileContext, ICodeBlock } from "../../../globals";
+import { ICodeBlock } from "../../../globals";
+import { ComputeManager } from "../ComputeManager";
 
 export interface IReadAlias {
     id: string;
@@ -9,17 +10,17 @@ export interface IReadAlias {
 export class ReadAlias implements ICodeBlock<IReadAlias> {
     _underlyingExpression?: ICodeBlock;
 
-    constructor(public ctx: CompileContext, public json: IReadAlias) {}
+    constructor(public compute: ComputeManager, public json: IReadAlias) {}
 
     expandVariables() {
-        if (!(this.json.name in this.ctx.variables)) {
-            this.ctx.compilerErrors.push({
+        if (!(this.json.name in this.compute.variables)) {
+            this.compute.compilerErrors.push({
                 message: `Missing variable name "${this.json.name}"`,
                 internalError: false,
                 codeBlockIds: [this.json.id],
             });
         }
-        this._underlyingExpression = this.ctx.variables[this.json.name];
+        this._underlyingExpression = this.compute.variables[this.json.name];
     }
 
     variableInfo() {
@@ -31,7 +32,7 @@ export class ReadAlias implements ICodeBlock<IReadAlias> {
     }
 
     _uninitialized() {
-        this.ctx.compilerErrors.push({
+        this.compute.compilerErrors.push({
             message: `Uninitialized variable "${this.json.name}"`,
             internalError: true,
             codeBlockIds: [this.json.id],

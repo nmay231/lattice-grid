@@ -7,6 +7,19 @@ import { Blockly } from "../../utils/Blockly";
 
 const blocks = Blockly.Blocks as Record<UserCodeJSON["type"], NeedsUpdating>;
 
+blocks["DefineAlias"] = {
+    init(this: Blockly.Block) {
+        this.appendValueInput("EXPRESSION")
+            .setCheck(null)
+            .appendField("Define")
+            .appendField(new Blockly.FieldVariable(DEFAULT_ALIAS_NAME), "NAME")
+            .appendField("as");
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour(230);
+    },
+};
+
 blocks["ForEach"] = {
     init(this: Blockly.Block) {
         this.appendValueInput("COLLECTION")
@@ -46,19 +59,6 @@ blocks["MarkInvalid"] = {
         this.appendDummyInput()
             .appendField("highlight?")
             .appendField(new Blockly.FieldCheckbox("highlight"), "HIGHLIGHTED");
-        this.setPreviousStatement(true, null);
-        this.setNextStatement(true, null);
-        this.setColour(230);
-    },
-};
-
-blocks["DefineAlias"] = {
-    init(this: Blockly.Block) {
-        this.appendValueInput("EXPRESSION")
-            .setCheck(null)
-            .appendField("Define")
-            .appendField(new Blockly.FieldVariable(DEFAULT_ALIAS_NAME), "NAME")
-            .appendField("as");
         this.setPreviousStatement(true, null);
         this.setNextStatement(true, null);
         this.setColour(230);

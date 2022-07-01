@@ -1,25 +1,6 @@
-import { CompileContext, ICodeBlock, NeedsUpdating } from "../../globals";
+import { CompilerError, ICodeBlock } from "../../globals";
 import { PuzzleManager } from "../PuzzleManager";
 import { CodeBlocks, UserCodeJSON } from "./codeBlocks";
-
-const compile = (ctx: CompileContext, json: UserCodeJSON): void => {
-    try {
-        if (!(json.type in CodeBlocks)) {
-            throw Error("" as NeedsUpdating);
-        }
-        const codeBlock = new CodeBlocks[json.type](
-            ctx,
-            json as any,
-        ) as ICodeBlock;
-        ctx.codeBlocks[json.id] = codeBlock;
-    } catch {
-        ctx.compilerErrors.push({
-            message: `Failed to initialize "${json.type}" block`,
-            internalError: true,
-            codeBlockIds: [json.id],
-        });
-    }
-};
 
 type KeysMatching<Obj, Type> = keyof Obj extends infer K
     ? K extends keyof Obj
@@ -32,23 +13,51 @@ type KeysMatching<Obj, Type> = keyof Obj extends infer K
 export class ComputeManager {
     codeBlocks: Record<string, ICodeBlock> = {}; // string = BlockId
     variables: Record<string, ICodeBlock> = {}; // string = variable name
-    ctx: CompileContext;
+    compilerErrors: CompilerError[] = [];
 
-    constructor(private puzzle: PuzzleManager) {
-        this.ctx = {
-            codeBlocks: {},
-            compilerErrors: [],
-            variables: {},
-            grid: puzzle.grid,
-            layers: puzzle.layers,
-            puzzleErrors: [],
-            puzzleWarnings: [],
-            storage: puzzle.storage,
-        };
+    // Should a failing validation show errors are internal (we generated invalid code) or external (the user did not copy the code correctly)?
+    weGeneratedTheCode = false;
+
+    constructor(private puzzle: PuzzleManager) {}
+
+    _parseJson(str: string): object {
+        try {
+            return JSON.parse(str);
+        } catch {
+            this.compilerErrors.push({
+                message: `failed to parse: ${str}`,
+                internalError: true,
+                codeBlockIds: [],
+            });
+            return {};
+        }
     }
 
-    compile(json: any) {
-        compile(this.ctx, json);
+    compileBlock = (parent: ICodeBlock | null, json: UserCodeJSON): void => {
+        if (typeof json?.id !== "string" || !(json.type in CodeBlocks)) {
+            this.compilerErrors.push({
+                message: `Failed to initialize "${
+                    json.type
+                }" block nested under ${parent && parent.json.type}`,
+                internalError: true,
+                codeBlockIds: parent ? [parent.json.id, json.id] : [json.id],
+            });
+        }
+
+        const codeBlock = new CodeBlocks[json.type](this, json as any);
+        this.codeBlocks[json.id] = codeBlock;
+    };
+
+    compile(
+        json: string | object,
+        opts?: Partial<{ weGeneratedTheCode: boolean }>,
+    ) {
+        this.weGeneratedTheCode = opts?.weGeneratedTheCode || false;
+
+        if (typeof json === "string") {
+            json = this._parseJson(json);
+        }
+        this.compileBlock(null, json as UserCodeJSON);
 
         const functions: KeysMatching<ICodeBlock, () => void>[] = [
             "registerVariableNames",
@@ -56,15 +65,17 @@ export class ComputeManager {
             "validateInputs",
         ];
 
-        const blocks = Object.values(this.ctx.codeBlocks);
+        const blocks = Object.values(this.codeBlocks);
 
         for (let func of functions) {
             for (let block of blocks) block[func]?.();
         }
+
+        this.weGeneratedTheCode = false;
     }
 
     runOnce() {
-        const blocks = Object.values(this.ctx.codeBlocks);
+        const blocks = Object.values(this.codeBlocks);
 
         for (let block of blocks) block.runOnce?.();
     }

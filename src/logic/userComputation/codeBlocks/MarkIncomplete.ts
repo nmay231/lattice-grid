@@ -1,4 +1,5 @@
-import { CompileContext, ICodeBlock, NeedsUpdating } from "../../../globals";
+import { ICodeBlock, NeedsUpdating } from "../../../globals";
+import { ComputeManager } from "../ComputeManager";
 
 export interface IMarkInvalid {
     id: string;
@@ -7,7 +8,7 @@ export interface IMarkInvalid {
     userMessage?: string;
 }
 
-// export const markIncompleteStatement = (
+// -export const markIncompleteStatement = (
 //     ctx: Context,
 //     userCode: IMarkIncomplete,
 // ): CompiledCode => {
@@ -23,5 +24,5 @@ export interface IMarkInvalid {
 // };
 
 export class MarkInvalid implements ICodeBlock<IMarkInvalid> {
-    constructor(public ctx: CompileContext, public json: IMarkInvalid) {}
+    constructor(public compute: ComputeManager, public json: IMarkInvalid) {}
 }

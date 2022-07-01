@@ -94,9 +94,9 @@ export const BlocklyModal: React.FC = () => {
         const compute = new ComputeManager(puzzle);
         try {
             compute.compile(json);
-            console.log("Errors:", ...compute.ctx.compilerErrors);
+            console.log("Errors:", ...compute.compilerErrors);
             console.log(
-                `${Object.keys(compute.ctx.codeBlocks).length} blocks compiled`,
+                `${Object.keys(compute.codeBlocks).length} blocks compiled`,
             );
             compute.runOnce();
             console.log("ran");

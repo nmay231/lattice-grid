@@ -1,4 +1,5 @@
-import { CompileContext, ICodeBlock, NeedsUpdating } from "../../../globals";
+import { ICodeBlock, NeedsUpdating } from "../../../globals";
+import { ComputeManager } from "../ComputeManager";
 
 export interface ICompare {
     id: string;
@@ -39,5 +40,5 @@ export interface ICompare {
 // };
 
 export class Compare implements ICodeBlock<ICompare> {
-    constructor(public ctx: CompileContext, public json: ICompare) {}
+    constructor(public compute: ComputeManager, public json: ICompare) {}
 }

@@ -1,4 +1,5 @@
-import { CompileContext, ICodeBlock, PointType } from "../../../globals";
+import { ICodeBlock, PointType } from "../../../globals";
+import { ComputeManager } from "../ComputeManager";
 
 // TODO: Might be completely unnecessary
 
@@ -8,7 +9,7 @@ export interface IPointSelector {
     pointType: PointType;
 }
 
-// export const pointSelectorExpression = (
+// -export const pointSelectorExpression = (
 //     ctx: Context,
 //     userCode: PointSelector,
 // ): Variable => {
@@ -20,5 +21,5 @@ export interface IPointSelector {
 // };
 
 export class PointSelector implements ICodeBlock<IPointSelector> {
-    constructor(public ctx: CompileContext, public json: IPointSelector) {}
+    constructor(public compute: ComputeManager, public json: IPointSelector) {}
 }
