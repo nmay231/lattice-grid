@@ -47,6 +47,17 @@ blocks["IfElse"] = {
     },
 };
 
+blocks["Integer"] = {
+    init(this: Blockly.Block) {
+        this.appendDummyInput().appendField(
+            new Blockly.FieldNumber(0, -Infinity, Infinity, 1),
+            "VALUE",
+        );
+        this.setOutput(true, null);
+        this.setColour(230);
+    },
+};
+
 blocks["MarkInvalid"] = {
     init(this: Blockly.Block) {
         this.appendValueInput("EXPRESSION").setCheck(null).appendField("Mark");

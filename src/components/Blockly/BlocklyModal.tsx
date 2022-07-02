@@ -6,7 +6,6 @@ import { usePuzzle } from "../../atoms/puzzle";
 import { ComputeManager } from "../../logic/userComputation/ComputeManager";
 import { addAliasCategoryToToolbox } from "../../logic/userComputation/utils";
 import { Blockly } from "../../utils/Blockly";
-import "./blocklyUI";
 import { codeGen } from "./customCodeGen";
 
 const modalAtom = atom(true);

@@ -1,10 +1,10 @@
-import { ICodeBlock } from "../../../globals";
+import { CompilerError, ICodeBlock } from "../../../globals";
 import { ComputeManager } from "../ComputeManager";
 
 export interface IReadAlias {
     id: string;
     type: "ReadAlias";
-    name: string;
+    varId: string;
 }
 
 export class ReadAlias implements ICodeBlock<IReadAlias> {
@@ -13,29 +13,32 @@ export class ReadAlias implements ICodeBlock<IReadAlias> {
     constructor(public compute: ComputeManager, public json: IReadAlias) {}
 
     expandVariables() {
-        if (!(this.json.name in this.compute.variables)) {
-            this.compute.compilerErrors.push({
-                message: `Missing variable name "${this.json.name}"`,
-                internalError: false,
-                codeBlockIds: [this.json.id],
-            });
-        }
-        this._underlyingExpression = this.compute.variables[this.json.name];
+        this.compute.assert(this.json.varId in this.compute.variables, {
+            message: `Missing variable name "${
+                this.compute.getVariable(this.json.varId)?.name ||
+                "VARIABLE_NOT_FOUND"
+            }"`,
+            codeBlockIds: [this.json.id],
+        });
+        this._underlyingExpression = this.compute.variables[this.json.varId];
     }
 
     variableInfo() {
         if (!this._underlyingExpression?.variableInfo) {
-            this._uninitialized();
+            this.compute.assert(false, this._noVarInfo(this.json.varId));
             return null;
         }
+
         return this._underlyingExpression.variableInfo();
     }
 
-    _uninitialized() {
-        this.compute.compilerErrors.push({
-            message: `Uninitialized variable "${this.json.name}"`,
+    _noVarInfo(varId: string): CompilerError {
+        return {
+            message: `No info found for variable "${
+                this.compute.getVariable(varId)?.name || "VARIABLE_NOT_FOUND"
+            }"`,
             internalError: true,
             codeBlockIds: [this.json.id],
-        });
+        };
     }
 }

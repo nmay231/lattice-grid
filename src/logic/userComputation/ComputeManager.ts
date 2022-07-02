@@ -1,4 +1,5 @@
 import { CompilerError, ICodeBlock } from "../../globals";
+import { Blockly } from "../../utils/Blockly";
 import { PuzzleManager } from "../PuzzleManager";
 import { CodeBlocks, UserCodeJSON } from "./codeBlocks";
 
@@ -78,5 +79,24 @@ export class ComputeManager {
         const blocks = Object.values(this.codeBlocks);
 
         for (let block of blocks) block.runOnce?.();
+    }
+
+    getVariable(varId: string): null | Blockly.VariableModel {
+        return Blockly.Variables.getOrCreateVariablePackage(
+            Blockly.getMainWorkspace(),
+            varId,
+        );
+    }
+
+    assert(cond: boolean, error: Partial<CompilerError>) {
+        if (!cond) {
+            this.compilerErrors.push({
+                codeBlockIds: [],
+                internalError: false,
+                message: "UNKNOWN ERROR",
+                ...error,
+            });
+        }
+        return cond;
     }
 }

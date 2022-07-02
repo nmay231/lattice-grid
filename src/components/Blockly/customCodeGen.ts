@@ -1,6 +1,7 @@
 import { NeedsUpdating } from "../../globals";
 import { UserCodeJSON } from "../../logic/userComputation/codeBlocks";
 import { Blockly } from "../../utils/Blockly";
+import "./blocklyUI";
 
 export const codeGen = new Blockly.Generator("TODO_BETTER_NAME");
 codeGen.INDENT = "    ";
@@ -37,12 +38,12 @@ const generators = codeGen as NeedsUpdating as Record<
 
 generators["DefineAlias"] = (block) => {
     const expressionValue = codeGen.valueToCode(block, "EXPRESSION", 0);
-    const nameValue = codeGen.valueToCode(block, "NAME", 0);
+    const nameValue = block.getFieldValue("NAME");
 
     return `{
     "id": ${asString(block.id)},
     "type": "DefineAlias",
-    "name": ${asString(nameValue)},
+    "varId": ${asString(nameValue)},
     "expression": ${oneBlock(expressionValue)}
 }`;
 };
@@ -75,10 +76,26 @@ generators["IfElse"] = (block) => {
 }`;
 };
 
+generators["Integer"] = (block) => {
+    const value = block.getFieldValue("VALUE");
+
+    return [
+        `{
+    "id": ${asString(block.id)},
+    "type": "Integer",
+    "value": ${value}
+}`,
+        PRECEDENCE_ATOMIC,
+    ];
+};
+
 generators["MarkInvalid"] = (block) => {
     const expressionValue = codeGen.valueToCode(block, "EXPRESSION", 0);
     const userMessageValue = codeGen.valueToCode(block, "MESSAGE", 0);
-    const highlightedValue = codeGen.valueToCode(block, "HIGHLIGHTED", 0);
+    const highlightedValue = block.getFieldValue("HIGHLIGHTED");
+
+    // TODO: Check this
+    console.log(highlightedValue, typeof highlightedValue);
 
     return `{
     "id": ${asString(block.id)},
@@ -90,13 +107,13 @@ generators["MarkInvalid"] = (block) => {
 };
 
 generators["ReadAlias"] = (block) => {
-    const nameValue = codeGen.valueToCode(block, "NAME", 0);
+    const nameValue = block.getFieldValue("NAME");
 
     return [
         `{
     "id": ${asString(block.id)},
     "type": "ReadAlias",
-    "name": ${asString(nameValue)}
+    "varId": ${asString(nameValue)}
 }`,
         PRECEDENCE_ATOMIC,
     ];
