@@ -1,5 +1,6 @@
 import { getLayers, selectLayer } from "../atoms/layers";
 import { getSettings } from "../atoms/settings";
+import { blocklyModalIsOpen } from "../components/Blockly/BlocklyModal";
 import {
     CleanedDOMEvent,
     ILayer,
@@ -199,6 +200,9 @@ export class ControlsManager {
 
     handleKeyDown(rawEvent: React.KeyboardEvent) {
         const keypress = keypressString(rawEvent);
+
+        // TODO: Check for when anything in the sidebar is focused
+        if (blocklyModalIsOpen()) return; // Do not preventDefault when the puzzle is not focused
 
         if (
             // This should be a very small whitelist for which key-strokes are allowed to be blocked

@@ -1,14 +1,16 @@
 import { Drawer } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
-import { atom, useAtom, useSetAtom } from "jotai";
+import { useAtom, useSetAtom } from "jotai";
 import React, { useEffect, useRef, useState } from "react";
+import { modifiableAtom } from "../../atoms/modifiableAtom";
 import { usePuzzle } from "../../atoms/puzzle";
 import { ComputeManager } from "../../logic/userComputation/ComputeManager";
 import { addAliasCategoryToToolbox } from "../../logic/userComputation/utils";
 import { Blockly } from "../../utils/Blockly";
 import { codeGen } from "./customCodeGen";
 
-const modalAtom = atom(true);
+const { atom: modalAtom, getValue } = modifiableAtom(true);
+export const blocklyModalIsOpen = getValue;
 
 export const BlocklyModal: React.FC = () => {
     const [opened, setOpened] = useAtom(modalAtom);
