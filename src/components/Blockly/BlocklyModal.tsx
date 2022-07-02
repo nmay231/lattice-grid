@@ -58,6 +58,9 @@ export const BlocklyModal: React.FC = () => {
         const workspace = Blockly.inject(blocklyDiv.current, {
             toolbox,
             scrollbars: false,
+            collapse: false,
+            sounds: false,
+            zoom: { wheel: true },
         } as any);
 
         Blockly.serialization.workspaces.load(blocks, workspace);
