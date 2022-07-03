@@ -40,5 +40,10 @@ export interface ICompare {
 // };
 
 export class Compare implements ICodeBlock<ICompare> {
-    constructor(public compute: ComputeManager, public json: ICompare) {}
+    constructor(public compute: ComputeManager, public json: ICompare) {
+        compute.assert(false, {
+            message: "Compare not supported yet",
+            internalError: true,
+        });
+    }
 }

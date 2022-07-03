@@ -26,5 +26,10 @@ export interface IObjectSelector {
 // };
 
 export class ObjectSelector implements ICodeBlock<IObjectSelector> {
-    constructor(public compute: ComputeManager, public json: IObjectSelector) {}
+    constructor(public compute: ComputeManager, public json: IObjectSelector) {
+        compute.assert(false, {
+            message: "ObjectSelector not supported yet",
+            internalError: true,
+        });
+    }
 }
