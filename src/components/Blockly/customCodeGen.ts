@@ -3,6 +3,8 @@ import { UserCodeJSON } from "../../logic/userComputation/codeBlocks";
 import { Blockly } from "../../utils/Blockly";
 import "./blocklyUI";
 
+// TODO: To make indentation easier, I could require the parent element to include the wrapping parenthesis
+
 export const codeGen = new Blockly.Generator("TODO_BETTER_NAME");
 codeGen.INDENT = "    ";
 const PRECEDENCE_ATOMIC = 0;
@@ -17,15 +19,10 @@ const scrub_: Blockly.Generator["scrub_"] = (block, code, ignoreNext) => {
 (codeGen as NeedsUpdating).scrub_ = scrub_;
 
 const asString = (stringName: string) => JSON.stringify(stringName);
-
-// TODO: To make indentation easier, I could require the parent element to include the wrapping parenthesis
-
-// This indents everything but the first line of the codeBlock
 const oneBlock = (codeBlock: string) =>
     codeGen
         .prefixLines(codeBlock, codeGen.INDENT)
         .slice(codeGen.INDENT.length) || null;
-
 const manyBlocks = (codeBlocks: string) =>
     codeBlocks
         ? `[\n${codeGen.prefixLines(codeBlocks + "\n]", codeGen.INDENT)}`
@@ -94,15 +91,12 @@ generators["MarkInvalid"] = (block) => {
     const userMessageValue = codeGen.valueToCode(block, "MESSAGE", 0);
     const highlightedValue = block.getFieldValue("HIGHLIGHTED");
 
-    // TODO: Check this
-    console.log(highlightedValue, typeof highlightedValue);
-
     return `{
     "id": ${asString(block.id)},
     "type": "MarkInvalid",
     "expression": ${oneBlock(expressionValue)},
-    "userMessage": ${oneBlock(userMessageValue)}
-    "highlighted": ${highlightedValue}
+    "userMessage": ${oneBlock(userMessageValue)},
+    "highlighted": ${highlightedValue === "TRUE"}
 }`;
 };
 
@@ -120,8 +114,6 @@ generators["ReadAlias"] = (block) => {
 };
 
 generators["RootBlock"] = (block) => {
-    // -const typeDropdownGrid = block.getFieldValue("GRID_TYPE");
-    // const layer1Dropdown = block.getFieldValue("LAYER_CONFIG");
     const codeBodyStatements = codeGen.statementToCode(block, "CODE_BODY");
 
     return `{
