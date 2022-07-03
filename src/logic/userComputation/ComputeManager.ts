@@ -43,6 +43,7 @@ export class ComputeManager {
                 internalError: true,
                 codeBlockIds: parent ? [parent.json.id, json.id] : [json.id],
             });
+            return;
         }
 
         const codeBlock = new CodeBlocks[json.type](this, json as any);
@@ -50,14 +51,12 @@ export class ComputeManager {
     };
 
     compile(
-        json: string | object,
+        jsonString: string,
         opts?: Partial<{ weGeneratedTheCode: boolean }>,
     ) {
         this.weGeneratedTheCode = opts?.weGeneratedTheCode || false;
 
-        if (typeof json === "string") {
-            json = this._parseJson(json);
-        }
+        const json = this._parseJson(jsonString);
         this.compileBlock(null, json as UserCodeJSON);
 
         const functions: KeysMatching<ICodeBlock, () => void>[] = [

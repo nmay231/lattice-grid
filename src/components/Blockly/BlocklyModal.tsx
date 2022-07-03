@@ -92,12 +92,11 @@ export const BlocklyModal: React.FC = () => {
             return;
         }
 
-        const s = codeGen.blockToCode(topBlocks[0]) as string;
-        let json: any;
+        const codeString = codeGen.blockToCode(topBlocks[0]) as string;
 
         const compute = new ComputeManager(puzzle);
         try {
-            compute.compile(json);
+            compute.compile(codeString);
             console.log("Errors:", ...compute.compilerErrors);
             console.log(
                 `${Object.keys(compute.codeBlocks).length} blocks compiled`,
@@ -105,7 +104,7 @@ export const BlocklyModal: React.FC = () => {
             compute.runOnce();
             console.log("ran");
         } catch (e) {
-            console.error("failed to compile with error", e, s);
+            console.error("failed to compile with error", e, codeString);
         }
     };
 
