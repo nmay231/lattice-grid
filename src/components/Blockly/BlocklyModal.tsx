@@ -10,8 +10,9 @@ import { addAliasCategoryToToolbox } from "../../logic/userComputation/utils";
 import { Blockly } from "../../utils/Blockly";
 import { codeGen } from "./customCodeGen";
 
-const { atom: modalAtom, getValue } = modifiableAtom(true);
+const { atom: modalAtom, getValue, setValue } = modifiableAtom(false);
 export const blocklyModalIsOpen = getValue;
+export const setBlocklyModalOpen = setValue;
 
 export const BlocklyModal: React.FC = () => {
     const [opened, setOpened] = useAtom(modalAtom);
@@ -47,6 +48,13 @@ export const BlocklyModal: React.FC = () => {
             "ALIASES",
             addAliasCategoryToToolbox,
         );
+
+        workspace.addChangeListener((event: any) => {
+            if (false) {
+                console.log(event.type);
+                if (["move"].includes(event.type)) console.log(event);
+            }
+        });
 
         return () => {
             const serialized = Blockly.serialization.workspaces.save(workspace);
