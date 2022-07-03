@@ -43,18 +43,23 @@ export const BlocklyModal: React.FC = () => {
             zoom: { wheel: true },
         } as any);
 
-        Blockly.serialization.workspaces.load(blocks, workspace);
-        workspace.registerToolboxCategoryCallback(
-            "ALIASES",
-            addAliasCategoryToToolbox,
-        );
-
         workspace.addChangeListener((event: any) => {
             if (false) {
                 console.log(event.type);
                 if (["move"].includes(event.type)) console.log(event);
             }
         });
+
+        workspace.registerToolboxCategoryCallback(
+            "ALIASES",
+            addAliasCategoryToToolbox,
+        );
+
+        try {
+            Blockly.serialization.workspaces.load(blocks, workspace);
+        } catch {
+            console.error("failed to load blocks from localStorage");
+        }
 
         return () => {
             const serialized = Blockly.serialization.workspaces.save(workspace);
