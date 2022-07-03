@@ -4,6 +4,7 @@ import { useAtom, useSetAtom } from "jotai";
 import React, { useEffect, useRef, useState } from "react";
 import { modifiableAtom } from "../../atoms/modifiableAtom";
 import { usePuzzle } from "../../atoms/puzzle";
+import { blocklyToolbox } from "../../logic/userComputation/codeBlocks";
 import { ComputeManager } from "../../logic/userComputation/ComputeManager";
 import { addAliasCategoryToToolbox } from "../../logic/userComputation/utils";
 import { Blockly } from "../../utils/Blockly";
@@ -33,31 +34,8 @@ export const BlocklyModal: React.FC = () => {
             return;
         }
 
-        const toolbox = {
-            kind: "categoryToolbox",
-            contents: [
-                {
-                    kind: "category",
-                    name: "statements",
-                    contents: [
-                        // -{ kind: "block", type: "ObjectsOfLayer" },
-                        { kind: "block", type: "IfElse" },
-                        { kind: "block", type: "ForEach" },
-                        { kind: "block", type: "MarkInvalid" },
-                        { kind: "block", type: "DefineAlias" },
-                        { kind: "block", type: "RootBlock" },
-                    ],
-                },
-                {
-                    kind: "category",
-                    name: "user aliases",
-                    custom: "ALIASES",
-                },
-            ],
-        };
-
         const workspace = Blockly.inject(blocklyDiv.current, {
-            toolbox,
+            toolbox: blocklyToolbox,
             scrollbars: false,
             collapse: false,
             sounds: false,

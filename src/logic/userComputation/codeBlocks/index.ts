@@ -10,9 +10,9 @@ import { IReadAlias, ReadAlias } from "./ReadAlias";
 import { IRootBlock, RootBlock } from "./RootBlock";
 
 export const CodeBlocks = {
-    DefineAlias,
     Compare,
     Debug,
+    DefineAlias,
     ForEach,
     IfElse,
     Integer,
@@ -22,10 +22,37 @@ export const CodeBlocks = {
     RootBlock,
 };
 
+export const blocklyToolbox = {
+    kind: "categoryToolbox",
+    contents: [
+        {
+            kind: "category",
+            name: "statements",
+            contents: [
+                // { kind: "block", type: "Compare" },
+                // { kind: "block", type: "Debug" },
+                { kind: "block", type: "DefineAlias" },
+                { kind: "block", type: "ForEach" },
+                { kind: "block", type: "IfElse" },
+                { kind: "block", type: "Integer", fields: { VALUE: 1 } },
+                { kind: "block", type: "MarkInvalid" },
+                // { kind: "block", type: "ObjectSelector" },
+                { kind: "block", type: "ReadAlias" },
+                { kind: "block", type: "RootBlock" },
+            ],
+        },
+        {
+            kind: "category",
+            name: "user aliases",
+            custom: "ALIASES",
+        },
+    ],
+};
+
 export type UserCodeJSON =
-    | IDefineAlias
     | ICompare
     | IDebug
+    | IDefineAlias
     | IForEach
     | IIfElse
     | IInteger
