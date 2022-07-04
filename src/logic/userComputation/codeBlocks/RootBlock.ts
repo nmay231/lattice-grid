@@ -13,7 +13,7 @@ export class RootBlock implements ICodeBlock<IRootBlock> {
         if (!Array.isArray(json.codeBody)) {
             compute.compilerErrors.push({
                 message: "RootBlock requires a codeBody attribute",
-                internalError: compute.weGeneratedTheCode,
+                internalError: false,
                 codeBlockIds: [json.id],
             });
             return;

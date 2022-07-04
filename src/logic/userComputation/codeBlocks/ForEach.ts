@@ -26,6 +26,6 @@ export class ForEach implements ICodeBlock<IForEach> {
                 ],
             });
         }
-        this.compute.variables[this.json.variableName] = this;
+        // this.compute.variables[this.json.variableName] = this;
     }
 }

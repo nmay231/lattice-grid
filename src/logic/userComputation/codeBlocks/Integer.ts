@@ -1,4 +1,4 @@
-import { ICodeBlock, IVariable } from "../../../globals";
+import { ICodeBlock, IVariableInfo } from "../../../globals";
 import { ComputeManager } from "../ComputeManager";
 
 export interface IInteger {
@@ -10,8 +10,12 @@ export interface IInteger {
 export class Integer implements ICodeBlock<IInteger> {
     constructor(public compute: ComputeManager, public json: IInteger) {}
 
-    variableInfo(): IVariable {
+    variableInfo(): IVariableInfo {
         return { rank: 0, scalarType: "integer" };
+    }
+
+    getValue() {
+        return this.json.value;
     }
 
     validateInputs() {

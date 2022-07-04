@@ -1,7 +1,8 @@
-import { CompilerError, ICodeBlock } from "../../globals";
+import { CompilerError, ICodeBlock, VariableCodeBlock } from "../../globals";
 import { Blockly } from "../../utils/Blockly";
 import { PuzzleManager } from "../PuzzleManager";
 import { CodeBlocks, UserCodeJSON } from "./codeBlocks";
+import { RealCompilerError } from "./utils";
 
 type KeysMatching<Obj, Type> = keyof Obj extends infer K
     ? K extends keyof Obj
@@ -13,13 +14,13 @@ type KeysMatching<Obj, Type> = keyof Obj extends infer K
 
 export class ComputeManager {
     codeBlocks: Record<string, ICodeBlock> = {}; // string = BlockId
-    variables: Record<string, ICodeBlock> = {}; // string = variable name
+    variables: Record<string, VariableCodeBlock> = {}; // string = variable name
     compilerErrors: CompilerError[] = [];
 
     // Should a failing validation show errors are internal (we generated invalid code) or external (the user did not copy the code correctly)?
-    weGeneratedTheCode = false;
+    _weGeneratedTheCode = false;
 
-    constructor(private puzzle: PuzzleManager) {}
+    constructor(public puzzle: PuzzleManager) {}
 
     _parseJson(str: string): object {
         try {
@@ -27,7 +28,7 @@ export class ComputeManager {
         } catch {
             this.compilerErrors.push({
                 message: `failed to parse: ${str}`,
-                internalError: true,
+                internalError: this._weGeneratedTheCode,
                 codeBlockIds: [],
             });
             return {};
@@ -35,26 +36,33 @@ export class ComputeManager {
     }
 
     compileBlock = (parent: ICodeBlock | null, json: UserCodeJSON): void => {
-        if (typeof json?.id !== "string" || !(json.type in CodeBlocks)) {
-            this.compilerErrors.push({
-                message: `Failed to initialize "${
-                    json.type
-                }" block nested under ${parent && parent.json.type}`,
-                internalError: true,
-                codeBlockIds: parent ? [parent.json.id, json.id] : [json.id],
-            });
-            return;
+        if (typeof json?.id === "string" && json.type in CodeBlocks) {
+            try {
+                const codeBlock = new CodeBlocks[json.type](this, json as any);
+                this.codeBlocks[json.id] = codeBlock;
+                return;
+            } catch (e) {
+                if (e instanceof RealCompilerError) {
+                    this.compilerErrors.push(e.details);
+                    return;
+                }
+            }
         }
 
-        const codeBlock = new CodeBlocks[json.type](this, json as any);
-        this.codeBlocks[json.id] = codeBlock;
+        this.compilerErrors.push({
+            message: `Failed to initialize "${json.type}" block nested under ${
+                parent && parent.json.type
+            }`,
+            internalError: true,
+            codeBlockIds: parent ? [parent.json.id, json.id] : [json.id],
+        });
     };
 
     compile(
         jsonString: string,
         opts?: Partial<{ weGeneratedTheCode: boolean }>,
     ) {
-        this.weGeneratedTheCode = opts?.weGeneratedTheCode || false;
+        this._weGeneratedTheCode = opts?.weGeneratedTheCode || false;
 
         const json = this._parseJson(jsonString);
         this.compileBlock(null, json as UserCodeJSON);
@@ -71,7 +79,7 @@ export class ComputeManager {
             for (let block of blocks) block[func]?.();
         }
 
-        this.weGeneratedTheCode = false;
+        this._weGeneratedTheCode = false;
     }
 
     runOnce() {
@@ -85,17 +93,5 @@ export class ComputeManager {
             Blockly.getMainWorkspace(),
             varId,
         );
-    }
-
-    assert(cond: boolean, error: Partial<CompilerError>) {
-        if (!cond) {
-            this.compilerErrors.push({
-                codeBlockIds: [],
-                internalError: false,
-                message: "UNKNOWN ERROR",
-                ...error,
-            });
-        }
-        return cond;
     }
 }

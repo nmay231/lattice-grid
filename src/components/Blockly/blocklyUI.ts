@@ -1,14 +1,48 @@
-import { NeedsUpdating } from "../../globals";
+import { getLayers } from "../../atoms/layers";
 import { UserCodeJSON } from "../../logic/userComputation/codeBlocks";
 import { DEFAULT_ALIAS_NAME } from "../../logic/userComputation/utils";
 import { Blockly } from "../../utils/Blockly";
 
 // TODO: this.setTooltip("") and other helpful things like colour and such
 
-const blocks = Blockly.Blocks as Record<UserCodeJSON["type"], NeedsUpdating>;
+const blocks = Blockly.Blocks as Record<
+    UserCodeJSON["type"],
+    { init: (this: Blockly.Block) => void }
+>;
+
+blocks["Compare"] = {
+    init() {
+        this.appendValueInput("LEFT").setCheck(null);
+
+        this.appendValueInput("RIGHT")
+            .setCheck(null)
+            .appendField(
+                new Blockly.FieldDropdown([
+                    // TODO: Have Compare export a map of strings to operations and build the dropdown based on that.
+                    ["<", "<"],
+                    [">", ">"],
+                    ["=", "="],
+                ]),
+                "COMPARE_TYPE",
+            );
+        this.setOutput(true, null);
+        this.setColour(230);
+    },
+};
+
+blocks["Debug"] = {
+    init() {
+        this.appendValueInput("EXPRESSION")
+            .setCheck(null)
+            .appendField("Debug value");
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour(230);
+    },
+};
 
 blocks["DefineAlias"] = {
-    init(this: Blockly.Block) {
+    init() {
         this.appendValueInput("EXPRESSION")
             .setCheck(null)
             .appendField("Define")
@@ -21,7 +55,7 @@ blocks["DefineAlias"] = {
 };
 
 blocks["ForEach"] = {
-    init(this: Blockly.Block) {
+    init() {
         this.appendValueInput("COLLECTION")
             .setCheck(null)
             .appendField("for each")
@@ -37,7 +71,7 @@ blocks["ForEach"] = {
 };
 
 blocks["IfElse"] = {
-    init(this: Blockly.Block) {
+    init() {
         this.appendValueInput("EXPRESSION").setCheck(null).appendField("If");
         this.appendStatementInput("IF").setCheck(null).appendField("Then");
         this.appendStatementInput("ELSE").setCheck(null).appendField("Else");
@@ -48,7 +82,7 @@ blocks["IfElse"] = {
 };
 
 blocks["Integer"] = {
-    init(this: Blockly.Block) {
+    init() {
         this.appendDummyInput().appendField(
             new Blockly.FieldNumber(0, -Infinity, Infinity, 1),
             "VALUE",
@@ -59,7 +93,7 @@ blocks["Integer"] = {
 };
 
 blocks["MarkInvalid"] = {
-    init(this: Blockly.Block) {
+    init() {
         this.appendValueInput("EXPRESSION").setCheck(null).appendField("Mark");
         this.appendDummyInput()
             .appendField("as invalid with message")
@@ -76,8 +110,25 @@ blocks["MarkInvalid"] = {
     },
 };
 
+blocks["ObjectSelector"] = {
+    init() {
+        this.appendDummyInput().appendField(
+            new Blockly.FieldDropdown(() => {
+                // TODO: How to trigger this function if the current layers change...
+                const layers = getLayers();
+                return layers.layers
+                    .filter(({ ethereal }) => !ethereal)
+                    .map(({ id }) => [id, id]);
+            }),
+            "LAYER_ID",
+        );
+        this.setOutput(true, null);
+        this.setColour(230);
+    },
+};
+
 blocks["ReadAlias"] = {
-    init(this: Blockly.Block) {
+    init() {
         this.appendDummyInput().appendField(
             new Blockly.FieldVariable("Alias Name"),
             "NAME",
@@ -88,7 +139,7 @@ blocks["ReadAlias"] = {
 };
 
 blocks["RootBlock"] = {
-    init(this: Blockly.Block) {
+    init() {
         this.appendDummyInput()
             .appendField("with")
             .appendField(

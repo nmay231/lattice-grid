@@ -33,6 +33,33 @@ const generators = codeGen as NeedsUpdating as Record<
     (block: Blockly.Block) => string | [string, any]
 >;
 
+generators["Compare"] = (block) => {
+    const left = codeGen.valueToCode(block, "LEFT", 0);
+    const right = codeGen.valueToCode(block, "RIGHT", 0);
+    const compareType = block.getFieldValue("COMPARE_TYPE");
+
+    return [
+        `{
+    "id": ${asString(block.id)},
+    "type": "Compare",
+    "compareType": ${asString(compareType)},
+    "left": ${oneBlock(left)},
+    "right": ${oneBlock(right)}
+}`,
+        PRECEDENCE_ATOMIC,
+    ];
+};
+
+generators["Debug"] = (block) => {
+    const expressionValue = codeGen.valueToCode(block, "EXPRESSION", 0);
+
+    return `{
+    "id": ${asString(block.id)},
+    "type": "Debug",
+    "expression": ${oneBlock(expressionValue)}
+}`;
+};
+
 generators["DefineAlias"] = (block) => {
     const expressionValue = codeGen.valueToCode(block, "EXPRESSION", 0);
     const nameValue = block.getFieldValue("NAME");
@@ -98,6 +125,19 @@ generators["MarkInvalid"] = (block) => {
     "userMessage": ${oneBlock(userMessageValue)},
     "highlighted": ${highlightedValue === "TRUE"}
 }`;
+};
+
+generators["ObjectSelector"] = (block) => {
+    const layerId = block.getFieldValue("LAYER_ID");
+
+    return [
+        `{
+    "id": ${asString(block.id)},
+    "type": "ObjectSelector",
+    "layerId": ${asString(layerId)}
+}`,
+        PRECEDENCE_ATOMIC,
+    ];
 };
 
 generators["ReadAlias"] = (block) => {

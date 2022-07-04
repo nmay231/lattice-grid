@@ -24,6 +24,6 @@ export class DefineAlias implements ICodeBlock<IDefineAlias> {
                 ],
             });
         }
-        this.compute.variables[this.json.varId] = this;
+        // this.compute.variables[this.json.varId] = this;
     }
 }

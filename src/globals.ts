@@ -28,11 +28,13 @@ export type ICodeBlock<T extends UserCodeJSON = UserCodeJSON> = {
 
     registerVariableNames?: () => void;
     expandVariables?: () => void;
-    variableInfo?: () => IVariable | null;
+    variableInfo?: () => IVariableInfo | null;
     validateInputs?: () => void;
-    // Figure out the requirements of this function. Should IVariable have getValue()?
-    // What about IVariable.effectiveRank?
-    // Should this be required?
+
+    // TODO: Better name perhaps? But also figure out iterator/generator pattern and how rank translation will be handled.
+    getValue?: () => any;
+
+    // TODO: Should runOnce be required? I think it should, but I'll do that all at once after blocks have been developed some more.
     runOnce?: () => void;
 
     // validation: expression type+rank validation, variable scope checks, alias expansion ->
@@ -41,7 +43,11 @@ export type ICodeBlock<T extends UserCodeJSON = UserCodeJSON> = {
     // stringify: compression (var name shorten, remove useless aliases), debug output (basically a memory dump)
 };
 
-export interface IVariable {
+export type VariableCodeBlock = Required<
+    Pick<ICodeBlock, "variableInfo" | "getValue" | "json">
+>;
+
+export interface IVariableInfo {
     // For now, I think I'll take after the MatLab style of every variable being a nested array of a scalar type.
     scalarType: "boolean" | "integer" | "point" | "object";
     rank: number;
