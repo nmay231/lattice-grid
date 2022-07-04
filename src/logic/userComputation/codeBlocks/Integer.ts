@@ -22,7 +22,7 @@ export class Integer implements ICodeBlock<IInteger> {
         if (typeof this.json.value !== "number" || this.json.value % 1 !== 0) {
             this.compute.compilerErrors.push({
                 message: `${this.json.value} is not an integer`,
-                internalError: true,
+                isInternal: true,
                 codeBlockIds: [this.json.id],
             });
         }

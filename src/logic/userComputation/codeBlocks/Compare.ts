@@ -55,7 +55,7 @@ export class Compare implements ICodeBlock<ICompare> {
             this.compute.compilerErrors.push({
                 message: "Left operator did not provide variableInfo",
                 codeBlockIds: [this.left.json.id],
-                internalError: true,
+                isInternal: true,
             });
             return;
         }
@@ -63,7 +63,7 @@ export class Compare implements ICodeBlock<ICompare> {
             this.compute.compilerErrors.push({
                 message: "Right operator did not provide variableInfo",
                 codeBlockIds: [this.right.json.id],
-                internalError: true,
+                isInternal: true,
             });
             return;
         }
@@ -73,7 +73,7 @@ export class Compare implements ICodeBlock<ICompare> {
                 message:
                     "Only single value comparisons of the same type are supported",
                 codeBlockIds: [this.left.json.id, this.right.json.id],
-                internalError: false,
+                isInternal: false,
             });
         }
     }

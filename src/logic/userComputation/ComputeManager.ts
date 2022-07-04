@@ -1,8 +1,12 @@
-import { CompilerError, ICodeBlock, VariableCodeBlock } from "../../globals";
+import {
+    CompilerErrorDetails,
+    ICodeBlock,
+    VariableCodeBlock,
+} from "../../globals";
 import { Blockly } from "../../utils/Blockly";
 import { PuzzleManager } from "../PuzzleManager";
 import { CodeBlocks, UserCodeJSON } from "./codeBlocks";
-import { RealCompilerError } from "./utils";
+import { CompilerError } from "./utils";
 
 type KeysMatching<Obj, Type> = keyof Obj extends infer K
     ? K extends keyof Obj
@@ -15,7 +19,7 @@ type KeysMatching<Obj, Type> = keyof Obj extends infer K
 export class ComputeManager {
     codeBlocks: Record<string, ICodeBlock> = {}; // string = BlockId
     variables: Record<string, VariableCodeBlock> = {}; // string = variable name
-    compilerErrors: CompilerError[] = [];
+    compilerErrors: CompilerErrorDetails[] = [];
 
     // Should a failing validation show errors are internal (we generated invalid code) or external (the user did not copy the code correctly)?
     _weGeneratedTheCode = false;
@@ -28,7 +32,7 @@ export class ComputeManager {
         } catch {
             this.compilerErrors.push({
                 message: `failed to parse: ${str}`,
-                internalError: this._weGeneratedTheCode,
+                isInternal: this._weGeneratedTheCode,
                 codeBlockIds: [],
             });
             return {};
@@ -42,7 +46,7 @@ export class ComputeManager {
                 this.codeBlocks[json.id] = codeBlock;
                 return;
             } catch (e) {
-                if (e instanceof RealCompilerError) {
+                if (e instanceof CompilerError) {
                     this.compilerErrors.push(e.details);
                     return;
                 }
@@ -53,7 +57,7 @@ export class ComputeManager {
             message: `Failed to initialize "${json.type}" block nested under ${
                 parent && parent.json.type
             }`,
-            internalError: true,
+            isInternal: true,
             codeBlockIds: parent ? [parent.json.id, json.id] : [json.id],
         });
     };

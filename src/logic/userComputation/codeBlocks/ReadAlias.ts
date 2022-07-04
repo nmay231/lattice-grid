@@ -1,4 +1,8 @@
-import { CompilerError, ICodeBlock, VariableCodeBlock } from "../../../globals";
+import {
+    CompilerErrorDetails,
+    ICodeBlock,
+    VariableCodeBlock,
+} from "../../../globals";
 import { ComputeManager } from "../ComputeManager";
 
 export interface IReadAlias {
@@ -21,7 +25,7 @@ export class ReadAlias implements ICodeBlock<IReadAlias> {
                     this.compute.getVariable(this.json.varId)?.name ||
                     "VARIABLE_NOT_FOUND"
                 }"`,
-                internalError: true,
+                isInternal: true,
                 codeBlockIds: [this.json.id],
             });
             return;
@@ -38,12 +42,12 @@ export class ReadAlias implements ICodeBlock<IReadAlias> {
         return this._underlyingExpression.variableInfo();
     }
 
-    _noVarInfo(varId: string): CompilerError {
+    _noVarInfo(varId: string): CompilerErrorDetails {
         return {
             message: `No info found for variable "${
                 this.compute.getVariable(varId)?.name || "VARIABLE_NOT_FOUND"
             }"`,
-            internalError: true,
+            isInternal: true,
             codeBlockIds: [this.json.id],
         };
     }

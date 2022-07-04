@@ -1,7 +1,7 @@
 import { UserCodeJSON } from ".";
 import { ICodeBlock, VariableCodeBlock } from "../../../globals";
 import { ComputeManager } from "../ComputeManager";
-import { blockIsVariable, RealCompilerError } from "../utils";
+import { blockIsVariable, CompilerError } from "../utils";
 
 export interface IDebug {
     id: string;
@@ -13,11 +13,11 @@ export class Debug implements ICodeBlock<IDebug> {
     value: VariableCodeBlock;
     constructor(public compute: ComputeManager, public json: IDebug) {
         if (!json.expression) {
-            throw new RealCompilerError({
+            throw new CompilerError({
                 // TODO: Is there any value to allowing no expressions? Like maybe it could log information about the code run from that spot like "checked ten numbers from the number layer" or something. I don't have a real clear picture of how that would work though. Besides, I would implement that using shadow blocks which means json.expression would *always* be defined.
                 message: "Debug statements must have expressions given to them",
                 codeBlockIds: [json.id],
-                internalError: false,
+                isInternal: false,
             });
         }
 
@@ -27,10 +27,9 @@ export class Debug implements ICodeBlock<IDebug> {
         if (blockIsVariable(block)) {
             this.value = block;
         } else {
-            throw new RealCompilerError({
+            throw new CompilerError({
                 message: "Block is not an expression",
                 codeBlockIds: [json.id, json.expression.id],
-                internalError: false,
             });
         }
     }

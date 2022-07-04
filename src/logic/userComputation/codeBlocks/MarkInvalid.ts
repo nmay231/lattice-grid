@@ -1,6 +1,6 @@
 import { ICodeBlock, NeedsUpdating } from "../../../globals";
 import { ComputeManager } from "../ComputeManager";
-import { RealCompilerError } from "../utils";
+import { CompilerError } from "../utils";
 
 export interface IMarkInvalid {
     id: string;
@@ -11,9 +11,8 @@ export interface IMarkInvalid {
 
 export class MarkInvalid implements ICodeBlock<IMarkInvalid> {
     constructor(public compute: ComputeManager, public json: IMarkInvalid) {
-        throw new RealCompilerError({
+        throw new CompilerError({
             message: "MarkInvalid not supported yet",
-            internalError: true,
             codeBlockIds: [this.json.id],
         });
     }

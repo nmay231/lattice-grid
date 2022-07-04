@@ -1,4 +1,4 @@
-import { CompilerError, VariableCodeBlock } from "../../globals";
+import { CompilerErrorDetails, VariableCodeBlock } from "../../globals";
 import { Blockly } from "../../utils/Blockly";
 
 export const DEFAULT_ALIAS_NAME = "MY ALIAS";
@@ -34,8 +34,8 @@ export const blockIsVariable = (
     return !!(block.getValue && block.variableInfo && block.json);
 };
 
-export class RealCompilerError extends Error {
-    constructor(public details: CompilerError) {
+export class CompilerError extends Error {
+    constructor(public details: CompilerErrorDetails) {
         super(details.message);
     }
 }

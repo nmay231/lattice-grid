@@ -17,9 +17,9 @@ export type PuzzleError = {
     };
 };
 
-export type CompilerError = {
+export type CompilerErrorDetails = {
     message: string;
-    internalError: boolean;
+    isInternal?: boolean;
     codeBlockIds: string[];
 };
 
@@ -145,8 +145,7 @@ export type LayerHandlerResult = {
     history?: IncompleteHistoryAction[];
 };
 
-// TODO: More specific types
-type JSONSchema = { schema: object; uischemaElements: any[] };
+type JSONSchema = { schema: NeedsUpdating; uischemaElements: NeedsUpdating[] };
 
 export type LayerProps = {
     // TODO: Try allowing settings and rawSettings to be optional
