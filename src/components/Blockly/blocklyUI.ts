@@ -25,6 +25,7 @@ blocks["Compare"] = {
                 ]),
                 "COMPARE_TYPE",
             );
+        this.setInputsInline(true);
         this.setOutput(true, null);
         this.setColour(230);
     },

@@ -1,12 +1,7 @@
 import { UserCodeJSON } from ".";
-import {
-    ICodeBlock,
-    IVariableInfo,
-    NeedsUpdating,
-    VariableCodeBlock,
-} from "../../../globals";
+import { ICodeBlock, IVariableInfo, VariableCodeBlock } from "../../../globals";
 import { ComputeManager } from "../ComputeManager";
-import { blockIsVariable } from "../utils";
+import { blockIsVariable, CompilerError } from "../utils";
 
 export interface ICompare {
     id: string;
@@ -22,10 +17,11 @@ export class Compare implements ICodeBlock<ICompare> {
 
     constructor(public compute: ComputeManager, public json: ICompare) {
         if (!json.left || !json.right) {
-            // TODO: Change these regular errors to CompilerErrors
-            throw Error(
-                "Left or right operator was not provided" as NeedsUpdating,
-            );
+            throw new CompilerError({
+                message: "Left or right operator was not provided",
+                isInternal: false,
+                codeBlockIds: [json.id],
+            });
         }
 
         compute.compileBlock(this, json.left);
@@ -35,14 +31,22 @@ export class Compare implements ICodeBlock<ICompare> {
         if (blockIsVariable(block1)) {
             this.left = block1;
         } else {
-            throw Error("Left block is not a variable" as NeedsUpdating);
+            throw new CompilerError({
+                message: "Left block is not a variable",
+                isInternal: true,
+                codeBlockIds: [json.left.id],
+            });
         }
 
         const block2 = compute.codeBlocks[json.right.id];
         if (blockIsVariable(block2)) {
             this.right = block2;
         } else {
-            throw Error("Right block is not a variable" as NeedsUpdating);
+            throw new CompilerError({
+                message: "Right block is not a variable",
+                isInternal: true,
+                codeBlockIds: [json.right.id],
+            });
         }
     }
 
@@ -79,12 +83,17 @@ export class Compare implements ICodeBlock<ICompare> {
     }
 
     variableInfo(): IVariableInfo {
-        // TODO: rank will change once I allow broadcasting
+        // TODO: rank will change once I allow broadcasting/bijection
         return { rank: 0, scalarType: "boolean" };
     }
 
     getValue() {
-        // TODO: Implement  :P
-        return true;
+        if (this.json.compareType === "<") {
+            return this.left.getValue() < this.right.getValue();
+        } else if (this.json.compareType === "=") {
+            return this.left.getValue() === this.right.getValue();
+        } else if (this.json.compareType === ">") {
+            return this.left.getValue() > this.right.getValue();
+        }
     }
 }
