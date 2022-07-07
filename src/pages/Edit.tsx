@@ -1,5 +1,6 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { usePuzzle } from "../atoms/puzzle";
+import { BlocklyModal } from "../components/Blockly/BlocklyModal";
 import { SideBar } from "../components/SideBar";
 import { SVGCanvas } from "../components/SVGCanvas";
 import styles from "./Puzzle.module.css";
@@ -38,6 +39,7 @@ export const EditPage = () => {
             <div className={styles.sideBar}>
                 <SideBar />
             </div>
+            <BlocklyModal />
         </div>
     );
 };

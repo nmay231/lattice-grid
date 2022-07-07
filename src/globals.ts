@@ -5,18 +5,68 @@ import { TextBlits } from "./components/SVGCanvas/Text";
 import { availableLayers } from "./logic/layers";
 import { SelectionExtraProps } from "./logic/layers/Selection";
 import { StorageManager } from "./logic/StorageManager";
+import { UserCodeJSON } from "./logic/userComputation/codeBlocks";
 
-// ======== Explicit Type Names ========
+// #region - Compilation
+export type PuzzleError = {
+    message: string;
+    objects?: {
+        layerId: string;
+        gridId: string;
+        objectIds: string[];
+    };
+};
 
+export type CompilerErrorDetails = {
+    message: string;
+    isInternal?: boolean;
+    codeBlockIds: string[];
+};
+
+export type ICodeBlock<T extends UserCodeJSON = UserCodeJSON> = {
+    json: T;
+
+    registerVariableNames?: () => void;
+    expandVariables?: () => void;
+    variableInfo?: () => IVariableInfo | null;
+    validateInputs?: () => void;
+
+    // TODO: Better name perhaps? But also figure out iterator/generator pattern and how rank translation will be handled.
+    getValue?: () => any;
+
+    // TODO: Should runOnce be required? I think it should, but I'll do that all at once after blocks have been developed some more.
+    runOnce?: () => void;
+
+    // validation: expression type+rank validation, variable scope checks, alias expansion ->
+    // optimization: unused code errors, optimization pattern matching, caching static values ->
+    // runtime: step-solver, puzzle solution validation ->
+    // stringify: compression (var name shorten, remove useless aliases), debug output (basically a memory dump)
+};
+
+export type VariableCodeBlock = Required<
+    Pick<ICodeBlock, "variableInfo" | "getValue" | "json">
+>;
+
+export interface IVariableInfo {
+    // For now, I think I'll take after the MatLab style of every variable being a nested array of a scalar type.
+    scalarType: "boolean" | "integer" | "point" | "object";
+    rank: number;
+    effectiveRank?: number; // TODO: Is this what I need to handle iteration in for-each loops?
+    // TODO: Eventually, I want a convenient function that will return values in the specified rank
+    // getValue: () => any;
+}
+// #endregion
+
+// #region - Explicit Type Names
 // TODO: Replace all relevant instances of the plain types with these explicit types.
 // It helps with changing all of the types if necessary, and also with being explicit with how composite types are used.
 export type Point = string;
 export type Delta = { dx: number; dy: number };
 
 export type PointType = "cells" | "edges" | "corners";
+// #endregion
 
-// ======== Grids ========
-
+// #region - Grids
 export type Grid = {
     id: string;
     // TODO: More specific types
@@ -50,9 +100,9 @@ export type Grid = {
         resize: (amount: number) => void;
     }[];
 };
+// #endregion
 
-// ======== Layers ========
-
+// #region - Layers
 export type PointerMoveOrDown = {
     type: "pointerDown" | "pointerMove";
     points: string[];
@@ -95,8 +145,7 @@ export type LayerHandlerResult = {
     history?: IncompleteHistoryAction[];
 };
 
-// TODO: More specific types
-type JSONSchema = { schema: object; uischemaElements: any[] };
+type JSONSchema = { schema: NeedsUpdating; uischemaElements: NeedsUpdating[] };
 
 export type LayerProps = {
     // TODO: Try allowing settings and rawSettings to be optional
@@ -128,9 +177,9 @@ export type ILayer<LP extends LayerProps = LayerProps> = {
         data: Omit<LayerEventEssentials<LP>, "tempStorage">,
     ) => BlitGroup[];
 };
+// #endregion
 
-// ======== Undo-Redo History ========
-
+// #region - Undo-Redo History
 export type LayerStorage<LP extends LayerProps = LayerProps> = {
     renderOrder: string[];
     objects: Record<string, LP["ObjectState"]>;
@@ -155,9 +204,9 @@ export type History = {
     actions: HistoryAction[];
     index: number;
 };
+// #endregion
 
-// ======== Rendering ========
-
+// #region - Rendering
 export type RenderChange =
     | { type: "draw"; layerIds: string[] | "all" }
     | { type: "delete"; layerId: string }
@@ -166,9 +215,9 @@ export type RenderChange =
 
 // TODO: More specific types
 export type BlitGroup = LineBlits | TextBlits | PolygonBlits;
+// #endregion
 
-// ======== Parsing ========
-
+// #region - Parsing
 export type LocalStorageData = {
     grid: { width: number; height: number };
     layers: {
@@ -176,3 +225,9 @@ export type LocalStorageData = {
         rawSettings?: object;
     }[];
 };
+// #endregion
+
+// #region - Refactoring
+// I think I will always keep this variable to make refactoring easier.
+export type NeedsUpdating = any;
+// #endregion

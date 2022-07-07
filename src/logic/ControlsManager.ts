@@ -1,6 +1,10 @@
 import { getLayers, selectLayer } from "../atoms/layers";
 import { getSettings } from "../atoms/settings";
 import {
+    blocklyModalIsOpen,
+    setBlocklyModalOpen,
+} from "../components/Blockly/BlocklyModal";
+import {
     CleanedDOMEvent,
     ILayer,
     LayerEvent,
@@ -199,6 +203,15 @@ export class ControlsManager {
 
     handleKeyDown(rawEvent: React.KeyboardEvent) {
         const keypress = keypressString(rawEvent);
+
+        // TODO: Remove. It's just a temporary convenience
+        if (keypress === "ctrl-p") {
+            rawEvent.preventDefault();
+            setBlocklyModalOpen((x) => !x);
+        }
+
+        // TODO: Check for when anything in the sidebar is focused
+        if (blocklyModalIsOpen()) return; // Do not preventDefault when the puzzle is not focused
 
         if (
             // This should be a very small whitelist for which key-strokes are allowed to be blocked
