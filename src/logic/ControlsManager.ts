@@ -273,9 +273,8 @@ export class ControlsManager {
         }
     }
 
-    onPageBlur(rawEvent: React.FocusEvent) {
-        // TODO: Why am I asking if the rawEvent isPrimary?
-        if (!(rawEvent as any).isPrimary || !this.tempStorage) {
+    onPageBlur() {
+        if (!this.tempStorage) {
             return;
         }
 

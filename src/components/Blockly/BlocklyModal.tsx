@@ -105,6 +105,7 @@ export const BlocklyModal: React.FC = () => {
                 style={{
                     display: "grid",
                     overflow: "hidden",
+                    boxSizing: "border-box",
                     padding: "10px",
                     columnGap: "10px",
                     width: "100%",

@@ -62,6 +62,7 @@ export const LayerControlSettings = () => {
                 schema={schema}
                 uischema={uischema}
             />
+            {layerClass.controls ? null : <i>No controls for this layer</i>}
         </div>
     );
 };

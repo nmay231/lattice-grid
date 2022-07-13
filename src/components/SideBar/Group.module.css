@@ -1,25 +1,31 @@
 .groupContainer {
     margin-bottom: 10px;
-}
-
-.groupBody {
-    overflow-y: hidden;
-}
-
-.groupBodyHidden {
-    composes: groupBody;
-    height: 0px;
+    --transition-duration: 200ms;
 }
 
 .groupBodyShown {
-    composes: groupBody;
+    padding: 3px;
+    overflow-y: hidden;
+    transform: scaleY(1);
+    transform-origin: center top;
+    transition: max-height var(--transition-duration),
+        transform var(--transition-duration);
+    max-height: 800px;
+}
+
+.groupBodyHidden {
+    composes: groupBodyShown;
+    transform: scaleY(0);
+    max-height: 0px;
 }
 
 .groupHeader {
-    background-color: gray;
-    border-radius: 5px;
+    display: inline-flex;
+    justify-content: center;
     padding: 7px;
     margin: 0;
+
+    background-color: gray;
     box-sizing: border-box;
     width: 100%;
     text-align: center;
@@ -29,4 +35,15 @@
 .groupHeader > * {
     margin: 0px;
     padding: 0px;
+    user-select: none;
+}
+
+.headerIcon {
+    transition: transform var(--transition-duration);
+    transform: rotate(0deg);
+}
+
+.headerIconOpen {
+    transition: transform var(--transition-duration);
+    transform: rotate(90deg);
 }
