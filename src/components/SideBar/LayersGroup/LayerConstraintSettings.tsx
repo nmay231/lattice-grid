@@ -8,10 +8,12 @@ import { availableLayers } from "../../../logic/layers";
 import { blurActiveElement } from "../../../utils/DOMUtils";
 import { JsonFormsWrapper } from "../../JsonFormsWrapper";
 
+const noSettingsPreset = <i>No settings for this layer</i>;
+
 export const LayerConstraintSettings = () => {
     const puzzle = usePuzzle();
     const { layers, currentLayerId: id } = useAtomValue(layersAtom);
-    const layer = puzzle.layers[id || ""];
+    const layer = id && puzzle.layers[id];
 
     const [data, setData] = useAtom(constraintSettingsAtom);
 
@@ -21,16 +23,18 @@ export const LayerConstraintSettings = () => {
         }
     }, [layer, setData]);
 
-    if (!data || !layer || !id) {
-        return <></>;
+    if (!layer || !id) {
+        return <i>Add a layer to get started</i>;
+    }
+    if (!data) {
+        return noSettingsPreset;
     }
 
-    const layerType = layers.filter((layer) => layer.id === id)[0].layerType;
+    const layerType = layers.filter((layer_) => layer_.id === id)[0].layerType;
     const layerClass = availableLayers[layerType];
 
     if (!layerClass.constraints) {
-        // We don't want to display anything if the layer only has control settings but no regular settings
-        return <></>;
+        return noSettingsPreset;
     }
 
     const { schema, uischemaElements } = layerClass.constraints || {};

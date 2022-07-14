@@ -1,5 +1,6 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { IoMdMenu } from "react-icons/io";
 import styling from "./SortableItem.module.css";
 
 type Props = {
@@ -22,12 +23,13 @@ export const SortableItem: React.FC<Props> = ({ children, id }) => {
             {...attributes}
         >
             <div className={styling.itemBody}>
-                {/* TODO: Handle icon */}
                 <div
                     {...attributes}
                     {...listeners}
                     className={styling.itemHandle}
-                ></div>
+                >
+                    <IoMdMenu />
+                </div>
                 {children}
             </div>
         </div>

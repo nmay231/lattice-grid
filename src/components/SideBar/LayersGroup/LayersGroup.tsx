@@ -24,7 +24,6 @@ export const LayersGroup = () => {
             <AddNewLayerButton />
             <LayerList />
             <hr />
-            <p>Settings:</p>
             <LayerConstraintSettings />
         </Group>
     );

@@ -1,0 +1,23 @@
+.nameContainer {
+    align-items: center;
+    display: flex;
+    width: 100%;
+    font-size: 1em;
+    margin: 0px;
+}
+
+.nameNotSelected {
+    cursor: pointer;
+    text-align: center;
+    flex-grow: 1; /* Make it larger and easier to click on */
+    margin: 0px 7px;
+}
+
+.nameSelected {
+    composes: nameNotSelected;
+    padding-right: 1em; /* Adjust for the icon to the left of the text */
+}
+
+.remove {
+    cursor: pointer;
+}
