@@ -1,6 +1,7 @@
 import { useAtomValue } from "jotai";
+import { useEffect, useRef } from "react";
 import { blitsAtom } from "../../atoms/blits";
-import { canvasSizeAtom } from "../../atoms/canvasSize";
+import { canvasScaleAtom, canvasSizeAtom } from "../../atoms/canvasSize";
 import { layersAtom } from "../../atoms/layers";
 import { usePuzzle } from "../../atoms/puzzle";
 import { Line } from "./Line";
@@ -19,12 +20,29 @@ export const SVGCanvas = () => {
     const blitGroups = useAtomValue(blitsAtom);
     const layers = useAtomValue(layersAtom).layers;
     const { minX, minY, width, height } = useAtomValue(canvasSizeAtom);
+    const scale = useAtomValue(canvasScaleAtom);
+
+    const scrollArea = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        const current = scrollArea.current;
+        if (!current) throw Error("wut?");
+        current.addEventListener("wheel", controls.onWheel, {
+            passive: false,
+        });
+
+        return () => {
+            current.removeEventListener("wheel", controls.onWheel);
+        };
+    }, [controls]);
 
     return (
-        <div className={styling.scrollArea}>
+        <div className={styling.scrollArea} ref={scrollArea}>
             <div
                 className={styling.outerContainer}
-                style={{ width: `${width}px` }}
+                style={{
+                    width: `${scale}%`,
+                    maxWidth: `${width}px`,
+                }}
             >
                 <div
                     className={styling.innerContainer}

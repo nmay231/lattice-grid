@@ -1,3 +1,5 @@
+import { clamp } from "lodash";
+import { getCanvasScale, setCanvasScale } from "../atoms/canvasSize";
 import { getLayers, selectLayer } from "../atoms/layers";
 import { getSettings } from "../atoms/settings";
 import {
@@ -271,6 +273,33 @@ export class ControlsManager {
             if (!layer) return;
             this.applyLayerEvent(layer, { type: "cancelAction" });
         }
+    }
+
+    onWheel(rawEvent: WheelEvent) {
+        if (!rawEvent.ctrlKey && !rawEvent.metaKey) return;
+        rawEvent.preventDefault();
+
+        if (rawEvent.deltaMode !== rawEvent.DOM_DELTA_PIXEL)
+            throw Error(
+                "FYI, scaling the grid with scrolling might be buggy. Submit a bug report if you get this error.",
+            );
+
+        const { deltaY, offsetX: x, offsetY: y } = rawEvent;
+
+        // TODO: Clamp the scale so that it doesn't shrink large grids to be smaller than the screen (it shouldn't be too hard...)
+        const sign = deltaY / (Math.abs(deltaY) || 0.1); // TODO: Eventually scale by the magnitude of deltaY
+        const oldScale = getCanvasScale();
+        const newScale = clamp(oldScale * (1 - sign * 0.2), 100, 1600);
+        const ratio = newScale / oldScale;
+
+        const { scrollLeft, scrollTop } =
+            rawEvent.currentTarget as HTMLDivElement;
+        setCanvasScale(newScale);
+
+        const left = ratio * (x + scrollLeft) - x;
+        const top = ratio * (y + scrollTop) - y;
+        (rawEvent.currentTarget as HTMLDivElement).scroll({ left, top });
+        console.log([x, y, scrollLeft, scrollTop, left, top, ratio].join(", "));
     }
 
     onPageBlur() {
