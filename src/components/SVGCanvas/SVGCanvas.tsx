@@ -1,7 +1,7 @@
 import { useAtomValue } from "jotai";
 import { useEffect, useRef } from "react";
 import { blitsAtom } from "../../atoms/blits";
-import { canvasScaleAtom, canvasSizeAtom } from "../../atoms/canvasSize";
+import { canvasSizeAtom } from "../../atoms/canvasSize";
 import { layersAtom } from "../../atoms/layers";
 import { usePuzzle } from "../../atoms/puzzle";
 import { Line } from "./Line";
@@ -19,8 +19,7 @@ export const SVGCanvas = () => {
     const controls = usePuzzle().controls;
     const blitGroups = useAtomValue(blitsAtom);
     const layers = useAtomValue(layersAtom).layers;
-    const { minX, minY, width, height } = useAtomValue(canvasSizeAtom);
-    const scale = useAtomValue(canvasScaleAtom);
+    const { minX, minY, width, height, zoom } = useAtomValue(canvasSizeAtom);
 
     const scrollArea = useRef<HTMLDivElement>(null);
     useEffect(() => {
@@ -35,14 +34,17 @@ export const SVGCanvas = () => {
         };
     }, [controls]);
 
+    // TODO: I forgot that width should include the padding of the outerContainer (b/c box-sizing: border-box) and the border of the innerContainer. Right now, it only includes the width of the svg by itself.
+    const fullScreen = `${Math.round(100 * (1 - zoom))}%`;
+    const realSize = `${Math.round(zoom * width)}px`;
+    // Set the canvas width to the interpolation between fullScreen and realSize
+    const canvasWidth = `calc(${fullScreen} + ${realSize})`;
+
     return (
         <div className={styling.scrollArea} ref={scrollArea}>
             <div
                 className={styling.outerContainer}
-                style={{
-                    width: `${scale}%`,
-                    maxWidth: `${width}px`,
-                }}
+                style={{ width: canvasWidth, maxWidth: `${width}px` }}
             >
                 <div
                     className={styling.innerContainer}

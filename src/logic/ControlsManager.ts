@@ -1,5 +1,5 @@
 import { clamp } from "lodash";
-import { getCanvasScale, setCanvasScale } from "../atoms/canvasSize";
+import { getCanvasSize, setCanvasSize } from "../atoms/canvasSize";
 import { getLayers, selectLayer } from "../atoms/layers";
 import { getSettings } from "../atoms/settings";
 import {
@@ -284,22 +284,25 @@ export class ControlsManager {
                 "FYI, scaling the grid with scrolling might be buggy. Submit a bug report if you get this error.",
             );
 
-        const { deltaY, offsetX: x, offsetY: y } = rawEvent;
+        const sign = rawEvent.deltaY / (Math.abs(rawEvent.deltaY) || 1);
+        const { zoom, width, ...theRest } = getCanvasSize();
+        // TODO: Eventually scale by the magnitude of deltaY and the size of the grid
+        const newZoom = clamp(zoom - sign * 0.2, 0, 1);
+        setCanvasSize({ ...theRest, width, zoom: newZoom });
 
-        // TODO: Clamp the scale so that it doesn't shrink large grids to be smaller than the screen (it shouldn't be too hard...)
-        const sign = deltaY / (Math.abs(deltaY) || 0.1); // TODO: Eventually scale by the magnitude of deltaY
-        const oldScale = getCanvasScale();
-        const newScale = clamp(oldScale * (1 - sign * 0.2), 100, 1600);
-        const ratio = newScale / oldScale;
+        const div = rawEvent.currentTarget as HTMLDivElement;
+        const conWidth = div.getBoundingClientRect().width;
 
-        const { scrollLeft, scrollTop } =
-            rawEvent.currentTarget as HTMLDivElement;
-        setCanvasScale(newScale);
+        const oldWidth = conWidth * (1 - zoom) + zoom * width;
+        const newWidth = conWidth * (1 - newZoom) + newZoom * width;
+        const ratio = newWidth / oldWidth;
 
-        const left = ratio * (x + scrollLeft) - x;
-        const top = ratio * (y + scrollTop) - y;
-        (rawEvent.currentTarget as HTMLDivElement).scroll({ left, top });
-        console.log([x, y, scrollLeft, scrollTop, left, top, ratio].join(", "));
+        // TODO: Why is the scrolling position so stuttery?
+        const { offsetX, offsetY } = rawEvent;
+        const { scrollLeft, scrollTop } = div;
+        const left = ratio * (offsetX + scrollLeft) - offsetX;
+        const top = ratio * (offsetY + scrollTop) - offsetY;
+        div.scroll({ left, top });
     }
 
     onPageBlur() {

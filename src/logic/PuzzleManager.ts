@@ -77,7 +77,7 @@ export class PuzzleManager {
 
     resizeCanvas() {
         const requirements = this.grid.getCanvasRequirements();
-        setCanvasSize(requirements);
+        setCanvasSize({ ...requirements, zoom: 0 });
     }
 
     renderChange(change: RenderChange) {

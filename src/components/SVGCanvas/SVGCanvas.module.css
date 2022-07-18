@@ -7,6 +7,7 @@
 }
 
 .outerContainer {
+    /* Remember, if I change box-sizing back to content-box, I will have to update my zoom in/out code. */
     box-sizing: border-box;
     margin: 0px auto;
     padding: 2em;
