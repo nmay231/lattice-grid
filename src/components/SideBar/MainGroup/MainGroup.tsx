@@ -4,8 +4,16 @@ import { ResizeGridButton } from "./ResizeGridButton";
 export const MainGroup = () => {
     return (
         <Group name="Puzzle" expanded>
-            Resize Grid
-            <ResizeGridButton />
+            <div
+                style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    margin: "10px",
+                }}
+            >
+                <ResizeGridButton />
+            </div>
         </Group>
     );
 };

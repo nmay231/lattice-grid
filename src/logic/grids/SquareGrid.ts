@@ -34,13 +34,12 @@ export class SquareGrid implements Grid {
     }
 
     getCanvasResizers() {
-        const { cellSize, borderPadding } = getSettings();
-
+        // TODO: introduce corner resizers that resize two sides at the same time.
         return [
             {
                 name: "Top",
-                x: ((this.width - this.x0) * cellSize) / 2,
-                y: (this.height - this.y0) * cellSize + borderPadding / 2,
+                x: 5,
+                y: 0,
                 rotate: 0,
                 resize: (amount: number) => {
                     this.y0 -= amount;
@@ -48,30 +47,30 @@ export class SquareGrid implements Grid {
                 },
             },
             {
+                name: "Right",
+                x: 10,
+                y: 5,
+                rotate: 90,
+                resize: (amount: number) => {
+                    this.width += amount;
+                },
+            },
+            {
                 name: "Bottom",
-                x: ((this.width - this.x0) * cellSize) / 2,
-                y: (this.y0 - this.height) * cellSize + borderPadding / 2,
-                rotate: 0,
+                x: 5,
+                y: 10,
+                rotate: 180,
                 resize: (amount: number) => {
                     this.height += amount;
                 },
             },
             {
                 name: "Left",
-                x: (this.x0 - this.width) * cellSize + borderPadding / 2,
-                y: ((this.height - this.y0) * cellSize) / 2,
-                rotate: 90,
+                x: 0,
+                y: 5,
+                rotate: 270,
                 resize: (amount: number) => {
                     this.x0 -= amount;
-                    this.width += amount;
-                },
-            },
-            {
-                name: "Right",
-                x: (this.width - this.x0) * cellSize + borderPadding / 2,
-                y: ((this.height - this.y0) * cellSize) / 2,
-                rotate: 90,
-                resize: (amount: number) => {
                     this.width += amount;
                 },
             },

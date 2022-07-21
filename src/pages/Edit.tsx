@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { usePuzzle } from "../atoms/puzzle";
 import { BlocklyModal } from "../components/Blockly/BlocklyModal";
 import { SideBar } from "../components/SideBar";
+import { ResizeModal } from "../components/SideBar/MainGroup/ResizeModal";
 import { SVGCanvas } from "../components/SVGCanvas";
 import styles from "./Puzzle.module.css";
 
@@ -30,6 +31,7 @@ export const EditPage = () => {
                 onPointerUp={puzzle.controls.onPointerUpOutside}
             >
                 <SVGCanvas />
+                <ResizeModal />
             </div>
             <BlocklyModal />
         </div>
