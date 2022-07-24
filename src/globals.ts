@@ -1,11 +1,11 @@
-import { initialSettings } from "./atoms/settings";
-import { LineBlits } from "./components/SVGCanvas/Line";
-import { PolygonBlits } from "./components/SVGCanvas/Polygon";
-import { TextBlits } from "./components/SVGCanvas/Text";
-import { availableLayers } from "./logic/layers";
-import { SelectionExtraProps } from "./logic/layers/Selection";
-import { StorageManager } from "./logic/StorageManager";
-import { UserCodeJSON } from "./logic/userComputation/codeBlocks";
+import type { initialSettings } from "./atoms/settings";
+import type { LineBlits } from "./components/SVGCanvas/Line";
+import type { PolygonBlits } from "./components/SVGCanvas/Polygon";
+import type { TextBlits } from "./components/SVGCanvas/Text";
+import type { availableLayers } from "./logic/layers";
+import type { SelectionExtraProps } from "./logic/layers/Selection";
+import type { StorageManager } from "./logic/StorageManager";
+import type { UserCodeJSON } from "./logic/userComputation/codeBlocks";
 
 // #region - Compilation
 export type PuzzleError = {
