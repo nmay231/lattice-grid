@@ -1,4 +1,4 @@
-import { Drawer } from "@mantine/core";
+import { Button, Drawer } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { useAtom, useSetAtom } from "jotai";
 import React, { useEffect, useRef, useState } from "react";
@@ -37,7 +37,6 @@ export const BlocklyModal: React.FC = () => {
 
         const workspace = Blockly.inject(blocklyDiv.current, {
             toolbox: blocklyToolbox,
-            scrollbars: false,
             collapse: false,
             sounds: false,
             zoom: { wheel: true },
@@ -111,7 +110,7 @@ export const BlocklyModal: React.FC = () => {
                     <div ref={blocklyDiv} style={{ width: "100%", height: "100%" }}></div>
                 </div>
                 <div style={{ gridArea: "1 / 7 / 2 / span 1" }}>
-                    <button onClick={compileAndRun}>Compile and run</button>
+                    <Button onClick={compileAndRun}>Compile and run</Button>
                 </div>
             </div>
         </Drawer>
@@ -121,5 +120,5 @@ export const BlocklyModal: React.FC = () => {
 export const ToggleBlocklyModal: React.FC<{ children: string }> = ({ children }) => {
     const setOpened = useSetAtom(modalAtom);
 
-    return <button onClick={() => setOpened((opened) => !opened)}>{children}</button>;
+    return <Button onClick={() => setOpened((opened) => !opened)}>{children}</Button>;
 };
