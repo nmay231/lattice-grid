@@ -29,9 +29,7 @@ export function* hopStraight({
     const vectors = deltas
         .filter(
             ({ dx, dy }) =>
-                Math.abs(
-                    atan(dx, dy) - atan(startX - targetX, startY - targetY),
-                ) <= Math.PI,
+                Math.abs(atan(dx, dy) - atan(startX - targetX, startY - targetY)) <= Math.PI,
         )
         .map(({ dx, dy }) => [dx, dy]);
     if (!vectors.length) {
@@ -58,8 +56,7 @@ export function* hopStraight({
     while (euclidean(newX, newY, startX, startY) < cursorDistance) {
         // eslint-disable-next-line no-loop-func
         const bestDelta = vectors.reduce(([dx1, dy1], [dx2, dy2]) =>
-            toMinimize(newX + dx1, newY + dy1) <
-            toMinimize(newX + dx2, newY + dy2)
+            toMinimize(newX + dx1, newY + dy1) < toMinimize(newX + dx2, newY + dy2)
                 ? [dx1, dy1]
                 : [dx2, dy2],
         );

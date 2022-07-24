@@ -38,9 +38,7 @@ export class PuzzleManager {
     loadPuzzle() {
         this._resetLayers();
         try {
-            const data = JSON.parse(
-                localStorage.getItem("_currentPuzzle") || "{}",
-            );
+            const data = JSON.parse(localStorage.getItem("_currentPuzzle") || "{}");
             this._loadPuzzle(data);
             this.renderChange({ type: "draw", layerIds: "all" });
         } catch (err) {
@@ -118,9 +116,7 @@ export class PuzzleManager {
 
             // TODO: Allowing layerIds === "all" is mostly used for resizing the grid. How to efficiently redraw layers that depend on the size of the grid. Are there even layers other than grids that need to rerender on resizes? If there are, should they have to explicitly subscribe to these events?
             const layerIds = new Set(
-                change.layerIds === "all"
-                    ? layers.map(({ id }) => id)
-                    : change.layerIds,
+                change.layerIds === "all" ? layers.map(({ id }) => id) : change.layerIds,
             );
 
             for (let layerId of layerIds) {
@@ -176,10 +172,7 @@ export class PuzzleManager {
 
         this.layers[layer.id] = layer;
         this.storage.addStorage({ grid: this.grid, layer });
-        this.changeLayerSettings(
-            layer.id,
-            settings || layerClass.defaultSettings,
-        );
+        this.changeLayerSettings(layer.id, settings || layerClass.defaultSettings);
 
         addLayer({
             id: layer.id,
@@ -207,8 +200,7 @@ export class PuzzleManager {
                 grid: this.grid,
                 storage: this.storage,
                 // TODO: If anything, I should prevent the issue where CellOutline is added before Selections therefore requiring the following optional chain. That's why I thought pre-instantiating it would be a good idea.
-                attachSelectionsHandler:
-                    Selections?.attachHandler?.bind?.(Selections),
+                attachSelectionsHandler: Selections?.attachHandler?.bind?.(Selections),
                 settings: getSettings(),
                 tempStorage: {},
             }) || {};

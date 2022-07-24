@@ -5,10 +5,7 @@ import {
     LayerStorage,
     PointerMoveOrDown,
 } from "../../globals";
-import {
-    getEventEssentials,
-    GetEventEssentialsArg,
-} from "../../utils/testUtils";
+import { getEventEssentials, GetEventEssentialsArg } from "../../utils/testUtils";
 import { SelectionLayer, SelectionProps } from "./Selection";
 
 const getFreshSelectionLayer = () => {

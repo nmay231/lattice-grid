@@ -27,9 +27,7 @@ export const JsonFormsWrapper: React.FC<Props> = ({
             setTimeout(
                 () =>
                     document
-                        .querySelector<HTMLElement>(
-                            `#${formId} input, #${formId} select`,
-                        )
+                        .querySelector<HTMLElement>(`#${formId} input, #${formId} select`)
                         ?.focus?.(),
                 0,
             );

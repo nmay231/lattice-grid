@@ -32,9 +32,7 @@ export const CellOutlineLayer: ILayer<CellOutlineProps> = {
             layer: this,
         });
 
-        const blacklist = stored.renderOrder.filter(
-            (key) => stored.objects[key].state,
-        );
+        const blacklist = stored.renderOrder.filter((key) => stored.objects[key].state);
         const { cells, gridEdge } = grid.getPoints({
             connections: {
                 cells: {

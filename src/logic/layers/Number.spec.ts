@@ -1,8 +1,5 @@
 import { LayerHandlerResult, LayerStorage } from "../../globals";
-import {
-    getEventEssentials,
-    GetEventEssentialsArg,
-} from "../../utils/testUtils";
+import { getEventEssentials, GetEventEssentialsArg } from "../../utils/testUtils";
 import { NumberLayer, NumberProps } from "./Number";
 
 describe("Number Layer", () => {
@@ -128,9 +125,7 @@ describe("Number Layer", () => {
     it("should add a second digit when typed fast enough", () => {
         // Fake Date.now
         let fakeNow = START_TIME;
-        const dateNowSpy = jest
-            .spyOn(Date, "now")
-            .mockImplementation(() => fakeNow);
+        const dateNowSpy = jest.spyOn(Date, "now").mockImplementation(() => fakeNow);
 
         const stored: LayerStorage<NumberProps> = {
             renderOrder: ["id"],
@@ -157,9 +152,7 @@ describe("Number Layer", () => {
     it("should not add a second digit when not typed fast enough", () => {
         // Fake Date.now
         let fakeNow = START_TIME;
-        const dateNowSpy = jest
-            .spyOn(Date, "now")
-            .mockImplementation(() => fakeNow);
+        const dateNowSpy = jest.spyOn(Date, "now").mockImplementation(() => fakeNow);
 
         const stored: LayerStorage<NumberProps> = {
             renderOrder: ["id"],
@@ -186,9 +179,7 @@ describe("Number Layer", () => {
     it("should not add a second digit when the selection is not the same", () => {
         // Fake Date.now
         let fakeNow = START_TIME;
-        const dateNowSpy = jest
-            .spyOn(Date, "now")
-            .mockImplementation(() => fakeNow);
+        const dateNowSpy = jest.spyOn(Date, "now").mockImplementation(() => fakeNow);
 
         const stored: LayerStorage<NumberProps> = {
             renderOrder: ["id", "id2"],
@@ -220,9 +211,7 @@ describe("Number Layer", () => {
     it("should not add a second digit when the numbers are not the same", () => {
         // Fake Date.now
         let fakeNow = START_TIME;
-        const dateNowSpy = jest
-            .spyOn(Date, "now")
-            .mockImplementation(() => fakeNow);
+        const dateNowSpy = jest.spyOn(Date, "now").mockImplementation(() => fakeNow);
 
         const stored: LayerStorage<NumberProps> = {
             renderOrder: ["id", "id2"],

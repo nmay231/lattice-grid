@@ -26,16 +26,16 @@ export type CompilerErrorDetails = {
 export type ICodeBlock<T extends UserCodeJSON = UserCodeJSON> = {
     json: T;
 
-    registerVariableNames?: () => void;
-    expandVariables?: () => void;
-    variableInfo?: () => IVariableInfo | null;
-    validateInputs?: () => void;
+    registerVariableNames?(): void;
+    expandVariables?(): void;
+    variableInfo?(): IVariableInfo | null;
+    validateInputs?(): void;
 
     // TODO: Better name perhaps? But also figure out iterator/generator pattern and how rank translation will be handled.
-    getValue?: () => any;
+    getValue?(): any;
 
     // TODO: Should runOnce be required? I think it should, but I'll do that all at once after blocks have been developed some more.
-    runOnce?: () => void;
+    runOnce?(): void;
 
     // validation: expression type+rank validation, variable scope checks, alias expansion ->
     // optimization: unused code errors, optimization pattern matching, caching static values ->
@@ -43,9 +43,7 @@ export type ICodeBlock<T extends UserCodeJSON = UserCodeJSON> = {
     // stringify: compression (var name shorten, remove useless aliases), debug output (basically a memory dump)
 };
 
-export type VariableCodeBlock = Required<
-    Pick<ICodeBlock, "variableInfo" | "getValue" | "json">
->;
+export type VariableCodeBlock = Required<Pick<ICodeBlock, "variableInfo" | "getValue" | "json">>;
 
 export interface IVariableInfo {
     // For now, I think I'll take after the MatLab style of every variable being a nested array of a scalar type.
@@ -122,23 +120,18 @@ export type CleanedDOMEvent =
     | PointerMoveOrDown;
 
 export type LayerEventEssentials<LP extends LayerProps> = {
-    grid: Pick<
-        Grid,
-        "id" | "getAllPoints" | "getPoints" | "selectPointsWithCursor"
-    >;
+    grid: Pick<Grid, "id" | "getAllPoints" | "getPoints" | "selectPointsWithCursor">;
     storage: StorageManager;
     settings: typeof initialSettings;
     tempStorage: Partial<LP["TempStorage"]>;
 };
 
-export type LayerEvent<LP extends LayerProps> = CleanedDOMEvent &
-    LayerEventEssentials<LP>;
+export type LayerEvent<LP extends LayerProps> = CleanedDOMEvent & LayerEventEssentials<LP>;
 
-export type NewSettingsEvent<LP extends LayerProps> =
-    LayerEventEssentials<LP> & {
-        newSettings: LP["RawSettings"];
-        attachSelectionsHandler: SelectionExtraProps["attachHandler"];
-    };
+export type NewSettingsEvent<LP extends LayerProps> = LayerEventEssentials<LP> & {
+    newSettings: LP["RawSettings"];
+    attachSelectionsHandler: SelectionExtraProps["attachHandler"];
+};
 
 export type LayerHandlerResult = {
     discontinueInput?: boolean;
@@ -163,19 +156,11 @@ export type ILayer<LP extends LayerProps = LayerProps> = {
     defaultSettings: LP["RawSettings"];
     controls?: JSONSchema;
     constraints?: JSONSchema;
-    newSettings?: (
-        settingsChange: NewSettingsEvent<LP>,
-    ) => LayerHandlerResult | void;
-    gatherPoints: (
-        layerEvent: PointerMoveOrDown & LayerEventEssentials<LP>,
-    ) => string[];
+    newSettings?(settingsChange: NewSettingsEvent<LP>): LayerHandlerResult | void;
+    gatherPoints: (layerEvent: PointerMoveOrDown & LayerEventEssentials<LP>) => string[];
     handleEvent: (layerEvent: LayerEvent<LP>) => LayerHandlerResult;
-    getBlits?: (
-        data: Omit<LayerEventEssentials<LP>, "tempStorage">,
-    ) => BlitGroup[];
-    getOverlayBlits?: (
-        data: Omit<LayerEventEssentials<LP>, "tempStorage">,
-    ) => BlitGroup[];
+    getBlits?(data: Omit<LayerEventEssentials<LP>, "tempStorage">): BlitGroup[];
+    getOverlayBlits?(data: Omit<LayerEventEssentials<LP>, "tempStorage">): BlitGroup[];
 };
 // #endregion
 

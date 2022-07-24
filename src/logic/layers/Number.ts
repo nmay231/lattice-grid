@@ -9,10 +9,7 @@ export interface NumberProps extends LayerProps {
 }
 
 type NumberSettings = {
-    match: (
-        number: number,
-        alternate?: string | null,
-    ) => string | null | undefined;
+    match: (number: number, alternate?: string | null) => string | null | undefined;
 };
 
 type NumberExtraProps = {
@@ -39,8 +36,7 @@ export const NumberLayer: ILayer<NumberProps> &
         const timeDelay = Date.now() - (stored.lastTime || 0);
         stored.lastTime = Date.now();
 
-        const selectionChanged =
-            (stored.lastIds || []).join(";") !== ids.join(";");
+        const selectionChanged = (stored.lastIds || []).join(";") !== ids.join(";");
         stored.lastIds = ids.slice();
 
         const states = ids.map((id) => stored.objects[id]?.state);

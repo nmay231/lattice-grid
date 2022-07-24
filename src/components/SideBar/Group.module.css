@@ -8,8 +8,7 @@
     overflow-y: hidden;
     transform: scaleY(1);
     transform-origin: center top;
-    transition: max-height var(--transition-duration),
-        transform var(--transition-duration);
+    transition: max-height var(--transition-duration), transform var(--transition-duration);
     max-height: 800px;
 }
 

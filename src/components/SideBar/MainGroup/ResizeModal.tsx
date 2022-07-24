@@ -39,10 +39,7 @@ export const ResizeModal = () => {
         >
             <Paper p="lg" m="auto" style={{ display: "flex" }}>
                 <div style={{ position: "relative", margin: "auto" }}>
-                    <SquareGridIcon
-                        width="10em"
-                        style={{ marginBottom: "2em" }}
-                    />
+                    <SquareGridIcon width="10em" style={{ marginBottom: "2em" }} />
 
                     <div style={{ position: "absolute", left: 0, top: 0 }}>
                         {buttons.map(({ name, resize, x, y, rotate }) => (

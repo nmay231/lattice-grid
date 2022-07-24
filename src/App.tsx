@@ -1,10 +1,5 @@
 import { MantineProvider } from "@mantine/core";
-import {
-    BrowserRouter as Router,
-    Redirect,
-    Route,
-    Switch,
-} from "react-router-dom";
+import { BrowserRouter as Router, Redirect, Route, Switch } from "react-router-dom";
 import { EditPage } from "./pages/Edit";
 
 export const App = () => {

@@ -81,11 +81,7 @@ export const LayerConstraintSettings = () => {
                 <button type="submit" disabled={!changed}>
                     Save
                 </button>
-                <button
-                    type="button"
-                    disabled={!changed}
-                    onClick={handleCancel}
-                >
+                <button type="button" disabled={!changed} onClick={handleCancel}>
                     Cancel
                 </button>
             </form>

@@ -142,9 +142,7 @@ export const SelectionLayer: ILayer<SelectionProps> & SelectionExtraProps = {
                     return { history };
                 }
 
-                const storingLayer: ILayer & KeyDownEventHandler = (
-                    event as any
-                ).storingLayer;
+                const storingLayer: ILayer & KeyDownEventHandler = (event as any).storingLayer;
 
                 const actions =
                     storingLayer.handleKeyDown?.({
@@ -209,9 +207,7 @@ export const SelectionLayer: ILayer<SelectionProps> & SelectionExtraProps = {
                                 object: null,
                             }));
                     } else {
-                        const groupsToMerge = new Set(
-                            ids.map((id) => stored.objects[id]?.state),
-                        );
+                        const groupsToMerge = new Set(ids.map((id) => stored.objects[id]?.state));
                         const allIds = ids
                             .filter((id) => !(id in stored.objects))
                             .concat(
@@ -314,9 +310,7 @@ export const SelectionLayer: ILayer<SelectionProps> & SelectionExtraProps = {
 
     _getBlits({ grid, storage }) {
         const stored = storage.getStored<SelectionProps>({ grid, layer: this });
-        const points = stored.renderOrder.filter(
-            (key) => stored.objects[key].state,
-        );
+        const points = stored.renderOrder.filter((key) => stored.objects[key].state);
         const states = points.map((id) => stored.objects[id].state);
 
         let blits: Record<string, any> = {};
@@ -331,9 +325,7 @@ export const SelectionLayer: ILayer<SelectionProps> & SelectionExtraProps = {
                             },
                         },
                     },
-                    points: states
-                        .filter((state) => state === group)
-                        .map((_, i) => points[i]),
+                    points: states.filter((state) => state === group).map((_, i) => points[i]),
                 });
 
                 for (let key in selectionCage.svgPolygons) {

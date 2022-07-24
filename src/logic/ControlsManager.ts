@@ -2,17 +2,8 @@ import { clamp } from "lodash";
 import { getCanvasSize, setCanvasSize } from "../atoms/canvasSize";
 import { getLayers, selectLayer } from "../atoms/layers";
 import { getSettings } from "../atoms/settings";
-import {
-    blocklyModalIsOpen,
-    setBlocklyModalOpen,
-} from "../components/Blockly/BlocklyModal";
-import {
-    CleanedDOMEvent,
-    ILayer,
-    LayerEvent,
-    LayerProps,
-    PointerMoveOrDown,
-} from "../globals";
+import { blocklyModalIsOpen, setBlocklyModalOpen } from "../components/Blockly/BlocklyModal";
+import { CleanedDOMEvent, ILayer, LayerEvent, LayerProps, PointerMoveOrDown } from "../globals";
 import { keypressString } from "../utils/stringUtils";
 import { PuzzleManager } from "./PuzzleManager";
 
@@ -59,9 +50,7 @@ export class ControlsManager {
     getCurrentLayer() {
         const currentLayerId = getLayers().currentLayerId;
 
-        return currentLayerId === null
-            ? null
-            : this.puzzle.layers[currentLayerId];
+        return currentLayerId === null ? null : this.puzzle.layers[currentLayerId];
     }
 
     cleanPointerEvent(
@@ -75,8 +64,7 @@ export class ControlsManager {
             width: realWidth,
             height: realHeight,
         } = currentTarget.getBoundingClientRect();
-        const { minX, minY, width, height } =
-            this.puzzle.grid.getCanvasRequirements();
+        const { minX, minY, width, height } = this.puzzle.grid.getCanvasRequirements();
         // These transformations convert dom coordinates to svg coords
         let x = minX + (clientX - left) * (height / realHeight),
             y = minY + (clientY - top) * (width / realWidth);
@@ -103,10 +91,7 @@ export class ControlsManager {
             tempStorage: this.tempStorage || {},
         };
 
-        if (
-            layerEvent.type === "pointerDown" ||
-            layerEvent.type === "pointerMove"
-        ) {
+        if (layerEvent.type === "pointerDown" || layerEvent.type === "pointerMove") {
             const points = layer.gatherPoints(layerEvent);
             if (!points?.length) {
                 return;
@@ -114,8 +99,7 @@ export class ControlsManager {
             layerEvent.points = points;
         }
 
-        const { discontinueInput, history } =
-            layer.handleEvent(layerEvent) || {};
+        const { discontinueInput, history } = layer.handleEvent(layerEvent) || {};
 
         if (
             layerEvent.type === "keyDown" ||
@@ -243,13 +227,10 @@ export class ControlsManager {
             // Perhaps, I can use that mechanism for storage to switch the current layer when undoing/redoing
             const { storage, grid } = this.puzzle;
             const appliedActions =
-                keypress === "ctrl-z"
-                    ? storage.undoHistory(grid.id)
-                    : storage.redoHistory(grid.id);
+                keypress === "ctrl-z" ? storage.undoHistory(grid.id) : storage.redoHistory(grid.id);
 
             if (appliedActions.length) {
-                const newLayerId =
-                    appliedActions[appliedActions.length - 1].layerId;
+                const newLayerId = appliedActions[appliedActions.length - 1].layerId;
                 this.selectLayer({ id: newLayerId });
 
                 layer = this.getCurrentLayer();
@@ -265,10 +246,7 @@ export class ControlsManager {
     }
 
     onPointerUpOutside(rawEvent: React.PointerEvent) {
-        if (
-            rawEvent.isPrimary &&
-            (rawEvent.target as any)?.id === "canvas-container"
-        ) {
+        if (rawEvent.isPrimary && (rawEvent.target as any)?.id === "canvas-container") {
             const layer = this.getCurrentLayer();
             if (!layer) return;
             this.applyLayerEvent(layer, { type: "cancelAction" });

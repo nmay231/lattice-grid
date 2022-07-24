@@ -1,8 +1,4 @@
-import {
-    CompilerErrorDetails,
-    ICodeBlock,
-    VariableCodeBlock,
-} from "../../../globals";
+import { CompilerErrorDetails, ICodeBlock, VariableCodeBlock } from "../../../globals";
 import { ComputeManager } from "../ComputeManager";
 
 export interface IReadAlias {
@@ -22,8 +18,7 @@ export class ReadAlias implements ICodeBlock<IReadAlias> {
         if (!(this.json.varId in this.compute.variables)) {
             this.compute.compilerErrors.push({
                 message: `Missing variable name "${
-                    this.compute.getVariable(this.json.varId)?.name ||
-                    "VARIABLE_NOT_FOUND"
+                    this.compute.getVariable(this.json.varId)?.name || "VARIABLE_NOT_FOUND"
                 }"`,
                 isInternal: true,
                 codeBlockIds: [this.json.id],

@@ -62,10 +62,7 @@ export const LayerList = () => {
             onDragEnd={handleDragEnd}
             modifiers={[restrictToVerticalAxis]}
         >
-            <SortableContext
-                items={layers}
-                strategy={verticalListSortingStrategy}
-            >
+            <SortableContext items={layers} strategy={verticalListSortingStrategy}>
                 {layers.map(({ id, ethereal }) => {
                     const current = id === currentLayerId;
                     return (
@@ -75,9 +72,7 @@ export const LayerList = () => {
                                     <span
                                         onPointerDown={handleSelect(id)}
                                         className={
-                                            current
-                                                ? styling.nameSelected
-                                                : styling.nameNotSelected
+                                            current ? styling.nameSelected : styling.nameNotSelected
                                         }
                                     >
                                         {current && <IoMdCheckmark />}

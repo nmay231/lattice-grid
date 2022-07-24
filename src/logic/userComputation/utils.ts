@@ -28,9 +28,7 @@ export const addAliasCategoryToToolbox = (workspace: Blockly.Workspace) => {
     return toolboxCategories;
 };
 
-export const blockIsVariable = (
-    block: Partial<VariableCodeBlock>,
-): block is VariableCodeBlock => {
+export const blockIsVariable = (block: Partial<VariableCodeBlock>): block is VariableCodeBlock => {
     return !!(block.getValue && block.variableInfo && block.json);
 };
 

@@ -21,9 +21,7 @@ export const AddNewLayerButton = () => {
         blurActiveElement();
     }) as React.ChangeEventHandler<HTMLSelectElement>;
 
-    const layerIds = Object.keys(availableLayers).filter(
-        (id) => !availableLayers[id].ethereal,
-    );
+    const layerIds = Object.keys(availableLayers).filter((id) => !availableLayers[id].ethereal);
     layerIds.sort();
 
     return (

@@ -1,9 +1,6 @@
 import { ILayer } from "../../globals";
 import { BaseLayer } from "./baseLayer";
-import {
-    handleEventsUnorderedSets,
-    MultiPointLayerProps,
-} from "./controls/multiPoint";
+import { handleEventsUnorderedSets, MultiPointLayerProps } from "./controls/multiPoint";
 import { KeyDownEventHandler } from "./Selection";
 
 export interface KillerCagesProps extends MultiPointLayerProps {
@@ -15,8 +12,7 @@ export type KillerCagesExtraProps = {
     _nextState: (state: string, keypress: string) => string | number | null;
 };
 
-export const KillerCagesLayer: ILayer<KillerCagesProps> &
-    KillerCagesExtraProps = {
+export const KillerCagesLayer: ILayer<KillerCagesProps> & KillerCagesExtraProps = {
     ...BaseLayer,
     id: "Killer Cages",
     unique: false,
@@ -102,8 +98,7 @@ export const KillerCagesLayer: ILayer<KillerCagesProps> &
                 points: object.points,
             });
 
-            const style =
-                id === stored.currentObjectId ? { stroke: "#33F" } : undefined;
+            const style = id === stored.currentObjectId ? { stroke: "#33F" } : undefined;
             for (let key in cageOutline.svgPolygons) {
                 cageBlits[`${object.id}-${key}`] = {
                     style,
@@ -114,10 +109,7 @@ export const KillerCagesLayer: ILayer<KillerCagesProps> &
             if (object.state !== null) {
                 const point = sorted[0];
                 const { svgPoint, maxRadius } = cells[point];
-                const corner = [
-                    svgPoint[0] - 0.85 * maxRadius,
-                    svgPoint[1] - 0.85 * maxRadius,
-                ];
+                const corner = [svgPoint[0] - 0.85 * maxRadius, svgPoint[1] - 0.85 * maxRadius];
                 numberBlits[point] = {
                     text: object.state,
                     point: corner,

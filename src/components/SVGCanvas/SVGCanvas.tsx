@@ -46,10 +46,7 @@ export const SVGCanvas = () => {
                 className={styling.outerContainer}
                 style={{ width: canvasWidth, maxWidth: `${width}px` }}
             >
-                <div
-                    className={styling.innerContainer}
-                    {...controls.eventListeners}
-                >
+                <div className={styling.innerContainer} {...controls.eventListeners}>
                     <svg viewBox={`${minX} ${minY} ${width} ${height}`}>
                         {layers.flatMap(({ id }) =>
                             blitGroups[id].map((group) => {

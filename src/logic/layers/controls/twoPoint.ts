@@ -67,14 +67,9 @@ export const handleEventsCurrentSetting = <LP extends TwoPointProps>(
             const id = pair.join(";");
 
             if (tempStorage.targetState === undefined) {
-                const isSame = isEqual(
-                    stored.objects[id]?.state,
-                    layer.settings.selectedState,
-                );
+                const isSame = isEqual(stored.objects[id]?.state, layer.settings.selectedState);
 
-                tempStorage.targetState = isSame
-                    ? null
-                    : layer.settings.selectedState;
+                tempStorage.targetState = isSame ? null : layer.settings.selectedState;
             }
 
             if (tempStorage.targetState === null && id in stored.objects) {

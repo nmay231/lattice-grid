@@ -1,8 +1,4 @@
-import {
-    CompilerErrorDetails,
-    ICodeBlock,
-    VariableCodeBlock,
-} from "../../globals";
+import { CompilerErrorDetails, ICodeBlock, VariableCodeBlock } from "../../globals";
 import { Blockly } from "../../utils/Blockly";
 import { PuzzleManager } from "../PuzzleManager";
 import { CodeBlocks, UserCodeJSON } from "./codeBlocks";
@@ -62,10 +58,7 @@ export class ComputeManager {
         });
     };
 
-    compile(
-        jsonString: string,
-        opts?: Partial<{ weGeneratedTheCode: boolean }>,
-    ) {
+    compile(jsonString: string, opts?: Partial<{ weGeneratedTheCode: boolean }>) {
         this._weGeneratedTheCode = opts?.weGeneratedTheCode || false;
 
         const json = this._parseJson(jsonString);
@@ -93,9 +86,6 @@ export class ComputeManager {
     }
 
     getVariable(varId: string): null | Blockly.VariableModel {
-        return Blockly.Variables.getOrCreateVariablePackage(
-            Blockly.getMainWorkspace(),
-            varId,
-        );
+        return Blockly.Variables.getOrCreateVariablePackage(Blockly.getMainWorkspace(), varId);
     }
 }

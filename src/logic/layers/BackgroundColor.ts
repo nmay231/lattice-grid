@@ -12,8 +12,7 @@ type BackgroundColorExtraProps = {
     settings: BackgroundColorProps["RawSettings"];
 };
 
-export const BackgroundColorLayer: ILayer<BackgroundColorProps> &
-    BackgroundColorExtraProps = {
+export const BackgroundColorLayer: ILayer<BackgroundColorProps> & BackgroundColorExtraProps = {
     ...BaseLayer,
     id: "Background Color",
     unique: false,

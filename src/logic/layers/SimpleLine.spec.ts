@@ -10,8 +10,7 @@ describe("SimpleLine", () => {
         settings?: SimpleLineProps["RawSettings"];
     };
     const getSimpleLine = ({ stored, settings }: Arg) => {
-        const simpleLine: typeof SimpleLineLayer =
-            Object.create(SimpleLineLayer);
+        const simpleLine: typeof SimpleLineLayer = Object.create(SimpleLineLayer);
         if (!simpleLine.newSettings) {
             throw Error("Expected simpleLine.newSettings to be defined");
         }

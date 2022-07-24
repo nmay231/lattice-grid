@@ -138,8 +138,7 @@ describe("layers atom", () => {
     });
 
     it("should remove a layer that is not selected", () => {
-        const { layersAtom, addLayer, selectLayer, removeLayer } =
-            makeLayersAtom();
+        const { layersAtom, addLayer, selectLayer, removeLayer } = makeLayersAtom();
         const { result } = renderHook(() => useAtomValue(layersAtom));
 
         act(() => {
@@ -164,8 +163,7 @@ describe("layers atom", () => {
     });
 
     it("should remove a layer that is selected with layers after it", () => {
-        const { layersAtom, addLayer, selectLayer, removeLayer } =
-            makeLayersAtom();
+        const { layersAtom, addLayer, selectLayer, removeLayer } = makeLayersAtom();
         const { result } = renderHook(() => useAtomValue(layersAtom));
 
         act(() => {

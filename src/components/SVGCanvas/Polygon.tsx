@@ -12,13 +12,7 @@ export const Polygon: React.FC<PolygonProps> = ({ blits, style }) => {
         <g style={style}>
             {Object.keys(blits).map((key) => {
                 const { points, style } = blits[key];
-                return (
-                    <polygon
-                        points={points.join(",")}
-                        style={style}
-                        key={key}
-                    />
-                );
+                return <polygon points={points.join(",")} style={style} key={key} />;
             })}
         </g>
     );

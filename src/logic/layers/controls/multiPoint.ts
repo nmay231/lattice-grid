@@ -179,9 +179,7 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
                     if (!objectCopy.points.length) {
                         return {
                             discontinueInput: true,
-                            history: [
-                                { id: currentObjectId, batchId, object: null },
-                            ],
+                            history: [{ id: currentObjectId, batchId, object: null }],
                         };
                     }
                 }

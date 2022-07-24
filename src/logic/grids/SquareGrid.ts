@@ -119,12 +119,12 @@ export class SquareGrid implements Grid {
                 .map(({ x, y }) => `${x},${y}`);
         }
 
-        let previousGridPoint = previousPoint
-            .split(",")
-            .map((x) => parseInt(x)) as [number, number];
+        let previousGridPoint = previousPoint.split(",").map((x) => parseInt(x)) as [
+            number,
+            number,
+        ];
         const nearby = deltas.map(
-            ({ dx, dy }) =>
-                `${previousGridPoint[0] + dx},${previousGridPoint[1] + dy}`,
+            ({ dx, dy }) => `${previousGridPoint[0] + dx},${previousGridPoint[1] + dy}`,
         );
         const intersection = targetPoints
             .map((p) => p.toString())
@@ -143,9 +143,10 @@ export class SquareGrid implements Grid {
 
         let maxIteration = 100; // Prevent infinite loops
         while (maxIteration > 0) {
-            const next = generator
-                .next(previousGridPoint)
-                .value?.map((v) => Math.round(v)) as [number, number];
+            const next = generator.next(previousGridPoint).value?.map((v) => Math.round(v)) as [
+                number,
+                number,
+            ];
             const string = previousGridPoint?.join(",");
             if (!next || points.indexOf(string) > -1) {
                 return [];
@@ -260,8 +261,7 @@ export class SquareGrid implements Grid {
                             const nextString = `${nextPoint.x},${nextPoint.y}`;
                             if (
                                 blacklist.includes(nextString) ||
-                                (!includeOutOfBounds &&
-                                    this._outOfBounds(nextPoint))
+                                (!includeOutOfBounds && this._outOfBounds(nextPoint))
                             ) {
                                 continue;
                             }
@@ -305,8 +305,7 @@ export class SquareGrid implements Grid {
                     for (let { point, result } of gridPoints) {
                         // (connection === edges->cells) XOR (x is even) ? upDown : leftRight
                         const neighbors =
-                            (nextType === "cells") !==
-                            (point.x === (point.x >> 1) << 1)
+                            (nextType === "cells") !== (point.x === (point.x >> 1) << 1)
                                 ? upDown
                                 : leftRight;
 
@@ -321,8 +320,7 @@ export class SquareGrid implements Grid {
                             const nextString = `${nextPoint.x},${nextPoint.y}`;
                             if (
                                 blacklist.includes(nextString) ||
-                                (!includeOutOfBounds &&
-                                    this._outOfBounds(nextPoint))
+                                (!includeOutOfBounds && this._outOfBounds(nextPoint))
                             ) {
                                 continue;
                             }
@@ -362,10 +360,7 @@ export class SquareGrid implements Grid {
                     const { cellSize } = getSettings();
                     const halfCell = cellSize / 2;
                     for (let { point, result } of gridPoints) {
-                        result[nextType] = [
-                            point.x * halfCell,
-                            point.y * halfCell,
-                        ];
+                        result[nextType] = [point.x * halfCell, point.y * halfCell];
                     }
                     break;
                 }
@@ -379,30 +374,17 @@ export class SquareGrid implements Grid {
                     const halfCell = cellSize / 2;
                     for (let { point, result } of gridPoints) {
                         result[nextType] = [
-                            [
-                                (point.x - 1) * halfCell,
-                                (point.y - 1) * halfCell,
-                            ],
-                            [
-                                (point.x + 1) * halfCell,
-                                (point.y - 1) * halfCell,
-                            ],
-                            [
-                                (point.x + 1) * halfCell,
-                                (point.y + 1) * halfCell,
-                            ],
-                            [
-                                (point.x - 1) * halfCell,
-                                (point.y + 1) * halfCell,
-                            ],
+                            [(point.x - 1) * halfCell, (point.y - 1) * halfCell],
+                            [(point.x + 1) * halfCell, (point.y - 1) * halfCell],
+                            [(point.x + 1) * halfCell, (point.y + 1) * halfCell],
+                            [(point.x - 1) * halfCell, (point.y + 1) * halfCell],
                         ];
                     }
                     break;
                 }
                 case "cells->shrinkwrap": {
                     const result: any = {};
-                    const { key, svgPolygons, edgePoints } =
-                        connections[nextType];
+                    const { key, svgPolygons, edgePoints } = connections[nextType];
                     finalResult[key || "shrinkwrap"] = result;
 
                     if (svgPolygons) {
@@ -421,10 +403,7 @@ export class SquareGrid implements Grid {
                 case "edges->sorted": {
                     const { key, direction } = connections[nextType];
 
-                    if (
-                        typeof direction !== "string" ||
-                        direction.length !== 2
-                    ) {
+                    if (typeof direction !== "string" || direction.length !== 2) {
                         throw Error(
                             `param direction required to be string of length two instead of "${direction}"`,
                         );
@@ -432,10 +411,7 @@ export class SquareGrid implements Grid {
                     const [primary, secondary] = direction.toUpperCase();
 
                     type Point = { x: number; y: number };
-                    const sorts: Record<
-                        string,
-                        (a: Point, b: Point) => number
-                    > = {
+                    const sorts: Record<string, (a: Point, b: Point) => number> = {
                         N: (a, b) => a.y - b.y,
                         S: (a, b) => b.y - a.y,
                         E: (a, b) => b.x - a.x,
@@ -452,14 +428,10 @@ export class SquareGrid implements Grid {
                 case "corners->rows":
                 case "cells->rows": {
                     const { types } =
-                        connections[nextType] === true
-                            ? { types: "all" }
-                            : connections[nextType];
+                        connections[nextType] === true ? { types: "all" } : connections[nextType];
 
-                    const horizontal =
-                        types === "all" || types?.indexOf("horizontal") > -1;
-                    const vertical =
-                        types === "all" || types?.indexOf("vertical") > -1;
+                    const horizontal = types === "all" || types?.indexOf("horizontal") > -1;
+                    const vertical = types === "all" || types?.indexOf("vertical") > -1;
 
                     for (let { point, result } of gridPoints) {
                         const isCell = point.type === "cells";
@@ -497,10 +469,7 @@ export class SquareGrid implements Grid {
                     let radius = getSettings().cellSize / 2;
 
                     // I'm literally making up these values as I go along...
-                    const shapeMap: Record<
-                        PointType,
-                        Record<string, number>
-                    > = {
+                    const shapeMap: Record<PointType, Record<string, number>> = {
                         cells: { square: 1, circle: 1 },
                         corners: { square: 0.9, circle: 1 },
                         edges: { square: 0.8, circle: 0.8 },
@@ -511,8 +480,7 @@ export class SquareGrid implements Grid {
                         edges: { large: 0.8, medium: 0.4, small: 0.2 },
                     };
 
-                    radius *=
-                        shapeMap[pointType][shape] * sizeMap[pointType][size];
+                    radius *= shapeMap[pointType][shape] * sizeMap[pointType][size];
 
                     for (let { result } of gridPoints) {
                         // For some other grids, the radius will be different for different cells, etc.
@@ -529,13 +497,7 @@ export class SquareGrid implements Grid {
         }
     }
 
-    _shrinkwrap({
-        gridPoints,
-        inset,
-    }: {
-        gridPoints: GridPoint[];
-        inset?: number;
-    }) {
+    _shrinkwrap({ gridPoints, inset }: { gridPoints: GridPoint[]; inset?: number }) {
         inset = inset || 0;
         let cellPoints: [number, number][] = [];
         const edgesLeft: Record<string, [number, number]> = {};
@@ -569,8 +531,7 @@ export class SquareGrid implements Grid {
             let current = edgesLeft[edgeKey];
             [dx, dy] = [firstEdge[0] - current[0], firstEdge[1] - current[1]];
 
-            let cellAcrossBoundary = (cell: [number, number]) =>
-                !cells.includes(cell.toString());
+            let cellAcrossBoundary = (cell: [number, number]) => !cells.includes(cell.toString());
 
             // If the inset is negative, we traverse around the outside instead of the inside.
             // Otherwise, lines would overlap on touching corners
@@ -584,10 +545,7 @@ export class SquareGrid implements Grid {
             const edgeLoop = [];
 
             // Collect the edges around a contiguous group of cells
-            while (
-                edge.toString() !== edgeLoop[0]?.toString() &&
-                maxIteration > 0
-            ) {
+            while (edge.toString() !== edgeLoop[0]?.toString() && maxIteration > 0) {
                 maxIteration--;
                 next = [current[0] + 2 * dx, current[1] + 2 * dy];
 
@@ -607,9 +565,7 @@ export class SquareGrid implements Grid {
                 }
             }
             if (maxIteration <= 0) {
-                throw new Error(
-                    "Reached iteration limit in shrinkwrap inner loop",
-                );
+                throw new Error("Reached iteration limit in shrinkwrap inner loop");
             }
 
             edgeLoop.pop();
@@ -621,8 +577,7 @@ export class SquareGrid implements Grid {
 
             for (let index in edgeLoop) {
                 edge = edgeLoop[index];
-                const nextEdge =
-                    edgeLoop[(Number(index) + 1) % edgeLoop.length];
+                const nextEdge = edgeLoop[(Number(index) + 1) % edgeLoop.length];
 
                 const corner = [edge[0] + dx, edge[1] + dy];
                 const insetCorner = [
@@ -684,11 +639,9 @@ export class SquareGrid implements Grid {
             let arr = [];
             for (let x = this.x0; x <= this.x0 + this.width; x += 1) {
                 for (let y = this.y0; y <= this.y0 + this.height; y += 1) {
-                    if (x < this.x0 + this.width)
-                        arr.push({ x: 2 * x + 1, y: 2 * y, type });
+                    if (x < this.x0 + this.width) arr.push({ x: 2 * x + 1, y: 2 * y, type });
 
-                    if (y < this.y0 + this.height)
-                        arr.push({ x: 2 * x, y: 2 * y + 1, type });
+                    if (y < this.y0 + this.height) arr.push({ x: 2 * x, y: 2 * y + 1, type });
                 }
             }
             return arr;

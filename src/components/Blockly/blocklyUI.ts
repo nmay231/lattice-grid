@@ -33,9 +33,7 @@ blocks["Compare"] = {
 
 blocks["Debug"] = {
     init() {
-        this.appendValueInput("EXPRESSION")
-            .setCheck(null)
-            .appendField("Debug value");
+        this.appendValueInput("EXPRESSION").setCheck(null).appendField("Debug value");
         this.setPreviousStatement(true, null);
         this.setNextStatement(true, null);
         this.setColour(230);
@@ -62,9 +60,7 @@ blocks["ForEach"] = {
             .appendField("for each")
             .appendField(new Blockly.FieldTextInput("instance"), "NAME")
             .appendField("of the collection");
-        this.appendStatementInput("CODE_BODY")
-            .setCheck(null)
-            .appendField("run");
+        this.appendStatementInput("CODE_BODY").setCheck(null).appendField("run");
         this.setPreviousStatement(true, null);
         this.setNextStatement(true, null);
         this.setColour(230);
@@ -98,10 +94,7 @@ blocks["MarkInvalid"] = {
         this.appendValueInput("EXPRESSION").setCheck(null).appendField("Mark");
         this.appendDummyInput()
             .appendField("as invalid with message")
-            .appendField(
-                new Blockly.FieldTextInput("Shown to solver"),
-                "MESSAGE",
-            );
+            .appendField(new Blockly.FieldTextInput("Shown to solver"), "MESSAGE");
         this.appendDummyInput()
             .appendField("highlight?")
             .appendField(new Blockly.FieldCheckbox("highlight"), "HIGHLIGHTED");
@@ -117,9 +110,7 @@ blocks["ObjectSelector"] = {
             new Blockly.FieldDropdown(() => {
                 // TODO: How to trigger this function if the current layers change...
                 const layers = getLayers();
-                return layers.layers
-                    .filter(({ ethereal }) => !ethereal)
-                    .map(({ id }) => [id, id]);
+                return layers.layers.filter(({ ethereal }) => !ethereal).map(({ id }) => [id, id]);
             }),
             "LAYER_ID",
         );
@@ -130,10 +121,7 @@ blocks["ObjectSelector"] = {
 
 blocks["ReadAlias"] = {
     init() {
-        this.appendDummyInput().appendField(
-            new Blockly.FieldVariable("Alias Name"),
-            "NAME",
-        );
+        this.appendDummyInput().appendField(new Blockly.FieldVariable("Alias Name"), "NAME");
         this.setOutput(true, null);
         this.setColour(230);
     },

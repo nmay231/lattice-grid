@@ -3,10 +3,7 @@ import { ILayer, LayerProps, PointType } from "../../../globals";
 type CommonArgs = { pointTypes: PointType[]; deltas: any };
 
 const pointGatherer =
-    ({
-        pointTypes,
-        deltas,
-    }: CommonArgs): ILayer<OnePointProps>["gatherPoints"] =>
+    ({ pointTypes, deltas }: CommonArgs): ILayer<OnePointProps>["gatherPoints"] =>
     ({ grid, cursor, tempStorage }) => {
         let newPoints = grid.selectPointsWithCursor({
             cursor: cursor,
@@ -19,9 +16,7 @@ const pointGatherer =
         tempStorage.previousPoint = newPoints[newPoints.length - 1];
         const blacklist = tempStorage.blacklist ?? [];
         tempStorage.blacklist = blacklist;
-        newPoints = newPoints.filter(
-            (point) => blacklist.indexOf(point) === -1,
-        );
+        newPoints = newPoints.filter((point) => blacklist.indexOf(point) === -1);
 
         if (!newPoints.length) return [];
         tempStorage.blacklist.push(...newPoints);
@@ -67,8 +62,7 @@ export const handleEventsCycleStates = <LP extends OnePointProps>(
             state = tempStorage.targetState;
         } else {
             if (newPoints[0] in stored.objects) {
-                const index =
-                    1 + states.indexOf(stored.objects[newPoints[0]].state);
+                const index = 1 + states.indexOf(stored.objects[newPoints[0]].state);
                 state = index < states.length ? states[index] : null;
             } else {
                 state = states[0];
@@ -107,8 +101,7 @@ export const handleEventsCurrentSetting = <LP extends OnePointProps>(
         if (tempStorage.targetState === undefined) {
             if (newPoints[0] in stored.objects) {
                 const state = stored.objects[newPoints[0]].state;
-                tempStorage.targetState =
-                    state === layer.settings.selectedState ? null : state;
+                tempStorage.targetState = state === layer.settings.selectedState ? null : state;
             } else {
                 tempStorage.targetState = layer.settings.selectedState;
             }

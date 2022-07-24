@@ -9,31 +9,18 @@ type GroupProps = {
     expanded?: boolean;
 };
 
-export const Group: React.FC<GroupProps> = ({
-    children,
-    name,
-    expanded = false,
-}) => {
+export const Group: React.FC<GroupProps> = ({ children, name, expanded = false }) => {
     const [expand, setExpand] = useState(expanded);
 
     return (
         <Paper className={styling.groupContainer}>
-            <div
-                className={styling.groupHeader}
-                onClick={() => setExpand(!expand)}
-            >
+            <div className={styling.groupHeader} onClick={() => setExpand(!expand)}>
                 <IoIosArrowForward
-                    className={
-                        expand ? styling.headerIconOpen : styling.headerIcon
-                    }
+                    className={expand ? styling.headerIconOpen : styling.headerIcon}
                 />
                 <p>{name}</p>
             </div>
-            <div
-                className={
-                    expand ? styling.groupBodyShown : styling.groupBodyHidden
-                }
-            >
+            <div className={expand ? styling.groupBodyShown : styling.groupBodyHidden}>
                 {children}
             </div>
         </Paper>

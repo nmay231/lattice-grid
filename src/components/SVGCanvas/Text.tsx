@@ -50,8 +50,7 @@ export const Text: React.FC<TextProps> = ({ blits, style }) => {
     return (
         <g style={realStyle}>
             {Object.keys(blits).map((key) => {
-                const { text, point, size, textLength, lengthAdjust } =
-                    blits[key];
+                const { text, point, size, textLength, lengthAdjust } = blits[key];
                 return (
                     <text
                         key={key}

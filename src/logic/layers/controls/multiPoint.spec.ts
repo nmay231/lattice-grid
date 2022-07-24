@@ -1,9 +1,4 @@
-import {
-    ILayer,
-    LayerEvent,
-    LayerStorage,
-    PointerMoveOrDown,
-} from "../../../globals";
+import { ILayer, LayerEvent, LayerStorage, PointerMoveOrDown } from "../../../globals";
 import { getEventEssentials } from "../../../utils/testUtils";
 import { DummyLayer } from "../_DummyLayer";
 import { handleEventsUnorderedSets, MultiPointLayerProps } from "./multiPoint";
@@ -15,18 +10,13 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
     };
 
     type SecondArg = Parameters<typeof handleEventsUnorderedSets>[1];
-    const applySettings = (
-        layer: ILayer<MultiPointLayerProps>,
-        arg?: SecondArg,
-    ) =>
+    const applySettings = (layer: ILayer<MultiPointLayerProps>, arg?: SecondArg) =>
         handleEventsUnorderedSets(layer, {
             pointTypes: ["cells"],
             ...arg,
         });
 
-    const getPointerEvent = (
-        event: Pick<PointerMoveOrDown, "type">,
-    ): PointerMoveOrDown => ({
+    const getPointerEvent = (event: Pick<PointerMoveOrDown, "type">): PointerMoveOrDown => ({
         ctrlKey: false,
         shiftKey: false,
         altKey: false,
@@ -157,9 +147,7 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
 
         result = layer.handleEvent({ ...fakeEvent, points });
         points = [...points].sort();
-        expect(result.history).toEqual([
-            { batchId: 1, id: "b", object: { points, state: null } },
-        ]);
+        expect(result.history).toEqual([{ batchId: 1, id: "b", object: { points, state: null } }]);
         expect(result.discontinueInput).toBeFalsy();
 
         stored.objects.b = result.history?.[0].object;
@@ -172,9 +160,7 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
 
         result = layer.handleEvent({ ...fakeEvent, points });
         points = ["b", "c"];
-        expect(result.history).toEqual([
-            { batchId: 1, id: "b", object: { points, state: null } },
-        ]);
+        expect(result.history).toEqual([{ batchId: 1, id: "b", object: { points, state: null } }]);
         expect(result.discontinueInput).toBeFalsy();
 
         stored.objects.b = result.history?.[0].object;
@@ -238,9 +224,7 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         expect(result.discontinueInput).toBeTruthy();
     });
 
-    it.todo(
-        "should not remove a point from an object if it was not the current object",
-    );
+    it.todo("should not remove a point from an object if it was not the current object");
 
     it("should not remove the starting point from an object if points were added/deleted", () => {
         const layer = getFakeLayer();
@@ -299,9 +283,7 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
 
     it.todo("should delete a single-point object after a simple click");
 
-    it.todo(
-        "should delete the layers state then delete the object using the delete key",
-    );
+    it.todo("should delete the layers state then delete the object using the delete key");
 
     it.todo("should deselect an object when escape is pressed");
 

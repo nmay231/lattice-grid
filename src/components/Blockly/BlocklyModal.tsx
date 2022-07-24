@@ -50,10 +50,7 @@ export const BlocklyModal: React.FC = () => {
             }
         });
 
-        workspace.registerToolboxCategoryCallback(
-            "ALIASES",
-            addAliasCategoryToToolbox,
-        );
+        workspace.registerToolboxCategoryCallback("ALIASES", addAliasCategoryToToolbox);
 
         try {
             Blockly.serialization.workspaces.load(blocks, workspace);
@@ -89,9 +86,7 @@ export const BlocklyModal: React.FC = () => {
         try {
             compute.compile(codeString);
             console.log("Errors:", ...compute.compilerErrors);
-            console.log(
-                `${Object.keys(compute.codeBlocks).length} blocks compiled`,
-            );
+            console.log(`${Object.keys(compute.codeBlocks).length} blocks compiled`);
             compute.runOnce();
             console.log("ran");
         } catch (e) {
@@ -113,10 +108,7 @@ export const BlocklyModal: React.FC = () => {
                 }}
             >
                 <div style={{ gridArea: "1 / 1 / span 1 / span 6" }}>
-                    <div
-                        ref={blocklyDiv}
-                        style={{ width: "100%", height: "100%" }}
-                    ></div>
+                    <div ref={blocklyDiv} style={{ width: "100%", height: "100%" }}></div>
                 </div>
                 <div style={{ gridArea: "1 / 7 / 2 / span 1" }}>
                     <button onClick={compileAndRun}>Compile and run</button>
@@ -126,14 +118,8 @@ export const BlocklyModal: React.FC = () => {
     );
 };
 
-export const ToggleBlocklyModal: React.FC<{ children: string }> = ({
-    children,
-}) => {
+export const ToggleBlocklyModal: React.FC<{ children: string }> = ({ children }) => {
     const setOpened = useSetAtom(modalAtom);
 
-    return (
-        <button onClick={() => setOpened((opened) => !opened)}>
-            {children}
-        </button>
-    );
+    return <button onClick={() => setOpened((opened) => !opened)}>{children}</button>;
 };
