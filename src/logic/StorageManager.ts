@@ -7,6 +7,7 @@ import {
     LayerProps,
     LayerStorage,
 } from "../globals";
+import { errorNotification } from "../utils/DOMUtils";
 
 type GridAndLayer = { grid: Pick<Grid, "id">; layer: Pick<ILayer, "id"> };
 
@@ -102,7 +103,10 @@ export class StorageManager {
         action: HistoryAction,
     ) {
         if (action.object === undefined) {
-            throw Error("You stupid");
+            errorNotification({
+                message: `Layer ${action.layerId} object undefined: ${action}`,
+                forever: true,
+            });
         }
 
         const undoAction: HistoryAction = {

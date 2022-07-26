@@ -1,5 +1,6 @@
 import { getSettings } from "../../atoms/settings";
 import { Grid, LocalStorageData, PointType } from "../../globals";
+import { errorNotification } from "../../utils/DOMUtils";
 import { hopStraight } from "../algorithms/hopStraight";
 
 type GridPoint = { x: number; y: number; type: PointType };
@@ -354,7 +355,10 @@ export class SquareGrid implements Grid {
                 case "corners->svgPoint": {
                     if (connections[nextType] !== true) {
                         // TODO
-                        throw Error("Params for svgPoint are not supported!");
+                        errorNotification({
+                            message: "Params for svgPoint are not supported!",
+                            forever: true,
+                        });
                     }
 
                     const { cellSize } = getSettings();
@@ -367,7 +371,10 @@ export class SquareGrid implements Grid {
                 case "cells->svgOutline": {
                     if (connections[nextType] !== true) {
                         // TODO
-                        throw Error("Params for svgOutline are not supported!");
+                        errorNotification({
+                            message: "Params for svgOutline are not supported!",
+                            forever: true,
+                        });
                     }
 
                     const { cellSize } = getSettings();
@@ -404,9 +411,10 @@ export class SquareGrid implements Grid {
                     const { key, direction } = connections[nextType];
 
                     if (typeof direction !== "string" || direction.length !== 2) {
-                        throw Error(
-                            `param direction required to be string of length two instead of "${direction}"`,
-                        );
+                        errorNotification({
+                            message: `param direction required to be string of length two instead of "${direction}"`,
+                            forever: true,
+                        });
                     }
                     const [primary, secondary] = direction.toUpperCase();
 
@@ -490,9 +498,7 @@ export class SquareGrid implements Grid {
                     break;
                 }
                 default:
-                    throw Error(
-                        `Unsupported connection in getPoints: "${pointType}" -> "${nextType}"`,
-                    );
+                    errorNotification({ message: "", forever: true });
             }
         }
     }
@@ -565,7 +571,11 @@ export class SquareGrid implements Grid {
                 }
             }
             if (maxIteration <= 0) {
-                throw new Error("Reached iteration limit in shrinkwrap inner loop");
+                errorNotification({
+                    message: "Reached iteration limit in shrinkwrap inner loop",
+                    forever: true,
+                });
+                return;
             }
 
             edgeLoop.pop();
@@ -597,7 +607,11 @@ export class SquareGrid implements Grid {
             result.push(cornerLoop);
         }
         if (maxIteration <= 0) {
-            throw new Error("Reached iteration limit in shrinkwrap outer loop");
+            errorNotification({
+                message: "Reached iteration limit in shrinkwrap outer loop",
+                forever: true,
+            });
+            return;
         }
 
         return result;
@@ -646,7 +660,8 @@ export class SquareGrid implements Grid {
             }
             return arr;
         } else {
-            throw Error(`Unrecognized type=${type}`);
+            errorNotification({ message: `Unrecognized point type=${type}`, forever: true });
+            return [];
         }
     }
 

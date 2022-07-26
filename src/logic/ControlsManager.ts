@@ -4,6 +4,7 @@ import { getLayers, selectLayer } from "../atoms/layers";
 import { getSettings } from "../atoms/settings";
 import { blocklyModalIsOpen, setBlocklyModalOpen } from "../components/Blockly/BlocklyModal";
 import { CleanedDOMEvent, ILayer, LayerEvent, LayerProps, PointerMoveOrDown } from "../globals";
+import { errorNotification } from "../utils/DOMUtils";
 import { keypressString } from "../utils/stringUtils";
 import { PuzzleManager } from "./PuzzleManager";
 
@@ -258,9 +259,12 @@ export class ControlsManager {
         rawEvent.preventDefault();
 
         if (rawEvent.deltaMode !== rawEvent.DOM_DELTA_PIXEL)
-            throw Error(
-                "FYI, scaling the grid with scrolling might be buggy. Submit a bug report if you get this error.",
-            );
+            // TODO: How to show only once?
+            errorNotification({
+                message:
+                    "FYI, scaling the grid with scrolling might be buggy. Submit a bug report if you get this error.",
+                forever: true,
+            });
 
         const sign = rawEvent.deltaY / (Math.abs(rawEvent.deltaY) || 1);
         const { zoom, width, ...theRest } = getCanvasSize();

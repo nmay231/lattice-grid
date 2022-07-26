@@ -11,6 +11,7 @@
         "@jsonforms/vanilla-renderers": "^2.5.2",
         "@mantine/core": "^4.2.9",
         "@mantine/hooks": "^4.2.9",
+        "@mantine/notifications": "4.2.9",
         "blockly": "^8.0.3",
         "jotai": "^1.6.2",
         "lodash": "^4.17.21",

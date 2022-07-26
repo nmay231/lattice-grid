@@ -1,5 +1,6 @@
 import { cloneDeep } from "lodash";
 import { ILayer, LayerProps, PointType } from "../../../globals";
+import { errorNotification } from "../../../utils/DOMUtils";
 import { KeyDownEventHandler } from "../Selection";
 
 export interface MultiPointLayerProps extends LayerProps {
@@ -24,7 +25,11 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
     },
 ) => {
     if (!pointTypes?.length) {
-        throw Error("Was not provided parameters");
+        errorNotification({
+            message: "Multipoint handler was not provided required parameters",
+            forever: true,
+        });
+        return;
     }
 
     // TODO: Allow this to be set by the layer once FSM (or a general gatherPoints method) is implemented.
@@ -216,7 +221,11 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
                 return { discontinueInput: true };
             }
             default: {
-                throw Error(`Unknown event.type=${type}`);
+                errorNotification({
+                    message: `Multipoint unknown event.type=${type}`,
+                    forever: true,
+                });
+                return {};
             }
         }
     };

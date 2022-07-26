@@ -3,6 +3,7 @@ import { setCanvasSize } from "../atoms/canvasSize";
 import { addLayer, getLayers, removeLayer, setLayers } from "../atoms/layers";
 import { getSettings } from "../atoms/settings";
 import { Grid, ILayer, LocalStorageData, RenderChange } from "../globals";
+import { errorNotification } from "../utils/DOMUtils";
 import { ControlsManager } from "./ControlsManager";
 import { SquareGrid } from "./grids/SquareGrid";
 import { availableLayers } from "./layers";
@@ -131,7 +132,7 @@ export class PuzzleManager {
 
             setBlitGroups(blitGroups);
         } else {
-            throw Error(`sadface ${JSON.stringify(change)}`);
+            errorNotification({ message: `Failed to render to canvas: ${JSON.stringify(change)}` });
         }
 
         this._saveToLocalStorage();

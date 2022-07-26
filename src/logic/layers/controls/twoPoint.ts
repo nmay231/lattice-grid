@@ -1,5 +1,6 @@
 import { isEqual } from "lodash";
 import { ILayer, LayerProps, PointType } from "../../../globals";
+import { errorNotification } from "../../../utils/DOMUtils";
 
 export interface TwoPointProps extends LayerProps {
     ObjectState: { id: string; points: string[]; state: unknown };
@@ -25,7 +26,11 @@ export const handleEventsCurrentSetting = <LP extends TwoPointProps>(
     { directional, pointTypes, stopOnFirstPoint, deltas }: Arg = {},
 ) => {
     if (!pointTypes?.length || !deltas?.length) {
-        throw Error("Was not provided parameters");
+        errorNotification({
+            message: "twoPoint currentSetting was not provided required parameters",
+            forever: true,
+        });
+        return;
     }
 
     layer.gatherPoints = (event) => {

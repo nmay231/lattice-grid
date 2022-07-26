@@ -6,6 +6,7 @@ import {
     LayerHandlerResult,
     LayerProps,
 } from "../../globals";
+import { errorNotification } from "../../utils/DOMUtils";
 import { BaseLayer } from "./baseLayer";
 
 export type KeyDownEventHandler<LP extends LayerProps = LayerProps> = {
@@ -303,7 +304,11 @@ export const SelectionLayer: ILayer<SelectionProps> & SelectionExtraProps = {
                 return { history, discontinueInput: true };
             }
             default: {
-                throw new Error(`Unknown event.type=${(event as any).type}`);
+                errorNotification({
+                    message: `Unknown event.type in SelectionLayer: ${(event as any).type}`,
+                    forever: true,
+                });
+                return {};
             }
         }
     },

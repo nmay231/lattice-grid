@@ -4,6 +4,7 @@ import { blitsAtom } from "../../atoms/blits";
 import { canvasSizeAtom } from "../../atoms/canvasSize";
 import { layersAtom } from "../../atoms/layers";
 import { usePuzzle } from "../../atoms/puzzle";
+import { errorNotification } from "../../utils/DOMUtils";
 import { Line } from "./Line";
 import { Polygon } from "./Polygon";
 import styling from "./SVGCanvas.module.css";
@@ -24,7 +25,10 @@ export const SVGCanvas = () => {
     const scrollArea = useRef<HTMLDivElement>(null);
     useEffect(() => {
         const current = scrollArea.current;
-        if (!current) throw Error("wut?");
+        if (!current) {
+            errorNotification({ message: "Canvas element not found." });
+            return;
+        }
         current.addEventListener("wheel", controls.onWheel, {
             passive: false,
         });

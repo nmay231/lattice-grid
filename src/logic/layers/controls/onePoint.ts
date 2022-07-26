@@ -1,4 +1,5 @@
 import { ILayer, LayerProps, PointType } from "../../../globals";
+import { errorNotification } from "../../../utils/DOMUtils";
 
 type CommonArgs = { pointTypes: PointType[]; deltas: any };
 
@@ -42,7 +43,11 @@ export const handleEventsCycleStates = <LP extends OnePointProps>(
     { states, pointTypes, deltas }: CommonArgs & { states: unknown[] },
 ) => {
     if (!states?.length || !pointTypes?.length) {
-        throw Error("Was not provided parameters");
+        errorNotification({
+            message: "onePoint cycleStates was not provided required parameters",
+            forever: true,
+        });
+        return;
     }
 
     layer.gatherPoints = pointGatherer({ pointTypes, deltas });
@@ -83,7 +88,11 @@ export const handleEventsCurrentSetting = <LP extends OnePointProps>(
     { pointTypes, deltas }: CommonArgs,
 ) => {
     if (!pointTypes?.length || !deltas?.length) {
-        throw Error("Was not provided parameters");
+        errorNotification({
+            message: "onePoint currentSetting was not provided required parameters",
+            forever: true,
+        });
+        return;
     }
 
     layer.gatherPoints = pointGatherer({ pointTypes, deltas });
