@@ -53,7 +53,7 @@ export const makeLayersAtom = () => {
                     let nextId = null;
 
                     // We try to select the next layer without wrapping to the other end
-                    for (let layer of layers.slice(index)) {
+                    for (const layer of layers.slice(index)) {
                         if (layer.ethereal) continue;
                         nextId = layer.id;
                         break;
@@ -78,7 +78,7 @@ export const makeLayersAtom = () => {
 
         selectLayer: (arg: { id: string } | { tab: number }) => {
             setValue((value) => {
-                let { currentLayerId, layers } = value;
+                const { currentLayerId, layers } = value;
                 if ("id" in arg) {
                     return { layers, currentLayerId: arg.id };
                 } else if ("tab" in arg && currentLayerId !== null) {

@@ -133,7 +133,7 @@ export const SimpleLineLayer: ILayer<SimpleLineProps> & SimpleLineExtraProps = {
         });
 
         const blits: LineBlits["blits"] = {};
-        for (let id of stored.renderOrder) {
+        for (const id of stored.renderOrder) {
             const {
                 state: { fill },
                 points,

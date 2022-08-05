@@ -1,4 +1,4 @@
-import { ILayer } from "../../globals";
+import { ILayer, UnknownObject } from "../../globals";
 import { BaseLayer } from "./baseLayer";
 import { handleEventsUnorderedSets, MultiPointLayerProps } from "./controls/multiPoint";
 import { KeyDownEventHandler } from "./Selection";
@@ -79,9 +79,9 @@ export const KillerCagesLayer: ILayer<KillerCagesProps> & KillerCagesExtraProps 
             layer: this,
         });
 
-        const cageBlits: Record<string, object> = {};
-        const numberBlits: Record<string, object> = {};
-        for (let id of stored.renderOrder) {
+        const cageBlits: Record<string, UnknownObject> = {};
+        const numberBlits: Record<string, UnknownObject> = {};
+        for (const id of stored.renderOrder) {
             const object = stored.objects[id];
             const { cageOutline, cells, sorted } = grid.getPoints({
                 connections: {
@@ -99,7 +99,7 @@ export const KillerCagesLayer: ILayer<KillerCagesProps> & KillerCagesExtraProps 
             });
 
             const style = id === stored.currentObjectId ? { stroke: "#33F" } : undefined;
-            for (let key in cageOutline.svgPolygons) {
+            for (const key in cageOutline.svgPolygons) {
                 cageBlits[`${object.id}-${key}`] = {
                     style,
                     points: cageOutline.svgPolygons[key],

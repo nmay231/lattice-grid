@@ -327,7 +327,7 @@ describe("SelectionLayer", () => {
         const essentials = eventEssentials();
 
         // Have the storing layer return two objects
-        let fakeEvent: LayerEvent<SelectionProps> = {
+        const fakeEvent: LayerEvent<SelectionProps> = {
             ...essentials,
             type: "keyDown",
             keypress: "your face",
@@ -340,7 +340,7 @@ describe("SelectionLayer", () => {
         });
         (fakeEvent.storage.getNewBatchId as jest.Mock).mockReturnValueOnce(1);
 
-        let result = selection.handleEvent(fakeEvent);
+        const result = selection.handleEvent(fakeEvent);
 
         // They should be transformed to have the same batchId
         expect(result.history).toEqual<LayerHandlerResult["history"]>([
@@ -363,7 +363,7 @@ describe("SelectionLayer", () => {
         const essentials = eventEssentials({ stored });
 
         // The event has two objects with one already selected and one not
-        let fakeEvent: LayerEvent<SelectionProps> = {
+        const fakeEvent: LayerEvent<SelectionProps> = {
             ...essentials,
             type: "undoRedo",
             actions: [
@@ -382,7 +382,7 @@ describe("SelectionLayer", () => {
                 },
             ],
         };
-        let result = selection.handleEvent(fakeEvent);
+        const result = selection.handleEvent(fakeEvent);
 
         // Only "toKeep" and "toSelect" should remain
         expect(result.history).toEqual<LayerHandlerResult["history"]>([

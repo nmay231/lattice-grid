@@ -2,7 +2,7 @@ import { getBlitGroups, OVERLAY_LAYER_ID, setBlitGroups } from "../atoms/blits";
 import { setCanvasSize } from "../atoms/canvasSize";
 import { addLayer, getLayers, removeLayer, setLayers } from "../atoms/layers";
 import { getSettings } from "../atoms/settings";
-import { Grid, ILayer, LocalStorageData, RenderChange } from "../globals";
+import { Grid, ILayer, LocalStorageData, RenderChange, UnknownObject } from "../globals";
 import { errorNotification } from "../utils/DOMUtils";
 import { ControlsManager } from "./ControlsManager";
 import { SquareGrid } from "./grids/SquareGrid";
@@ -31,7 +31,7 @@ export class PuzzleManager {
 
         // Guarantee that these layers will be present even if the saved puzzle tries to add them
         const requiredLayers = [CellOutlineLayer, SelectionLayer, OverlayLayer];
-        for (let layer of requiredLayers) {
+        for (const layer of requiredLayers) {
             this.addLayer(layer);
         }
     }
@@ -69,7 +69,7 @@ export class PuzzleManager {
         (this.grid as any).width = width;
         (this.grid as any).height = height;
 
-        for (let { layerClass, rawSettings } of data.layers) {
+        for (const { layerClass, rawSettings } of data.layers) {
             this.addLayer(availableLayers[layerClass], rawSettings);
         }
     }
@@ -120,7 +120,7 @@ export class PuzzleManager {
                 change.layerIds === "all" ? layers.map(({ id }) => id) : change.layerIds,
             );
 
-            for (let layerId of layerIds) {
+            for (const layerId of layerIds) {
                 const layer = this.layers[layerId];
                 blitGroups[layer.id] =
                     layer.getBlits?.({
@@ -147,7 +147,7 @@ export class PuzzleManager {
                 height: (this.grid as any).height,
             },
         };
-        for (let fakeLayer of getLayers().layers) {
+        for (const fakeLayer of getLayers().layers) {
             const layer = this.layers[fakeLayer.id];
             data.layers.push({
                 layerClass: Object.getPrototypeOf(layer).id,
@@ -157,7 +157,7 @@ export class PuzzleManager {
         localStorage.setItem("_currentPuzzle", JSON.stringify(data));
     }
 
-    addLayer(layerClass: ILayer, settings?: object): string {
+    addLayer(layerClass: ILayer, settings?: UnknownObject): string {
         if (layerClass.unique && layerClass.id in this.layers) {
             this.changeLayerSettings(layerClass.id, settings);
             return layerClass.id;

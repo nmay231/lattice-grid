@@ -51,7 +51,7 @@ export const BackgroundColorLayer: ILayer<BackgroundColorProps> & BackgroundColo
         });
 
         const objectsByColor: Record<string, PolygonBlits["blits"]> = {};
-        for (let id of stored.renderOrder) {
+        for (const id of stored.renderOrder) {
             const { state } = stored.objects[id];
             objectsByColor[state] = objectsByColor[state] ?? {};
             objectsByColor[state][id] = { points: cells[id].svgOutline };

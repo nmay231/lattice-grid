@@ -1,17 +1,18 @@
 import { isEqual } from "lodash";
-import { ILayer, LayerProps, PointType } from "../../../globals";
+import { ILayer, LayerProps, PointType, UnknownObject } from "../../../globals";
 import { errorNotification } from "../../../utils/DOMUtils";
+import { smartSort } from "../../../utils/stringUtils";
 
 export interface TwoPointProps extends LayerProps {
     ObjectState: { id: string; points: string[]; state: unknown };
     TempStorage: {
         previousPoint: string;
         batchId: number;
-        targetState: null | object;
+        targetState: null | UnknownObject;
     };
 }
 
-export type MinimalSettings = { selectedState: object };
+export type MinimalSettings = { selectedState: UnknownObject };
 
 type Arg = Partial<{
     directional: boolean;
@@ -67,7 +68,7 @@ export const handleEventsCurrentSetting = <LP extends TwoPointProps>(
         for (let i = 0; i < newPoints.length - 1; i++) {
             const pair = newPoints.slice(i, i + 2);
             if (!directional) {
-                pair.sort();
+                pair.sort(smartSort);
             }
             const id = pair.join(";");
 

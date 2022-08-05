@@ -59,6 +59,7 @@ export interface IVariableInfo {
 // TODO: Replace all relevant instances of the plain types with these explicit types.
 // It helps with changing all of the types if necessary, and also with being explicit with how composite types are used.
 export type Point = string;
+export type Vector = [number, number];
 export type Delta = { dx: number; dy: number };
 
 export type PointType = "cells" | "edges" | "corners";
@@ -142,10 +143,10 @@ type JSONSchema = { schema: NeedsUpdating; uischemaElements: NeedsUpdating[] };
 
 export type LayerProps = {
     // TODO: Try allowing settings and rawSettings to be optional
-    RawSettings: object;
-    ObjectState: object;
-    ExtraLayerStorageProps: object;
-    TempStorage: object;
+    RawSettings: UnknownObject;
+    ObjectState: UnknownObject;
+    ExtraLayerStorageProps: UnknownObject;
+    TempStorage: UnknownObject;
 };
 
 export type ILayer<LP extends LayerProps = LayerProps> = {
@@ -182,7 +183,7 @@ export type HistoryAction = {
     id: string;
     layerId: string;
     batchId?: number;
-    object: object | null;
+    object: UnknownObject | null;
     renderIndex: number;
 };
 export type History = {
@@ -207,12 +208,14 @@ export type LocalStorageData = {
     grid: { width: number; height: number };
     layers: {
         layerClass: keyof typeof availableLayers;
-        rawSettings?: object;
+        rawSettings?: UnknownObject;
     }[];
 };
 // #endregion
 
 // #region - Refactoring
-// I think I will always keep this variable to make refactoring easier.
+// I think I will always keep this type to make refactoring easier.
 export type NeedsUpdating = any;
+
+export type UnknownObject = Record<string, unknown>;
 // #endregion

@@ -1,5 +1,5 @@
 import { TextBlits } from "../../components/SVGCanvas/Text";
-import { ILayer, LayerProps } from "../../globals";
+import { ILayer, LayerProps, Vector } from "../../globals";
 import { errorNotification } from "../../utils/DOMUtils";
 import { BaseLayer } from "./baseLayer";
 import { KeyDownEventHandler } from "./Selection";
@@ -76,7 +76,7 @@ export const ToggleCharactersLayer: ILayer<ToggleCharactersProps> & ToggleCharac
         characters = [...characters].filter((char, i) => characters.indexOf(char) === i).join("");
 
         const lower = characters.toLowerCase();
-        for (let c of characters) {
+        for (const c of characters) {
             // If there is no ambiguity between an upper- and lower-case letter (aka, only one is present), map them to the same letter
             if (lower.indexOf(c.toLowerCase()) === lower.lastIndexOf(c.toLowerCase())) {
                 caseSwap[c.toLowerCase()] = c;
@@ -106,7 +106,7 @@ export const ToggleCharactersLayer: ILayer<ToggleCharactersProps> & ToggleCharac
         const history = [];
 
         // Exclude disallowed characters
-        for (let id of renderOrder) {
+        for (const id of renderOrder) {
             const object = objects[id];
             const newState = [...object.state]
                 .filter((char) => this.settings.characters.indexOf(char) > -1)
@@ -191,7 +191,7 @@ export const ToggleCharactersLayer: ILayer<ToggleCharactersProps> & ToggleCharac
         let style: TextBlits["style"];
         if (this.settings.displayStyle === "center") {
             style = { originX: "center", originY: "center" };
-            for (let id of stored.renderOrder) {
+            for (const id of stored.renderOrder) {
                 blits[id] = {
                     text: stored.objects[id].state,
                     point: cells[id].svgPoint,
@@ -203,11 +203,11 @@ export const ToggleCharactersLayer: ILayer<ToggleCharactersProps> & ToggleCharac
             }
         } else if (this.settings.displayStyle === "topBottom") {
             style = { originX: "left", originY: "center" };
-            for (let id of stored.renderOrder) {
+            for (const id of stored.renderOrder) {
                 const text = stored.objects[id].state;
                 const split = Math.max(2, Math.ceil(text.length / 2));
-                const radius = cells[id].maxRadius;
-                const point = cells[id].svgPoint;
+                const radius = cells[id].maxRadius as number;
+                const point = cells[id].svgPoint as Vector;
 
                 blits[`${id}-top`] = {
                     text: text.slice(0, split),

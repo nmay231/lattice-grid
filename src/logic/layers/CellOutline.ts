@@ -45,8 +45,8 @@ export const CellOutlineLayer: ILayer<CellOutlineProps> = {
 
         const Nothing = { x1: 0, x2: 0, y1: 0, y2: 0 };
         const edges: Record<string, typeof Nothing> = {};
-        for (let cell in cells) {
-            for (let edge in cells[cell].edges) {
+        for (const cell in cells) {
+            for (const edge in cells[cell].edges) {
                 /* If a cell does not share an edge with another cell, use a thick line. */
                 if (edges[edge] === undefined) {
                     edges[edge] = Nothing;
@@ -60,14 +60,14 @@ export const CellOutlineLayer: ILayer<CellOutlineProps> = {
             }
         }
 
-        for (let id in edges) {
+        for (const id in edges) {
             if (edges[id] === Nothing) {
                 delete edges[id];
             }
         }
 
         const outline: Record<string, any> = {};
-        for (let key in gridEdge.svgPolygons) {
+        for (const key in gridEdge.svgPolygons) {
             outline[key] = { points: gridEdge.svgPolygons[key] };
         }
 

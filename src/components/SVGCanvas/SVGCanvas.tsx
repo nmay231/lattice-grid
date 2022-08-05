@@ -4,6 +4,7 @@ import { blitsAtom } from "../../atoms/blits";
 import { canvasSizeAtom } from "../../atoms/canvasSize";
 import { layersAtom } from "../../atoms/layers";
 import { usePuzzle } from "../../atoms/puzzle";
+import { NeedsUpdating } from "../../globals";
 import { errorNotification } from "../../utils/DOMUtils";
 import { Line } from "./Line";
 import { Polygon } from "./Polygon";
@@ -29,12 +30,12 @@ export const SVGCanvas = () => {
             errorNotification({ message: "Canvas element not found." });
             return;
         }
-        current.addEventListener("wheel", controls.onWheel, {
-            passive: false,
-        });
+
+        const onWheel = controls.onWheel.bind(controls);
+        current.addEventListener("wheel", onWheel, { passive: false });
 
         return () => {
-            current.removeEventListener("wheel", controls.onWheel);
+            current.removeEventListener("wheel", onWheel);
         };
     }, [controls]);
 
@@ -59,7 +60,7 @@ export const SVGCanvas = () => {
                                     <Blitter
                                         blits={group.blits}
                                         // I was hoping typescript would be smarter...
-                                        style={group.style as any}
+                                        style={group.style as NeedsUpdating}
                                         key={id + group.id}
                                     />
                                 );

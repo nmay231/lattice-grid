@@ -23,7 +23,7 @@ export function* hopStraight({
     previousPoint,
     deltas,
 }: Arg): Generator<[number, number] | null, void, [number, number]> {
-    let [startX, startY] = previousPoint;
+    const [startX, startY] = previousPoint;
     const [targetX, targetY] = cursor;
 
     const vectors = deltas

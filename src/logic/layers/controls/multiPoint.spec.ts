@@ -1,4 +1,5 @@
 import { ILayer, LayerEvent, LayerStorage, PointerMoveOrDown } from "../../../globals";
+import { smartSort } from "../../../utils/stringUtils";
 import { getEventEssentials } from "../../../utils/testUtils";
 import { DummyLayer } from "../_DummyLayer";
 import { handleEventsUnorderedSets, MultiPointLayerProps } from "./multiPoint";
@@ -43,12 +44,12 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         essentials.storage.getNewBatchId = getBatchId;
 
         selectPoints.mockReturnValueOnce(["a"]);
-        let fakeEvent: LayerEvent<MultiPointLayerProps> = {
+        const fakeEvent: LayerEvent<MultiPointLayerProps> = {
             ...essentials,
             ...getPointerEvent({ type: "pointerDown" }),
         };
 
-        let points = layer.gatherPoints(fakeEvent);
+        const points = layer.gatherPoints(fakeEvent);
         expect(points).toEqual(["a"]);
 
         getBatchId.mockReturnValueOnce(1);
@@ -84,11 +85,11 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         stored.currentObjectId = "a";
 
         selectPoints.mockReturnValueOnce(["b"]);
-        let fakeEvent: LayerEvent<MultiPointLayerProps> = {
+        const fakeEvent: LayerEvent<MultiPointLayerProps> = {
             ...essentials,
             ...getPointerEvent({ type: "pointerDown" }),
         };
-        let points = layer.gatherPoints(fakeEvent);
+        const points = layer.gatherPoints(fakeEvent);
         expect(points).toEqual(["b"]);
 
         getBatchId.mockReturnValueOnce(1);
@@ -121,7 +122,7 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
 
         // Start drawing the object
         selectPoints.mockReturnValueOnce(["b"]);
-        let fakeEvent: LayerEvent<MultiPointLayerProps> = {
+        const fakeEvent: LayerEvent<MultiPointLayerProps> = {
             ...essentials,
             ...getPointerEvent({ type: "pointerDown" }),
         };
@@ -146,7 +147,7 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         expect(points).toEqual(["b", "c", "a"]);
 
         result = layer.handleEvent({ ...fakeEvent, points });
-        points = [...points].sort();
+        points = [...points].sort(smartSort);
         expect(result.history).toEqual([{ batchId: 1, id: "b", object: { points, state: null } }]);
         expect(result.discontinueInput).toBeFalsy();
 
@@ -193,11 +194,11 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         essentials.storage.getNewBatchId = getBatchId;
 
         selectPoints.mockReturnValueOnce(["b"]);
-        let fakeEvent: LayerEvent<MultiPointLayerProps> = {
+        const fakeEvent: LayerEvent<MultiPointLayerProps> = {
             ...essentials,
             ...getPointerEvent({ type: "pointerDown" }),
         };
-        let points = layer.gatherPoints(fakeEvent);
+        const points = layer.gatherPoints(fakeEvent);
         expect(points).toEqual(["b"]);
 
         getBatchId.mockReturnValueOnce(1);
@@ -243,7 +244,7 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
 
         // Select the starting point
         selectPoints.mockReturnValueOnce(["b"]);
-        let fakeEvent: LayerEvent<MultiPointLayerProps> = {
+        const fakeEvent: LayerEvent<MultiPointLayerProps> = {
             ...essentials,
             ...getPointerEvent({ type: "pointerDown" }),
         };

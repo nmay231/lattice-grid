@@ -53,7 +53,7 @@ export class StorageManager {
             history.actions.splice(history.index);
         }
 
-        for (let puzzleObject of puzzleObjects) {
+        for (const puzzleObject of puzzleObjects) {
             const layerId = puzzleObject.layerId || layer.id;
             const { objects, renderOrder } = this.objects[grid.id][layerId];
 

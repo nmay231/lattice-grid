@@ -21,7 +21,7 @@ export const ResizeModal = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [canvasSize, show]);
 
-    const resizer = (resize: Function, amount: number) => () => {
+    const resizer = (resize: (a: number) => void, amount: number) => () => {
         resize(amount);
         puzzle.resizeCanvas();
         puzzle.renderChange({ type: "draw", layerIds: "all" });

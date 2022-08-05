@@ -30,7 +30,7 @@ describe("layers atom", () => {
         const { result } = renderHook(() => useAtomValue(layersAtom));
 
         act(() => {
-            for (let layer of fourLayers) {
+            for (const layer of fourLayers) {
                 addLayer({ ...layer });
             }
         });
@@ -47,7 +47,7 @@ describe("layers atom", () => {
 
         act(() => {
             // First add them in reverse order
-            for (let layer of [...fourLayers].reverse()) {
+            for (const layer of [...fourLayers].reverse()) {
                 addLayer({ ...layer });
             }
             // Then reset the order
@@ -66,7 +66,7 @@ describe("layers atom", () => {
 
         act(() => {
             // First add them
-            for (let layer of fourLayers) {
+            for (const layer of fourLayers) {
                 addLayer({ ...layer });
             }
             // Then clear them out for a fresh puzzle
@@ -81,7 +81,7 @@ describe("layers atom", () => {
         const { result } = renderHook(() => useAtomValue(layersAtom));
 
         act(() => {
-            for (let layer of fourLayers) {
+            for (const layer of fourLayers) {
                 addLayer({ ...layer });
             }
         });
@@ -93,7 +93,7 @@ describe("layers atom", () => {
             "layer4", // Tab forward one layer
         ];
 
-        for (let id of ids) {
+        for (const id of ids) {
             expect(result.current.currentLayerId).toEqual(id);
             act(() => selectLayer({ tab: 1 }));
         }
@@ -104,7 +104,7 @@ describe("layers atom", () => {
         const { result } = renderHook(() => useAtomValue(layersAtom));
 
         act(() => {
-            for (let layer of fourLayers) {
+            for (const layer of fourLayers) {
                 addLayer({ ...layer });
             }
         });
@@ -116,7 +116,7 @@ describe("layers atom", () => {
             "layer4", // Wrap from the beginning to the end
         ];
 
-        for (let id of ids) {
+        for (const id of ids) {
             expect(result.current.currentLayerId).toEqual(id);
             act(() => selectLayer({ tab: -1 }));
         }
@@ -127,7 +127,7 @@ describe("layers atom", () => {
         const { result } = renderHook(() => useAtomValue(layersAtom));
 
         act(() => {
-            for (let layer of fourLayers) {
+            for (const layer of fourLayers) {
                 addLayer({ ...layer });
             }
         });
@@ -142,7 +142,7 @@ describe("layers atom", () => {
         const { result } = renderHook(() => useAtomValue(layersAtom));
 
         act(() => {
-            for (let layer of fourLayers) {
+            for (const layer of fourLayers) {
                 addLayer({ ...layer });
             }
             // Select a layer and remove a layer before it
@@ -167,7 +167,7 @@ describe("layers atom", () => {
         const { result } = renderHook(() => useAtomValue(layersAtom));
 
         act(() => {
-            for (let layer of fourLayers) {
+            for (const layer of fourLayers) {
                 addLayer({ ...layer });
             }
             selectLayer({ id: "layer1" });
@@ -185,7 +185,7 @@ describe("layers atom", () => {
 
         act(() => {
             // Skip the fourth layer
-            for (let layer of fourLayers.slice(0, 3)) {
+            for (const layer of fourLayers.slice(0, 3)) {
                 addLayer({ ...layer });
             }
         });
@@ -201,7 +201,7 @@ describe("layers atom", () => {
         const { result } = renderHook(() => useAtomValue(layersAtom));
 
         act(() => {
-            for (let layer of fourLayers) {
+            for (const layer of fourLayers) {
                 addLayer({ ...layer });
             }
         });
@@ -217,7 +217,7 @@ describe("layers atom", () => {
 
         act(() => {
             // Make sure the last layer added is ethereal
-            for (let layer of fourLayers.slice(0, 2)) {
+            for (const layer of fourLayers.slice(0, 2)) {
                 addLayer({ ...layer });
             }
         });

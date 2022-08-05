@@ -18,7 +18,7 @@ export type KeyDownEventHandler<LP extends LayerProps = LayerProps> = {
 export type SelectionExtraProps = {
     attachHandler: <LP extends LayerProps = LayerProps>(
         layer: ILayer<LP> & KeyDownEventHandler<LP>,
-        options: {},
+        options: unknown,
     ) => void;
     _getBlits: NonNullable<ILayer<SelectionProps>["getBlits"]>;
 };
@@ -318,9 +318,9 @@ export const SelectionLayer: ILayer<SelectionProps> & SelectionExtraProps = {
         const points = stored.renderOrder.filter((key) => stored.objects[key].state);
         const states = points.map((id) => stored.objects[id].state);
 
-        let blits: Record<string, any> = {};
+        const blits: Record<string, any> = {};
         if (points.length) {
-            for (let group of new Set(states)) {
+            for (const group of new Set(states)) {
                 const { selectionCage } = grid.getPoints({
                     connections: {
                         cells: {
@@ -333,7 +333,7 @@ export const SelectionLayer: ILayer<SelectionProps> & SelectionExtraProps = {
                     points: states.filter((state) => state === group).map((_, i) => points[i]),
                 });
 
-                for (let key in selectionCage.svgPolygons) {
+                for (const key in selectionCage.svgPolygons) {
                     blits[`${group}-${key}`] = {
                         points: selectionCage.svgPolygons[key],
                     };

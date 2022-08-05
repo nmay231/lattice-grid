@@ -17,7 +17,7 @@ export const addAliasCategoryToToolbox = (workspace: Blockly.Workspace) => {
         { kind: "block", type: "ReadAlias", fields: { NAME: { id } } },
     ];
 
-    for (let variableId of variables.map((v) => v.getId())) {
+    for (const variableId of variables.map((v) => v.getId())) {
         if (id === variableId) continue;
         toolboxCategories.push({
             kind: "block",

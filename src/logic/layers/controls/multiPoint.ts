@@ -1,6 +1,7 @@
 import { cloneDeep } from "lodash";
 import { ILayer, LayerProps, PointType } from "../../../globals";
 import { errorNotification } from "../../../utils/DOMUtils";
+import { smartSort } from "../../../utils/stringUtils";
 import { KeyDownEventHandler } from "../Selection";
 
 export interface MultiPointLayerProps extends LayerProps {
@@ -138,7 +139,7 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
 
                 const newPoints = new Set(object.points);
                 let previous = event.points[0];
-                for (let next of event.points.slice(1)) {
+                for (const next of event.points.slice(1)) {
                     if (newPoints.has(next)) {
                         // Shrink by removing the previous point
                         newPoints.delete(previous);
@@ -161,7 +162,7 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
                             batchId: tempStorage.batchId,
                             object: {
                                 ...object,
-                                points: [...newPoints].sort(),
+                                points: [...newPoints].sort(smartSort),
                             },
                         },
                     ],
@@ -190,7 +191,7 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
                 }
 
                 const oldId = currentObjectId;
-                objectCopy.points.sort();
+                objectCopy.points.sort(smartSort);
                 const newId = objectCopy.points.join(";");
                 if (oldId === newId) {
                     return { discontinueInput: true };

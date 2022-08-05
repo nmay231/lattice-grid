@@ -3,6 +3,7 @@ import { useState } from "react";
 import { usePuzzle } from "../../../atoms/puzzle";
 import { availableLayers } from "../../../logic/layers";
 import { blurActiveElement } from "../../../utils/DOMUtils";
+import { smartSort } from "../../../utils/stringUtils";
 
 const DEFAULT_VALUE = "Add New Layer";
 
@@ -22,7 +23,7 @@ export const AddNewLayerButton = () => {
     };
 
     const layerIds = Object.keys(availableLayers).filter((id) => !availableLayers[id].ethereal);
-    layerIds.sort();
+    layerIds.sort(smartSort);
     layerIds.unshift(DEFAULT_VALUE);
 
     return (

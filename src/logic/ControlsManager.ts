@@ -3,14 +3,21 @@ import { getCanvasSize, setCanvasSize } from "../atoms/canvasSize";
 import { getLayers, selectLayer } from "../atoms/layers";
 import { getSettings } from "../atoms/settings";
 import { blocklyModalIsOpen, setBlocklyModalOpen } from "../components/Blockly/BlocklyModal";
-import { CleanedDOMEvent, ILayer, LayerEvent, LayerProps, PointerMoveOrDown } from "../globals";
+import {
+    CleanedDOMEvent,
+    ILayer,
+    LayerEvent,
+    LayerProps,
+    PointerMoveOrDown,
+    UnknownObject,
+} from "../globals";
 import { errorNotification } from "../utils/DOMUtils";
 import { keypressString } from "../utils/stringUtils";
 import { PuzzleManager } from "./PuzzleManager";
 
 export class ControlsManager {
     blurCanvasTimeoutId: number | undefined = undefined;
-    tempStorage: Record<string, object> | null = null;
+    tempStorage: Record<string, UnknownObject> | null = null;
     puzzle: PuzzleManager;
     eventListeners;
     stopPropagation;
@@ -67,7 +74,7 @@ export class ControlsManager {
         } = currentTarget.getBoundingClientRect();
         const { minX, minY, width, height } = this.puzzle.grid.getCanvasRequirements();
         // These transformations convert dom coordinates to svg coords
-        let x = minX + (clientX - left) * (height / realHeight),
+        const x = minX + (clientX - left) * (height / realHeight),
             y = minY + (clientY - top) * (width / realWidth);
 
         // TODO: Should I actually remember which meta keys were held down on pointer down?

@@ -49,7 +49,7 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
         essentials.grid.selectPointsWithCursor = selectPoints;
 
         selectPoints.mockReturnValueOnce(["a"]);
-        let fakeEvent: LayerEvent<TwoPointProps> = {
+        const fakeEvent: LayerEvent<TwoPointProps> = {
             ...essentials,
             ...getPointerEvent({ type: "pointerDown" }),
         };
@@ -86,7 +86,7 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
         essentials.grid.selectPointsWithCursor = selectPoints;
 
         selectPoints.mockReturnValueOnce(["a"]);
-        let fakeEvent: LayerEvent<TwoPointProps> = {
+        const fakeEvent: LayerEvent<TwoPointProps> = {
             ...essentials,
             ...getPointerEvent({ type: "pointerDown" }),
         };
@@ -153,7 +153,7 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
         essentials.grid.selectPointsWithCursor = selectPoints;
 
         selectPoints.mockReturnValueOnce(["b"]);
-        let fakeEvent: LayerEvent<TwoPointProps> = {
+        const fakeEvent: LayerEvent<TwoPointProps> = {
             ...essentials,
             ...getPointerEvent({ type: "pointerDown" }),
         };
@@ -194,7 +194,7 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
         essentials.grid.selectPointsWithCursor = selectPoints;
 
         selectPoints.mockReturnValueOnce(["b"]);
-        let fakeEvent: LayerEvent<TwoPointProps> = {
+        const fakeEvent: LayerEvent<TwoPointProps> = {
             ...essentials,
             ...getPointerEvent({ type: "pointerDown" }),
         };
@@ -237,7 +237,7 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
         essentials.grid.selectPointsWithCursor = selectPoints;
 
         selectPoints.mockReturnValueOnce(["3"]);
-        let fakeEvent: LayerEvent<TwoPointProps> = {
+        const fakeEvent: LayerEvent<TwoPointProps> = {
             ...essentials,
             ...getPointerEvent({ type: "pointerDown" }),
         };
@@ -296,7 +296,7 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
         essentials.grid.selectPointsWithCursor = selectPoints;
 
         selectPoints.mockReturnValueOnce(["1"]);
-        let fakeEvent: LayerEvent<TwoPointProps> = {
+        const fakeEvent: LayerEvent<TwoPointProps> = {
             ...essentials,
             ...getPointerEvent({ type: "pointerDown" }),
         };

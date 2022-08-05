@@ -25,7 +25,7 @@ const pointGatherer =
         return newPoints;
     };
 
-export type MinimalSettings = { selectedState: object };
+export type MinimalSettings = { selectedState: unknown };
 
 export interface OnePointProps extends LayerProps {
     ObjectState: { id: string; points: string[]; state: unknown };
