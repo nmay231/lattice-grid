@@ -28,6 +28,7 @@ export const AddNewLayerButton = () => {
     return (
         <Select
             m="sm"
+            withinPortal
             onChange={handleSelectChange}
             value={layerType}
             data={layerIds.map((id) => ({ value: id, label: id }))}

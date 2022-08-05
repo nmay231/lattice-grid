@@ -5,7 +5,7 @@ import { EditPage } from "./pages/Edit";
 
 export const App = () => {
     return (
-        <MantineProvider>
+        <MantineProvider withGlobalStyles withNormalizeCSS>
             <NotificationsProvider>
                 <Router>
                     <Switch>
