@@ -1,16 +1,7 @@
-import {
-    ILayer,
-    LayerEvent,
-    LayerStorage,
-    PointerMoveOrDown,
-} from "../../../globals";
+import { ILayer, LayerEvent, LayerStorage, PointerMoveOrDown } from "../../../globals";
 import { getEventEssentials } from "../../../utils/testUtils";
 import { DummyLayer } from "../_DummyLayer";
-import {
-    handleEventsCurrentSetting,
-    MinimalSettings,
-    TwoPointProps,
-} from "./twoPoint";
+import { handleEventsCurrentSetting, MinimalSettings, TwoPointProps } from "./twoPoint";
 
 type TwoPointLayer = ILayer<TwoPointProps> & {
     settings: MinimalSettings;
@@ -31,9 +22,7 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
             ...arg,
         });
 
-    const getPointerEvent = (
-        event: Pick<PointerMoveOrDown, "type">,
-    ): PointerMoveOrDown => ({
+    const getPointerEvent = (event: Pick<PointerMoveOrDown, "type">): PointerMoveOrDown => ({
         ctrlKey: false,
         shiftKey: false,
         altKey: false,
@@ -60,7 +49,7 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
         essentials.grid.selectPointsWithCursor = selectPoints;
 
         selectPoints.mockReturnValueOnce(["a"]);
-        let fakeEvent: LayerEvent<TwoPointProps> = {
+        const fakeEvent: LayerEvent<TwoPointProps> = {
             ...essentials,
             ...getPointerEvent({ type: "pointerDown" }),
         };
@@ -97,7 +86,7 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
         essentials.grid.selectPointsWithCursor = selectPoints;
 
         selectPoints.mockReturnValueOnce(["a"]);
-        let fakeEvent: LayerEvent<TwoPointProps> = {
+        const fakeEvent: LayerEvent<TwoPointProps> = {
             ...essentials,
             ...getPointerEvent({ type: "pointerDown" }),
         };
@@ -164,7 +153,7 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
         essentials.grid.selectPointsWithCursor = selectPoints;
 
         selectPoints.mockReturnValueOnce(["b"]);
-        let fakeEvent: LayerEvent<TwoPointProps> = {
+        const fakeEvent: LayerEvent<TwoPointProps> = {
             ...essentials,
             ...getPointerEvent({ type: "pointerDown" }),
         };
@@ -178,9 +167,7 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
         expect(points).toEqual(["b", "a"]);
 
         let result = layer.handleEvent({ ...fakeEvent, points });
-        expect(result.history).toEqual([
-            { batchId: undefined, id: "a;b", object: null },
-        ]);
+        expect(result.history).toEqual([{ batchId: undefined, id: "a;b", object: null }]);
         expect(result.discontinueInput).toBeFalsy();
 
         result = layer.handleEvent({ ...fakeEvent, type: "pointerUp" });
@@ -207,7 +194,7 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
         essentials.grid.selectPointsWithCursor = selectPoints;
 
         selectPoints.mockReturnValueOnce(["b"]);
-        let fakeEvent: LayerEvent<TwoPointProps> = {
+        const fakeEvent: LayerEvent<TwoPointProps> = {
             ...essentials,
             ...getPointerEvent({ type: "pointerDown" }),
         };
@@ -250,7 +237,7 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
         essentials.grid.selectPointsWithCursor = selectPoints;
 
         selectPoints.mockReturnValueOnce(["3"]);
-        let fakeEvent: LayerEvent<TwoPointProps> = {
+        const fakeEvent: LayerEvent<TwoPointProps> = {
             ...essentials,
             ...getPointerEvent({ type: "pointerDown" }),
         };
@@ -309,7 +296,7 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
         essentials.grid.selectPointsWithCursor = selectPoints;
 
         selectPoints.mockReturnValueOnce(["1"]);
-        let fakeEvent: LayerEvent<TwoPointProps> = {
+        const fakeEvent: LayerEvent<TwoPointProps> = {
             ...essentials,
             ...getPointerEvent({ type: "pointerDown" }),
         };
@@ -323,9 +310,7 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
         expect(points).toEqual(["1", "2"]);
 
         let result = layer.handleEvent({ ...fakeEvent, points });
-        expect(result.history).toEqual([
-            { batchId: undefined, id: "1;2", object: null },
-        ]);
+        expect(result.history).toEqual([{ batchId: undefined, id: "1;2", object: null }]);
         expect(result.discontinueInput).toBeFalsy();
 
         selectPoints.mockReturnValueOnce(["3"]);
@@ -343,7 +328,5 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
     });
 
     // TODO: Not implemented yet
-    it.todo(
-        "should expand or shrink in the same motion when that setting is active",
-    );
+    it.todo("should expand or shrink in the same motion when that setting is active");
 });

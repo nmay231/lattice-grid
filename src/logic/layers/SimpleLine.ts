@@ -68,15 +68,7 @@ export const SimpleLineLayer: ILayer<SimpleLineProps> & SimpleLineExtraProps = {
             properties: {
                 fill: {
                     type: "string",
-                    enum: [
-                        "blue",
-                        "green",
-                        "orange",
-                        "pink",
-                        "purple",
-                        "red",
-                        "yellow",
-                    ],
+                    enum: ["blue", "green", "orange", "pink", "purple", "red", "yellow"],
                 },
             },
         },
@@ -133,19 +125,15 @@ export const SimpleLineLayer: ILayer<SimpleLineProps> & SimpleLineExtraProps = {
             layer: this,
         });
 
-        let allPoints = stored.renderOrder.flatMap(
-            (id) => stored.objects[id].points,
-        );
-        allPoints = allPoints.filter(
-            (point, index) => index === allPoints.indexOf(point),
-        );
+        let allPoints = stored.renderOrder.flatMap((id) => stored.objects[id].points);
+        allPoints = allPoints.filter((point, index) => index === allPoints.indexOf(point));
         const { [this.settings.pointType]: pointInfo } = grid.getPoints({
             connections: { [this.settings.pointType]: { svgPoint: true } },
             points: allPoints,
         });
 
         const blits: LineBlits["blits"] = {};
-        for (let id of stored.renderOrder) {
+        for (const id of stored.renderOrder) {
             const {
                 state: { fill },
                 points,

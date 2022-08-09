@@ -20,13 +20,9 @@ const scrub_: Blockly.Generator["scrub_"] = (block, code, ignoreNext) => {
 
 const asString = (stringName: string) => JSON.stringify(stringName);
 const oneBlock = (codeBlock: string) =>
-    codeGen
-        .prefixLines(codeBlock, codeGen.INDENT)
-        .slice(codeGen.INDENT.length) || null;
+    codeGen.prefixLines(codeBlock, codeGen.INDENT).slice(codeGen.INDENT.length) || null;
 const manyBlocks = (codeBlocks: string) =>
-    codeBlocks
-        ? `[\n${codeGen.prefixLines(codeBlocks + "\n]", codeGen.INDENT)}`
-        : "[]";
+    codeBlocks ? `[\n${codeGen.prefixLines(codeBlocks + "\n]", codeGen.INDENT)}` : "[]";
 
 const generators = codeGen as NeedsUpdating as Record<
     UserCodeJSON["type"],

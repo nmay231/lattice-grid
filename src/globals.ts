@@ -1,11 +1,11 @@
-import { initialSettings } from "./atoms/settings";
-import { LineBlits } from "./components/SVGCanvas/Line";
-import { PolygonBlits } from "./components/SVGCanvas/Polygon";
-import { TextBlits } from "./components/SVGCanvas/Text";
-import { availableLayers } from "./logic/layers";
-import { SelectionExtraProps } from "./logic/layers/Selection";
-import { StorageManager } from "./logic/StorageManager";
-import { UserCodeJSON } from "./logic/userComputation/codeBlocks";
+import type { initialSettings } from "./atoms/settings";
+import type { LineBlits } from "./components/SVGCanvas/Line";
+import type { PolygonBlits } from "./components/SVGCanvas/Polygon";
+import type { TextBlits } from "./components/SVGCanvas/Text";
+import type { availableLayers } from "./logic/layers";
+import type { SelectionExtraProps } from "./logic/layers/Selection";
+import type { StorageManager } from "./logic/StorageManager";
+import type { UserCodeJSON } from "./logic/userComputation/codeBlocks";
 
 // #region - Compilation
 export type PuzzleError = {
@@ -26,16 +26,16 @@ export type CompilerErrorDetails = {
 export type ICodeBlock<T extends UserCodeJSON = UserCodeJSON> = {
     json: T;
 
-    registerVariableNames?: () => void;
-    expandVariables?: () => void;
-    variableInfo?: () => IVariableInfo | null;
-    validateInputs?: () => void;
+    registerVariableNames?(): void;
+    expandVariables?(): void;
+    variableInfo?(): IVariableInfo | null;
+    validateInputs?(): void;
 
     // TODO: Better name perhaps? But also figure out iterator/generator pattern and how rank translation will be handled.
-    getValue?: () => any;
+    getValue?(): any;
 
     // TODO: Should runOnce be required? I think it should, but I'll do that all at once after blocks have been developed some more.
-    runOnce?: () => void;
+    runOnce?(): void;
 
     // validation: expression type+rank validation, variable scope checks, alias expansion ->
     // optimization: unused code errors, optimization pattern matching, caching static values ->
@@ -43,9 +43,7 @@ export type ICodeBlock<T extends UserCodeJSON = UserCodeJSON> = {
     // stringify: compression (var name shorten, remove useless aliases), debug output (basically a memory dump)
 };
 
-export type VariableCodeBlock = Required<
-    Pick<ICodeBlock, "variableInfo" | "getValue" | "json">
->;
+export type VariableCodeBlock = Required<Pick<ICodeBlock, "variableInfo" | "getValue" | "json">>;
 
 export interface IVariableInfo {
     // For now, I think I'll take after the MatLab style of every variable being a nested array of a scalar type.
@@ -61,6 +59,7 @@ export interface IVariableInfo {
 // TODO: Replace all relevant instances of the plain types with these explicit types.
 // It helps with changing all of the types if necessary, and also with being explicit with how composite types are used.
 export type Point = string;
+export type Vector = [number, number];
 export type Delta = { dx: number; dy: number };
 
 export type PointType = "cells" | "edges" | "corners";
@@ -122,23 +121,18 @@ export type CleanedDOMEvent =
     | PointerMoveOrDown;
 
 export type LayerEventEssentials<LP extends LayerProps> = {
-    grid: Pick<
-        Grid,
-        "id" | "getAllPoints" | "getPoints" | "selectPointsWithCursor"
-    >;
+    grid: Pick<Grid, "id" | "getAllPoints" | "getPoints" | "selectPointsWithCursor">;
     storage: StorageManager;
     settings: typeof initialSettings;
     tempStorage: Partial<LP["TempStorage"]>;
 };
 
-export type LayerEvent<LP extends LayerProps> = CleanedDOMEvent &
-    LayerEventEssentials<LP>;
+export type LayerEvent<LP extends LayerProps> = CleanedDOMEvent & LayerEventEssentials<LP>;
 
-export type NewSettingsEvent<LP extends LayerProps> =
-    LayerEventEssentials<LP> & {
-        newSettings: LP["RawSettings"];
-        attachSelectionsHandler: SelectionExtraProps["attachHandler"];
-    };
+export type NewSettingsEvent<LP extends LayerProps> = LayerEventEssentials<LP> & {
+    newSettings: LP["RawSettings"];
+    attachSelectionsHandler: SelectionExtraProps["attachHandler"];
+};
 
 export type LayerHandlerResult = {
     discontinueInput?: boolean;
@@ -149,10 +143,10 @@ type JSONSchema = { schema: NeedsUpdating; uischemaElements: NeedsUpdating[] };
 
 export type LayerProps = {
     // TODO: Try allowing settings and rawSettings to be optional
-    RawSettings: object;
-    ObjectState: object;
-    ExtraLayerStorageProps: object;
-    TempStorage: object;
+    RawSettings: UnknownObject;
+    ObjectState: UnknownObject;
+    ExtraLayerStorageProps: UnknownObject;
+    TempStorage: UnknownObject;
 };
 
 export type ILayer<LP extends LayerProps = LayerProps> = {
@@ -163,19 +157,11 @@ export type ILayer<LP extends LayerProps = LayerProps> = {
     defaultSettings: LP["RawSettings"];
     controls?: JSONSchema;
     constraints?: JSONSchema;
-    newSettings?: (
-        settingsChange: NewSettingsEvent<LP>,
-    ) => LayerHandlerResult | void;
-    gatherPoints: (
-        layerEvent: PointerMoveOrDown & LayerEventEssentials<LP>,
-    ) => string[];
+    newSettings?(settingsChange: NewSettingsEvent<LP>): LayerHandlerResult | void;
+    gatherPoints: (layerEvent: PointerMoveOrDown & LayerEventEssentials<LP>) => string[];
     handleEvent: (layerEvent: LayerEvent<LP>) => LayerHandlerResult;
-    getBlits?: (
-        data: Omit<LayerEventEssentials<LP>, "tempStorage">,
-    ) => BlitGroup[];
-    getOverlayBlits?: (
-        data: Omit<LayerEventEssentials<LP>, "tempStorage">,
-    ) => BlitGroup[];
+    getBlits?(data: Omit<LayerEventEssentials<LP>, "tempStorage">): BlitGroup[];
+    getOverlayBlits?(data: Omit<LayerEventEssentials<LP>, "tempStorage">): BlitGroup[];
 };
 // #endregion
 
@@ -197,7 +183,7 @@ export type HistoryAction = {
     id: string;
     layerId: string;
     batchId?: number;
-    object: object | null;
+    object: UnknownObject | null;
     renderIndex: number;
 };
 export type History = {
@@ -222,12 +208,14 @@ export type LocalStorageData = {
     grid: { width: number; height: number };
     layers: {
         layerClass: keyof typeof availableLayers;
-        rawSettings?: object;
+        rawSettings?: UnknownObject;
     }[];
 };
 // #endregion
 
 // #region - Refactoring
-// I think I will always keep this variable to make refactoring easier.
+// I think I will always keep this type to make refactoring easier.
 export type NeedsUpdating = any;
+
+export type UnknownObject = Record<string, unknown>;
 // #endregion

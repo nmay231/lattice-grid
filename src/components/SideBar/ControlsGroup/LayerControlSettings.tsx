@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { constraintSettingsAtom } from "../../../atoms/constraintSettings";
 import { layersAtom } from "../../../atoms/layers";
 import { usePuzzle } from "../../../atoms/puzzle";
+import { UnknownObject } from "../../../globals";
 import { availableLayers } from "../../../logic/layers";
 import { blurActiveElement } from "../../../utils/DOMUtils";
 import { JsonFormsWrapper } from "../../JsonFormsWrapper";
@@ -12,10 +13,8 @@ export const LayerControlSettings = () => {
     const { layers, currentLayerId: id } = useAtomValue(layersAtom);
     const layer = puzzle.layers[id || ""];
 
-    const [data, setData] = useState<object | null>(null);
-    const [constraintSettings, setConstraintSettings] = useAtom(
-        constraintSettingsAtom,
-    );
+    const [data, setData] = useState<UnknownObject | null>(null);
+    const [constraintSettings, setConstraintSettings] = useAtom(constraintSettingsAtom);
 
     // We want to update a layer's settings whenever data changes, but changing id also changes data.
     // So we keep track of the data and only update settings when data changes but id doesn't.
@@ -62,6 +61,7 @@ export const LayerControlSettings = () => {
                 schema={schema}
                 uischema={uischema}
             />
+            {layerClass.controls ? null : <i>No control settings for this layer</i>}
         </div>
     );
 };

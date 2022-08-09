@@ -14,10 +14,12 @@ import {
     verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { useAtomValue } from "jotai";
+import { IoMdCheckmark, IoMdClose } from "react-icons/io";
 import { layersAtom, setLayers } from "../../../atoms/layers";
 import { usePuzzle } from "../../../atoms/puzzle";
 import { blurActiveElement } from "../../../utils/DOMUtils";
 import { SortableItem } from "../../SortableItem";
+import styling from "./LayerList.module.css";
 
 export const LayerList = () => {
     const puzzle = usePuzzle();
@@ -60,24 +62,34 @@ export const LayerList = () => {
             onDragEnd={handleDragEnd}
             modifiers={[restrictToVerticalAxis]}
         >
-            <SortableContext
-                items={layers}
-                strategy={verticalListSortingStrategy}
-            >
-                {layers.map(
-                    ({ id, ethereal }) =>
+            <SortableContext items={layers} strategy={verticalListSortingStrategy}>
+                {layers.map(({ id, ethereal }) => {
+                    const current = id === currentLayerId;
+                    return (
                         !ethereal && (
                             <SortableItem key={id} id={id}>
-                                {/* TODO: Change the element to be the whole sortableItem but excluding the itemHandle (and maybe not just a simple onPointDown) */}
-                                <p onPointerDown={handleSelect(id)}>
-                                    {id === currentLayerId && "✓"}
-                                    {id}
-                                </p>
-                                {/* TODO: Icon (?) */}
-                                <div onPointerDown={handleDelete(id)}>X</div>
+                                <div className={styling.nameContainer}>
+                                    <span
+                                        onPointerDown={handleSelect(id)}
+                                        className={
+                                            current ? styling.nameSelected : styling.nameNotSelected
+                                        }
+                                    >
+                                        {current && <IoMdCheckmark />}
+                                        <span>{id}</span>
+                                    </span>
+
+                                    <span
+                                        onPointerDown={handleDelete(id)}
+                                        className={styling.remove}
+                                    >
+                                        <IoMdClose />
+                                    </span>
+                                </div>
                             </SortableItem>
-                        ),
-                )}
+                        )
+                    );
+                })}
             </SortableContext>
         </DndContext>
     );

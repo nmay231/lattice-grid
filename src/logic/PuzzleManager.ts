@@ -2,7 +2,8 @@ import { getBlitGroups, OVERLAY_LAYER_ID, setBlitGroups } from "../atoms/blits";
 import { setCanvasSize } from "../atoms/canvasSize";
 import { addLayer, getLayers, removeLayer, setLayers } from "../atoms/layers";
 import { getSettings } from "../atoms/settings";
-import { Grid, ILayer, LocalStorageData, RenderChange } from "../globals";
+import { Grid, ILayer, LocalStorageData, RenderChange, UnknownObject } from "../globals";
+import { errorNotification } from "../utils/DOMUtils";
 import { ControlsManager } from "./ControlsManager";
 import { SquareGrid } from "./grids/SquareGrid";
 import { availableLayers } from "./layers";
@@ -30,7 +31,7 @@ export class PuzzleManager {
 
         // Guarantee that these layers will be present even if the saved puzzle tries to add them
         const requiredLayers = [CellOutlineLayer, SelectionLayer, OverlayLayer];
-        for (let layer of requiredLayers) {
+        for (const layer of requiredLayers) {
             this.addLayer(layer);
         }
     }
@@ -38,9 +39,7 @@ export class PuzzleManager {
     loadPuzzle() {
         this._resetLayers();
         try {
-            const data = JSON.parse(
-                localStorage.getItem("_currentPuzzle") || "{}",
-            );
+            const data = JSON.parse(localStorage.getItem("_currentPuzzle") || "{}");
             this._loadPuzzle(data);
             this.renderChange({ type: "draw", layerIds: "all" });
         } catch (err) {
@@ -70,14 +69,14 @@ export class PuzzleManager {
         (this.grid as any).width = width;
         (this.grid as any).height = height;
 
-        for (let { layerClass, rawSettings } of data.layers) {
+        for (const { layerClass, rawSettings } of data.layers) {
             this.addLayer(availableLayers[layerClass], rawSettings);
         }
     }
 
     resizeCanvas() {
         const requirements = this.grid.getCanvasRequirements();
-        setCanvasSize(requirements);
+        setCanvasSize({ ...requirements, zoom: 0 });
     }
 
     renderChange(change: RenderChange) {
@@ -118,12 +117,10 @@ export class PuzzleManager {
 
             // TODO: Allowing layerIds === "all" is mostly used for resizing the grid. How to efficiently redraw layers that depend on the size of the grid. Are there even layers other than grids that need to rerender on resizes? If there are, should they have to explicitly subscribe to these events?
             const layerIds = new Set(
-                change.layerIds === "all"
-                    ? layers.map(({ id }) => id)
-                    : change.layerIds,
+                change.layerIds === "all" ? layers.map(({ id }) => id) : change.layerIds,
             );
 
-            for (let layerId of layerIds) {
+            for (const layerId of layerIds) {
                 const layer = this.layers[layerId];
                 blitGroups[layer.id] =
                     layer.getBlits?.({
@@ -135,7 +132,7 @@ export class PuzzleManager {
 
             setBlitGroups(blitGroups);
         } else {
-            throw Error(`sadface ${JSON.stringify(change)}`);
+            errorNotification({ message: `Failed to render to canvas: ${JSON.stringify(change)}` });
         }
 
         this._saveToLocalStorage();
@@ -150,7 +147,7 @@ export class PuzzleManager {
                 height: (this.grid as any).height,
             },
         };
-        for (let fakeLayer of getLayers().layers) {
+        for (const fakeLayer of getLayers().layers) {
             const layer = this.layers[fakeLayer.id];
             data.layers.push({
                 layerClass: Object.getPrototypeOf(layer).id,
@@ -160,7 +157,7 @@ export class PuzzleManager {
         localStorage.setItem("_currentPuzzle", JSON.stringify(data));
     }
 
-    addLayer(layerClass: ILayer, settings?: object): string {
+    addLayer(layerClass: ILayer, settings?: UnknownObject): string {
         if (layerClass.unique && layerClass.id in this.layers) {
             this.changeLayerSettings(layerClass.id, settings);
             return layerClass.id;
@@ -176,10 +173,7 @@ export class PuzzleManager {
 
         this.layers[layer.id] = layer;
         this.storage.addStorage({ grid: this.grid, layer });
-        this.changeLayerSettings(
-            layer.id,
-            settings || layerClass.defaultSettings,
-        );
+        this.changeLayerSettings(layer.id, settings || layerClass.defaultSettings);
 
         addLayer({
             id: layer.id,
@@ -207,8 +201,7 @@ export class PuzzleManager {
                 grid: this.grid,
                 storage: this.storage,
                 // TODO: If anything, I should prevent the issue where CellOutline is added before Selections therefore requiring the following optional chain. That's why I thought pre-instantiating it would be a good idea.
-                attachSelectionsHandler:
-                    Selections?.attachHandler?.bind?.(Selections),
+                attachSelectionsHandler: Selections?.attachHandler?.bind?.(Selections),
                 settings: getSettings(),
                 tempStorage: {},
             }) || {};

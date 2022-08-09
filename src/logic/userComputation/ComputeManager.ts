@@ -1,8 +1,4 @@
-import {
-    CompilerErrorDetails,
-    ICodeBlock,
-    VariableCodeBlock,
-} from "../../globals";
+import { CompilerErrorDetails, ICodeBlock, NeedsUpdating, VariableCodeBlock } from "../../globals";
 import { Blockly } from "../../utils/Blockly";
 import { PuzzleManager } from "../PuzzleManager";
 import { CodeBlocks, UserCodeJSON } from "./codeBlocks";
@@ -26,7 +22,7 @@ export class ComputeManager {
 
     constructor(public puzzle: PuzzleManager) {}
 
-    _parseJson(str: string): object {
+    _parseJson(str: string): UserCodeJSON {
         try {
             return JSON.parse(str);
         } catch {
@@ -35,7 +31,7 @@ export class ComputeManager {
                 isInternal: this._weGeneratedTheCode,
                 codeBlockIds: [],
             });
-            return {};
+            return {} as NeedsUpdating;
         }
     }
 
@@ -62,14 +58,11 @@ export class ComputeManager {
         });
     };
 
-    compile(
-        jsonString: string,
-        opts?: Partial<{ weGeneratedTheCode: boolean }>,
-    ) {
+    compile(jsonString: string, opts?: Partial<{ weGeneratedTheCode: boolean }>) {
         this._weGeneratedTheCode = opts?.weGeneratedTheCode || false;
 
         const json = this._parseJson(jsonString);
-        this.compileBlock(null, json as UserCodeJSON);
+        this.compileBlock(null, json);
 
         const functions: KeysMatching<ICodeBlock, () => void>[] = [
             "registerVariableNames",
@@ -79,8 +72,8 @@ export class ComputeManager {
 
         const blocks = Object.values(this.codeBlocks);
 
-        for (let func of functions) {
-            for (let block of blocks) block[func]?.();
+        for (const func of functions) {
+            for (const block of blocks) block[func]?.();
         }
 
         this._weGeneratedTheCode = false;
@@ -89,13 +82,10 @@ export class ComputeManager {
     runOnce() {
         const blocks = Object.values(this.codeBlocks);
 
-        for (let block of blocks) block.runOnce?.();
+        for (const block of blocks) block.runOnce?.();
     }
 
     getVariable(varId: string): null | Blockly.VariableModel {
-        return Blockly.Variables.getOrCreateVariablePackage(
-            Blockly.getMainWorkspace(),
-            varId,
-        );
+        return Blockly.Variables.getOrCreateVariablePackage(Blockly.getMainWorkspace(), varId);
     }
 }

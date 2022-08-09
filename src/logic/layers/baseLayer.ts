@@ -1,8 +1,10 @@
 import { ILayer } from "../../globals";
+import { errorNotification } from "../../utils/DOMUtils";
 
 const throwError =
     ({ message }: { message: string }) =>
     () => {
+        errorNotification({ message, forever: true });
         throw Error(message);
     };
 

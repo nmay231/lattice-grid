@@ -3,32 +3,28 @@
     width: 100vw;
     height: 100vh;
     display: flex;
-    /* TODO: Hide the scroll bars for now. This issue should be fixed when the canvas is not fit to the screen, but scrolled */
-    overflow: hidden;
+    --canvas-width: 70%;
 }
 
 .canvasContainer {
-    width: 80%;
+    width: var(--canvas-width);
     height: 100%;
     display: flex;
+    overflow: hidden;
+    position: relative;
 }
 
 .sideBar {
-    width: calc(20% - 5px);
+    width: calc(100% - var(--canvas-width));
     height: 100%;
-    overflow: hidden;
+    margin: 0px;
+    overflow-x: hidden;
+    overflow-y: scroll;
+    scrollbar-width: none;
+    border-right: 3px solid rgb(54, 50, 50);
 }
 
-.divider {
-    width: 5px;
-    height: 100%;
-    /* Is this necessary? No. */
-    background-color: gray;
-    background: repeating-linear-gradient(
-        45deg,
-        rgb(50, 50, 50),
-        rgb(50, 50, 50) 2px,
-        rgb(80, 80, 80) 2px,
-        rgb(80, 80, 80) 12px
-    );
+.sideBar::-webkit-scrollbar {
+    /* TODO: Do I want to actually do that? */
+    display: none; /* Remove scroll bars while still allowing scrolling. */
 }

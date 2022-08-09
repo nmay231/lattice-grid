@@ -1,4 +1,6 @@
+import { Paper } from "@mantine/core";
 import { useState } from "react";
+import { IoIosArrowForward } from "react-icons/io";
 import styling from "./Group.module.css";
 
 type GroupProps = {
@@ -7,27 +9,20 @@ type GroupProps = {
     expanded?: boolean;
 };
 
-export const Group: React.FC<GroupProps> = ({
-    children,
-    name,
-    expanded = false,
-}) => {
+export const Group: React.FC<GroupProps> = ({ children, name, expanded = false }) => {
     const [expand, setExpand] = useState(expanded);
+
     return (
-        <div className={styling.groupContainer}>
-            <div
-                className={styling.groupHeader}
-                onClick={() => setExpand(!expand)}
-            >
+        <Paper className={styling.groupContainer}>
+            <div className={styling.groupHeader} onClick={() => setExpand(!expand)}>
+                <IoIosArrowForward
+                    className={expand ? styling.headerIconOpen : styling.headerIcon}
+                />
                 <p>{name}</p>
             </div>
-            <div
-                className={
-                    expand ? styling.groupBodyShown : styling.groupBodyHidden
-                }
-            >
+            <div className={expand ? styling.groupBodyShown : styling.groupBodyHidden}>
                 {children}
             </div>
-        </div>
+        </Paper>
     );
 };

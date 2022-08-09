@@ -18,10 +18,7 @@ export class DefineAlias implements ICodeBlock<IDefineAlias> {
             this.compute.compilerErrors.push({
                 message: "Duplicate variable/alias names",
                 isInternal: false,
-                codeBlockIds: [
-                    this.compute.variables[this.json.varId].json.id,
-                    this.json.id,
-                ],
+                codeBlockIds: [this.compute.variables[this.json.varId].json.id, this.json.id],
             });
         }
         // this.compute.variables[this.json.varId] = this;

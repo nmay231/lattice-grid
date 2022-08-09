@@ -9,10 +9,7 @@ export interface NumberProps extends LayerProps {
 }
 
 type NumberSettings = {
-    match: (
-        number: number,
-        alternate?: string | null,
-    ) => string | null | undefined;
+    match: (number: number, alternate?: string | null) => string | null | undefined;
 };
 
 type NumberExtraProps = {
@@ -39,8 +36,7 @@ export const NumberLayer: ILayer<NumberProps> &
         const timeDelay = Date.now() - (stored.lastTime || 0);
         stored.lastTime = Date.now();
 
-        const selectionChanged =
-            (stored.lastIds || []).join(";") !== ids.join(";");
+        const selectionChanged = (stored.lastIds || []).join(";") !== ids.join(";");
         stored.lastIds = ids.slice();
 
         const states = ids.map((id) => stored.objects[id]?.state);
@@ -78,6 +74,8 @@ export const NumberLayer: ILayer<NumberProps> &
         } else if (keypress === "+" || keypress === "=") {
             return match(oldState && Math.abs(parseInt(oldState)), undefined);
         } else if (/^[0-9]$/.test(keypress)) {
+            // TODO: Temporary solution
+            // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
             return match(parseInt(state + keypress), oldState);
         } else if (/^[a-fA-F]$/.test(keypress)) {
             return match(parseInt(keypress.toLowerCase(), 36), oldState);
@@ -133,7 +131,7 @@ export const NumberLayer: ILayer<NumberProps> &
         const history = [];
 
         // Delete numbers that are out of range
-        for (let id of renderOrder) {
+        for (const id of renderOrder) {
             const object = objects[id];
             if (
                 parseInt(object.state) < newSettings.min ||
@@ -158,8 +156,8 @@ export const NumberLayer: ILayer<NumberProps> &
             points: stored.renderOrder,
         });
 
-        const blits: Record<string, object> = {};
-        for (let id of stored.renderOrder) {
+        const blits: Record<string, unknown> = {};
+        for (const id of stored.renderOrder) {
             blits[id] = {
                 text: stored.objects[id].state,
                 point: cells[id].svgPoint,

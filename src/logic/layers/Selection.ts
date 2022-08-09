@@ -6,6 +6,7 @@ import {
     LayerHandlerResult,
     LayerProps,
 } from "../../globals";
+import { errorNotification } from "../../utils/DOMUtils";
 import { BaseLayer } from "./baseLayer";
 
 export type KeyDownEventHandler<LP extends LayerProps = LayerProps> = {
@@ -17,7 +18,7 @@ export type KeyDownEventHandler<LP extends LayerProps = LayerProps> = {
 export type SelectionExtraProps = {
     attachHandler: <LP extends LayerProps = LayerProps>(
         layer: ILayer<LP> & KeyDownEventHandler<LP>,
-        options: {},
+        options: unknown,
     ) => void;
     _getBlits: NonNullable<ILayer<SelectionProps>["getBlits"]>;
 };
@@ -142,9 +143,7 @@ export const SelectionLayer: ILayer<SelectionProps> & SelectionExtraProps = {
                     return { history };
                 }
 
-                const storingLayer: ILayer & KeyDownEventHandler = (
-                    event as any
-                ).storingLayer;
+                const storingLayer: ILayer & KeyDownEventHandler = (event as any).storingLayer;
 
                 const actions =
                     storingLayer.handleKeyDown?.({
@@ -209,9 +208,7 @@ export const SelectionLayer: ILayer<SelectionProps> & SelectionExtraProps = {
                                 object: null,
                             }));
                     } else {
-                        const groupsToMerge = new Set(
-                            ids.map((id) => stored.objects[id]?.state),
-                        );
+                        const groupsToMerge = new Set(ids.map((id) => stored.objects[id]?.state));
                         const allIds = ids
                             .filter((id) => !(id in stored.objects))
                             .concat(
@@ -307,21 +304,23 @@ export const SelectionLayer: ILayer<SelectionProps> & SelectionExtraProps = {
                 return { history, discontinueInput: true };
             }
             default: {
-                throw new Error(`Unknown event.type=${(event as any).type}`);
+                errorNotification({
+                    message: `Unknown event.type in SelectionLayer: ${(event as any).type}`,
+                    forever: true,
+                });
+                return {};
             }
         }
     },
 
     _getBlits({ grid, storage }) {
         const stored = storage.getStored<SelectionProps>({ grid, layer: this });
-        const points = stored.renderOrder.filter(
-            (key) => stored.objects[key].state,
-        );
+        const points = stored.renderOrder.filter((key) => stored.objects[key].state);
         const states = points.map((id) => stored.objects[id].state);
 
-        let blits: Record<string, any> = {};
+        const blits: Record<string, any> = {};
         if (points.length) {
-            for (let group of new Set(states)) {
+            for (const group of new Set(states)) {
                 const { selectionCage } = grid.getPoints({
                     connections: {
                         cells: {
@@ -331,12 +330,10 @@ export const SelectionLayer: ILayer<SelectionProps> & SelectionExtraProps = {
                             },
                         },
                     },
-                    points: states
-                        .filter((state) => state === group)
-                        .map((_, i) => points[i]),
+                    points: states.filter((state) => state === group).map((_, i) => points[i]),
                 });
 
-                for (let key in selectionCage.svgPolygons) {
+                for (const key in selectionCage.svgPolygons) {
                     blits[`${group}-${key}`] = {
                         points: selectionCage.svgPolygons[key],
                     };

@@ -1,12 +1,10 @@
 import { ILayer, LayerProps, PointType } from "../../../globals";
+import { errorNotification } from "../../../utils/DOMUtils";
 
 type CommonArgs = { pointTypes: PointType[]; deltas: any };
 
 const pointGatherer =
-    ({
-        pointTypes,
-        deltas,
-    }: CommonArgs): ILayer<OnePointProps>["gatherPoints"] =>
+    ({ pointTypes, deltas }: CommonArgs): ILayer<OnePointProps>["gatherPoints"] =>
     ({ grid, cursor, tempStorage }) => {
         let newPoints = grid.selectPointsWithCursor({
             cursor: cursor,
@@ -19,9 +17,7 @@ const pointGatherer =
         tempStorage.previousPoint = newPoints[newPoints.length - 1];
         const blacklist = tempStorage.blacklist ?? [];
         tempStorage.blacklist = blacklist;
-        newPoints = newPoints.filter(
-            (point) => blacklist.indexOf(point) === -1,
-        );
+        newPoints = newPoints.filter((point) => blacklist.indexOf(point) === -1);
 
         if (!newPoints.length) return [];
         tempStorage.blacklist.push(...newPoints);
@@ -29,7 +25,7 @@ const pointGatherer =
         return newPoints;
     };
 
-export type MinimalSettings = { selectedState: object };
+export type MinimalSettings = { selectedState: unknown };
 
 export interface OnePointProps extends LayerProps {
     ObjectState: { id: string; points: string[]; state: unknown };
@@ -47,7 +43,11 @@ export const handleEventsCycleStates = <LP extends OnePointProps>(
     { states, pointTypes, deltas }: CommonArgs & { states: unknown[] },
 ) => {
     if (!states?.length || !pointTypes?.length) {
-        throw Error("Was not provided parameters");
+        errorNotification({
+            message: "onePoint cycleStates was not provided required parameters",
+            forever: true,
+        });
+        return;
     }
 
     layer.gatherPoints = pointGatherer({ pointTypes, deltas });
@@ -67,8 +67,7 @@ export const handleEventsCycleStates = <LP extends OnePointProps>(
             state = tempStorage.targetState;
         } else {
             if (newPoints[0] in stored.objects) {
-                const index =
-                    1 + states.indexOf(stored.objects[newPoints[0]].state);
+                const index = 1 + states.indexOf(stored.objects[newPoints[0]].state);
                 state = index < states.length ? states[index] : null;
             } else {
                 state = states[0];
@@ -89,7 +88,11 @@ export const handleEventsCurrentSetting = <LP extends OnePointProps>(
     { pointTypes, deltas }: CommonArgs,
 ) => {
     if (!pointTypes?.length || !deltas?.length) {
-        throw Error("Was not provided parameters");
+        errorNotification({
+            message: "onePoint currentSetting was not provided required parameters",
+            forever: true,
+        });
+        return;
     }
 
     layer.gatherPoints = pointGatherer({ pointTypes, deltas });
@@ -107,8 +110,7 @@ export const handleEventsCurrentSetting = <LP extends OnePointProps>(
         if (tempStorage.targetState === undefined) {
             if (newPoints[0] in stored.objects) {
                 const state = stored.objects[newPoints[0]].state;
-                tempStorage.targetState =
-                    state === layer.settings.selectedState ? null : state;
+                tempStorage.targetState = state === layer.settings.selectedState ? null : state;
             } else {
                 tempStorage.targetState = layer.settings.selectedState;
             }

@@ -1,22 +1,23 @@
+import { clamp } from "lodash";
+import { getCanvasSize, setCanvasSize } from "../atoms/canvasSize";
 import { getLayers, selectLayer } from "../atoms/layers";
 import { getSettings } from "../atoms/settings";
-import {
-    blocklyModalIsOpen,
-    setBlocklyModalOpen,
-} from "../components/Blockly/BlocklyModal";
+import { blocklyModalIsOpen, setBlocklyModalOpen } from "../components/Blockly/BlocklyModal";
 import {
     CleanedDOMEvent,
     ILayer,
     LayerEvent,
     LayerProps,
     PointerMoveOrDown,
+    UnknownObject,
 } from "../globals";
+import { errorNotification } from "../utils/DOMUtils";
 import { keypressString } from "../utils/stringUtils";
 import { PuzzleManager } from "./PuzzleManager";
 
 export class ControlsManager {
     blurCanvasTimeoutId: number | undefined = undefined;
-    tempStorage: Record<string, object> | null = null;
+    tempStorage: Record<string, UnknownObject> | null = null;
     puzzle: PuzzleManager;
     eventListeners;
     stopPropagation;
@@ -57,9 +58,7 @@ export class ControlsManager {
     getCurrentLayer() {
         const currentLayerId = getLayers().currentLayerId;
 
-        return currentLayerId === null
-            ? null
-            : this.puzzle.layers[currentLayerId];
+        return currentLayerId === null ? null : this.puzzle.layers[currentLayerId];
     }
 
     cleanPointerEvent(
@@ -73,10 +72,9 @@ export class ControlsManager {
             width: realWidth,
             height: realHeight,
         } = currentTarget.getBoundingClientRect();
-        const { minX, minY, width, height } =
-            this.puzzle.grid.getCanvasRequirements();
+        const { minX, minY, width, height } = this.puzzle.grid.getCanvasRequirements();
         // These transformations convert dom coordinates to svg coords
-        let x = minX + (clientX - left) * (height / realHeight),
+        const x = minX + (clientX - left) * (height / realHeight),
             y = minY + (clientY - top) * (width / realWidth);
 
         // TODO: Should I actually remember which meta keys were held down on pointer down?
@@ -101,10 +99,7 @@ export class ControlsManager {
             tempStorage: this.tempStorage || {},
         };
 
-        if (
-            layerEvent.type === "pointerDown" ||
-            layerEvent.type === "pointerMove"
-        ) {
+        if (layerEvent.type === "pointerDown" || layerEvent.type === "pointerMove") {
             const points = layer.gatherPoints(layerEvent);
             if (!points?.length) {
                 return;
@@ -112,8 +107,7 @@ export class ControlsManager {
             layerEvent.points = points;
         }
 
-        const { discontinueInput, history } =
-            layer.handleEvent(layerEvent) || {};
+        const { discontinueInput, history } = layer.handleEvent(layerEvent) || {};
 
         if (
             layerEvent.type === "keyDown" ||
@@ -241,13 +235,10 @@ export class ControlsManager {
             // Perhaps, I can use that mechanism for storage to switch the current layer when undoing/redoing
             const { storage, grid } = this.puzzle;
             const appliedActions =
-                keypress === "ctrl-z"
-                    ? storage.undoHistory(grid.id)
-                    : storage.redoHistory(grid.id);
+                keypress === "ctrl-z" ? storage.undoHistory(grid.id) : storage.redoHistory(grid.id);
 
             if (appliedActions.length) {
-                const newLayerId =
-                    appliedActions[appliedActions.length - 1].layerId;
+                const newLayerId = appliedActions[appliedActions.length - 1].layerId;
                 this.selectLayer({ id: newLayerId });
 
                 layer = this.getCurrentLayer();
@@ -263,19 +254,48 @@ export class ControlsManager {
     }
 
     onPointerUpOutside(rawEvent: React.PointerEvent) {
-        if (
-            rawEvent.isPrimary &&
-            (rawEvent.target as any)?.id === "canvas-container"
-        ) {
+        if (rawEvent.isPrimary && (rawEvent.target as any)?.id === "canvas-container") {
             const layer = this.getCurrentLayer();
             if (!layer) return;
             this.applyLayerEvent(layer, { type: "cancelAction" });
         }
     }
 
-    onPageBlur(rawEvent: React.FocusEvent) {
-        // TODO: Why am I asking if the rawEvent isPrimary?
-        if (!(rawEvent as any).isPrimary || !this.tempStorage) {
+    onWheel(rawEvent: WheelEvent) {
+        if (!rawEvent.ctrlKey && !rawEvent.metaKey) return;
+        rawEvent.preventDefault();
+
+        if (rawEvent.deltaMode !== rawEvent.DOM_DELTA_PIXEL)
+            // TODO: How to show only once?
+            errorNotification({
+                message:
+                    "FYI, scaling the grid with scrolling might be buggy. Submit a bug report if you get this error.",
+                forever: true,
+            });
+
+        const sign = rawEvent.deltaY / (Math.abs(rawEvent.deltaY) || 1);
+        const { zoom, width, ...theRest } = getCanvasSize();
+        // TODO: Eventually scale by the magnitude of deltaY and the size of the grid
+        const newZoom = clamp(zoom - sign * 0.2, 0, 1);
+        setCanvasSize({ ...theRest, width, zoom: newZoom });
+
+        const div = rawEvent.currentTarget as HTMLDivElement;
+        const conWidth = div.getBoundingClientRect().width;
+
+        const oldWidth = conWidth * (1 - zoom) + zoom * width;
+        const newWidth = conWidth * (1 - newZoom) + newZoom * width;
+        const ratio = newWidth / oldWidth;
+
+        // TODO: Why is the scrolling position so stuttery?
+        const { offsetX, offsetY } = rawEvent;
+        const { scrollLeft, scrollTop } = div;
+        const left = ratio * (offsetX + scrollLeft) - offsetX;
+        const top = ratio * (offsetY + scrollTop) - offsetY;
+        div.scroll({ left, top });
+    }
+
+    onPageBlur() {
+        if (!this.tempStorage) {
             return;
         }
 

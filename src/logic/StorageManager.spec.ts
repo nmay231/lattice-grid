@@ -111,11 +111,7 @@ describe("StorageManager", () => {
             object: { asdf: "something" },
             renderIndex: 0,
         };
-        const inverse = storage._ApplyHistoryAction(
-            objects,
-            renderOrder,
-            action,
-        );
+        const inverse = storage._ApplyHistoryAction(objects, renderOrder, action);
         expect(inverse).toEqual({
             id: "objectId",
             layerId: "layer1",
@@ -123,11 +119,7 @@ describe("StorageManager", () => {
             renderIndex: -1,
         });
 
-        const sameAction = storage._ApplyHistoryAction(
-            objects,
-            renderOrder,
-            action,
-        );
+        const sameAction = storage._ApplyHistoryAction(objects, renderOrder, action);
         expect(sameAction).toEqual<HistoryAction>(action);
     });
 

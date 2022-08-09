@@ -12,8 +12,7 @@ type BackgroundColorExtraProps = {
     settings: BackgroundColorProps["RawSettings"];
 };
 
-export const BackgroundColorLayer: ILayer<BackgroundColorProps> &
-    BackgroundColorExtraProps = {
+export const BackgroundColorLayer: ILayer<BackgroundColorProps> & BackgroundColorExtraProps = {
     ...BaseLayer,
     id: "Background Color",
     unique: false,
@@ -52,7 +51,7 @@ export const BackgroundColorLayer: ILayer<BackgroundColorProps> &
         });
 
         const objectsByColor: Record<string, PolygonBlits["blits"]> = {};
-        for (let id of stored.renderOrder) {
+        for (const id of stored.renderOrder) {
             const { state } = stored.objects[id];
             objectsByColor[state] = objectsByColor[state] ?? {};
             objectsByColor[state][id] = { points: cells[id].svgOutline };

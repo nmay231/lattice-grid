@@ -1,16 +1,18 @@
 import { isEqual } from "lodash";
-import { ILayer, LayerProps, PointType } from "../../../globals";
+import { ILayer, LayerProps, PointType, UnknownObject } from "../../../globals";
+import { errorNotification } from "../../../utils/DOMUtils";
+import { smartSort } from "../../../utils/stringUtils";
 
 export interface TwoPointProps extends LayerProps {
     ObjectState: { id: string; points: string[]; state: unknown };
     TempStorage: {
         previousPoint: string;
         batchId: number;
-        targetState: null | object;
+        targetState: null | UnknownObject;
     };
 }
 
-export type MinimalSettings = { selectedState: object };
+export type MinimalSettings = { selectedState: UnknownObject };
 
 type Arg = Partial<{
     directional: boolean;
@@ -25,7 +27,11 @@ export const handleEventsCurrentSetting = <LP extends TwoPointProps>(
     { directional, pointTypes, stopOnFirstPoint, deltas }: Arg = {},
 ) => {
     if (!pointTypes?.length || !deltas?.length) {
-        throw Error("Was not provided parameters");
+        errorNotification({
+            message: "twoPoint currentSetting was not provided required parameters",
+            forever: true,
+        });
+        return;
     }
 
     layer.gatherPoints = (event) => {
@@ -62,19 +68,14 @@ export const handleEventsCurrentSetting = <LP extends TwoPointProps>(
         for (let i = 0; i < newPoints.length - 1; i++) {
             const pair = newPoints.slice(i, i + 2);
             if (!directional) {
-                pair.sort();
+                pair.sort(smartSort);
             }
             const id = pair.join(";");
 
             if (tempStorage.targetState === undefined) {
-                const isSame = isEqual(
-                    stored.objects[id]?.state,
-                    layer.settings.selectedState,
-                );
+                const isSame = isEqual(stored.objects[id]?.state, layer.settings.selectedState);
 
-                tempStorage.targetState = isSame
-                    ? null
-                    : layer.settings.selectedState;
+                tempStorage.targetState = isSame ? null : layer.settings.selectedState;
             }
 
             if (tempStorage.targetState === null && id in stored.objects) {

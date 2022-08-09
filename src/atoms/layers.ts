@@ -38,18 +38,14 @@ export const makeLayersAtom = () => {
         addLayer: (layer: FakeLayer) => {
             setValue((value) => ({
                 layers: [...value.layers, layer],
-                currentLayerId: layer.ethereal
-                    ? value.currentLayerId
-                    : layer.id,
+                currentLayerId: layer.ethereal ? value.currentLayerId : layer.id,
             }));
         },
 
         removeLayer: (idToRemove: string) => {
             setValue((value) => {
                 const layers = [...value.layers];
-                const index = value.layers
-                    .map(({ id }) => id)
-                    .indexOf(idToRemove);
+                const index = value.layers.map(({ id }) => id).indexOf(idToRemove);
                 layers.splice(index, 1);
 
                 let currentLayerId = value.currentLayerId;
@@ -57,7 +53,7 @@ export const makeLayersAtom = () => {
                     let nextId = null;
 
                     // We try to select the next layer without wrapping to the other end
-                    for (let layer of layers.slice(index)) {
+                    for (const layer of layers.slice(index)) {
                         if (layer.ethereal) continue;
                         nextId = layer.id;
                         break;
@@ -82,14 +78,12 @@ export const makeLayersAtom = () => {
 
         selectLayer: (arg: { id: string } | { tab: number }) => {
             setValue((value) => {
-                let { currentLayerId, layers } = value;
+                const { currentLayerId, layers } = value;
                 if ("id" in arg) {
                     return { layers, currentLayerId: arg.id };
                 } else if ("tab" in arg && currentLayerId !== null) {
                     const one = arg.tab; // positive or negative one
-                    let index = layers
-                        .map(({ id }) => id)
-                        .indexOf(currentLayerId);
+                    let index = layers.map(({ id }) => id).indexOf(currentLayerId);
 
                     for (let count = 0; count < layers.length; count++) {
                         index = (layers.length + index + one) % layers.length;
@@ -104,11 +98,5 @@ export const makeLayersAtom = () => {
     };
 };
 
-export const {
-    layersAtom,
-    getLayers,
-    setLayers,
-    addLayer,
-    removeLayer,
-    selectLayer,
-} = makeLayersAtom();
+export const { layersAtom, getLayers, setLayers, addLayer, removeLayer, selectLayer } =
+    makeLayersAtom();

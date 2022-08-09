@@ -2,10 +2,11 @@ import { JsonSchema, UISchemaElement } from "@jsonforms/core";
 import { JsonForms } from "@jsonforms/react";
 import { vanillaCells, vanillaRenderers } from "@jsonforms/vanilla-renderers";
 import { useEffect, useRef } from "react";
+import { UnknownObject } from "../../globals";
 
 type Props = {
-    data: object;
-    setData: Function;
+    data: UnknownObject;
+    setData: (arg: UnknownObject) => void;
     schema?: JsonSchema;
     uischema?: UISchemaElement;
     autoFocus?: boolean;
@@ -27,9 +28,7 @@ export const JsonFormsWrapper: React.FC<Props> = ({
             setTimeout(
                 () =>
                     document
-                        .querySelector<HTMLElement>(
-                            `#${formId} input, #${formId} select`,
-                        )
+                        .querySelector<HTMLElement>(`#${formId} input, #${formId} select`)
                         ?.focus?.(),
                 0,
             );

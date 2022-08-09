@@ -74,8 +74,7 @@ export class Compare implements ICodeBlock<ICompare> {
 
         if (left.rank || right.rank || left.scalarType !== right.scalarType) {
             this.compute.compilerErrors.push({
-                message:
-                    "Only single value comparisons of the same type are supported",
+                message: "Only single value comparisons of the same type are supported",
                 codeBlockIds: [this.left.json.id, this.right.json.id],
                 isInternal: false,
             });

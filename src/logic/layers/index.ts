@@ -20,6 +20,6 @@ const layers: ILayer<any>[] = [
 ];
 
 export const availableLayers: Record<string, ILayer> = {};
-for (let layer of layers) {
+for (const layer of layers) {
     availableLayers[layer.id] = layer;
 }

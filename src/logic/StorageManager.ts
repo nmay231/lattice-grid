@@ -7,6 +7,7 @@ import {
     LayerProps,
     LayerStorage,
 } from "../globals";
+import { errorNotification } from "../utils/DOMUtils";
 
 type GridAndLayer = { grid: Pick<Grid, "id">; layer: Pick<ILayer, "id"> };
 
@@ -30,10 +31,7 @@ export class StorageManager {
         delete this.objects[grid.id][layer.id];
     }
 
-    getStored<LP extends LayerProps = LayerProps>({
-        grid,
-        layer,
-    }: GridAndLayer) {
+    getStored<LP extends LayerProps = LayerProps>({ grid, layer }: GridAndLayer) {
         return this.objects[grid.id][layer.id] as LayerStorage<LP>;
     }
 
@@ -48,16 +46,14 @@ export class StorageManager {
 
         const history = this.histories[grid.id];
 
-        const historyChanges = puzzleObjects.filter(
-            ({ batchId }) => batchId !== "ignore",
-        ).length;
+        const historyChanges = puzzleObjects.filter(({ batchId }) => batchId !== "ignore").length;
 
         if (history.index < history.actions.length && historyChanges) {
             // Only prune redo actions when actions will be added to history
             history.actions.splice(history.index);
         }
 
-        for (let puzzleObject of puzzleObjects) {
+        for (const puzzleObject of puzzleObjects) {
             const layerId = puzzleObject.layerId || layer.id;
             const { objects, renderOrder } = this.objects[grid.id][layerId];
 
@@ -72,11 +68,7 @@ export class StorageManager {
                         : renderOrder.length,
             };
 
-            const undoAction = this._ApplyHistoryAction(
-                objects,
-                renderOrder,
-                action,
-            );
+            const undoAction = this._ApplyHistoryAction(objects, renderOrder, action);
 
             if (puzzleObject.batchId === "ignore") {
                 continue; // Do not include in history
@@ -111,7 +103,10 @@ export class StorageManager {
         action: HistoryAction,
     ) {
         if (action.object === undefined) {
-            throw Error("You stupid");
+            errorNotification({
+                message: `Layer ${action.layerId} object undefined: ${action}`,
+                forever: true,
+            });
         }
 
         const undoAction: HistoryAction = {
@@ -147,18 +142,14 @@ export class StorageManager {
         do {
             history.index--;
             action = history.actions[history.index];
-            const { objects, renderOrder } =
-                this.objects[historyId][action.layerId];
+            const { objects, renderOrder } = this.objects[historyId][action.layerId];
 
             const redo = this._ApplyHistoryAction(objects, renderOrder, action);
             // Replace the action with its opposite
             history.actions.splice(history.index, 1, redo);
 
             returnedActions.push(action);
-        } while (
-            action.batchId &&
-            action.batchId === history.actions[history.index - 1]?.batchId
-        );
+        } while (action.batchId && action.batchId === history.actions[history.index - 1]?.batchId);
 
         return returnedActions;
     }
@@ -173,8 +164,7 @@ export class StorageManager {
         const returnedActions: HistoryAction[] = [];
         do {
             action = history.actions[history.index];
-            const { objects, renderOrder } =
-                this.objects[historyId][action.layerId];
+            const { objects, renderOrder } = this.objects[historyId][action.layerId];
 
             const undo = this._ApplyHistoryAction(objects, renderOrder, action);
             // Replace the action with its opposite
@@ -182,10 +172,7 @@ export class StorageManager {
             history.index++;
 
             returnedActions.push(action);
-        } while (
-            action.batchId &&
-            action.batchId === history.actions[history.index]?.batchId
-        );
+        } while (action.batchId && action.batchId === history.actions[history.index]?.batchId);
 
         return returnedActions;
     }

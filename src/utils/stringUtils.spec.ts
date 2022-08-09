@@ -44,7 +44,5 @@ describe("keypressStringShorthand", () => {
         expect(call({ key: "2", ctrlKey: true })).toBe("ctrl-2");
     });
 
-    it.todo(
-        "should still understand capslock when numlock is pressed (Windows bug)",
-    );
+    it.todo("should still understand capslock when numlock is pressed (Windows bug)");
 });
