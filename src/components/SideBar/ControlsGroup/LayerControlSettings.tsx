@@ -50,10 +50,6 @@ export const LayerControlSettings = () => {
                         setLastId(id);
                     } else {
                         puzzle.changeLayerSettings(id, newData);
-
-                        // TODO: This can call .redrawScreen() twice if changing settings adds/removes objects as well as changing how the objects are displayed.
-                        // e.g. using the ToggleCharacters() layer, you might change the allowed characters and the displayStyle/positioning and that will call it twice: once from .changeLayerSettings (calling ControlsManager.handleLayerActions) and a second time directly in this function.
-                        // TODO: Changes = []
                         puzzle.renderChange({ type: "draw", layerIds: [id] });
                         blurActiveElement();
                     }

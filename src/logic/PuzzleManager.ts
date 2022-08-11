@@ -135,13 +135,13 @@ export class PuzzleManager {
             errorNotification({ message: `Failed to render to canvas: ${JSON.stringify(change)}` });
         }
 
-        this._saveToLocalStorage();
+        localStorage.setItem("_currentPuzzle", JSON.stringify(this._getParams()));
     }
 
-    _saveToLocalStorage() {
+    _getParams() {
         // TODO: change localStorage key and what's actually stored/how it's stored
-        const data = {
-            layers: [] as { layerClass: string; rawSettings: any }[],
+        const data: LocalStorageData = {
+            layers: [],
             grid: {
                 width: (this.grid as any).width,
                 height: (this.grid as any).height,
@@ -154,7 +154,7 @@ export class PuzzleManager {
                 rawSettings: layer.rawSettings,
             });
         }
-        localStorage.setItem("_currentPuzzle", JSON.stringify(data));
+        return data;
     }
 
     addLayer(layerClass: ILayer, settings?: UnknownObject): string {
@@ -208,7 +208,6 @@ export class PuzzleManager {
 
         if (history?.length) {
             this.storage.addToHistory(this.grid, layer, history);
-            this.renderChange({ type: "draw", layerIds: [layer.id] });
         }
     }
 }
