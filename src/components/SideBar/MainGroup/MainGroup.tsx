@@ -1,26 +1,20 @@
-import { Button } from "@mantine/core";
+import { Button, Center, Group } from "@mantine/core";
+import { useSetAtom } from "jotai";
 import { usePuzzle } from "../../../atoms/puzzle";
 import { blurActiveElement } from "../../../utils/DOMUtils";
-import { Group } from "../Group";
+import { ImportExportAtom } from "../../ImportExportModal/ImportExportModal";
+import { Group as Collapse } from "../Group";
 import { ResizeGridButton } from "./ResizeGridButton";
 
 export const MainGroup = () => {
     const puzzle = usePuzzle();
+    const toggleImportExportModal = useSetAtom(ImportExportAtom);
 
     return (
-        <Group name="Puzzle" expanded>
-            <div
-                style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    margin: "10px",
-                }}
-            >
+        <Collapse name="Puzzle" expanded>
+            <Center style={{ width: "100%" }} my="sm" component={Group}>
                 <ResizeGridButton />
-
                 <Button
-                    mt="sm"
                     onClick={() => {
                         // Temporary in it's current form
                         puzzle.freshPuzzle();
@@ -31,7 +25,8 @@ export const MainGroup = () => {
                 >
                     Reset Puzzle
                 </Button>
-            </div>
-        </Group>
+                <Button onClick={() => toggleImportExportModal(true)}>Import / Export</Button>
+            </Center>
+        </Collapse>
     );
 };

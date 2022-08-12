@@ -2,6 +2,7 @@ import { usePageLeave } from "@mantine/hooks";
 import { useEffect } from "react";
 import { usePuzzle } from "../atoms/puzzle";
 import { BlocklyModal } from "../components/Blockly/BlocklyModal";
+import { ImportExportModal } from "../components/ImportExportModal";
 import { SideBar } from "../components/SideBar";
 import { ResizeModal } from "../components/SideBar/MainGroup/ResizeModal";
 import { SVGCanvas } from "../components/SVGCanvas";
@@ -33,6 +34,7 @@ export const EditPage = () => {
                 <ResizeModal />
             </div>
             <BlocklyModal />
+            <ImportExportModal />
         </div>
     );
 };

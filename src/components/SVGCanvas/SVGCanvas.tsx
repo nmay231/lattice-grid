@@ -53,18 +53,19 @@ export const SVGCanvas = () => {
             >
                 <div className={styling.innerContainer} {...controls.eventListeners}>
                     <svg viewBox={`${minX} ${minY} ${width} ${height}`}>
-                        {layers.flatMap(({ id }) =>
-                            blitGroups[id].map((group) => {
-                                const Blitter = blitters[group.blitter];
-                                return (
-                                    <Blitter
-                                        blits={group.blits}
-                                        // I was hoping typescript would be smarter...
-                                        style={group.style as NeedsUpdating}
-                                        key={id + group.id}
-                                    />
-                                );
-                            }),
+                        {layers.flatMap(
+                            ({ id }) =>
+                                blitGroups[id]?.map((group) => {
+                                    const Blitter = blitters[group.blitter];
+                                    return (
+                                        <Blitter
+                                            blits={group.blits}
+                                            // I was hoping typescript would be smarter...
+                                            style={group.style as NeedsUpdating}
+                                            key={id + group.id}
+                                        />
+                                    );
+                                }) || [],
                         )}
                     </svg>
                 </div>
