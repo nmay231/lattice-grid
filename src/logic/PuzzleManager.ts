@@ -29,7 +29,7 @@ export class PuzzleManager {
         setLayers([]);
         this.layers = {};
 
-        // Guarantee that these layers will be present even if the saved puzzle tries to add them
+        // Guarantee that these layers will be present even if the saved puzzle fails to add them
         const requiredLayers = [CellOutlineLayer, SelectionLayer, OverlayLayer];
         for (const layer of requiredLayers) {
             this.addLayer(layer);
@@ -186,6 +186,7 @@ export class PuzzleManager {
     removeLayer(id: string) {
         if (id in this.layers) {
             delete this.layers[id];
+            this.storage.removeStorage({ grid: this.grid, layer: { id } });
             removeLayer(id);
             this.renderChange({ type: "delete", layerId: id });
         }
