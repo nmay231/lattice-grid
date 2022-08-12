@@ -174,9 +174,9 @@ export class ControlsManager {
             return;
         }
 
-        clearTimeout(this.blurCanvasTimeoutId);
+        window.clearTimeout(this.blurCanvasTimeoutId);
         const timeoutDelay = getSettings().actionWindowMs;
-        this.blurCanvasTimeoutId = setTimeout(() => {
+        this.blurCanvasTimeoutId = window.setTimeout(() => {
             const layer = this.getCurrentLayer();
             if (!layer) return;
             this.applyLayerEvent(layer, { type: "pointerUp" });
@@ -188,7 +188,7 @@ export class ControlsManager {
             return;
         }
 
-        clearTimeout(this.blurCanvasTimeoutId);
+        window.clearTimeout(this.blurCanvasTimeoutId);
     }
 
     onContextMenu(event: React.MouseEvent) {
@@ -302,6 +302,6 @@ export class ControlsManager {
         const layer = this.getCurrentLayer();
         if (!layer) return;
         this.applyLayerEvent(layer, { type: "pointerUp" });
-        clearTimeout(this.blurCanvasTimeoutId);
+        window.clearTimeout(this.blurCanvasTimeoutId);
     }
 }
