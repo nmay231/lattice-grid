@@ -1,7 +1,8 @@
 import { MantineProvider } from "@mantine/core";
 import { NotificationsProvider } from "@mantine/notifications";
-import { BrowserRouter as Router, Redirect, Route, Switch } from "react-router-dom";
+import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import { EditPage } from "./pages/Edit";
+import { RedirectHome } from "./pages/RedirectHome";
 
 export const App = () => {
     return (
@@ -9,7 +10,7 @@ export const App = () => {
             <NotificationsProvider>
                 <Router>
                     <Switch>
-                        <Redirect exact path="/" to="/edit" />
+                        <Route component={RedirectHome} exact path="/" />
                         <Route component={EditPage} exact path="/edit" />
                     </Switch>
                 </Router>
