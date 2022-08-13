@@ -15,7 +15,7 @@ import { StorageManager } from "./StorageManager";
 export class PuzzleManager {
     layers: Record<string, ILayer> = {};
 
-    grid: Grid = new SquareGrid({ width: 1, height: 1 });
+    grid: Grid = new SquareGrid();
     storage = new StorageManager();
     controls = new ControlsManager(this);
 
@@ -58,17 +58,13 @@ export class PuzzleManager {
                 { layerClass: "Number" },
                 { layerClass: OVERLAY_LAYER_ID },
             ],
-            grid: { width: 10, height: 10 },
+            grid: { type: "square", width: 10, height: 10, minX: 0, minY: 0 },
         });
         this.renderChange({ type: "draw", layerIds: "all" });
     }
 
     _loadPuzzle(data: LocalStorageData) {
-        const { width, height } = data.grid;
-        // TODO: Grid.initialize(). Also, data.grid will not always be {width, height} depending on the lattice.
-        (this.grid as any).width = width;
-        (this.grid as any).height = height;
-
+        this.grid.setParams(data.grid);
         for (const { layerClass, rawSettings } of data.layers) {
             this.addLayer(availableLayers[layerClass], rawSettings);
         }
@@ -140,13 +136,7 @@ export class PuzzleManager {
 
     _getParams() {
         // TODO: change localStorage key and what's actually stored/how it's stored
-        const data: LocalStorageData = {
-            layers: [],
-            grid: {
-                width: (this.grid as any).width,
-                height: (this.grid as any).height,
-            },
-        };
+        const data: LocalStorageData = { layers: [], grid: this.grid.getParams() };
         for (const fakeLayer of getLayers().layers) {
             const layer = this.layers[fakeLayer.id];
             data.layers.push({

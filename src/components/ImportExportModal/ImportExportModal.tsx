@@ -51,6 +51,7 @@ export const ImportExportModal = () => {
             puzzle.storage.histories[puzzle.grid.id] = { actions: [], index: 0 };
             puzzle._resetLayers();
             puzzle._loadPuzzle(puzzleData.params);
+            puzzle.resizeCanvas();
             const cloned = cloneDeep(puzzle.storage.objects);
             for (const layerId of layersAlwaysPresent) {
                 // Keep layer data that was not included in the puzzle string
