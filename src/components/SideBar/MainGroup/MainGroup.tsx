@@ -14,7 +14,9 @@ export const MainGroup = () => {
         <Collapse name="Puzzle" expanded>
             <Center style={{ width: "100%" }} my="sm" component={Group}>
                 <ResizeGridButton />
+                <Button onClick={() => toggleImportExportModal(true)}>Import / Export</Button>
                 <Button
+                    color="red"
                     onClick={() => {
                         // Temporary in it's current form
                         puzzle.freshPuzzle();
@@ -25,7 +27,6 @@ export const MainGroup = () => {
                 >
                     Reset Puzzle
                 </Button>
-                <Button onClick={() => toggleImportExportModal(true)}>Import / Export</Button>
             </Center>
         </Collapse>
     );
