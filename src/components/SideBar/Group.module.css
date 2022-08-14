@@ -3,21 +3,6 @@
     --transition-duration: 200ms;
 }
 
-.groupBodyShown {
-    padding: 3px;
-    overflow-y: hidden;
-    transform: scaleY(1);
-    transform-origin: center top;
-    transition: max-height var(--transition-duration), transform var(--transition-duration);
-    max-height: 800px;
-}
-
-.groupBodyHidden {
-    composes: groupBodyShown;
-    transform: scaleY(0);
-    max-height: 0px;
-}
-
 .groupHeader {
     display: inline-flex;
     justify-content: center;
