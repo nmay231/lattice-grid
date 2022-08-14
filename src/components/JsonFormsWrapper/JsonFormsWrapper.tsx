@@ -1,7 +1,7 @@
 import { JsonSchema, UISchemaElement } from "@jsonforms/core";
 import { JsonForms } from "@jsonforms/react";
 import { vanillaCells, vanillaRenderers } from "@jsonforms/vanilla-renderers";
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import { UnknownObject } from "../../globals";
 
 type Props = {
@@ -14,27 +14,7 @@ type Props = {
 };
 
 // TODO: Styling
-export const JsonFormsWrapper: React.FC<Props> = ({
-    data,
-    setData,
-    schema,
-    uischema,
-    autoFocus = false,
-    formId = "LayerSettings",
-}) => {
-    useEffect(() => {
-        if (autoFocus) {
-            // Yes... This needs to be in a timeout to work properly
-            setTimeout(
-                () =>
-                    document
-                        .querySelector<HTMLElement>(`#${formId} input, #${formId} select`)
-                        ?.focus?.(),
-                0,
-            );
-        }
-    }, [formId, autoFocus]);
-
+export const JsonFormsWrapper: React.FC<Props> = ({ data, setData, schema, uischema }) => {
     // The onChange event is called once on first render. It is annoying.
     const firstRender = useRef(true);
 

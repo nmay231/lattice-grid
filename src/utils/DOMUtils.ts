@@ -2,7 +2,7 @@ import { NotificationProps, showNotification } from "@mantine/notifications";
 
 export const blurActiveElement = () => {
     // Sometimes, I hate JS... Why event loop? WHY?
-    setTimeout(() => (document.activeElement as HTMLElement)?.blur(), 0);
+    window.setTimeout(() => (document.activeElement as HTMLElement)?.blur(), 0);
 };
 
 export const errorNotification = (

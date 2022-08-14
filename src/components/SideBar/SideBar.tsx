@@ -1,4 +1,4 @@
-import { Paper } from "@mantine/core";
+import { Divider, Paper } from "@mantine/core";
 import { CodeGroup } from "./ConstraintsGroup";
 import { ControlsGroup } from "./ControlsGroup";
 import { LayersGroup } from "./LayersGroup";
@@ -11,7 +11,7 @@ export const SideBar: React.FC = () => {
             <LayersGroup />
             <ControlsGroup />
             <CodeGroup />
-            <hr />
+            <Divider mb={20} /> {/* Show the user that there's nothing below. */}
         </Paper>
     );
 };

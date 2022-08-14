@@ -1,7 +1,15 @@
 import { getSettings } from "../../atoms/settings";
-import { Grid, LocalStorageData, PointType } from "../../globals";
+import { Grid, PointType } from "../../globals";
 import { errorNotification } from "../../utils/DOMUtils";
 import { hopStraight } from "../algorithms/hopStraight";
+
+export type SquareGridParams = {
+    type: "square";
+    width: number;
+    height: number;
+    minX: number;
+    minY: number;
+};
 
 type GridPoint = { x: number; y: number; type: PointType };
 type GetPointsArg = Parameters<Grid["getPoints"]>[0];
@@ -13,15 +21,29 @@ type InternalGetPointsArg = Parameters<Grid["getPoints"]>[0] & {
 
 export class SquareGrid implements Grid {
     id = "TODO: use a uuid generator";
-    width: number;
-    height: number;
-    x0: number;
-    y0: number;
-    constructor(params: LocalStorageData["grid"]) {
-        this.width = params.width;
-        this.height = params.height;
-        this.x0 = 0;
-        this.y0 = 0;
+    width = 1;
+    height = 1;
+    x0 = 0;
+    y0 = 0;
+    constructor(params?: SquareGridParams) {
+        this.setParams(params);
+    }
+
+    getParams(): SquareGridParams {
+        return {
+            type: "square",
+            width: this.width,
+            height: this.height,
+            minX: this.x0,
+            minY: this.y0,
+        };
+    }
+
+    setParams(params?: SquareGridParams) {
+        this.width = params?.width ?? 1;
+        this.height = params?.height ?? 1;
+        this.x0 = params?.minX ?? 0;
+        this.y0 = params?.minY ?? 0;
     }
 
     getCanvasRequirements() {

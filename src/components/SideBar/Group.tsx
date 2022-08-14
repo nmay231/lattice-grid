@@ -1,4 +1,4 @@
-import { Paper } from "@mantine/core";
+import { Collapse, Paper, Text } from "@mantine/core";
 import { useState } from "react";
 import { IoIosArrowForward } from "react-icons/io";
 import styling from "./Group.module.css";
@@ -18,11 +18,11 @@ export const Group: React.FC<GroupProps> = ({ children, name, expanded = false }
                 <IoIosArrowForward
                     className={expand ? styling.headerIconOpen : styling.headerIcon}
                 />
-                <p>{name}</p>
+                <Text>{name}</Text>
             </div>
-            <div className={expand ? styling.groupBodyShown : styling.groupBodyHidden}>
+            <Collapse p={3} in={expand}>
                 {children}
-            </div>
+            </Collapse>
         </Paper>
     );
 };

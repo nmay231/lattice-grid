@@ -2,6 +2,7 @@ import type { initialSettings } from "./atoms/settings";
 import type { LineBlits } from "./components/SVGCanvas/Line";
 import type { PolygonBlits } from "./components/SVGCanvas/Polygon";
 import type { TextBlits } from "./components/SVGCanvas/Text";
+import type { SquareGridParams } from "./logic/grids/SquareGrid";
 import type { availableLayers } from "./logic/layers";
 import type { SelectionExtraProps } from "./logic/layers/Selection";
 import type { StorageManager } from "./logic/StorageManager";
@@ -85,6 +86,8 @@ export type Grid = {
         deltas: Delta[];
         previousPoint?: string | null;
     }) => string[];
+    getParams(): LocalStorageData["grid"];
+    setParams(params?: SquareGridParams): void;
     getCanvasRequirements: () => {
         minX: number;
         minY: number;
@@ -205,7 +208,7 @@ export type BlitGroup = LineBlits | TextBlits | PolygonBlits;
 
 // #region - Parsing
 export type LocalStorageData = {
-    grid: { width: number; height: number };
+    grid: SquareGridParams;
     layers: {
         layerClass: keyof typeof availableLayers;
         rawSettings?: UnknownObject;

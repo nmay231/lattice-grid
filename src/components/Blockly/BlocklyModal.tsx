@@ -1,4 +1,4 @@
-import { Button, Drawer } from "@mantine/core";
+import { Button, Drawer, Grid, Text } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { useAtom, useSetAtom } from "jotai";
 import React, { useEffect, useRef, useState } from "react";
@@ -95,24 +95,17 @@ export const BlocklyModal: React.FC = () => {
 
     return (
         <Drawer opened={opened} size="90%" onClose={() => setOpened(false)}>
-            <div
-                style={{
-                    display: "grid",
-                    overflow: "hidden",
-                    boxSizing: "border-box",
-                    padding: "10px",
-                    columnGap: "10px",
-                    width: "100%",
-                    height: "90vh",
-                }}
-            >
-                <div style={{ gridArea: "1 / 1 / span 1 / span 6" }}>
+            <Grid columns={7} style={{ width: "100%", height: "90vh" }}>
+                <Grid.Col span={6}>
                     <div ref={blocklyDiv} style={{ width: "100%", height: "100%" }}></div>
-                </div>
-                <div style={{ gridArea: "1 / 7 / 2 / span 1" }}>
-                    <Button onClick={compileAndRun}>Compile and run</Button>
-                </div>
-            </div>
+                </Grid.Col>
+                <Grid.Col span={1}>
+                    <Text component="p" italic weight="bold" mb="sm">
+                        This is a mockup, and does not actually run anything yet.
+                    </Text>
+                    <Button onClick={compileAndRun}>Run</Button>
+                </Grid.Col>
+            </Grid>
         </Drawer>
     );
 };

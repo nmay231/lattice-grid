@@ -20,11 +20,11 @@
     margin: 0px;
     overflow-x: hidden;
     overflow-y: scroll;
-    scrollbar-width: none;
+    scrollbar-width: none; /* Remove once I switch to Mantine Scrollbar */
     border-right: 3px solid rgb(54, 50, 50);
 }
 
+/* Remove once I switch to Mantine Scrollbar */
 .sideBar::-webkit-scrollbar {
-    /* TODO: Do I want to actually do that? */
-    display: none; /* Remove scroll bars while still allowing scrolling. */
+    display: none;
 }

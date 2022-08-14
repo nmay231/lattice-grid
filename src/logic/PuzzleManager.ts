@@ -15,7 +15,7 @@ import { StorageManager } from "./StorageManager";
 export class PuzzleManager {
     layers: Record<string, ILayer> = {};
 
-    grid: Grid = new SquareGrid({ width: 1, height: 1 });
+    grid: Grid = new SquareGrid();
     storage = new StorageManager();
     controls = new ControlsManager(this);
 
@@ -29,7 +29,7 @@ export class PuzzleManager {
         setLayers([]);
         this.layers = {};
 
-        // Guarantee that these layers will be present even if the saved puzzle tries to add them
+        // Guarantee that these layers will be present even if the saved puzzle fails to add them
         const requiredLayers = [CellOutlineLayer, SelectionLayer, OverlayLayer];
         for (const layer of requiredLayers) {
             this.addLayer(layer);
@@ -58,17 +58,13 @@ export class PuzzleManager {
                 { layerClass: "Number" },
                 { layerClass: OVERLAY_LAYER_ID },
             ],
-            grid: { width: 10, height: 10 },
+            grid: { type: "square", width: 10, height: 10, minX: 0, minY: 0 },
         });
         this.renderChange({ type: "draw", layerIds: "all" });
     }
 
     _loadPuzzle(data: LocalStorageData) {
-        const { width, height } = data.grid;
-        // TODO: Grid.initialize(). Also, data.grid will not always be {width, height} depending on the lattice.
-        (this.grid as any).width = width;
-        (this.grid as any).height = height;
-
+        this.grid.setParams(data.grid);
         for (const { layerClass, rawSettings } of data.layers) {
             this.addLayer(availableLayers[layerClass], rawSettings);
         }
@@ -135,18 +131,12 @@ export class PuzzleManager {
             errorNotification({ message: `Failed to render to canvas: ${JSON.stringify(change)}` });
         }
 
-        this._saveToLocalStorage();
+        localStorage.setItem("_currentPuzzle", JSON.stringify(this._getParams()));
     }
 
-    _saveToLocalStorage() {
+    _getParams() {
         // TODO: change localStorage key and what's actually stored/how it's stored
-        const data = {
-            layers: [] as { layerClass: string; rawSettings: any }[],
-            grid: {
-                width: (this.grid as any).width,
-                height: (this.grid as any).height,
-            },
-        };
+        const data: LocalStorageData = { layers: [], grid: this.grid.getParams() };
         for (const fakeLayer of getLayers().layers) {
             const layer = this.layers[fakeLayer.id];
             data.layers.push({
@@ -154,7 +144,7 @@ export class PuzzleManager {
                 rawSettings: layer.rawSettings,
             });
         }
-        localStorage.setItem("_currentPuzzle", JSON.stringify(data));
+        return data;
     }
 
     addLayer(layerClass: ILayer, settings?: UnknownObject): string {
@@ -186,6 +176,7 @@ export class PuzzleManager {
     removeLayer(id: string) {
         if (id in this.layers) {
             delete this.layers[id];
+            this.storage.removeStorage({ grid: this.grid, layer: { id } });
             removeLayer(id);
             this.renderChange({ type: "delete", layerId: id });
         }
@@ -208,7 +199,6 @@ export class PuzzleManager {
 
         if (history?.length) {
             this.storage.addToHistory(this.grid, layer, history);
-            this.renderChange({ type: "draw", layerIds: [layer.id] });
         }
     }
 }
