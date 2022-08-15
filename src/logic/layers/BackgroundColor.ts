@@ -60,7 +60,8 @@ export const BackgroundColorLayer: ILayer<BackgroundColorProps> & BackgroundColo
         return Object.keys(objectsByColor).map((color) => ({
             id: color,
             blitter: "polygon",
-            style: { fill: color },
+            // TODO: Should I keep stroke(Width) even after I allow putting this layer under the grid? It might be cleaner to keep the border so that it looks okay when placed outside of the grid. In any case, I can always add an option.
+            style: { fill: color, strokeWidth: 2, stroke: "black" },
             blits: objectsByColor[color],
         }));
     },
