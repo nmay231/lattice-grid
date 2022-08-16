@@ -22,6 +22,25 @@ export const BackgroundColorLayer: ILayer<BackgroundColorProps> & BackgroundColo
     rawSettings: { selectedState: "blue" },
     settings: { selectedState: "blue" },
 
+    controls: {
+        schema: {
+            type: "object",
+            properties: {
+                selectedState: {
+                    type: "string",
+                    enum: ["blue", "green", "orange", "pink", "purple", "red", "yellow"],
+                },
+            },
+        },
+        uischemaElements: [
+            {
+                type: "Control",
+                label: "Color",
+                scope: "#/properties/selectedState",
+            },
+        ],
+    },
+
     newSettings({ newSettings }) {
         this.rawSettings = newSettings;
         this.settings = {
