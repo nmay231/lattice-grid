@@ -108,9 +108,8 @@ export const handleEventsCurrentSetting = <LP extends OnePointProps>(
         const newPoints = event.points;
 
         if (tempStorage.targetState === undefined) {
-            if (newPoints[0] in stored.objects) {
-                const state = stored.objects[newPoints[0]].state;
-                tempStorage.targetState = state === layer.settings.selectedState ? null : state;
+            if (stored.objects[newPoints[0]]?.state === layer.settings.selectedState) {
+                tempStorage.targetState = null;
             } else {
                 tempStorage.targetState = layer.settings.selectedState;
             }
