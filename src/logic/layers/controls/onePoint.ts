@@ -32,8 +32,7 @@ export interface OnePointProps extends LayerProps {
     TempStorage: {
         blacklist: string[];
         previousPoint: string;
-        // targetState: string;
-        // batchId: number,
+        batchId: number;
         targetState: unknown;
     };
 }
@@ -75,8 +74,10 @@ export const handleEventsCycleStates = <LP extends OnePointProps>(
             tempStorage.targetState = state;
         }
 
+        tempStorage.batchId = tempStorage.batchId ?? storage.getNewBatchId();
         const history = newPoints.map((id) => ({
             id,
+            batchId: tempStorage.batchId,
             object: state === null ? null : { point: id, state },
         }));
         return { history };
@@ -108,17 +109,18 @@ export const handleEventsCurrentSetting = <LP extends OnePointProps>(
         const newPoints = event.points;
 
         if (tempStorage.targetState === undefined) {
-            if (newPoints[0] in stored.objects) {
-                const state = stored.objects[newPoints[0]].state;
-                tempStorage.targetState = state === layer.settings.selectedState ? null : state;
+            if (stored.objects[newPoints[0]]?.state === layer.settings.selectedState) {
+                tempStorage.targetState = null;
             } else {
                 tempStorage.targetState = layer.settings.selectedState;
             }
         }
 
+        tempStorage.batchId = tempStorage.batchId ?? storage.getNewBatchId();
         const state = tempStorage.targetState;
         const history = newPoints.map((id) => ({
             id,
+            batchId: tempStorage.batchId,
             object: state === null ? null : { point: id, state },
         }));
         return { history };

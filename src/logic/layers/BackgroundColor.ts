@@ -22,6 +22,25 @@ export const BackgroundColorLayer: ILayer<BackgroundColorProps> & BackgroundColo
     rawSettings: { selectedState: "blue" },
     settings: { selectedState: "blue" },
 
+    controls: {
+        schema: {
+            type: "object",
+            properties: {
+                selectedState: {
+                    type: "string",
+                    enum: ["blue", "green", "orange", "pink", "purple", "red", "yellow"],
+                },
+            },
+        },
+        uischemaElements: [
+            {
+                type: "Control",
+                label: "Color",
+                scope: "#/properties/selectedState",
+            },
+        ],
+    },
+
     newSettings({ newSettings }) {
         this.rawSettings = newSettings;
         this.settings = {
@@ -60,7 +79,8 @@ export const BackgroundColorLayer: ILayer<BackgroundColorProps> & BackgroundColo
         return Object.keys(objectsByColor).map((color) => ({
             id: color,
             blitter: "polygon",
-            style: { fill: color },
+            // TODO: Should I keep stroke(Width) even after I allow putting this layer under the grid? It might be cleaner to keep the border so that it looks okay when placed outside of the grid. In any case, I can always add an option.
+            style: { fill: color, strokeWidth: 2, stroke: "black" },
             blits: objectsByColor[color],
         }));
     },
