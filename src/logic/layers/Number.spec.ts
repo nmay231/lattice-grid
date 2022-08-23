@@ -18,7 +18,7 @@ describe("Number Layer", () => {
     // Layer with numbers 1-9
     const settings1to9 = { min: 1, max: 9 };
     const layer1to9: typeof NumberLayer = Object.create(NumberLayer);
-    layer1to9.newSettings?.({
+    layer1to9.newSettings({
         ...eventEssentials(),
         newSettings: settings1to9,
         attachSelectionsHandler,
@@ -27,7 +27,7 @@ describe("Number Layer", () => {
     // Layer with numbers -9 to 64
     const settingsN9to64 = { min: -9, max: 64 };
     const layerN9to64: typeof NumberLayer = Object.create(NumberLayer);
-    layerN9to64.newSettings?.({
+    layerN9to64.newSettings({
         ...eventEssentials(),
         newSettings: settingsN9to64,
         attachSelectionsHandler,
@@ -80,14 +80,14 @@ describe("Number Layer", () => {
             },
         };
 
-        const result = layer1to9.newSettings?.({
+        const result = layer1to9.newSettings({
             ...eventEssentials({ stored }),
             newSettings: { min: -1, max: 10 },
             attachSelectionsHandler,
         });
         expect(result?.history).toEqual([]);
 
-        layer1to9.newSettings?.({
+        layer1to9.newSettings({
             ...eventEssentials(),
             newSettings: settings1to9,
             attachSelectionsHandler,
@@ -104,7 +104,7 @@ describe("Number Layer", () => {
             },
         };
 
-        const result = layer1to9.newSettings?.({
+        const result = layer1to9.newSettings({
             ...eventEssentials({ stored }),
             newSettings: { min: 3, max: 7 },
             attachSelectionsHandler,
@@ -115,7 +115,7 @@ describe("Number Layer", () => {
             { id: "3,3", object: null },
         ]);
 
-        layer1to9.newSettings?.({
+        layer1to9.newSettings({
             ...eventEssentials(),
             newSettings: settings1to9,
             attachSelectionsHandler,

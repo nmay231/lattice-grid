@@ -11,9 +11,6 @@ describe("SimpleLine", () => {
     };
     const getSimpleLine = ({ stored, settings }: Arg) => {
         const simpleLine: typeof SimpleLineLayer = Object.create(SimpleLineLayer);
-        if (!simpleLine.newSettings) {
-            throw Error("Expected simpleLine.newSettings to be defined");
-        }
         simpleLine.newSettings({
             ...getEventEssentials({ stored }),
             attachSelectionsHandler,
@@ -38,7 +35,7 @@ describe("SimpleLine", () => {
             settings: { connections: "Cell to Cell", fill: "green" },
         });
 
-        const result = simpleLine.newSettings?.({
+        const result = simpleLine.newSettings({
             ...getEventEssentials({ stored }),
             attachSelectionsHandler,
             newSettings: {
@@ -62,7 +59,7 @@ describe("SimpleLine", () => {
             settings: { connections: "Cell to Cell", fill: "green" },
         });
 
-        const result = simpleLine.newSettings?.({
+        const result = simpleLine.newSettings({
             ...getEventEssentials({ stored }),
             attachSelectionsHandler,
             newSettings: {

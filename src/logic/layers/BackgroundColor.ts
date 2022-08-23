@@ -57,6 +57,8 @@ export const BackgroundColorLayer: ILayer<BackgroundColorProps> & BackgroundColo
                 { dx: -2, dy: 0 },
             ],
         });
+
+        return {};
     },
 
     getBlits({ storage, grid }) {

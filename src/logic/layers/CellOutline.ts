@@ -24,6 +24,7 @@ export const CellOutlineLayer: ILayer<CellOutlineProps> = {
                 { dx: -2, dy: 0 },
             ],
         });
+        return {};
     },
 
     getBlits({ storage, grid }) {

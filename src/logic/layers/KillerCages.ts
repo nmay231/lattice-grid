@@ -71,6 +71,7 @@ export const KillerCagesLayer: ILayer<KillerCagesProps> & KillerCagesExtraProps 
             allowOverlap: true, // TODO: Change to false when properly implemented
             overwriteOthers: false,
         });
+        return {};
     },
 
     getBlits({ storage, grid }) {

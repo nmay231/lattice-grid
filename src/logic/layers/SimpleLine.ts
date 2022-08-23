@@ -114,9 +114,7 @@ export const SimpleLineLayer: ILayer<SimpleLineProps> & SimpleLineExtraProps = {
             ],
         });
 
-        if (history) {
-            return { history };
-        }
+        return { history: history || undefined };
     },
 
     getBlits({ storage, grid }) {

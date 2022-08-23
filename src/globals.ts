@@ -160,11 +160,11 @@ export type ILayer<LP extends LayerProps = LayerProps> = {
     defaultSettings: LP["RawSettings"];
     controls?: JSONSchema;
     constraints?: JSONSchema;
-    newSettings?(settingsChange: NewSettingsEvent<LP>): LayerHandlerResult | void;
+    newSettings: (settingsChange: Omit<NewSettingsEvent<LP>, "tempStorage">) => LayerHandlerResult;
     gatherPoints: (layerEvent: PointerMoveOrDown & LayerEventEssentials<LP>) => string[];
     handleEvent: (layerEvent: LayerEvent<LP>) => LayerHandlerResult;
-    getBlits?(data: Omit<LayerEventEssentials<LP>, "tempStorage">): BlitGroup[];
-    getOverlayBlits?(data: Omit<LayerEventEssentials<LP>, "tempStorage">): BlitGroup[];
+    getBlits: (data: Omit<LayerEventEssentials<LP>, "tempStorage">) => BlitGroup[];
+    getOverlayBlits?: (data: Omit<LayerEventEssentials<LP>, "tempStorage">) => BlitGroup[];
 };
 // #endregion
 

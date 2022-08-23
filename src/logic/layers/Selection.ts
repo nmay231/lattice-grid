@@ -355,4 +355,10 @@ export const SelectionLayer: ILayer<SelectionProps> & SelectionExtraProps = {
             },
         ];
     },
+    getBlits() {
+        return [];
+    },
+    newSettings(settingsChange) {
+        return {};
+    },
 };

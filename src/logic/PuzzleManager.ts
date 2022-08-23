@@ -118,12 +118,11 @@ export class PuzzleManager {
 
             for (const layerId of layerIds) {
                 const layer = this.layers[layerId];
-                blitGroups[layer.id] =
-                    layer.getBlits?.({
-                        grid: this.grid,
-                        storage: this.storage,
-                        settings,
-                    }) || [];
+                blitGroups[layer.id] = layer.getBlits({
+                    grid: this.grid,
+                    storage: this.storage,
+                    settings,
+                });
             }
 
             setBlitGroups(blitGroups);
@@ -186,16 +185,14 @@ export class PuzzleManager {
         // TODO: Should I even have the "Selections" layer be with the normal layers or should it always be attached to the puzzle or grid?
         const Selections = this.layers["Selections"] as typeof SelectionLayer;
         const layer = this.layers[layerId];
-        const { history } =
-            layer.newSettings?.({
-                newSettings,
-                grid: this.grid,
-                storage: this.storage,
-                // TODO: If anything, I should prevent the issue where CellOutline is added before Selections therefore requiring the following optional chain. That's why I thought pre-instantiating it would be a good idea.
-                attachSelectionsHandler: Selections?.attachHandler?.bind?.(Selections),
-                settings: getSettings(),
-                tempStorage: {},
-            }) || {};
+        const { history } = layer.newSettings({
+            newSettings,
+            grid: this.grid,
+            storage: this.storage,
+            // TODO: If anything, I should prevent the issue where CellOutline is added before Selections therefore requiring the following optional chain. That's why I thought pre-instantiating it would be a good idea.
+            attachSelectionsHandler: Selections?.attachHandler?.bind?.(Selections),
+            settings: getSettings(),
+        });
 
         if (history?.length) {
             this.storage.addToHistory(this.grid, layer, history);

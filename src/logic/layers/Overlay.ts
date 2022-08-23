@@ -7,4 +7,10 @@ export const OverlayLayer: ILayer = {
     id: OVERLAY_LAYER_ID,
     unique: true,
     ethereal: true,
+    newSettings() {
+        return {};
+    },
+    getBlits(data) {
+        return [];
+    },
 };
