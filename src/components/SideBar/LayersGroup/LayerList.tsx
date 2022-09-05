@@ -63,7 +63,7 @@ export const LayerList = () => {
             modifiers={[restrictToVerticalAxis]}
         >
             <SortableContext items={layers} strategy={verticalListSortingStrategy}>
-                {layers.map(({ id, ethereal }) => {
+                {layers.map(({ id, displayName, ethereal }) => {
                     const current = id === currentLayerId;
                     return (
                         !ethereal && (
@@ -76,7 +76,7 @@ export const LayerList = () => {
                                         }
                                     >
                                         {current && <IoMdCheckmark />}
-                                        <span>{id}</span>
+                                        <span>{displayName}</span>
                                     </span>
 
                                     <span

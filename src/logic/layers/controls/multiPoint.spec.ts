@@ -1,4 +1,4 @@
-import { ILayer, LayerEvent, LayerStorage, PointerMoveOrDown } from "../../../globals";
+import { Layer, LayerEvent, LayerStorage, PointerMoveOrDown } from "../../../types";
 import { smartSort } from "../../../utils/stringUtils";
 import { getEventEssentials } from "../../../utils/testUtils";
 import { DummyLayer } from "../_DummyLayer";
@@ -6,12 +6,12 @@ import { handleEventsUnorderedSets, MultiPointLayerProps } from "./multiPoint";
 
 describe("multiPoint.handleEventsUnorderedSets", () => {
     const getFakeLayer = () => {
-        const layer = Object.create(DummyLayer) as ILayer<MultiPointLayerProps>;
+        const layer = Object.create(DummyLayer) as Layer<MultiPointLayerProps>;
         return layer;
     };
 
     type SecondArg = Parameters<typeof handleEventsUnorderedSets>[1];
-    const applySettings = (layer: ILayer<MultiPointLayerProps>, arg?: SecondArg) =>
+    const applySettings = (layer: Layer<MultiPointLayerProps>, arg?: SecondArg) =>
         handleEventsUnorderedSets(layer, {
             pointTypes: ["cells"],
             ...arg,

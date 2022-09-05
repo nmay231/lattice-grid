@@ -4,10 +4,10 @@ import { initialValue, LayersAtomValue, makeLayersAtom } from "./layers";
 
 describe("layers atom", () => {
     const fourLayers: LayersAtomValue["layers"] = [
-        { id: "layer1", layerType: "class1", ethereal: false },
-        { id: "layer2", layerType: "class2", ethereal: true },
-        { id: "layer3", layerType: "class1", ethereal: false },
-        { id: "layer4", layerType: "class3", ethereal: false },
+        { id: "layer1", type: "class1", ethereal: false },
+        { id: "layer2", type: "class2", ethereal: true },
+        { id: "layer3", type: "class1", ethereal: false },
+        { id: "layer4", type: "class3", ethereal: false },
     ];
 
     it("should synchronize component and external state", () => {
@@ -16,7 +16,7 @@ describe("layers atom", () => {
 
         const expected: LayersAtomValue = {
             currentLayerId: "layerId",
-            layers: [{ id: "layerId", layerType: "asdf", ethereal: false }],
+            layers: [{ id: "layerId", type: "asdf", ethereal: false }],
         };
 
         act(() => addLayer({ ...expected.layers[0] }));

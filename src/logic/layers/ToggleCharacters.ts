@@ -1,5 +1,5 @@
 import { TextBlits } from "../../components/SVGCanvas/Text";
-import { ILayer, LayerClass, LayerProps, Vector } from "../../globals";
+import { Layer, LayerClass, LayerProps, Vector } from "../../types";
 import { errorNotification } from "../../utils/DOMUtils";
 import { BaseLayer, methodNotImplemented } from "./baseLayer";
 import { KeyDownEventHandler } from "./Selection";
@@ -18,7 +18,7 @@ interface ToggleCharactersProps extends LayerProps {
 }
 
 interface IToggleCharactersLayer
-    extends ILayer<ToggleCharactersProps>,
+    extends Layer<ToggleCharactersProps>,
         KeyDownEventHandler<ToggleCharactersProps> {
     _newSettings: (arg: RawSettings) => RawSettings;
     settings: RawSettings;
@@ -107,12 +107,12 @@ export class ToggleCharactersLayer
         newSettings,
         grid,
         storage,
-        attachSelectionsHandler,
+        attachSelectionHandler,
     }) => {
         this.settings = this._newSettings(newSettings);
         this.rawSettings = newSettings;
 
-        attachSelectionsHandler(this, {});
+        attachSelectionHandler(this, {});
 
         const { objects, renderOrder } = storage.getStored<ToggleCharactersProps>({
             grid,

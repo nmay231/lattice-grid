@@ -1,5 +1,5 @@
 import { UserCodeJSON } from ".";
-import { ICodeBlock, NeedsUpdating } from "../../../globals";
+import { ICodeBlock, NeedsUpdating } from "../../../types";
 import { ComputeManager } from "../ComputeManager";
 
 export interface IIfElse {

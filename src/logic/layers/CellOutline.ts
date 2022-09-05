@@ -1,4 +1,4 @@
-import { BlitGroup, ILayer, LayerClass, LayerEventEssentials } from "../../globals";
+import { BlitGroup, Layer, LayerClass, LayerEventEssentials } from "../../types";
 import { BaseLayer, methodNotImplemented } from "./baseLayer";
 import { handleEventsCycleStates, OnePointProps } from "./controls/onePoint";
 
@@ -7,7 +7,7 @@ interface CellOutlineProps extends OnePointProps {
     ObjectState: { id: string; points: string[]; state: true };
 }
 
-type ICellOutlineLayer = ILayer<CellOutlineProps>;
+type ICellOutlineLayer = Layer<CellOutlineProps>;
 
 export class CellOutlineLayer extends BaseLayer<CellOutlineProps> implements ICellOutlineLayer {
     static ethereal = true;

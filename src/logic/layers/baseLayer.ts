@@ -1,14 +1,14 @@
 import { cloneDeep } from "lodash";
 import {
-    ILayer,
     JSONSchema,
+    Layer,
     LayerClass,
     LayerEvent,
     LayerEventEssentials,
     LayerHandlerResult,
     LayerProps,
     PointerMoveOrDown,
-} from "../../globals";
+} from "../../types";
 import { errorNotification } from "../../utils/DOMUtils";
 import { randomStringId } from "../../utils/stringUtils";
 import { PuzzleManager } from "../PuzzleManager";
@@ -23,7 +23,7 @@ export const methodNotImplemented = ({ name }: { name: string }) => {
 
 // Change this to only contain properties that layers would add at runtime (i.e. remove id, ethereal, and unique since those should always be defined on init)
 export abstract class BaseLayer<LP extends LayerProps>
-    implements Omit<ILayer<LP>, "newSettings" | "getBlits">
+    implements Omit<Layer<LP>, "newSettings" | "getBlits">
 {
     static ethereal = true;
     static unique = false;

@@ -2,14 +2,14 @@ import {
     Grid,
     History,
     HistoryAction,
-    ILayer,
     IncompleteHistoryAction,
+    Layer,
     LayerProps,
     LayerStorage,
-} from "../globals";
+} from "../types";
 import { errorNotification } from "../utils/DOMUtils";
 
-type GridAndLayer = { grid: Pick<Grid, "id">; layer: Pick<ILayer, "id"> };
+type GridAndLayer = { grid: Pick<Grid, "id">; layer: Pick<Layer, "id"> };
 
 export class StorageManager {
     objects: Record<Grid["id"], Record<string, LayerStorage>> = {};
@@ -37,7 +37,7 @@ export class StorageManager {
 
     addToHistory(
         grid: Pick<Grid, "id">,
-        layer: Pick<ILayer, "id">,
+        layer: Pick<Layer, "id">,
         puzzleObjects?: IncompleteHistoryAction[],
     ) {
         if (!puzzleObjects?.length) {

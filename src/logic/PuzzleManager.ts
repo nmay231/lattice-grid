@@ -2,14 +2,7 @@ import { getBlitGroups, OVERLAY_LAYER_ID, setBlitGroups } from "../atoms/blits";
 import { setCanvasSize } from "../atoms/canvasSize";
 import { addLayer, getLayers, removeLayer, setLayers } from "../atoms/layers";
 import { getSettings } from "../atoms/settings";
-import {
-    Grid,
-    ILayer,
-    LayerClass,
-    LocalStorageData,
-    RenderChange,
-    UnknownObject,
-} from "../globals";
+import { Grid, Layer, LayerClass, LocalStorageData, RenderChange, UnknownObject } from "../types";
 import { errorNotification } from "../utils/DOMUtils";
 import { ControlsManager } from "./ControlsManager";
 import { SquareGrid } from "./grids/SquareGrid";
@@ -20,7 +13,7 @@ import { SelectionLayer } from "./layers/Selection";
 import { StorageManager } from "./StorageManager";
 
 export class PuzzleManager {
-    layers: Record<string, ILayer> = {};
+    layers: Record<string, Layer> = {};
 
     grid: Grid = new SquareGrid();
     storage = new StorageManager();
@@ -60,10 +53,10 @@ export class PuzzleManager {
         this._resetLayers();
         this._loadPuzzle({
             layers: [
-                { layerClass: "CellOutlineLayer" },
-                { layerClass: "SelectionLayer" },
-                { layerClass: "NumberLayer" },
-                { layerClass: "OverlayLayer" },
+                { type: "CellOutlineLayer" },
+                { type: "SelectionLayer" },
+                { type: "NumberLayer" },
+                { type: "OverlayLayer" },
             ],
             grid: { type: "square", width: 10, height: 10, minX: 0, minY: 0 },
         });
@@ -72,7 +65,7 @@ export class PuzzleManager {
 
     _loadPuzzle(data: LocalStorageData) {
         this.grid.setParams(data.grid);
-        for (const { layerClass, rawSettings } of data.layers) {
+        for (const { type: layerClass, rawSettings } of data.layers) {
             this.addLayer(availableLayers[layerClass], rawSettings);
         }
     }
@@ -146,7 +139,7 @@ export class PuzzleManager {
         for (const fakeLayer of getLayers().layers) {
             const layer = this.layers[fakeLayer.id];
             data.layers.push({
-                layerClass: Object.getPrototypeOf(layer).id,
+                type: layer.type,
                 rawSettings: layer.rawSettings,
             });
         }
@@ -165,11 +158,8 @@ export class PuzzleManager {
         this.storage.addStorage({ grid: this.grid, layer });
         this.changeLayerSettings(layer.id, settings || layerClass.defaultSettings);
 
-        addLayer({
-            id: layer.id,
-            ethereal: layer.ethereal,
-            layerType: layerClass.type,
-        });
+        const { id, type, displayName, ethereal } = layer;
+        addLayer({ id, type, displayName, ethereal });
         return layer.id;
     }
 
@@ -183,15 +173,15 @@ export class PuzzleManager {
     }
 
     changeLayerSettings(layerId: string, newSettings: any) {
-        // TODO: Should I even have the "Selections" layer be with the normal layers or should it always be attached to the puzzle or grid?
-        const Selections = this.layers["Selections"] as SelectionLayer;
+        // TODO: Should I even have the "Selection" layer be with the normal layers or should it always be attached to the puzzle or grid?
+        const Selection = this.layers["Selection"] as SelectionLayer;
         const layer = this.layers[layerId];
         const { history } = layer.newSettings({
             newSettings,
             grid: this.grid,
             storage: this.storage,
-            // TODO: If anything, I should prevent the issue where CellOutline is added before Selections therefore requiring the following optional chain. That's why I thought pre-instantiating it would be a good idea.
-            attachSelectionsHandler: Selections?.attachHandler?.bind?.(Selections),
+            // TODO: If anything, I should prevent the issue where CellOutline is added before Selection therefore requiring the following optional chain. That's why I thought pre-instantiating it would be a good idea.
+            attachSelectionHandler: Selection?.attachHandler?.bind?.(Selection),
             settings: getSettings(),
         });
 

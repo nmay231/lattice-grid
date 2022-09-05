@@ -1,4 +1,4 @@
-import { LayerClass } from "../../globals";
+import { LayerClass } from "../../types";
 import { BackgroundColorLayer } from "./BackgroundColor";
 import { CellOutlineLayer } from "./CellOutline";
 import { KillerCagesLayer } from "./KillerCages";

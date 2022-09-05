@@ -6,7 +6,7 @@ import { ImportExportModal } from "../components/ImportExportModal";
 import { SideBar } from "../components/SideBar";
 import { ResizeModal } from "../components/SideBar/MainGroup/ResizeModal";
 import { SVGCanvas } from "../components/SVGCanvas";
-import { NeedsUpdating } from "../globals";
+import { NeedsUpdating } from "../types";
 import styles from "./Puzzle.module.css";
 
 export const EditPage = () => {

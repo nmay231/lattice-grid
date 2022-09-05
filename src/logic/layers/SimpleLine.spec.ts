@@ -1,9 +1,9 @@
-import { LayerStorage } from "../../globals";
+import { LayerStorage } from "../../types";
 import { getEventEssentials } from "../../utils/testUtils";
 import { SimpleLineLayer, SimpleLineProps } from "./SimpleLine";
 
 describe("SimpleLine", () => {
-    const attachSelectionsHandler = jest.fn();
+    const attachSelectionHandler = jest.fn();
 
     type Arg = {
         stored?: LayerStorage<SimpleLineProps>;
@@ -13,7 +13,7 @@ describe("SimpleLine", () => {
         const simpleLine: typeof SimpleLineLayer = Object.create(SimpleLineLayer);
         simpleLine.newSettings({
             ...getEventEssentials({ stored }),
-            attachSelectionsHandler,
+            attachSelectionHandler,
             newSettings: settings || {
                 connections: "Cell to Cell",
                 fill: "green",
@@ -37,7 +37,7 @@ describe("SimpleLine", () => {
 
         const result = simpleLine.newSettings({
             ...getEventEssentials({ stored }),
-            attachSelectionsHandler,
+            attachSelectionHandler,
             newSettings: {
                 connections: "Corner to Corner",
                 fill: "green",
@@ -61,7 +61,7 @@ describe("SimpleLine", () => {
 
         const result = simpleLine.newSettings({
             ...getEventEssentials({ stored }),
-            attachSelectionsHandler,
+            attachSelectionHandler,
             newSettings: {
                 connections: "Cell to Cell",
                 fill: "blue",

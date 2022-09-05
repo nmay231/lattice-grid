@@ -1,5 +1,5 @@
 import { LineBlits } from "../../components/SVGCanvas/Line";
-import { ILayer, LayerClass, PointType } from "../../globals";
+import { Layer, LayerClass, PointType } from "../../types";
 import { BaseLayer, methodNotImplemented } from "./baseLayer";
 import { handleEventsCurrentSetting, TwoPointProps } from "./controls/twoPoint";
 
@@ -21,7 +21,7 @@ export interface SimpleLineProps extends TwoPointProps {
     };
 }
 
-interface ISimpleLineLayer extends ILayer<SimpleLineProps> {
+interface ISimpleLineLayer extends Layer<SimpleLineProps> {
     settings: { pointType: PointType; selectedState: { fill: string } };
 }
 

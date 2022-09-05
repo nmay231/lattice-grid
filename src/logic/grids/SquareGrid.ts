@@ -1,5 +1,5 @@
 import { getSettings } from "../../atoms/settings";
-import { Grid, PointType } from "../../globals";
+import { Grid, PointType } from "../../types";
 import { errorNotification } from "../../utils/DOMUtils";
 import { hopStraight } from "../algorithms/hopStraight";
 

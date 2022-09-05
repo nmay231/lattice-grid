@@ -1,13 +1,13 @@
 import {
-    ILayer,
     IncompleteHistoryAction,
     Keypress,
+    Layer,
     LayerClass,
     LayerEventEssentials,
     LayerHandlerResult,
     LayerProps,
     NeedsUpdating,
-} from "../../globals";
+} from "../../types";
 import { errorNotification } from "../../utils/DOMUtils";
 import { BaseLayer } from "./baseLayer";
 
@@ -29,12 +29,12 @@ export interface SelectionProps extends LayerProps {
     };
 }
 
-export interface ISelectionLayer extends ILayer<SelectionProps> {
+export interface ISelectionLayer extends Layer<SelectionProps> {
     attachHandler: <LP extends LayerProps = LayerProps>(
-        layer: ILayer<LP> & KeyDownEventHandler<LP>,
+        layer: Layer<LP> & KeyDownEventHandler<LP>,
         options: unknown,
     ) => void;
-    _getBlits: NonNullable<ILayer<SelectionProps>["getBlits"]>;
+    _getBlits: NonNullable<Layer<SelectionProps>["getBlits"]>;
 }
 
 export class SelectionLayer extends BaseLayer<SelectionProps> implements ISelectionLayer {
@@ -43,7 +43,7 @@ export class SelectionLayer extends BaseLayer<SelectionProps> implements ISelect
     static type = "SelectionLayer" as const;
     static displayName = "Selection";
 
-    id = "Selections"; // TODO: Rename to Selection
+    id = "Selection";
 
     static uniqueInstance: SelectionLayer;
     static create: LayerClass<SelectionProps>["create"] = (puzzle) => {
@@ -155,7 +155,7 @@ export class SelectionLayer extends BaseLayer<SelectionProps> implements ISelect
                     return { history };
                 }
 
-                const storingLayer: ILayer & KeyDownEventHandler = (event as any).storingLayer;
+                const storingLayer: Layer & KeyDownEventHandler = (event as any).storingLayer;
 
                 const actions =
                     storingLayer.handleKeyDown?.({

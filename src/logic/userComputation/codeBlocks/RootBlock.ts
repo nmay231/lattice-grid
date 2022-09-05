@@ -1,5 +1,5 @@
 import { UserCodeJSON } from ".";
-import { ICodeBlock } from "../../../globals";
+import { ICodeBlock } from "../../../types";
 import { ComputeManager } from "../ComputeManager";
 
 export interface IRootBlock {

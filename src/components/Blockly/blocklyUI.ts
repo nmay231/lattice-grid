@@ -110,7 +110,9 @@ blocks["ObjectSelector"] = {
             new Blockly.FieldDropdown(() => {
                 // TODO: How to trigger this function if the current layers change...
                 const layers = getLayers();
-                return layers.layers.filter(({ ethereal }) => !ethereal).map(({ id }) => [id, id]);
+                return layers.layers
+                    .filter(({ ethereal }) => !ethereal)
+                    .map(({ id, displayName }) => [displayName, id]);
             }),
             "LAYER_ID",
         );

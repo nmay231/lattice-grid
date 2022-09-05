@@ -1,4 +1,4 @@
-// The settings type is described separately from ILayer to allow easier custom typing.
+// The settings type is described separately from Layer to allow easier custom typing.
 type Settings = { onlyUsedInternally: string; canContainFunctions: () => void };
 
 // A layer used for testing, and also contains inline documentation (might be out of date, FYI)

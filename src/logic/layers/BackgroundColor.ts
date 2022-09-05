@@ -1,5 +1,5 @@
 import { PolygonBlits } from "../../components/SVGCanvas/Polygon";
-import { ILayer, LayerClass } from "../../globals";
+import { Layer, LayerClass } from "../../types";
 import { BaseLayer, methodNotImplemented } from "./baseLayer";
 import { handleEventsCurrentSetting, OnePointProps } from "./controls/onePoint";
 
@@ -9,7 +9,7 @@ interface BackgroundColorProps extends OnePointProps {
     RawSettings: { selectedState: string };
 }
 
-interface IBackgroundColorLayer extends ILayer<BackgroundColorProps> {
+interface IBackgroundColorLayer extends Layer<BackgroundColorProps> {
     settings: BackgroundColorProps["RawSettings"];
 }
 

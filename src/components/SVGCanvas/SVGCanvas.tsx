@@ -4,7 +4,7 @@ import { blitsAtom } from "../../atoms/blits";
 import { canvasSizeAtom } from "../../atoms/canvasSize";
 import { layersAtom } from "../../atoms/layers";
 import { usePuzzle } from "../../atoms/puzzle";
-import { NeedsUpdating } from "../../globals";
+import { NeedsUpdating } from "../../types";
 import { errorNotification } from "../../utils/DOMUtils";
 import { Line } from "./Line";
 import { Polygon } from "./Polygon";

@@ -1,12 +1,12 @@
 import { atom } from "jotai";
-import { BlitGroup, ILayer } from "../globals";
+import { BlitGroup, Layer } from "../types";
 import { modifiableAtom } from "./modifiableAtom";
 
 const {
     atom: baseAtom,
     setValue,
     getValue,
-} = modifiableAtom({} as Record<ILayer["id"], BlitGroup[]>);
+} = modifiableAtom({} as Record<Layer["id"], BlitGroup[]>);
 
 // Make it read only by not including a setter function
 export const blitsAtom = atom((get) => get(baseAtom));

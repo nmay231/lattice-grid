@@ -135,7 +135,7 @@ export type LayerEvent<LP extends LayerProps> = CleanedDOMEvent & LayerEventEsse
 
 export type NewSettingsEvent<LP extends LayerProps> = LayerEventEssentials<LP> & {
     newSettings: LP["RawSettings"];
-    attachSelectionsHandler: ISelectionLayer["attachHandler"];
+    attachSelectionHandler: ISelectionLayer["attachHandler"];
 };
 
 export type LayerHandlerResult = {
@@ -154,7 +154,7 @@ export type LayerProps = {
     TempStorage: UnknownObject;
 };
 
-export type ILayer<LP extends LayerProps = LayerProps> = {
+export type Layer<LP extends LayerProps = LayerProps> = {
     type: LP["Type"];
     id: string;
     displayName: string;
@@ -171,8 +171,8 @@ export type ILayer<LP extends LayerProps = LayerProps> = {
 };
 
 export type LayerClass<LP extends LayerProps = LayerProps> = {
-    new (klass: LayerClass<LP>, puzzle: PuzzleManager): ILayer<LP>;
-    create: (puzzle: PuzzleManager) => ILayer<LP>;
+    new (klass: LayerClass<LP>, puzzle: PuzzleManager): Layer<LP>;
+    create: (puzzle: PuzzleManager) => Layer<LP>;
     type: LP["Type"];
     displayName: string;
     ethereal: boolean;
@@ -225,7 +225,7 @@ export type BlitGroup = LineBlits | TextBlits | PolygonBlits;
 export type LocalStorageData = {
     grid: SquareGridParams;
     layers: {
-        layerClass: keyof typeof availableLayers;
+        type: keyof typeof availableLayers;
         rawSettings?: UnknownObject;
     }[];
 };

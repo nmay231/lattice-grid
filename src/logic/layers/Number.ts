@@ -1,4 +1,4 @@
-import { ILayer, LayerClass, LayerProps } from "../../globals";
+import { Layer, LayerClass, LayerProps } from "../../types";
 import { BaseLayer, methodNotImplemented } from "./baseLayer";
 import { KeyDownEventHandler } from "./Selection";
 
@@ -13,7 +13,7 @@ type NumberSettings = {
     match: (number: number, alternate?: string | null) => string | null | undefined;
 };
 
-interface INumberLayer extends ILayer<NumberProps>, KeyDownEventHandler<NumberProps> {
+interface INumberLayer extends Layer<NumberProps>, KeyDownEventHandler<NumberProps> {
     settings: NumberSettings;
     _newSettings: (arg: { min: number; max: number }) => NumberSettings;
     // TODO: More specific types
@@ -128,12 +128,12 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
         newSettings,
         grid,
         storage,
-        attachSelectionsHandler,
+        attachSelectionHandler,
     }) => {
         this.settings = this._newSettings(newSettings);
         this.rawSettings = newSettings;
 
-        attachSelectionsHandler(this, {});
+        attachSelectionHandler(this, {});
 
         const { objects, renderOrder } = storage.getStored<NumberProps>({
             grid,

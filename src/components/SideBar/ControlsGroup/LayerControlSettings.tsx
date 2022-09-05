@@ -3,8 +3,8 @@ import { useEffect, useState } from "react";
 import { constraintSettingsAtom } from "../../../atoms/constraintSettings";
 import { layersAtom } from "../../../atoms/layers";
 import { usePuzzle } from "../../../atoms/puzzle";
-import { UnknownObject } from "../../../globals";
 import { availableLayers } from "../../../logic/layers";
+import { UnknownObject } from "../../../types";
 import { blurActiveElement } from "../../../utils/DOMUtils";
 import { JsonFormsWrapper } from "../../JsonFormsWrapper";
 
@@ -31,7 +31,7 @@ export const LayerControlSettings = () => {
         return <></>;
     }
 
-    const layerType = layers.filter((layer) => layer.id === id)[0].layerType;
+    const layerType = layers.filter((layer) => layer.id === id)[0].type;
     const layerClass = availableLayers[layerType];
 
     const { schema, uischemaElements } = layerClass.controls || {};

@@ -42,7 +42,7 @@ export const importPuzzle = (puzzle: PuzzleManager, text: string) => {
 };
 
 export const ImportExportAtom = atom(false);
-const layersAlwaysPresent = ["Cell Outline", "Selections", "OVERLAY_BLITS_KEY"];
+const layersAlwaysPresent = ["Cell Outline", "Selection", "OVERLAY_BLITS_KEY"];
 
 export const ImportExportModal = () => {
     const puzzle = usePuzzle();

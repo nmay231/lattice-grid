@@ -1,4 +1,4 @@
-import { CompilerErrorDetails, ICodeBlock, NeedsUpdating, VariableCodeBlock } from "../../globals";
+import { CompilerErrorDetails, ICodeBlock, NeedsUpdating, VariableCodeBlock } from "../../types";
 import { Blockly } from "../../utils/Blockly";
 import { PuzzleManager } from "../PuzzleManager";
 import { CodeBlocks, UserCodeJSON } from "./codeBlocks";

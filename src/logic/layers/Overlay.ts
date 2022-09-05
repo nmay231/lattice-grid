@@ -1,12 +1,12 @@
 import { OVERLAY_LAYER_ID } from "../../atoms/blits";
-import { ILayer, LayerClass, LayerProps } from "../../globals";
+import { Layer, LayerClass, LayerProps } from "../../types";
 import { BaseLayer, methodNotImplemented } from "./baseLayer";
 
 interface OverlayProps extends LayerProps {
     Type: "OverlayLayer";
 }
 
-type IOverlayLayer = ILayer<OverlayProps>;
+type IOverlayLayer = Layer<OverlayProps>;
 
 export class OverlayLayer extends BaseLayer<OverlayProps> implements IOverlayLayer {
     static ethereal = true;

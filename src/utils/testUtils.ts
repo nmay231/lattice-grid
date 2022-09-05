@@ -1,5 +1,5 @@
-import { LayerEventEssentials, LayerProps, LayerStorage } from "../globals";
 import { StorageManager } from "../logic/StorageManager";
+import { LayerEventEssentials, LayerProps, LayerStorage } from "../types";
 
 export type GetEventEssentialsArg<LP extends LayerProps> = {
     stored?: LayerStorage<LP>;

@@ -4,7 +4,7 @@ import {
     LayerHandlerResult,
     LayerStorage,
     PointerMoveOrDown,
-} from "../../globals";
+} from "../../types";
 import { getEventEssentials, GetEventEssentialsArg } from "../../utils/testUtils";
 import { SelectionLayer, SelectionProps } from "./Selection";
 
@@ -24,9 +24,9 @@ const eventEssentials = (arg: GetEventEssentialsArg<SelectionProps> = {}) => {
 };
 
 const partialPointerEvent: Omit<PointerMoveOrDown, "points" | "type"> = {
-    ctrlKey = false;
-    shiftKey = false;
-    altKey = false;
+    ctrlKey: false,
+    shiftKey: false,
+    altKey: false,
     cursor: { x: 1, y: 1 }, // The value of cursor doesn't matter since it is mocked anyways
 };
 
@@ -51,7 +51,7 @@ describe("SelectionLayer", () => {
         expect(result.history).toEqual<LayerHandlerResult["history"]>([
             {
                 id: "point1",
-                layerId: "Selections",
+                layerId: "Selection",
                 batchId: "ignore",
                 object: { point: "point1", state: 2 },
             },
@@ -94,7 +94,7 @@ describe("SelectionLayer", () => {
         expect(result.history).toEqual<LayerHandlerResult["history"]>([
             {
                 id: "point1",
-                layerId: "Selections",
+                layerId: "Selection",
                 batchId: "ignore",
                 object: null,
             },
@@ -126,13 +126,13 @@ describe("SelectionLayer", () => {
         expect(result.history).toEqual<LayerHandlerResult["history"]>([
             {
                 id: "point2",
-                layerId: "Selections",
+                layerId: "Selection",
                 batchId: "ignore",
                 object: null,
             },
             {
                 id: "point1",
-                layerId: "Selections",
+                layerId: "Selection",
                 batchId: "ignore",
                 object: { point: "point1", state: 2 },
             },
@@ -174,13 +174,13 @@ describe("SelectionLayer", () => {
         expect(result.history).toEqual<LayerHandlerResult["history"]>([
             {
                 id: "point1",
-                layerId: "Selections",
+                layerId: "Selection",
                 batchId: "ignore",
                 object: null,
             },
             {
                 id: "point2",
-                layerId: "Selections",
+                layerId: "Selection",
                 batchId: "ignore",
                 object: { point: "point2", state: 2 },
             },
@@ -220,7 +220,7 @@ describe("SelectionLayer", () => {
             {
                 batchId: "ignore",
                 id: "point4",
-                layerId: "Selections",
+                layerId: "Selection",
                 object: { point: "point4", state: 2 },
             },
         ]);
@@ -239,13 +239,13 @@ describe("SelectionLayer", () => {
             {
                 batchId: "ignore",
                 id: "point5",
-                layerId: "Selections",
+                layerId: "Selection",
                 object: { point: "point5", state: 2 },
             },
             {
                 batchId: "ignore",
                 id: "point6",
-                layerId: "Selections",
+                layerId: "Selection",
                 object: { point: "point6", state: 2 },
             },
         ]);
@@ -283,7 +283,7 @@ describe("SelectionLayer", () => {
             {
                 batchId: "ignore",
                 id: "point3",
-                layerId: "Selections",
+                layerId: "Selection",
                 object: { point: "point3", state: 2 },
             },
         ]);
@@ -303,13 +303,13 @@ describe("SelectionLayer", () => {
             {
                 batchId: "ignore",
                 id: "point1",
-                layerId: "Selections",
+                layerId: "Selection",
                 object: { point: "point1", state: 2 },
             },
             {
                 batchId: "ignore",
                 id: "point2",
-                layerId: "Selections",
+                layerId: "Selection",
                 object: { point: "point2", state: 2 },
             },
         ]);
@@ -389,19 +389,19 @@ describe("SelectionLayer", () => {
             {
                 batchId: "ignore",
                 id: "toDeselect",
-                layerId: "Selections",
+                layerId: "Selection",
                 object: null,
             },
             {
                 batchId: "ignore",
                 id: "toKeep",
-                layerId: "Selections",
+                layerId: "Selection",
                 object: { point: "toKeep", state: 2 },
             },
             {
                 batchId: "ignore",
                 id: "toSelect",
-                layerId: "Selections",
+                layerId: "Selection",
                 object: { point: "toSelect", state: 2 },
             },
         ]);

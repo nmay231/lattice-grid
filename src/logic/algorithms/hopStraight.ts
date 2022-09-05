@@ -1,4 +1,4 @@
-import { Delta } from "../../globals";
+import { Delta } from "../../types";
 
 const atan = (x: number, y: number) => (x < 0 ? -1 : 1) * Math.atan(y / x);
 const euclidean = (x1: number, y1: number, x2: number, y2: number) =>

@@ -1,4 +1,4 @@
-import { ILayer, LayerClass, UnknownObject } from "../../globals";
+import { Layer, LayerClass, UnknownObject } from "../../types";
 import { BaseLayer, methodNotImplemented } from "./baseLayer";
 import { handleEventsUnorderedSets, MultiPointLayerProps } from "./controls/multiPoint";
 import { KeyDownEventHandler } from "./Selection";
@@ -8,7 +8,7 @@ interface KillerCagesProps extends MultiPointLayerProps {
     ObjectState: MultiPointLayerProps["ObjectState"] & { state: string | null };
 }
 
-interface IKillerCagesLayer extends ILayer<KillerCagesProps> {
+interface IKillerCagesLayer extends Layer<KillerCagesProps> {
     _handleKeyDown: KeyDownEventHandler["handleKeyDown"];
     _nextState: (state: string, keypress: string) => string | number | null;
 }

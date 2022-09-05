@@ -1,4 +1,4 @@
-import { ICodeBlock, NeedsUpdating } from "../../../globals";
+import { ICodeBlock, NeedsUpdating } from "../../../types";
 import { ComputeManager } from "../ComputeManager";
 import { CompilerError } from "../utils";
 

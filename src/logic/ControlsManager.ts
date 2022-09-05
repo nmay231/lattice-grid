@@ -5,12 +5,12 @@ import { getSettings } from "../atoms/settings";
 import { blocklyModalIsOpen, setBlocklyModalOpen } from "../components/Blockly/BlocklyModal";
 import {
     CleanedDOMEvent,
-    ILayer,
+    Layer,
     LayerEvent,
     LayerProps,
     PointerMoveOrDown,
     UnknownObject,
-} from "../globals";
+} from "../types";
 import { errorNotification } from "../utils/DOMUtils";
 import { keypressString } from "../utils/stringUtils";
 import { PuzzleManager } from "./PuzzleManager";
@@ -89,7 +89,7 @@ export class ControlsManager {
         };
     }
 
-    applyLayerEvent(layer: ILayer, event: CleanedDOMEvent) {
+    applyLayerEvent(layer: Layer, event: CleanedDOMEvent) {
         const { grid, storage } = this.puzzle;
         const layerEvent: LayerEvent<LayerProps> = {
             ...event,

@@ -2,7 +2,7 @@ import { JsonSchema, UISchemaElement } from "@jsonforms/core";
 import { JsonForms } from "@jsonforms/react";
 import { vanillaCells, vanillaRenderers } from "@jsonforms/vanilla-renderers";
 import { useRef } from "react";
-import { UnknownObject } from "../../globals";
+import { UnknownObject } from "../../types";
 
 type Props = {
     data: UnknownObject;

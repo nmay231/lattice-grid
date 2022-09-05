@@ -1,4 +1,4 @@
-import { LayerHandlerResult, LayerStorage } from "../../globals";
+import { LayerHandlerResult, LayerStorage } from "../../types";
 import { getEventEssentials, GetEventEssentialsArg } from "../../utils/testUtils";
 import { NumberLayer, NumberProps } from "./Number";
 
@@ -13,7 +13,7 @@ describe("Number Layer", () => {
 
     // Used to fake Date.now
     const START_TIME = 1649519000000;
-    const attachSelectionsHandler = jest.fn();
+    const attachSelectionHandler = jest.fn();
 
     // Layer with numbers 1-9
     const settings1to9 = { min: 1, max: 9 };
@@ -21,7 +21,7 @@ describe("Number Layer", () => {
     layer1to9.newSettings({
         ...eventEssentials(),
         newSettings: settings1to9,
-        attachSelectionsHandler,
+        attachSelectionHandler,
     });
 
     // Layer with numbers -9 to 64
@@ -30,7 +30,7 @@ describe("Number Layer", () => {
     layerN9to64.newSettings({
         ...eventEssentials(),
         newSettings: settingsN9to64,
-        attachSelectionsHandler,
+        attachSelectionHandler,
     });
 
     it("should place numbers", () => {
@@ -83,14 +83,14 @@ describe("Number Layer", () => {
         const result = layer1to9.newSettings({
             ...eventEssentials({ stored }),
             newSettings: { min: -1, max: 10 },
-            attachSelectionsHandler,
+            attachSelectionHandler,
         });
         expect(result?.history).toEqual([]);
 
         layer1to9.newSettings({
             ...eventEssentials(),
             newSettings: settings1to9,
-            attachSelectionsHandler,
+            attachSelectionHandler,
         });
     });
 
@@ -107,7 +107,7 @@ describe("Number Layer", () => {
         const result = layer1to9.newSettings({
             ...eventEssentials({ stored }),
             newSettings: { min: 3, max: 7 },
-            attachSelectionsHandler,
+            attachSelectionHandler,
         });
 
         expect(result?.history).toEqual([
@@ -118,7 +118,7 @@ describe("Number Layer", () => {
         layer1to9.newSettings({
             ...eventEssentials(),
             newSettings: settings1to9,
-            attachSelectionsHandler,
+            attachSelectionHandler,
         });
     });
 

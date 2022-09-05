@@ -2,8 +2,9 @@ import { modifiableAtom } from "./modifiableAtom";
 
 type FakeLayer = {
     id: string;
+    type: string;
+    displayName: string;
     ethereal: boolean;
-    layerType: string;
 };
 
 export type LayersAtomValue = {
