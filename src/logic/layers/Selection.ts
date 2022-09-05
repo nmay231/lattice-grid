@@ -372,6 +372,9 @@ export class SelectionLayer extends BaseLayer<SelectionProps> implements ISelect
         return [];
     };
 
+    static controls = undefined;
+    static constraints = undefined;
+
     newSettings: ISelectionLayer["newSettings"] = (settingsChange) => {
         return {};
     };

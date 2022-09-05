@@ -31,7 +31,7 @@ export const LayerConstraintSettings = () => {
     }
 
     const layerType = layers.filter((layer_) => layer_.id === id)[0].type;
-    const layerClass = availableLayers[layerType];
+    const layerClass = availableLayers[layerType as keyof typeof availableLayers];
 
     if (!layerClass.constraints) {
         return noSettingsPreset;

@@ -25,6 +25,9 @@ export class CellOutlineLayer extends BaseLayer<CellOutlineProps> implements ICe
     handleEvent = methodNotImplemented({ name: "CellOutline.handleEvent" });
     gatherPoints = methodNotImplemented({ name: "CellOutline.gatherPoints" });
 
+    static controls = undefined;
+    static constraints = undefined;
+
     newSettings() {
         handleEventsCycleStates(this, {
             states: [true],

@@ -32,7 +32,7 @@ export const LayerControlSettings = () => {
     }
 
     const layerType = layers.filter((layer) => layer.id === id)[0].type;
-    const layerClass = availableLayers[layerType];
+    const layerClass = availableLayers[layerType as keyof typeof availableLayers];
 
     const { schema, uischemaElements } = layerClass.controls || {};
     const uischema = { type: "VerticalLayout", elements: uischemaElements };

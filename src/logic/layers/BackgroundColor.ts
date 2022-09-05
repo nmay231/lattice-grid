@@ -49,6 +49,7 @@ export class BackgroundColorLayer
             },
         ],
     };
+    static constraints = undefined;
 
     newSettings: IBackgroundColorLayer["newSettings"] = ({ newSettings }) => {
         this.rawSettings = newSettings;

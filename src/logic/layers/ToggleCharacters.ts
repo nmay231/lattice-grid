@@ -46,6 +46,7 @@ export class ToggleCharactersLayer
         return new ToggleCharactersLayer(ToggleCharactersLayer, puzzle);
     };
 
+    static controls = undefined;
     static constraints = {
         schema: {
             type: "object",

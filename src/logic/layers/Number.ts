@@ -98,6 +98,7 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
         }
     };
 
+    static controls = undefined;
     static constraints = {
         schema: {
             type: "object",

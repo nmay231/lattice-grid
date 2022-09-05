@@ -73,6 +73,9 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
         }
     };
 
+    static controls = undefined;
+    static constraints = undefined;
+
     newSettings: IKillerCagesLayer["newSettings"] = () => {
         handleEventsUnorderedSets(this, {
             handleKeyDown: this._handleKeyDown.bind(this),

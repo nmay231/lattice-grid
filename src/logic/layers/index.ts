@@ -1,4 +1,3 @@
-import { LayerClass } from "../../types";
 import { BackgroundColorLayer } from "./BackgroundColor";
 import { CellOutlineLayer } from "./CellOutline";
 import { KillerCagesLayer } from "./KillerCages";
@@ -8,7 +7,7 @@ import { SelectionLayer } from "./Selection";
 import { SimpleLineLayer } from "./SimpleLine";
 import { ToggleCharactersLayer } from "./ToggleCharacters";
 
-const layers: LayerClass<any>[] = [
+export const availableLayers = {
     BackgroundColorLayer,
     CellOutlineLayer,
     KillerCagesLayer,
@@ -17,9 +16,4 @@ const layers: LayerClass<any>[] = [
     SelectionLayer,
     SimpleLineLayer,
     ToggleCharactersLayer,
-];
-
-export const availableLayers: Record<string, LayerClass<any>> = {};
-for (const layer of layers) {
-    availableLayers[layer.type] = layer;
-}
+} as const;

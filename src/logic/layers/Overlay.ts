@@ -26,6 +26,9 @@ export class OverlayLayer extends BaseLayer<OverlayProps> implements IOverlayLay
         return OverlayLayer.uniqueInstance;
     };
 
+    static controls = undefined;
+    static constraints = undefined;
+
     newSettings() {
         return {};
     }

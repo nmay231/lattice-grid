@@ -2,7 +2,15 @@ import { getBlitGroups, OVERLAY_LAYER_ID, setBlitGroups } from "../atoms/blits";
 import { setCanvasSize } from "../atoms/canvasSize";
 import { addLayer, getLayers, removeLayer, setLayers } from "../atoms/layers";
 import { getSettings } from "../atoms/settings";
-import { Grid, Layer, LayerClass, LocalStorageData, RenderChange, UnknownObject } from "../types";
+import {
+    Grid,
+    Layer,
+    LayerClass,
+    LocalStorageData,
+    NeedsUpdating,
+    RenderChange,
+    UnknownObject,
+} from "../types";
 import { errorNotification } from "../utils/DOMUtils";
 import { ControlsManager } from "./ControlsManager";
 import { SquareGrid } from "./grids/SquareGrid";
@@ -139,7 +147,7 @@ export class PuzzleManager {
         for (const fakeLayer of getLayers().layers) {
             const layer = this.layers[fakeLayer.id];
             data.layers.push({
-                type: layer.type,
+                type: layer.type as NeedsUpdating,
                 rawSettings: layer.rawSettings,
             });
         }
