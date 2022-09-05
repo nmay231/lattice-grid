@@ -1,4 +1,4 @@
-import { ILayer } from "../../globals";
+import { LayerClass } from "../../globals";
 import { BackgroundColorLayer } from "./BackgroundColor";
 import { CellOutlineLayer } from "./CellOutline";
 import { KillerCagesLayer } from "./KillerCages";
@@ -8,7 +8,7 @@ import { SelectionLayer } from "./Selection";
 import { SimpleLineLayer } from "./SimpleLine";
 import { ToggleCharactersLayer } from "./ToggleCharacters";
 
-const layers: ILayer<any>[] = [
+const layers: LayerClass<any>[] = [
     BackgroundColorLayer,
     CellOutlineLayer,
     KillerCagesLayer,
@@ -19,7 +19,7 @@ const layers: ILayer<any>[] = [
     ToggleCharactersLayer,
 ];
 
-export const availableLayers: Record<string, ILayer> = {};
+export const availableLayers: Record<string, LayerClass<any>> = {};
 for (const layer of layers) {
-    availableLayers[layer.id] = layer;
+    availableLayers[layer.type] = layer;
 }

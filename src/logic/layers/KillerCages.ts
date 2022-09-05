@@ -1,24 +1,34 @@
-import { ILayer, UnknownObject } from "../../globals";
-import { BaseLayer } from "./baseLayer";
+import { ILayer, LayerClass, UnknownObject } from "../../globals";
+import { BaseLayer, methodNotImplemented } from "./baseLayer";
 import { handleEventsUnorderedSets, MultiPointLayerProps } from "./controls/multiPoint";
 import { KeyDownEventHandler } from "./Selection";
 
-export interface KillerCagesProps extends MultiPointLayerProps {
+interface KillerCagesProps extends MultiPointLayerProps {
+    Type: "KillerCagesLayer";
     ObjectState: MultiPointLayerProps["ObjectState"] & { state: string | null };
 }
 
-export type KillerCagesExtraProps = {
+interface IKillerCagesLayer extends ILayer<KillerCagesProps> {
     _handleKeyDown: KeyDownEventHandler["handleKeyDown"];
     _nextState: (state: string, keypress: string) => string | number | null;
-};
+}
 
-export const KillerCagesLayer: ILayer<KillerCagesProps> & KillerCagesExtraProps = {
-    ...BaseLayer,
-    id: "Killer Cages",
-    unique: false,
-    ethereal: false,
+export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKillerCagesLayer {
+    static ethereal = false;
+    static unique = false;
+    static type = "KillerCagesLayer" as const;
+    static displayName = "Killer Cages";
+    static defaultSettings = { selectedState: "blue" };
 
-    _handleKeyDown({ type, keypress, grid, storage }) {
+    settings = this.rawSettings;
+    handleEvent = methodNotImplemented({ name: "KillerCages.handleEvent" });
+    gatherPoints = methodNotImplemented({ name: "KillerCages.gatherPoints" });
+
+    static create: LayerClass<KillerCagesProps>["create"] = (puzzle) => {
+        return new KillerCagesLayer(KillerCagesLayer, puzzle);
+    };
+
+    _handleKeyDown: IKillerCagesLayer["_handleKeyDown"] = ({ type, keypress, grid, storage }) => {
         const stored = storage.getStored<KillerCagesProps>({
             layer: this,
             grid,
@@ -42,9 +52,9 @@ export const KillerCagesLayer: ILayer<KillerCagesProps> & KillerCagesExtraProps 
 
         object.state = state === null ? null : state.toString();
         return { history: [{ id, object }] };
-    },
+    };
 
-    _nextState(state, keypress) {
+    _nextState: IKillerCagesLayer["_nextState"] = (state, keypress) => {
         if (keypress === "Backspace") {
             return state.toString().slice(0, -1) || null;
         } else if (keypress === "Delete") {
@@ -61,9 +71,9 @@ export const KillerCagesLayer: ILayer<KillerCagesProps> & KillerCagesExtraProps 
         } else {
             return state || null;
         }
-    },
+    };
 
-    newSettings() {
+    newSettings: IKillerCagesLayer["newSettings"] = () => {
         handleEventsUnorderedSets(this, {
             handleKeyDown: this._handleKeyDown.bind(this),
             pointTypes: ["cells"],
@@ -72,9 +82,9 @@ export const KillerCagesLayer: ILayer<KillerCagesProps> & KillerCagesExtraProps 
             overwriteOthers: false,
         });
         return {};
-    },
+    };
 
-    getBlits({ storage, grid }) {
+    getBlits: IKillerCagesLayer["getBlits"] = ({ storage, grid }) => {
         const stored = storage.getStored<KillerCagesProps>({
             grid,
             layer: this,
@@ -143,10 +153,10 @@ export const KillerCagesLayer: ILayer<KillerCagesProps> & KillerCagesExtraProps 
                 },
             },
         ];
-    },
+    };
 
-    getOverlayBlits() {
+    getOverlayBlits: IKillerCagesLayer["getOverlayBlits"] = () => {
         // TODO: Only render the current Killer Cage when focused
         return [];
-    },
-};
+    };
+}

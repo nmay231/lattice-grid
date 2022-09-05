@@ -1,16 +1,29 @@
-import { ILayer } from "../../globals";
-import { BaseLayer } from "./baseLayer";
+import { BlitGroup, ILayer, LayerClass, LayerEventEssentials } from "../../globals";
+import { BaseLayer, methodNotImplemented } from "./baseLayer";
 import { handleEventsCycleStates, OnePointProps } from "./controls/onePoint";
 
-export interface CellOutlineProps extends OnePointProps {
+interface CellOutlineProps extends OnePointProps {
+    Type: "CellOutlineLayer";
     ObjectState: { id: string; points: string[]; state: true };
 }
 
-export const CellOutlineLayer: ILayer<CellOutlineProps> = {
-    ...BaseLayer,
-    id: "Cell Outline",
-    unique: true,
-    ethereal: true,
+type ICellOutlineLayer = ILayer<CellOutlineProps>;
+
+export class CellOutlineLayer extends BaseLayer<CellOutlineProps> implements ICellOutlineLayer {
+    static ethereal = true;
+    static unique = true;
+    static type = "CellOutlineLayer" as const;
+    static displayName = "Cell Outline";
+
+    static uniqueInstance: CellOutlineLayer;
+    static create: LayerClass<CellOutlineProps>["create"] = (puzzle) => {
+        CellOutlineLayer.uniqueInstance =
+            CellOutlineLayer.uniqueInstance || new CellOutlineLayer(CellOutlineLayer, puzzle);
+        return CellOutlineLayer.uniqueInstance;
+    };
+
+    handleEvent = methodNotImplemented({ name: "CellOutline.handleEvent" });
+    gatherPoints = methodNotImplemented({ name: "CellOutline.gatherPoints" });
 
     newSettings() {
         handleEventsCycleStates(this, {
@@ -25,9 +38,12 @@ export const CellOutlineLayer: ILayer<CellOutlineProps> = {
             ],
         });
         return {};
-    },
+    }
 
-    getBlits({ storage, grid }) {
+    getBlits({
+        storage,
+        grid,
+    }: Omit<LayerEventEssentials<CellOutlineProps>, "tempStorage">): BlitGroup[] {
         const stored = storage.getStored<CellOutlineProps>({
             grid,
             layer: this,
@@ -95,5 +111,5 @@ export const CellOutlineLayer: ILayer<CellOutlineProps> = {
                 },
             },
         ];
-    },
-};
+    }
+}

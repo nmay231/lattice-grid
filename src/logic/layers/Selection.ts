@@ -2,9 +2,11 @@ import {
     ILayer,
     IncompleteHistoryAction,
     Keypress,
+    LayerClass,
     LayerEventEssentials,
     LayerHandlerResult,
     LayerProps,
+    NeedsUpdating,
 } from "../../globals";
 import { errorNotification } from "../../utils/DOMUtils";
 import { BaseLayer } from "./baseLayer";
@@ -15,15 +17,8 @@ export type KeyDownEventHandler<LP extends LayerProps = LayerProps> = {
     ) => LayerHandlerResult;
 };
 
-export type SelectionExtraProps = {
-    attachHandler: <LP extends LayerProps = LayerProps>(
-        layer: ILayer<LP> & KeyDownEventHandler<LP>,
-        options: unknown,
-    ) => void;
-    _getBlits: NonNullable<ILayer<SelectionProps>["getBlits"]>;
-};
-
 export interface SelectionProps extends LayerProps {
+    Type: "SelectionLayer";
     ObjectState: { state: number };
     ExtraLayerStorageProps: { groupNumber: number };
     TempStorage: {
@@ -34,31 +29,48 @@ export interface SelectionProps extends LayerProps {
     };
 }
 
-export const SelectionLayer: ILayer<SelectionProps> & SelectionExtraProps = {
-    ...BaseLayer,
-    id: "Selections",
-    unique: true,
-    ethereal: true,
+export interface ISelectionLayer extends ILayer<SelectionProps> {
+    attachHandler: <LP extends LayerProps = LayerProps>(
+        layer: ILayer<LP> & KeyDownEventHandler<LP>,
+        options: unknown,
+    ) => void;
+    _getBlits: NonNullable<ILayer<SelectionProps>["getBlits"]>;
+}
+
+export class SelectionLayer extends BaseLayer<SelectionProps> implements ISelectionLayer {
+    static ethereal = true;
+    static unique = true;
+    static type = "SelectionLayer" as const;
+    static displayName = "Selection";
+
+    id = "Selections"; // TODO: Rename to Selection
+
+    static uniqueInstance: SelectionLayer;
+    static create: LayerClass<SelectionProps>["create"] = (puzzle) => {
+        SelectionLayer.uniqueInstance =
+            SelectionLayer.uniqueInstance || new SelectionLayer(SelectionLayer, puzzle);
+        return SelectionLayer.uniqueInstance;
+    };
 
     // TODO: Figuring the types for this will be complicated. I don't know how to approach types for multiple layers at the same time.
-    attachHandler(layer) {
-        layer.gatherPoints = this.gatherPoints.bind(this) as any;
+    attachHandler: ISelectionLayer["attachHandler"] = (layer) => {
+        layer.gatherPoints = this.gatherPoints.bind(this);
 
         layer.handleEvent = (args) =>
             this.handleEvent.call(this, {
                 ...args,
                 storingLayer: layer,
-            } as any);
+            } as NeedsUpdating);
 
         layer.getOverlayBlits = ({ grid, storage, ...rest }) =>
             this._getBlits({
                 ...rest,
                 grid,
                 storage,
-            } as any);
-    },
+            });
+    };
 
-    gatherPoints(event) {
+    gatherPoints: ISelectionLayer["gatherPoints"] = (event) => {
         const { grid, tempStorage } = event;
         let newPoints = grid.selectPointsWithCursor({
             cursor: event.cursor,
@@ -88,9 +100,9 @@ export const SelectionLayer: ILayer<SelectionProps> & SelectionExtraProps = {
         tempStorage.blacklist.push(...newPoints);
 
         return newPoints;
-    },
+    };
 
-    handleEvent(event) {
+    handleEvent: ISelectionLayer["handleEvent"] = (event) => {
         const { grid, storage, tempStorage } = event;
         const stored = storage.getStored<SelectionProps>({ grid, layer: this });
 
@@ -311,9 +323,9 @@ export const SelectionLayer: ILayer<SelectionProps> & SelectionExtraProps = {
                 return {};
             }
         }
-    },
+    };
 
-    _getBlits({ grid, storage }) {
+    _getBlits: ISelectionLayer["_getBlits"] = ({ grid, storage }) => {
         const stored = storage.getStored<SelectionProps>({ grid, layer: this });
         const points = stored.renderOrder.filter((key) => stored.objects[key].state);
         const states = points.map((id) => stored.objects[id].state);
@@ -354,11 +366,13 @@ export const SelectionLayer: ILayer<SelectionProps> & SelectionExtraProps = {
                 renderOnlyWhenFocused: true,
             },
         ];
-    },
-    getBlits() {
+    };
+
+    getBlits: ISelectionLayer["getBlits"] = () => {
         return [];
-    },
-    newSettings(settingsChange) {
+    };
+
+    newSettings: ISelectionLayer["newSettings"] = (settingsChange) => {
         return {};
-    },
-};
+    };
+}

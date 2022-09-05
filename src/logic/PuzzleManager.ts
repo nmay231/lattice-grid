@@ -2,7 +2,14 @@ import { getBlitGroups, OVERLAY_LAYER_ID, setBlitGroups } from "../atoms/blits";
 import { setCanvasSize } from "../atoms/canvasSize";
 import { addLayer, getLayers, removeLayer, setLayers } from "../atoms/layers";
 import { getSettings } from "../atoms/settings";
-import { Grid, ILayer, LocalStorageData, RenderChange, UnknownObject } from "../globals";
+import {
+    Grid,
+    ILayer,
+    LayerClass,
+    LocalStorageData,
+    RenderChange,
+    UnknownObject,
+} from "../globals";
 import { errorNotification } from "../utils/DOMUtils";
 import { ControlsManager } from "./ControlsManager";
 import { SquareGrid } from "./grids/SquareGrid";
@@ -53,10 +60,10 @@ export class PuzzleManager {
         this._resetLayers();
         this._loadPuzzle({
             layers: [
-                { layerClass: "Cell Outline" },
-                { layerClass: "Selections" },
-                { layerClass: "Number" },
-                { layerClass: OVERLAY_LAYER_ID },
+                { layerClass: "CellOutlineLayer" },
+                { layerClass: "SelectionLayer" },
+                { layerClass: "NumberLayer" },
+                { layerClass: "OverlayLayer" },
             ],
             grid: { type: "square", width: 10, height: 10, minX: 0, minY: 0 },
         });
@@ -146,19 +153,13 @@ export class PuzzleManager {
         return data;
     }
 
-    addLayer(layerClass: ILayer, settings?: UnknownObject): string {
-        if (layerClass.unique && layerClass.id in this.layers) {
-            this.changeLayerSettings(layerClass.id, settings);
-            return layerClass.id;
+    addLayer(layerClass: LayerClass<any>, settings?: UnknownObject): string {
+        if (layerClass.unique && layerClass.type in this.layers) {
+            this.changeLayerSettings(layerClass.type, settings);
+            return layerClass.type;
         }
 
-        const layer = Object.create(layerClass);
-        layer.id = layerClass.id;
-        let idNumber = 2;
-        while (layer.id in this.layers) {
-            layer.id = layerClass.id + ` (${idNumber})`;
-            idNumber++;
-        }
+        const layer = new layerClass(layerClass, this);
 
         this.layers[layer.id] = layer;
         this.storage.addStorage({ grid: this.grid, layer });
@@ -167,7 +168,7 @@ export class PuzzleManager {
         addLayer({
             id: layer.id,
             ethereal: layer.ethereal,
-            layerType: layerClass.id,
+            layerType: layerClass.type,
         });
         return layer.id;
     }
@@ -183,7 +184,7 @@ export class PuzzleManager {
 
     changeLayerSettings(layerId: string, newSettings: any) {
         // TODO: Should I even have the "Selections" layer be with the normal layers or should it always be attached to the puzzle or grid?
-        const Selections = this.layers["Selections"] as typeof SelectionLayer;
+        const Selections = this.layers["Selections"] as SelectionLayer;
         const layer = this.layers[layerId];
         const { history } = layer.newSettings({
             newSettings,

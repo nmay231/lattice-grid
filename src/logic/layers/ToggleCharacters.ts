@@ -1,41 +1,52 @@
 import { TextBlits } from "../../components/SVGCanvas/Text";
-import { ILayer, LayerProps, Vector } from "../../globals";
+import { ILayer, LayerClass, LayerProps, Vector } from "../../globals";
 import { errorNotification } from "../../utils/DOMUtils";
-import { BaseLayer } from "./baseLayer";
+import { BaseLayer, methodNotImplemented } from "./baseLayer";
 import { KeyDownEventHandler } from "./Selection";
 
+type RawSettings = {
+    // caseSwap allows upper- and lower-case letters to be used as separate characters but to be merged if there's no ambiguity.
+    caseSwap: Record<string, string>;
+    characters: string;
+    displayStyle: "center" | "topBottom"; // | "circle" | "tapa",
+};
+
 interface ToggleCharactersProps extends LayerProps {
+    Type: "ToggleCharactersLayer";
     ObjectState: { state: string };
-    RawSettings: {
-        // caseSwap allows upper- and lower-case letters to be used as separate characters but to be merged if there's no ambiguity.
-        caseSwap: Record<string, string>;
-        characters: string;
-        displayStyle: "center" | "topBottom"; // | "circle" | "tapa",
-    };
+    RawSettings: RawSettings;
 }
 
-type ToggleCharactersExtraProps = {
-    _newSettings: (
-        arg: ToggleCharactersProps["RawSettings"],
-    ) => ToggleCharactersProps["RawSettings"];
-    settings: ToggleCharactersProps["RawSettings"];
-} & KeyDownEventHandler<ToggleCharactersProps>;
+interface IToggleCharactersLayer
+    extends ILayer<ToggleCharactersProps>,
+        KeyDownEventHandler<ToggleCharactersProps> {
+    _newSettings: (arg: RawSettings) => RawSettings;
+    settings: RawSettings;
+}
 
-export const ToggleCharactersLayer: ILayer<ToggleCharactersProps> & ToggleCharactersExtraProps = {
-    ...BaseLayer,
-    id: "Toggle Characters",
-    unique: false,
-    ethereal: false,
-
-    defaultSettings: {
-        caseSwap: [..."0123456789"] as any,
+export class ToggleCharactersLayer
+    extends BaseLayer<ToggleCharactersProps>
+    implements IToggleCharactersLayer
+{
+    static ethereal = false;
+    static unique = false;
+    static type = "ToggleCharactersLayer" as const;
+    static displayName = "Toggle Characters";
+    static defaultSettings = {
+        caseSwap: Object.fromEntries([..."0123456789"].entries()),
         characters: "0123456789",
-        displayStyle: "center",
-    },
-    rawSettings: { caseSwap: {}, characters: "", displayStyle: "center" },
-    settings: { caseSwap: {}, characters: "", displayStyle: "center" },
+        displayStyle: "center" as const,
+    };
 
-    constraints: {
+    settings = this.rawSettings;
+    handleEvent = methodNotImplemented({ name: "ToggleCharacters.handleEvent" });
+    gatherPoints = methodNotImplemented({ name: "ToggleCharacters.gatherPoints" });
+
+    static create: LayerClass<ToggleCharactersProps>["create"] = (puzzle) => {
+        return new ToggleCharactersLayer(ToggleCharactersLayer, puzzle);
+    };
+
+    static constraints = {
         schema: {
             type: "object",
             properties: {
@@ -67,9 +78,9 @@ export const ToggleCharactersLayer: ILayer<ToggleCharactersProps> & ToggleCharac
                 scope: "#/properties/displayStyle",
             },
         ],
-    },
+    };
 
-    _newSettings({ characters, displayStyle }) {
+    _newSettings: IToggleCharactersLayer["_newSettings"] = ({ characters, displayStyle }) => {
         const caseSwap: Record<string, string> = {};
         // TODO: This should be done on the input side of things so that users are not confused
         // Remove duplicates
@@ -90,9 +101,14 @@ export const ToggleCharactersLayer: ILayer<ToggleCharactersProps> & ToggleCharac
             characters,
             displayStyle,
         };
-    },
+    };
 
-    newSettings({ newSettings, grid, storage, attachSelectionsHandler }) {
+    newSettings: IToggleCharactersLayer["newSettings"] = ({
+        newSettings,
+        grid,
+        storage,
+        attachSelectionsHandler,
+    }) => {
         this.settings = this._newSettings(newSettings);
         this.rawSettings = newSettings;
 
@@ -120,9 +136,14 @@ export const ToggleCharactersLayer: ILayer<ToggleCharactersProps> & ToggleCharac
         }
 
         return { history };
-    },
+    };
 
-    handleKeyDown({ grid, storage, points, keypress }) {
+    handleKeyDown: IToggleCharactersLayer["handleKeyDown"] = ({
+        grid,
+        storage,
+        points,
+        keypress,
+    }) => {
         const ids = points;
         if (!ids?.length) {
             return {};
@@ -167,9 +188,9 @@ export const ToggleCharactersLayer: ILayer<ToggleCharactersProps> & ToggleCharac
                 object: !newStates[index] ? null : { id, point: id, state: newStates[index] },
             })),
         };
-    },
+    };
 
-    getBlits({ storage, grid }) {
+    getBlits: IToggleCharactersLayer["getBlits"] = ({ storage, grid }) => {
         const stored = storage.getStored<ToggleCharactersProps>({
             grid,
             layer: this,
@@ -240,5 +261,5 @@ export const ToggleCharactersLayer: ILayer<ToggleCharactersProps> & ToggleCharac
                 style,
             },
         ];
-    },
-};
+    };
+}

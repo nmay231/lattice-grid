@@ -24,9 +24,9 @@ const eventEssentials = (arg: GetEventEssentialsArg<SelectionProps> = {}) => {
 };
 
 const partialPointerEvent: Omit<PointerMoveOrDown, "points" | "type"> = {
-    ctrlKey: false,
-    shiftKey: false,
-    altKey: false,
+    ctrlKey = false;
+    shiftKey = false;
+    altKey = false;
     cursor: { x: 1, y: 1 }, // The value of cursor doesn't matter since it is mocked anyways
 };
 
