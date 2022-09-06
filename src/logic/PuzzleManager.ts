@@ -21,21 +21,35 @@ import { SelectionLayer } from "./layers/Selection";
 import { StorageManager } from "./StorageManager";
 
 export class PuzzleManager {
-    layers: Record<string, Layer> = {};
+    layers: {
+        SelectionLayer: SelectionLayer;
+        OverlayLayer: OverlayLayer;
+        CellOutlineLayer: CellOutlineLayer;
+        [K: string]: Layer;
+    };
 
     grid: Grid = new SquareGrid();
     storage = new StorageManager();
     controls = new ControlsManager(this);
 
     constructor() {
+        this.layers = this._requiredLayers();
         this.loadPuzzle();
         this.resizeCanvas();
         this.renderChange({ type: "draw", layerIds: "all" });
     }
 
+    _requiredLayers(): typeof this["layers"] {
+        return {
+            SelectionLayer: availableLayers["SelectionLayer"].create(this) as SelectionLayer,
+            OverlayLayer: availableLayers["OverlayLayer"].create(this) as OverlayLayer,
+            CellOutlineLayer: availableLayers["CellOutlineLayer"].create(this) as CellOutlineLayer,
+        };
+    }
+
     _resetLayers() {
         setLayers([]);
-        this.layers = {};
+        this.layers = this._requiredLayers();
 
         // Guarantee that these layers will be present even if the saved puzzle fails to add them
         const requiredLayers = [CellOutlineLayer, SelectionLayer, OverlayLayer];
@@ -155,19 +169,17 @@ export class PuzzleManager {
     }
 
     addLayer(layerClass: LayerClass<any>, settings?: UnknownObject): string {
-        if (layerClass.unique && layerClass.type in this.layers) {
-            this.changeLayerSettings(layerClass.type, settings);
-            return layerClass.type;
-        }
-
         const layer = new layerClass(layerClass, this);
-
         this.layers[layer.id] = layer;
+
+        // TODO: Should this ever retain storage for certain unique layers?
         this.storage.addStorage({ grid: this.grid, layer });
         this.changeLayerSettings(layer.id, settings || layerClass.defaultSettings);
 
-        const { id, type, displayName, ethereal } = layer;
-        addLayer({ id, type, displayName, ethereal });
+        if (!layer.unique || !getLayers().layers.filter(({ id }) => id === layer.id).length) {
+            const { id, type, displayName, ethereal } = layer;
+            addLayer({ id, type, displayName, ethereal });
+        }
         return layer.id;
     }
 
@@ -181,15 +193,13 @@ export class PuzzleManager {
     }
 
     changeLayerSettings(layerId: string, newSettings: any) {
-        // TODO: Should I even have the "Selection" layer be with the normal layers or should it always be attached to the puzzle or grid?
-        const Selection = this.layers["Selection"] as SelectionLayer;
+        const Selection = this.layers["SelectionLayer"];
         const layer = this.layers[layerId];
         const { history } = layer.newSettings({
             newSettings,
             grid: this.grid,
             storage: this.storage,
-            // TODO: If anything, I should prevent the issue where CellOutline is added before Selection therefore requiring the following optional chain. That's why I thought pre-instantiating it would be a good idea.
-            attachSelectionHandler: Selection?.attachHandler?.bind?.(Selection),
+            attachSelectionHandler: Selection.attachHandler.bind(Selection),
             settings: getSettings(),
         });
 
