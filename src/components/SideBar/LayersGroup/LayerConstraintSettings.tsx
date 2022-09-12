@@ -1,8 +1,9 @@
-import { useAtom, useAtomValue } from "jotai";
+import { useAtom } from "jotai";
 import { isEqual } from "lodash";
 import { useEffect } from "react";
+import { useSnapshot } from "valtio";
 import { constraintSettingsAtom } from "../../../atoms/constraintSettings";
-import { layersAtom } from "../../../atoms/layers";
+import { useLayers } from "../../../atoms/layers";
 import { usePuzzle } from "../../../atoms/puzzle";
 import { availableLayers } from "../../../logic/layers";
 import { blurActiveElement } from "../../../utils/DOMUtils";
@@ -12,7 +13,9 @@ const noSettingsPreset = <i>No settings for this layer</i>;
 
 export const LayerConstraintSettings = () => {
     const puzzle = usePuzzle();
-    const { layers, currentLayerId: id } = useAtomValue(layersAtom);
+    const { Layers } = useLayers();
+    const snap = useSnapshot(Layers.state);
+    const id = snap.currentLayerId;
     const layer = id && puzzle.layers[id];
 
     const [data, setData] = useAtom(constraintSettingsAtom);
@@ -30,7 +33,7 @@ export const LayerConstraintSettings = () => {
         return noSettingsPreset;
     }
 
-    const layerType = layers.filter((layer_) => layer_.id === id)[0].type;
+    const layerType = snap.layers[id].type;
     const layerClass = availableLayers[layerType as keyof typeof availableLayers];
 
     if (!layerClass.constraints) {

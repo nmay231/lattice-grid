@@ -1,4 +1,4 @@
-import { getLayers } from "../../atoms/layers";
+import { Layers } from "../../atoms/layers";
 import { UserCodeJSON } from "../../logic/userComputation/codeBlocks";
 import { DEFAULT_ALIAS_NAME } from "../../logic/userComputation/utils";
 import { Blockly } from "../../utils/Blockly";
@@ -109,8 +109,9 @@ blocks["ObjectSelector"] = {
         this.appendDummyInput().appendField(
             new Blockly.FieldDropdown(() => {
                 // TODO: How to trigger this function if the current layers change...
-                const layers = getLayers();
-                return layers.layers
+                const { order, layers } = Layers.state;
+                return order
+                    .map((id) => layers[id])
                     .filter(({ ethereal }) => !ethereal)
                     .map(({ id, displayName }) => [displayName, id]);
             }),

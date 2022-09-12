@@ -1,6 +1,6 @@
 import { getBlitGroups, OVERLAY_LAYER_ID, setBlitGroups } from "../atoms/blits";
 import { setCanvasSize } from "../atoms/canvasSize";
-import { addLayer, getLayers, removeLayer, setLayers } from "../atoms/layers";
+import { Layers } from "../atoms/layers";
 import { getSettings } from "../atoms/settings";
 import {
     Grid,
@@ -48,7 +48,7 @@ export class PuzzleManager {
     }
 
     _resetLayers() {
-        setLayers([]);
+        Layers.reset();
         this.layers = this._requiredLayers();
 
         // Guarantee that these layers will be present even if the saved puzzle fails to add them
@@ -98,7 +98,7 @@ export class PuzzleManager {
     }
 
     renderChange(change: RenderChange) {
-        const { layers, currentLayerId } = getLayers();
+        const { order, currentLayerId } = Layers.state;
         const settings = getSettings();
         if (currentLayerId === null) {
             return;
@@ -134,9 +134,7 @@ export class PuzzleManager {
                 }) || [];
 
             // TODO: Allowing layerIds === "all" is mostly used for resizing the grid. How to efficiently redraw layers that depend on the size of the grid. Are there even layers other than grids that need to rerender on resizes? If there are, should they have to explicitly subscribe to these events?
-            const layerIds = new Set(
-                change.layerIds === "all" ? layers.map(({ id }) => id) : change.layerIds,
-            );
+            const layerIds = new Set(change.layerIds === "all" ? order : change.layerIds);
 
             for (const layerId of layerIds) {
                 const layer = this.layers[layerId];
@@ -158,8 +156,8 @@ export class PuzzleManager {
     _getParams() {
         // TODO: change localStorage key and what's actually stored/how it's stored
         const data: LocalStorageData = { layers: [], grid: this.grid.getParams() };
-        for (const fakeLayer of getLayers().layers) {
-            const layer = this.layers[fakeLayer.id];
+        for (const id of Layers.state.order) {
+            const layer = this.layers[id];
             data.layers.push({
                 type: layer.type as NeedsUpdating,
                 rawSettings: layer.rawSettings,
@@ -176,9 +174,9 @@ export class PuzzleManager {
         this.storage.addStorage({ grid: this.grid, layer });
         this.changeLayerSettings(layer.id, settings || layerClass.defaultSettings);
 
-        if (!layer.unique || !getLayers().layers.filter(({ id }) => id === layer.id).length) {
+        if (!(layer.unique && layer.id in Layers.state.layers)) {
             const { id, type, displayName, ethereal } = layer;
-            addLayer({ id, type, displayName, ethereal });
+            Layers.addLayer({ id, type, displayName, ethereal });
         }
         return layer.id;
     }
@@ -187,7 +185,7 @@ export class PuzzleManager {
         if (id in this.layers) {
             delete this.layers[id];
             this.storage.removeStorage({ grid: this.grid, layer: { id } });
-            removeLayer(id);
+            Layers.removeLayer(id);
             this.renderChange({ type: "delete", layerId: id });
         }
     }
