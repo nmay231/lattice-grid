@@ -15,7 +15,7 @@ export const AddNewLayerButton = () => {
         if (value === DEFAULT_VALUE) {
             return;
         }
-        const newId = puzzle.addLayer(availableLayers[value as keyof typeof availableLayers]);
+        const newId = puzzle.addLayer(availableLayers[value as keyof typeof availableLayers], null);
         puzzle.renderChange({ type: "draw", layerIds: [newId] });
         setLayerType(DEFAULT_VALUE);
         // TODO: Accessibility might be an issue if we add a layer when the dropdown changes. Particularly when using arrow keys to select (not to mention possible issues with mobile)

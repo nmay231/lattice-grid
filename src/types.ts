@@ -225,6 +225,7 @@ export type BlitGroup = LineBlits | TextBlits | PolygonBlits;
 export type LocalStorageData = {
     grid: SquareGridParams;
     layers: {
+        id: Layer["id"];
         type: keyof typeof availableLayers;
         rawSettings?: UnknownObject;
     }[];

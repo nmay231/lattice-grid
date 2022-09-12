@@ -1,4 +1,5 @@
 import { atom } from "jotai";
+import { OverlayLayer } from "../logic/layers/Overlay";
 import { BlitGroup, Layer } from "../types";
 import { modifiableAtom } from "./modifiableAtom";
 
@@ -14,4 +15,4 @@ export const getBlitGroups = getValue;
 export const setBlitGroups = setValue;
 
 // TODO: Change this to a Symbol in the future?
-export const OVERLAY_LAYER_ID = "OVERLAY_BLITS_KEY";
+export const OVERLAY_LAYER_ID: OverlayLayer["type"] = "OverlayLayer";

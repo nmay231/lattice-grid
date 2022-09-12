@@ -54,7 +54,7 @@ export class PuzzleManager {
         // Guarantee that these layers will be present even if the saved puzzle fails to add them
         const requiredLayers = [CellOutlineLayer, SelectionLayer, OverlayLayer];
         for (const layer of requiredLayers) {
-            this.addLayer(layer);
+            this.addLayer(layer, null);
         }
     }
 
@@ -74,12 +74,9 @@ export class PuzzleManager {
     freshPuzzle() {
         this._resetLayers();
         this._loadPuzzle({
-            layers: [
-                { type: "CellOutlineLayer" },
-                { type: "SelectionLayer" },
-                { type: "NumberLayer" },
-                { type: "OverlayLayer" },
-            ],
+            layers: (
+                ["CellOutlineLayer", "SelectionLayer", "NumberLayer", "OverlayLayer"] as const
+            ).map((id) => ({ id, type: id })),
             grid: { type: "square", width: 10, height: 10, minX: 0, minY: 0 },
         });
         this.renderChange({ type: "draw", layerIds: "all" });
@@ -87,8 +84,8 @@ export class PuzzleManager {
 
     _loadPuzzle(data: LocalStorageData) {
         this.grid.setParams(data.grid);
-        for (const { type: layerClass, rawSettings } of data.layers) {
-            this.addLayer(availableLayers[layerClass], rawSettings);
+        for (const { id, type: layerClass, rawSettings } of data.layers) {
+            this.addLayer(availableLayers[layerClass], id, rawSettings);
         }
     }
 
@@ -159,6 +156,7 @@ export class PuzzleManager {
         for (const id of Layers.state.order) {
             const layer = this.layers[id];
             data.layers.push({
+                id: layer.id,
                 type: layer.type as NeedsUpdating,
                 rawSettings: layer.rawSettings,
             });
@@ -166,8 +164,9 @@ export class PuzzleManager {
         return data;
     }
 
-    addLayer(layerClass: LayerClass<any>, settings?: UnknownObject): string {
+    addLayer(layerClass: LayerClass<any>, id: string | null, settings?: UnknownObject): string {
         const layer = new layerClass(layerClass, this);
+        if (id) layer.id = id;
         this.layers[layer.id] = layer;
 
         // TODO: Should this ever retain storage for certain unique layers?
