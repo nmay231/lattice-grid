@@ -1,4 +1,4 @@
-import { keypressString } from "./stringUtils";
+import { keypressString, smartSort } from "./stringUtils";
 
 describe("keypressStringShorthand", () => {
     const call = (arg: Partial<Parameters<typeof keypressString>[0]>) => {
@@ -45,4 +45,18 @@ describe("keypressStringShorthand", () => {
     });
 
     it.todo("should still understand capslock when numlock is pressed (Windows bug)");
+});
+
+describe("smartSort", () => {
+    it("should sort a number array correctly", () => {
+        const arr = [0, 1, 10, 2, 20, 999, -200, -100];
+        arr.sort(smartSort);
+        expect(arr).toEqual([-200, -100, 0, 1, 2, 10, 20, 999]);
+    });
+
+    it("should sort a string array correctly", () => {
+        const arr = ["asdf1", "1", "10", "2", "asdf", "z", "Z"];
+        arr.sort(smartSort);
+        expect(arr).toEqual(["1", "10", "2", "Z", "asdf", "asdf1", "z"]);
+    });
 });
