@@ -1,90 +1,72 @@
-import { act, renderHook } from "@testing-library/react-hooks";
-import { useAtomValue } from "jotai";
-import { initialValue, LayersAtomValue, makeLayersAtom } from "./layers";
+import { createLayersState, LayersProxyState } from "./layers";
 
 describe("layers atom", () => {
-    const fourLayers: LayersAtomValue["layers"] = [
-        { id: "layer1", type: "class1", ethereal: false },
-        { id: "layer2", type: "class2", ethereal: true },
-        { id: "layer3", type: "class1", ethereal: false },
-        { id: "layer4", type: "class3", ethereal: false },
-    ];
+    const fullState: LayersProxyState = {
+        layers: {},
+        order: [],
+        currentLayerId: "layer4",
+    };
+    for (let i = 1; i <= 4; i++) {
+        const L = { id: `layer${i}`, displayName: `Layer${i}`, type: `type${i}`, ethereal: false };
+        fullState.layers[L.id] = L;
+        fullState.order.push(L.id);
+    }
+    fullState.layers["layer2"].ethereal = true;
 
-    it("should synchronize component and external state", () => {
-        const { layersAtom, addLayer, getLayers } = makeLayersAtom();
-        const { result } = renderHook(() => useAtomValue(layersAtom));
-
-        const expected: LayersAtomValue = {
-            currentLayerId: "layerId",
-            layers: [{ id: "layerId", type: "asdf", ethereal: false }],
-        };
-
-        act(() => addLayer({ ...expected.layers[0] }));
-
-        expect(getLayers()).toEqual(expected);
-        expect(result.current).toEqual(expected);
+    it("should start with the correct state", () => {
+        const { state } = createLayersState();
+        expect(state).toEqual<LayersProxyState>({ currentLayerId: null, layers: {}, order: [] });
     });
 
     it("should add multiple layers normally", () => {
-        const { layersAtom, addLayer } = makeLayersAtom();
-        const { result } = renderHook(() => useAtomValue(layersAtom));
+        const { state, addLayer } = createLayersState();
 
-        act(() => {
-            for (const layer of fourLayers) {
-                addLayer({ ...layer });
-            }
-        });
+        for (const id of fullState.order) {
+            addLayer({ ...fullState.layers[id] });
+        }
 
-        expect(result.current).toEqual<LayersAtomValue>({
-            layers: fourLayers,
-            currentLayerId: "layer4",
-        });
+        expect(state).toEqual<LayersProxyState>(fullState);
     });
 
     it("should reorder layers", () => {
-        const { layersAtom, addLayer, setLayers } = makeLayersAtom();
-        const { result } = renderHook(() => useAtomValue(layersAtom));
+        const { state, addLayer, shuffleItemOnto } = createLayersState();
 
-        act(() => {
-            // First add them in reverse order
-            for (const layer of [...fourLayers].reverse()) {
-                addLayer({ ...layer });
-            }
-            // Then reset the order
-            setLayers(fourLayers);
+        // First add them in reverse order
+        for (const id of [...fullState.order].reverse()) {
+            addLayer({ ...fullState.layers[id] });
+        }
+
+        expect(state).toEqual<LayersProxyState>({
+            layers: fullState.layers,
+            order: ["layer4", "layer3", "layer2", "layer1"],
+            currentLayerId: "layer1",
         });
 
-        expect(result.current).toEqual<LayersAtomValue>({
-            layers: fourLayers,
+        shuffleItemOnto({ id: "layer4" }, { id: "layer1" });
+        expect(state).toEqual<LayersProxyState>({
+            layers: fullState.layers,
+            order: ["layer3", "layer2", "layer1", "layer4"],
             currentLayerId: "layer1",
         });
     });
 
-    it("should clear layers and currentLayerId", () => {
-        const { layersAtom, addLayer, setLayers } = makeLayersAtom();
-        const { result } = renderHook(() => useAtomValue(layersAtom));
+    it("should reset to initial state if all layers are removed", () => {
+        const { state, addLayer, reset } = createLayersState();
 
-        act(() => {
-            // First add them
-            for (const layer of fourLayers) {
-                addLayer({ ...layer });
-            }
-            // Then clear them out for a fresh puzzle
-            setLayers([]);
-        });
+        for (const id of fullState.order) {
+            addLayer({ ...fullState.layers[id] });
+        }
 
-        expect(result.current).toEqual(initialValue);
+        reset();
+        expect(state).toEqual<LayersProxyState>({ currentLayerId: null, layers: {}, order: [] });
     });
 
     it("should tab forward through layers", () => {
-        const { layersAtom, addLayer, selectLayer } = makeLayersAtom();
-        const { result } = renderHook(() => useAtomValue(layersAtom));
+        const { state, addLayer, selectLayer } = createLayersState();
 
-        act(() => {
-            for (const layer of fourLayers) {
-                addLayer({ ...layer });
-            }
-        });
+        for (const id of fullState.order) {
+            addLayer({ ...fullState.layers[id] });
+        }
 
         const ids = [
             "layer4", // Initial
@@ -94,20 +76,17 @@ describe("layers atom", () => {
         ];
 
         for (const id of ids) {
-            expect(result.current.currentLayerId).toEqual(id);
-            act(() => selectLayer({ tab: 1 }));
+            expect(state.currentLayerId).toEqual(id);
+            selectLayer({ tab: 1 });
         }
     });
 
     it("should tab backward through layers", () => {
-        const { layersAtom, addLayer, selectLayer } = makeLayersAtom();
-        const { result } = renderHook(() => useAtomValue(layersAtom));
+        const { state, addLayer, selectLayer } = createLayersState();
 
-        act(() => {
-            for (const layer of fourLayers) {
-                addLayer({ ...layer });
-            }
-        });
+        for (const id of fullState.order) {
+            addLayer({ ...fullState.layers[id] });
+        }
 
         const ids = [
             "layer4", // Initial
@@ -117,113 +96,84 @@ describe("layers atom", () => {
         ];
 
         for (const id of ids) {
-            expect(result.current.currentLayerId).toEqual(id);
-            act(() => selectLayer({ tab: -1 }));
+            expect(state.currentLayerId).toEqual(id);
+            selectLayer({ tab: -1 });
         }
     });
 
     it("should select a new layer by id", () => {
-        const { layersAtom, addLayer, selectLayer } = makeLayersAtom();
-        const { result } = renderHook(() => useAtomValue(layersAtom));
+        const { state, addLayer, selectLayer } = createLayersState();
 
-        act(() => {
-            for (const layer of fourLayers) {
-                addLayer({ ...layer });
-            }
-        });
+        for (const id of fullState.order) {
+            addLayer({ ...fullState.layers[id] });
+        }
 
-        expect(result.current.currentLayerId).toEqual("layer4");
-        act(() => selectLayer({ id: "layer2" }));
-        expect(result.current.currentLayerId).toEqual("layer2");
+        expect(state.currentLayerId).toEqual("layer4");
+        selectLayer({ id: "layer1" });
+        expect(state.currentLayerId).toEqual("layer1");
+        selectLayer({ id: "layer2" }); // Ethereal, do not select
+        expect(state.currentLayerId).toEqual("layer1");
     });
 
     it("should remove a layer that is not selected", () => {
-        const { layersAtom, addLayer, selectLayer, removeLayer } = makeLayersAtom();
-        const { result } = renderHook(() => useAtomValue(layersAtom));
+        const { state, addLayer, selectLayer, removeLayer } = createLayersState();
 
-        act(() => {
-            for (const layer of fourLayers) {
-                addLayer({ ...layer });
-            }
-            // Select a layer and remove a layer before it
-            selectLayer({ id: "layer3" });
-            removeLayer("layer2");
-        });
+        for (const id of fullState.order) {
+            addLayer({ ...fullState.layers[id] });
+        }
+        // Select a layer and remove a layer before it
+        selectLayer({ id: "layer3" });
+        removeLayer("layer2");
 
-        expect(result.current).toEqual<LayersAtomValue>({
-            layers: [
-                fourLayers[0],
-                // Second layer removed
-                fourLayers[2],
-                fourLayers[3],
-            ],
+        const { layer2, ...layers } = fullState.layers;
+        expect(state).toEqual<LayersProxyState>({
+            order: [fullState.order[0], fullState.order[2], fullState.order[3]],
+            layers,
             // Removing a different layer should not change the current layer
             currentLayerId: "layer3",
         });
     });
 
-    it("should remove a layer that is selected with layers after it", () => {
-        const { layersAtom, addLayer, selectLayer, removeLayer } = makeLayersAtom();
-        const { result } = renderHook(() => useAtomValue(layersAtom));
+    it("should select the next layer if the current is removed", () => {
+        const { state, addLayer, selectLayer, removeLayer } = createLayersState();
 
-        act(() => {
-            for (const layer of fourLayers) {
-                addLayer({ ...layer });
-            }
-            selectLayer({ id: "layer1" });
-        });
+        for (const id of fullState.order) {
+            addLayer({ ...fullState.layers[id] });
+        }
+        // Select a layer and remove a layer before it
+        selectLayer({ id: "layer1" });
 
-        expect(result.current.currentLayerId).toEqual("layer1");
-        act(() => removeLayer("layer1"));
+        expect(state.currentLayerId).toEqual("layer1");
+        removeLayer("layer1");
         // Removing the layer should select the next non-ethereal layer
-        expect(result.current.currentLayerId).toEqual("layer3");
+        expect(state.currentLayerId).toEqual("layer3");
     });
 
-    it("should remove a layer that is selected with layer before it", () => {
-        const { layersAtom, addLayer, removeLayer } = makeLayersAtom();
-        const { result } = renderHook(() => useAtomValue(layersAtom));
+    it("should select the next layer if the current is removed and there is none after", () => {
+        const { state, addLayer, removeLayer } = createLayersState();
 
-        act(() => {
-            // Skip the fourth layer
-            for (const layer of fourLayers.slice(0, 3)) {
-                addLayer({ ...layer });
-            }
-        });
+        // Skip the fourth layer
+        for (const id of fullState.order.slice(0, 3)) {
+            addLayer({ ...fullState.layers[id] });
+        }
 
-        expect(result.current.currentLayerId).toEqual("layer3");
-        act(() => removeLayer("layer3"));
+        expect(state.currentLayerId).toEqual("layer3");
+        removeLayer("layer3");
         // Removing the layer should select the next non-ethereal layer
-        expect(result.current.currentLayerId).toEqual("layer1");
+        expect(state.currentLayerId).toEqual("layer1");
     });
 
-    it("should reset to initial state if all layers are removed", () => {
-        const { layersAtom, addLayer, setLayers } = makeLayersAtom();
-        const { result } = renderHook(() => useAtomValue(layersAtom));
+    it("should not select an ethereal layer when adding it", () => {
+        const { state, addLayer } = createLayersState();
 
-        act(() => {
-            for (const layer of fourLayers) {
-                addLayer({ ...layer });
-            }
-        });
+        // The last layer added is ethereal
+        for (const id of fullState.order.slice(0, 2)) {
+            addLayer({ ...fullState.layers[id] });
+        }
 
-        // Clear layers
-        act(() => setLayers([]));
-        expect(result.current).toEqual(initialValue);
-    });
-
-    it("should not select a ethereal layer when adding it", () => {
-        const { layersAtom, addLayer } = makeLayersAtom();
-        const { result } = renderHook(() => useAtomValue(layersAtom));
-
-        act(() => {
-            // Make sure the last layer added is ethereal
-            for (const layer of fourLayers.slice(0, 2)) {
-                addLayer({ ...layer });
-            }
-        });
-
-        expect(result.current).toEqual<LayersAtomValue>({
-            layers: fourLayers.slice(0, 2),
+        expect(state).toEqual<LayersProxyState>({
+            order: fullState.order.slice(0, 2),
+            layers: { layer1: fullState.layers.layer1, layer2: fullState.layers.layer2 },
             currentLayerId: "layer1",
         });
     });

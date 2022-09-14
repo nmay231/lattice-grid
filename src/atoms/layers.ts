@@ -1,22 +1,23 @@
+import { arrayMove } from "@dnd-kit/sortable";
 import { proxy } from "valtio";
 import { errorNotification } from "../utils/DOMUtils";
 
 // TODO: import { Layer } from "../types"
-type Layer = {
+export type Layer = {
     id: string;
     type: string;
     displayName: string;
     ethereal: boolean;
 };
 
-type ProxyState = {
+export type LayersProxyState = {
     order: Layer["id"][];
     layers: Record<Layer["id"], Layer>;
     currentLayerId: null | Layer["id"];
 };
 
 export const createLayersState = () => {
-    const state = proxy<ProxyState>({
+    const state = proxy<LayersProxyState>({
         order: [],
         layers: {},
         currentLayerId: null,
@@ -41,8 +42,7 @@ export const createLayersState = () => {
                         `${beingMoved.id} => ${target.id} not in ${state.order}`,
                 });
             }
-            const moving = state.order.splice(from, 1);
-            state.order.splice(to, 0, ...moving);
+            state.order = arrayMove(state.order, from, to);
         },
 
         addLayer: (layer: Layer) => {
@@ -61,6 +61,7 @@ export const createLayersState = () => {
                 });
             }
             order.splice(index, 1);
+            delete layers[idToRemove];
 
             if (state.currentLayerId === idToRemove) {
                 let nextId = null;
@@ -87,7 +88,9 @@ export const createLayersState = () => {
             }
         },
 
-        selectLayer: (arg: { id: string } | { tab: number }): ProxyState["currentLayerId"] => {
+        selectLayer: (
+            arg: { id: string } | { tab: number },
+        ): LayersProxyState["currentLayerId"] => {
             if ("id" in arg) {
                 if (!(arg.id in state.layers) || state.layers[arg.id].ethereal) {
                     errorNotification({
