@@ -19,7 +19,7 @@ export class OverlayLayer extends BaseLayer<OverlayProps> implements IOverlayLay
     handleEvent = methodNotImplemented({ name: "Overlay.handleEvent" });
     gatherPoints = methodNotImplemented({ name: "Overlay.gatherPoints" });
 
-    static uniqueInstance: OverlayLayer;
+    static uniqueInstance?: OverlayLayer;
     static create: LayerClass<OverlayProps>["create"] = (puzzle) => {
         OverlayLayer.uniqueInstance =
             OverlayLayer.uniqueInstance || new OverlayLayer(OverlayLayer, puzzle);

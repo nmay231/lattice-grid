@@ -15,7 +15,7 @@ export class CellOutlineLayer extends BaseLayer<CellOutlineProps> implements ICe
     static type = "CellOutlineLayer" as const;
     static displayName = "Cell Outline";
 
-    static uniqueInstance: CellOutlineLayer;
+    static uniqueInstance?: CellOutlineLayer;
     static create: LayerClass<CellOutlineProps>["create"] = (puzzle) => {
         CellOutlineLayer.uniqueInstance =
             CellOutlineLayer.uniqueInstance || new CellOutlineLayer(CellOutlineLayer, puzzle);

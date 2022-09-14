@@ -1,4 +1,4 @@
-import { LayerStorage } from "../../types";
+import { LayerStorage, NeedsUpdating } from "../../types";
 import { getEventEssentials } from "../../utils/testUtils";
 import { SimpleLineLayer, SimpleLineProps } from "./SimpleLine";
 
@@ -10,7 +10,7 @@ describe("SimpleLine", () => {
         settings?: SimpleLineProps["RawSettings"];
     };
     const getSimpleLine = ({ stored, settings }: Arg) => {
-        const simpleLine: typeof SimpleLineLayer = Object.create(SimpleLineLayer);
+        const simpleLine = SimpleLineLayer.create({ layers: {} } as NeedsUpdating);
         simpleLine.newSettings({
             ...getEventEssentials({ stored }),
             attachSelectionHandler,

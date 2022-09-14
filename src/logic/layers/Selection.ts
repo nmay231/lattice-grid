@@ -45,7 +45,7 @@ export class SelectionLayer extends BaseLayer<SelectionProps> implements ISelect
 
     id = "SelectionLayer";
 
-    static uniqueInstance: SelectionLayer;
+    static uniqueInstance?: SelectionLayer;
     static create: LayerClass<SelectionProps>["create"] = (puzzle) => {
         SelectionLayer.uniqueInstance =
             SelectionLayer.uniqueInstance || new SelectionLayer(SelectionLayer, puzzle);

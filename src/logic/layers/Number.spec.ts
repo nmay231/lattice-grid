@@ -1,4 +1,4 @@
-import { LayerHandlerResult, LayerStorage } from "../../types";
+import { LayerHandlerResult, LayerStorage, NeedsUpdating } from "../../types";
 import { getEventEssentials, GetEventEssentialsArg } from "../../utils/testUtils";
 import { NumberLayer, NumberProps } from "./Number";
 
@@ -17,7 +17,7 @@ describe("Number Layer", () => {
 
     // Layer with numbers 1-9
     const settings1to9 = { min: 1, max: 9 };
-    const layer1to9: typeof NumberLayer = Object.create(NumberLayer);
+    const layer1to9 = NumberLayer.create({ layers: {} } as NeedsUpdating) as NumberLayer;
     layer1to9.newSettings({
         ...eventEssentials(),
         newSettings: settings1to9,
@@ -26,7 +26,7 @@ describe("Number Layer", () => {
 
     // Layer with numbers -9 to 64
     const settingsN9to64 = { min: -9, max: 64 };
-    const layerN9to64: typeof NumberLayer = Object.create(NumberLayer);
+    const layerN9to64 = NumberLayer.create({ layers: {} } as NeedsUpdating) as NumberLayer;
     layerN9to64.newSettings({
         ...eventEssentials(),
         newSettings: settingsN9to64,
