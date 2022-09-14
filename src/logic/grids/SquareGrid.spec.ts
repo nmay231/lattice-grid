@@ -1,8 +1,9 @@
 import { SquareGrid } from "./SquareGrid";
 
 describe("SquareGrid", () => {
-    const smallGrid = new SquareGrid({ width: 2, height: 2 });
-    const mediumGrid = new SquareGrid({ width: 10, height: 10 });
+    const common = { minX: 0, minY: 0, type: "square" as const };
+    const smallGrid = new SquareGrid({ ...common, width: 2, height: 2 });
+    const mediumGrid = new SquareGrid({ ...common, width: 10, height: 10 });
 
     it("knows points are within bounds", () => {
         expect([

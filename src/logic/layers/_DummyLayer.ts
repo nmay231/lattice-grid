@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // The settings type is described separately from Layer to allow easier custom typing.
 type Settings = { onlyUsedInternally: string; canContainFunctions: () => void };
 
