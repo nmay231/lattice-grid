@@ -1,3 +1,5 @@
+import { randomId } from "@mantine/hooks";
+
 export const keypressString = (
     event: Pick<KeyboardEvent, "key" | "ctrlKey" | "shiftKey">,
 ): string => {
@@ -16,5 +18,14 @@ export const keypressString = (
 };
 
 export const smartSort = <T extends string | number = any>(a: T, b: T) => {
-    return a < b ? 1 : a > b ? -1 : 0;
+    return a < b ? -1 : a > b ? 1 : 0;
+};
+
+export const randomStringId = (blacklist: string[]) => {
+    let s: string;
+    do {
+        // TODO: I'll probably use a different function in the future, we'll see.
+        s = randomId();
+    } while (blacklist.includes(s));
+    return s;
 };

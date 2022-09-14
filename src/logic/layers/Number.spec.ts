@@ -1,4 +1,4 @@
-import { LayerHandlerResult, LayerStorage } from "../../globals";
+import { LayerHandlerResult, LayerStorage, NeedsUpdating } from "../../types";
 import { getEventEssentials, GetEventEssentialsArg } from "../../utils/testUtils";
 import { NumberLayer, NumberProps } from "./Number";
 
@@ -13,24 +13,24 @@ describe("Number Layer", () => {
 
     // Used to fake Date.now
     const START_TIME = 1649519000000;
-    const attachSelectionsHandler = jest.fn();
+    const attachSelectionHandler = jest.fn();
 
     // Layer with numbers 1-9
     const settings1to9 = { min: 1, max: 9 };
-    const layer1to9: typeof NumberLayer = Object.create(NumberLayer);
-    layer1to9.newSettings?.({
+    const layer1to9 = NumberLayer.create({ layers: {} } as NeedsUpdating) as NumberLayer;
+    layer1to9.newSettings({
         ...eventEssentials(),
         newSettings: settings1to9,
-        attachSelectionsHandler,
+        attachSelectionHandler,
     });
 
     // Layer with numbers -9 to 64
     const settingsN9to64 = { min: -9, max: 64 };
-    const layerN9to64: typeof NumberLayer = Object.create(NumberLayer);
-    layerN9to64.newSettings?.({
+    const layerN9to64 = NumberLayer.create({ layers: {} } as NeedsUpdating) as NumberLayer;
+    layerN9to64.newSettings({
         ...eventEssentials(),
         newSettings: settingsN9to64,
-        attachSelectionsHandler,
+        attachSelectionHandler,
     });
 
     it("should place numbers", () => {
@@ -80,17 +80,17 @@ describe("Number Layer", () => {
             },
         };
 
-        const result = layer1to9.newSettings?.({
+        const result = layer1to9.newSettings({
             ...eventEssentials({ stored }),
             newSettings: { min: -1, max: 10 },
-            attachSelectionsHandler,
+            attachSelectionHandler,
         });
         expect(result?.history).toEqual([]);
 
-        layer1to9.newSettings?.({
+        layer1to9.newSettings({
             ...eventEssentials(),
             newSettings: settings1to9,
-            attachSelectionsHandler,
+            attachSelectionHandler,
         });
     });
 
@@ -104,10 +104,10 @@ describe("Number Layer", () => {
             },
         };
 
-        const result = layer1to9.newSettings?.({
+        const result = layer1to9.newSettings({
             ...eventEssentials({ stored }),
             newSettings: { min: 3, max: 7 },
-            attachSelectionsHandler,
+            attachSelectionHandler,
         });
 
         expect(result?.history).toEqual([
@@ -115,10 +115,10 @@ describe("Number Layer", () => {
             { id: "3,3", object: null },
         ]);
 
-        layer1to9.newSettings?.({
+        layer1to9.newSettings({
             ...eventEssentials(),
             newSettings: settings1to9,
-            attachSelectionsHandler,
+            attachSelectionHandler,
         });
     });
 

@@ -1,4 +1,4 @@
 import { atom } from "jotai";
-import { UnknownObject } from "../globals";
+import { UnknownObject } from "../types";
 
 export const constraintSettingsAtom = atom<null | UnknownObject>(null);

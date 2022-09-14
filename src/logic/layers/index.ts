@@ -1,4 +1,3 @@
-import { ILayer } from "../../globals";
 import { BackgroundColorLayer } from "./BackgroundColor";
 import { CellOutlineLayer } from "./CellOutline";
 import { KillerCagesLayer } from "./KillerCages";
@@ -8,7 +7,7 @@ import { SelectionLayer } from "./Selection";
 import { SimpleLineLayer } from "./SimpleLine";
 import { ToggleCharactersLayer } from "./ToggleCharacters";
 
-const layers: ILayer<any>[] = [
+export const availableLayers = {
     BackgroundColorLayer,
     CellOutlineLayer,
     KillerCagesLayer,
@@ -17,9 +16,4 @@ const layers: ILayer<any>[] = [
     SelectionLayer,
     SimpleLineLayer,
     ToggleCharactersLayer,
-];
-
-export const availableLayers: Record<string, ILayer> = {};
-for (const layer of layers) {
-    availableLayers[layer.id] = layer;
-}
+} as const;

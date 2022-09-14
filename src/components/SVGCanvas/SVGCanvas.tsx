@@ -1,10 +1,11 @@
 import { useAtomValue } from "jotai";
 import { useEffect, useRef } from "react";
+import { useSnapshot } from "valtio";
 import { blitsAtom } from "../../atoms/blits";
 import { canvasSizeAtom } from "../../atoms/canvasSize";
-import { layersAtom } from "../../atoms/layers";
+import { useLayers } from "../../atoms/layers";
 import { usePuzzle } from "../../atoms/puzzle";
-import { NeedsUpdating } from "../../globals";
+import { NeedsUpdating } from "../../types";
 import { errorNotification } from "../../utils/DOMUtils";
 import { Line } from "./Line";
 import { Polygon } from "./Polygon";
@@ -20,7 +21,8 @@ const blitters = {
 export const SVGCanvas = () => {
     const controls = usePuzzle().controls;
     const blitGroups = useAtomValue(blitsAtom);
-    const layers = useAtomValue(layersAtom).layers;
+    const { Layers } = useLayers();
+    const snap = useSnapshot(Layers.state);
     const { minX, minY, width, height, zoom } = useAtomValue(canvasSizeAtom);
 
     const scrollArea = useRef<HTMLDivElement>(null);
@@ -53,8 +55,8 @@ export const SVGCanvas = () => {
             >
                 <div className={styling.innerContainer} {...controls.eventListeners}>
                     <svg viewBox={`${minX} ${minY} ${width} ${height}`}>
-                        {layers.flatMap(
-                            ({ id }) =>
+                        {snap.order.flatMap(
+                            (id) =>
                                 blitGroups[id]?.map((group) => {
                                     const Blitter = blitters[group.blitter];
                                     return (

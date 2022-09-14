@@ -1,4 +1,4 @@
-import { CompilerErrorDetails, VariableCodeBlock } from "../../globals";
+import { CompilerErrorDetails, VariableCodeBlock } from "../../types";
 import { Blockly } from "../../utils/Blockly";
 
 export const DEFAULT_ALIAS_NAME = "MY ALIAS";

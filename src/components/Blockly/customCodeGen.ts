@@ -1,5 +1,5 @@
-import { NeedsUpdating } from "../../globals";
 import { UserCodeJSON } from "../../logic/userComputation/codeBlocks";
+import { NeedsUpdating } from "../../types";
 import { Blockly } from "../../utils/Blockly";
 import "./blocklyUI";
 

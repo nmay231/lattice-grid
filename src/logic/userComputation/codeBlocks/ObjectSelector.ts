@@ -1,4 +1,4 @@
-import { Grid, ICodeBlock, IVariableInfo } from "../../../globals";
+import { Grid, ICodeBlock, IVariableInfo } from "../../../types";
 import { ComputeManager } from "../ComputeManager";
 import { CompilerError } from "../utils";
 

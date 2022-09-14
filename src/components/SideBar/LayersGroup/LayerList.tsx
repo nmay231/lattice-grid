@@ -8,14 +8,13 @@ import {
 } from "@dnd-kit/core";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import {
-    arrayMove,
     SortableContext,
     sortableKeyboardCoordinates,
     verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { useAtomValue } from "jotai";
 import { IoMdCheckmark, IoMdClose } from "react-icons/io";
-import { layersAtom, setLayers } from "../../../atoms/layers";
+import { useSnapshot } from "valtio";
+import { useLayers } from "../../../atoms/layers";
 import { usePuzzle } from "../../../atoms/puzzle";
 import { blurActiveElement } from "../../../utils/DOMUtils";
 import { SortableItem } from "../../SortableItem";
@@ -29,14 +28,12 @@ export const LayerList = () => {
             coordinateGetter: sortableKeyboardCoordinates,
         }),
     );
-    const { layers, currentLayerId } = useAtomValue(layersAtom);
+    const { Layers } = useLayers();
+    const snap = useSnapshot(Layers.state);
 
     const handleDragEnd = ({ active, over }: DragEndEvent) => {
         if (over?.id && active.id !== over.id) {
-            const ids = layers.map(({ id }) => id);
-            const oldIndex = ids.indexOf(active.id);
-            const newIndex = ids.indexOf(over.id);
-            setLayers(arrayMove(layers, oldIndex, newIndex));
+            Layers.shuffleItemOnto(active, over);
             puzzle.renderChange({ type: "reorder" });
         }
         blurActiveElement();
@@ -45,7 +42,7 @@ export const LayerList = () => {
     const handleSelect = (id: string) => (event: React.PointerEvent) => {
         event.stopPropagation();
         blurActiveElement();
-        if (id !== currentLayerId) {
+        if (id !== Layers.state.currentLayerId) {
             puzzle.controls.selectLayer({ id });
         }
     };
@@ -62,9 +59,13 @@ export const LayerList = () => {
             onDragEnd={handleDragEnd}
             modifiers={[restrictToVerticalAxis]}
         >
-            <SortableContext items={layers} strategy={verticalListSortingStrategy}>
-                {layers.map(({ id, ethereal }) => {
-                    const current = id === currentLayerId;
+            <SortableContext
+                items={snap.order.map((id) => ({ id }))}
+                strategy={verticalListSortingStrategy}
+            >
+                {snap.order.map((id) => {
+                    const current = id === snap.currentLayerId;
+                    const { ethereal, displayName } = snap.layers[id];
                     return (
                         !ethereal && (
                             <SortableItem key={id} id={id}>
@@ -76,7 +77,7 @@ export const LayerList = () => {
                                         }
                                     >
                                         {current && <IoMdCheckmark />}
-                                        <span>{id}</span>
+                                        <span>{displayName}</span>
                                     </span>
 
                                     <span

@@ -1,5 +1,5 @@
 import { cloneDeep } from "lodash";
-import { ILayer, LayerProps, PointType } from "../../../globals";
+import { Layer, LayerProps, PointType } from "../../../types";
 import { errorNotification } from "../../../utils/DOMUtils";
 import { smartSort } from "../../../utils/stringUtils";
 import { KeyDownEventHandler } from "../Selection";
@@ -15,7 +15,7 @@ export interface MultiPointLayerProps extends LayerProps {
 }
 
 export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
-    layer: ILayer<LP>,
+    layer: Layer<LP>,
     {
         // TODO: In user settings, rename allowOverlap to "Allow partial overlap"
         allowOverlap = false,

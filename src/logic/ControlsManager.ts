@@ -1,16 +1,16 @@
 import { clamp } from "lodash";
 import { getCanvasSize, setCanvasSize } from "../atoms/canvasSize";
-import { getLayers, selectLayer } from "../atoms/layers";
+import { Layers } from "../atoms/layers";
 import { getSettings } from "../atoms/settings";
 import { blocklyModalIsOpen, setBlocklyModalOpen } from "../components/Blockly/BlocklyModal";
 import {
     CleanedDOMEvent,
-    ILayer,
+    Layer,
     LayerEvent,
     LayerProps,
     PointerMoveOrDown,
     UnknownObject,
-} from "../globals";
+} from "../types";
 import { errorNotification } from "../utils/DOMUtils";
 import { keypressString } from "../utils/stringUtils";
 import { PuzzleManager } from "./PuzzleManager";
@@ -56,7 +56,7 @@ export class ControlsManager {
     }
 
     getCurrentLayer() {
-        const currentLayerId = getLayers().currentLayerId;
+        const { currentLayerId } = Layers.state;
 
         return currentLayerId === null ? null : this.puzzle.layers[currentLayerId];
     }
@@ -89,7 +89,7 @@ export class ControlsManager {
         };
     }
 
-    applyLayerEvent(layer: ILayer, event: CleanedDOMEvent) {
+    applyLayerEvent(layer: Layer, event: CleanedDOMEvent) {
         const { grid, storage } = this.puzzle;
         const layerEvent: LayerEvent<LayerProps> = {
             ...event,
@@ -126,10 +126,9 @@ export class ControlsManager {
         this.tempStorage = null;
     }
 
-    selectLayer(...arg: Parameters<typeof selectLayer>) {
-        const oldId = getLayers().currentLayerId;
-        selectLayer(...arg);
-        const newId = getLayers().currentLayerId;
+    selectLayer(...arg: Parameters<typeof Layers["selectLayer"]>) {
+        const oldId = Layers.state.currentLayerId;
+        const newId = Layers.selectLayer(...arg);
         if (oldId !== newId) {
             // TODO: This will eventually just change out the overlay blits instead of this
             this.puzzle.renderChange({ type: "switchLayer" });

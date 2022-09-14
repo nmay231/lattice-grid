@@ -1,9 +1,9 @@
-import { ILayer, LayerEvent, LayerStorage, PointerMoveOrDown } from "../../../globals";
+import { Layer, LayerEvent, LayerStorage, PointerMoveOrDown } from "../../../types";
 import { getEventEssentials } from "../../../utils/testUtils";
 import { DummyLayer } from "../_DummyLayer";
 import { handleEventsCurrentSetting, MinimalSettings, TwoPointProps } from "./twoPoint";
 
-type TwoPointLayer = ILayer<TwoPointProps> & {
+type TwoPointLayer = Layer<TwoPointProps> & {
     settings: MinimalSettings;
 };
 

@@ -1,4 +1,4 @@
-import { CompilerErrorDetails, ICodeBlock, VariableCodeBlock } from "../../../globals";
+import { CompilerErrorDetails, ICodeBlock, VariableCodeBlock } from "../../../types";
 import { ComputeManager } from "../ComputeManager";
 
 export interface IReadAlias {

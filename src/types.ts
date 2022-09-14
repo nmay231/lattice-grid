@@ -4,7 +4,8 @@ import type { PolygonBlits } from "./components/SVGCanvas/Polygon";
 import type { TextBlits } from "./components/SVGCanvas/Text";
 import type { SquareGridParams } from "./logic/grids/SquareGrid";
 import type { availableLayers } from "./logic/layers";
-import type { SelectionExtraProps } from "./logic/layers/Selection";
+import type { ISelectionLayer } from "./logic/layers/Selection";
+import type { PuzzleManager } from "./logic/PuzzleManager";
 import type { StorageManager } from "./logic/StorageManager";
 import type { UserCodeJSON } from "./logic/userComputation/codeBlocks";
 
@@ -134,7 +135,7 @@ export type LayerEvent<LP extends LayerProps> = CleanedDOMEvent & LayerEventEsse
 
 export type NewSettingsEvent<LP extends LayerProps> = LayerEventEssentials<LP> & {
     newSettings: LP["RawSettings"];
-    attachSelectionsHandler: SelectionExtraProps["attachHandler"];
+    attachSelectionHandler: ISelectionLayer["attachHandler"];
 };
 
 export type LayerHandlerResult = {
@@ -142,29 +143,43 @@ export type LayerHandlerResult = {
     history?: IncompleteHistoryAction[];
 };
 
-type JSONSchema = { schema: NeedsUpdating; uischemaElements: NeedsUpdating[] };
+export type JSONSchema = { schema: NeedsUpdating; uischemaElements: NeedsUpdating[] };
 
 export type LayerProps = {
     // TODO: Try allowing settings and rawSettings to be optional
+    Type: string;
     RawSettings: UnknownObject;
     ObjectState: UnknownObject;
     ExtraLayerStorageProps: UnknownObject;
     TempStorage: UnknownObject;
 };
 
-export type ILayer<LP extends LayerProps = LayerProps> = {
+export type Layer<LP extends LayerProps = LayerProps> = {
+    type: LP["Type"];
     id: string;
+    displayName: string;
     unique: boolean;
     ethereal: boolean;
     rawSettings: LP["RawSettings"];
+    controls?: JSONSchema;
+    constraints?: JSONSchema;
+    newSettings: (settingsChange: Omit<NewSettingsEvent<LP>, "tempStorage">) => LayerHandlerResult;
+    gatherPoints: (layerEvent: PointerMoveOrDown & LayerEventEssentials<LP>) => string[];
+    handleEvent: (layerEvent: LayerEvent<LP>) => LayerHandlerResult;
+    getBlits: (data: Omit<LayerEventEssentials<LP>, "tempStorage">) => BlitGroup[];
+    getOverlayBlits?: (data: Omit<LayerEventEssentials<LP>, "tempStorage">) => BlitGroup[];
+};
+
+export type LayerClass<LP extends LayerProps = LayerProps> = {
+    new (klass: LayerClass<LP>, puzzle: PuzzleManager): Layer<LP>;
+    create: (puzzle: PuzzleManager) => Layer<LP>;
+    type: LP["Type"];
+    displayName: string;
+    ethereal: boolean;
+    unique: boolean;
     defaultSettings: LP["RawSettings"];
     controls?: JSONSchema;
     constraints?: JSONSchema;
-    newSettings?(settingsChange: NewSettingsEvent<LP>): LayerHandlerResult | void;
-    gatherPoints: (layerEvent: PointerMoveOrDown & LayerEventEssentials<LP>) => string[];
-    handleEvent: (layerEvent: LayerEvent<LP>) => LayerHandlerResult;
-    getBlits?(data: Omit<LayerEventEssentials<LP>, "tempStorage">): BlitGroup[];
-    getOverlayBlits?(data: Omit<LayerEventEssentials<LP>, "tempStorage">): BlitGroup[];
 };
 // #endregion
 
@@ -210,7 +225,8 @@ export type BlitGroup = LineBlits | TextBlits | PolygonBlits;
 export type LocalStorageData = {
     grid: SquareGridParams;
     layers: {
-        layerClass: keyof typeof availableLayers;
+        id: Layer["id"];
+        type: keyof typeof availableLayers;
         rawSettings?: UnknownObject;
     }[];
 };

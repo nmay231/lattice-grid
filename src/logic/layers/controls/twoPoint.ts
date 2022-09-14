@@ -1,5 +1,5 @@
 import { isEqual } from "lodash";
-import { ILayer, LayerProps, PointType, UnknownObject } from "../../../globals";
+import { Layer, LayerProps, PointType, UnknownObject } from "../../../types";
 import { errorNotification } from "../../../utils/DOMUtils";
 import { smartSort } from "../../../utils/stringUtils";
 
@@ -23,7 +23,7 @@ type Arg = Partial<{
 }>;
 
 export const handleEventsCurrentSetting = <LP extends TwoPointProps>(
-    layer: ILayer<LP> & { settings: MinimalSettings },
+    layer: Layer<LP> & { settings: MinimalSettings },
     { directional, pointTypes, stopOnFirstPoint, deltas }: Arg = {},
 ) => {
     if (!pointTypes?.length || !deltas?.length) {

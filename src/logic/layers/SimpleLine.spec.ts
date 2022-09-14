@@ -1,22 +1,19 @@
-import { LayerStorage } from "../../globals";
+import { LayerStorage, NeedsUpdating } from "../../types";
 import { getEventEssentials } from "../../utils/testUtils";
 import { SimpleLineLayer, SimpleLineProps } from "./SimpleLine";
 
 describe("SimpleLine", () => {
-    const attachSelectionsHandler = jest.fn();
+    const attachSelectionHandler = jest.fn();
 
     type Arg = {
         stored?: LayerStorage<SimpleLineProps>;
         settings?: SimpleLineProps["RawSettings"];
     };
     const getSimpleLine = ({ stored, settings }: Arg) => {
-        const simpleLine: typeof SimpleLineLayer = Object.create(SimpleLineLayer);
-        if (!simpleLine.newSettings) {
-            throw Error("Expected simpleLine.newSettings to be defined");
-        }
+        const simpleLine = SimpleLineLayer.create({ layers: {} } as NeedsUpdating);
         simpleLine.newSettings({
             ...getEventEssentials({ stored }),
-            attachSelectionsHandler,
+            attachSelectionHandler,
             newSettings: settings || {
                 connections: "Cell to Cell",
                 fill: "green",
@@ -38,9 +35,9 @@ describe("SimpleLine", () => {
             settings: { connections: "Cell to Cell", fill: "green" },
         });
 
-        const result = simpleLine.newSettings?.({
+        const result = simpleLine.newSettings({
             ...getEventEssentials({ stored }),
-            attachSelectionsHandler,
+            attachSelectionHandler,
             newSettings: {
                 connections: "Corner to Corner",
                 fill: "green",
@@ -62,9 +59,9 @@ describe("SimpleLine", () => {
             settings: { connections: "Cell to Cell", fill: "green" },
         });
 
-        const result = simpleLine.newSettings?.({
+        const result = simpleLine.newSettings({
             ...getEventEssentials({ stored }),
-            attachSelectionsHandler,
+            attachSelectionHandler,
             newSettings: {
                 connections: "Cell to Cell",
                 fill: "blue",

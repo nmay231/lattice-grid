@@ -1,8 +1,16 @@
 import { getBlitGroups, OVERLAY_LAYER_ID, setBlitGroups } from "../atoms/blits";
 import { setCanvasSize } from "../atoms/canvasSize";
-import { addLayer, getLayers, removeLayer, setLayers } from "../atoms/layers";
+import { Layers } from "../atoms/layers";
 import { getSettings } from "../atoms/settings";
-import { Grid, ILayer, LocalStorageData, RenderChange, UnknownObject } from "../globals";
+import {
+    Grid,
+    Layer,
+    LayerClass,
+    LocalStorageData,
+    NeedsUpdating,
+    RenderChange,
+    UnknownObject,
+} from "../types";
 import { errorNotification } from "../utils/DOMUtils";
 import { ControlsManager } from "./ControlsManager";
 import { SquareGrid } from "./grids/SquareGrid";
@@ -13,26 +21,40 @@ import { SelectionLayer } from "./layers/Selection";
 import { StorageManager } from "./StorageManager";
 
 export class PuzzleManager {
-    layers: Record<string, ILayer> = {};
+    layers: {
+        SelectionLayer: SelectionLayer;
+        OverlayLayer: OverlayLayer;
+        CellOutlineLayer: CellOutlineLayer;
+        [K: string]: Layer;
+    };
 
     grid: Grid = new SquareGrid();
     storage = new StorageManager();
     controls = new ControlsManager(this);
 
     constructor() {
+        this.layers = this._requiredLayers();
         this.loadPuzzle();
         this.resizeCanvas();
         this.renderChange({ type: "draw", layerIds: "all" });
     }
 
+    _requiredLayers(): typeof this["layers"] {
+        return {
+            SelectionLayer: availableLayers["SelectionLayer"].create(this) as SelectionLayer,
+            OverlayLayer: availableLayers["OverlayLayer"].create(this) as OverlayLayer,
+            CellOutlineLayer: availableLayers["CellOutlineLayer"].create(this) as CellOutlineLayer,
+        };
+    }
+
     _resetLayers() {
-        setLayers([]);
-        this.layers = {};
+        Layers.reset();
+        this.layers = this._requiredLayers();
 
         // Guarantee that these layers will be present even if the saved puzzle fails to add them
         const requiredLayers = [CellOutlineLayer, SelectionLayer, OverlayLayer];
         for (const layer of requiredLayers) {
-            this.addLayer(layer);
+            this.addLayer(layer, null);
         }
     }
 
@@ -52,12 +74,9 @@ export class PuzzleManager {
     freshPuzzle() {
         this._resetLayers();
         this._loadPuzzle({
-            layers: [
-                { layerClass: "Cell Outline" },
-                { layerClass: "Selections" },
-                { layerClass: "Number" },
-                { layerClass: OVERLAY_LAYER_ID },
-            ],
+            layers: (
+                ["CellOutlineLayer", "SelectionLayer", "NumberLayer", "OverlayLayer"] as const
+            ).map((id) => ({ id, type: id })),
             grid: { type: "square", width: 10, height: 10, minX: 0, minY: 0 },
         });
         this.renderChange({ type: "draw", layerIds: "all" });
@@ -65,8 +84,8 @@ export class PuzzleManager {
 
     _loadPuzzle(data: LocalStorageData) {
         this.grid.setParams(data.grid);
-        for (const { layerClass, rawSettings } of data.layers) {
-            this.addLayer(availableLayers[layerClass], rawSettings);
+        for (const { id, type: layerClass, rawSettings } of data.layers) {
+            this.addLayer(availableLayers[layerClass], id, rawSettings);
         }
     }
 
@@ -76,7 +95,7 @@ export class PuzzleManager {
     }
 
     renderChange(change: RenderChange) {
-        const { layers, currentLayerId } = getLayers();
+        const { order, currentLayerId } = Layers.state;
         const settings = getSettings();
         if (currentLayerId === null) {
             return;
@@ -112,18 +131,15 @@ export class PuzzleManager {
                 }) || [];
 
             // TODO: Allowing layerIds === "all" is mostly used for resizing the grid. How to efficiently redraw layers that depend on the size of the grid. Are there even layers other than grids that need to rerender on resizes? If there are, should they have to explicitly subscribe to these events?
-            const layerIds = new Set(
-                change.layerIds === "all" ? layers.map(({ id }) => id) : change.layerIds,
-            );
+            const layerIds = new Set(change.layerIds === "all" ? order : change.layerIds);
 
             for (const layerId of layerIds) {
                 const layer = this.layers[layerId];
-                blitGroups[layer.id] =
-                    layer.getBlits?.({
-                        grid: this.grid,
-                        storage: this.storage,
-                        settings,
-                    }) || [];
+                blitGroups[layer.id] = layer.getBlits({
+                    grid: this.grid,
+                    storage: this.storage,
+                    settings,
+                });
             }
 
             setBlitGroups(blitGroups);
@@ -137,39 +153,30 @@ export class PuzzleManager {
     _getParams() {
         // TODO: change localStorage key and what's actually stored/how it's stored
         const data: LocalStorageData = { layers: [], grid: this.grid.getParams() };
-        for (const fakeLayer of getLayers().layers) {
-            const layer = this.layers[fakeLayer.id];
+        for (const id of Layers.state.order) {
+            const layer = this.layers[id];
             data.layers.push({
-                layerClass: Object.getPrototypeOf(layer).id,
+                id: layer.id,
+                type: layer.type as NeedsUpdating,
                 rawSettings: layer.rawSettings,
             });
         }
         return data;
     }
 
-    addLayer(layerClass: ILayer, settings?: UnknownObject): string {
-        if (layerClass.unique && layerClass.id in this.layers) {
-            this.changeLayerSettings(layerClass.id, settings);
-            return layerClass.id;
-        }
-
-        const layer = Object.create(layerClass);
-        layer.id = layerClass.id;
-        let idNumber = 2;
-        while (layer.id in this.layers) {
-            layer.id = layerClass.id + ` (${idNumber})`;
-            idNumber++;
-        }
-
+    addLayer(layerClass: LayerClass<any>, id: string | null, settings?: UnknownObject): string {
+        const layer = new layerClass(layerClass, this);
+        if (id) layer.id = id;
         this.layers[layer.id] = layer;
+
+        // TODO: Should this ever retain storage for certain unique layers?
         this.storage.addStorage({ grid: this.grid, layer });
         this.changeLayerSettings(layer.id, settings || layerClass.defaultSettings);
 
-        addLayer({
-            id: layer.id,
-            ethereal: layer.ethereal,
-            layerType: layerClass.id,
-        });
+        if (!(layer.unique && layer.id in Layers.state.layers)) {
+            const { id, type, displayName, ethereal } = layer;
+            Layers.addLayer({ id, type, displayName, ethereal });
+        }
         return layer.id;
     }
 
@@ -177,25 +184,21 @@ export class PuzzleManager {
         if (id in this.layers) {
             delete this.layers[id];
             this.storage.removeStorage({ grid: this.grid, layer: { id } });
-            removeLayer(id);
+            Layers.removeLayer(id);
             this.renderChange({ type: "delete", layerId: id });
         }
     }
 
     changeLayerSettings(layerId: string, newSettings: any) {
-        // TODO: Should I even have the "Selections" layer be with the normal layers or should it always be attached to the puzzle or grid?
-        const Selections = this.layers["Selections"] as typeof SelectionLayer;
+        const Selection = this.layers["SelectionLayer"];
         const layer = this.layers[layerId];
-        const { history } =
-            layer.newSettings?.({
-                newSettings,
-                grid: this.grid,
-                storage: this.storage,
-                // TODO: If anything, I should prevent the issue where CellOutline is added before Selections therefore requiring the following optional chain. That's why I thought pre-instantiating it would be a good idea.
-                attachSelectionsHandler: Selections?.attachHandler?.bind?.(Selections),
-                settings: getSettings(),
-                tempStorage: {},
-            }) || {};
+        const { history } = layer.newSettings({
+            newSettings,
+            grid: this.grid,
+            storage: this.storage,
+            attachSelectionHandler: Selection.attachHandler.bind(Selection),
+            settings: getSettings(),
+        });
 
         if (history?.length) {
             this.storage.addToHistory(this.grid, layer, history);

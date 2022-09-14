@@ -1,10 +1,10 @@
-import { ILayer, LayerProps, PointType } from "../../../globals";
+import { Layer, LayerProps, PointType } from "../../../types";
 import { errorNotification } from "../../../utils/DOMUtils";
 
 type CommonArgs = { pointTypes: PointType[]; deltas: any };
 
 const pointGatherer =
-    ({ pointTypes, deltas }: CommonArgs): ILayer<OnePointProps>["gatherPoints"] =>
+    ({ pointTypes, deltas }: CommonArgs): Layer<OnePointProps>["gatherPoints"] =>
     ({ grid, cursor, tempStorage }) => {
         let newPoints = grid.selectPointsWithCursor({
             cursor: cursor,
@@ -38,7 +38,7 @@ export interface OnePointProps extends LayerProps {
 }
 
 export const handleEventsCycleStates = <LP extends OnePointProps>(
-    layer: ILayer<LP>,
+    layer: Layer<LP>,
     { states, pointTypes, deltas }: CommonArgs & { states: unknown[] },
 ) => {
     if (!states?.length || !pointTypes?.length) {
@@ -85,7 +85,7 @@ export const handleEventsCycleStates = <LP extends OnePointProps>(
 };
 
 export const handleEventsCurrentSetting = <LP extends OnePointProps>(
-    layer: ILayer<LP> & { settings: { selectedState: any } },
+    layer: Layer<LP> & { settings: { selectedState: any } },
     { pointTypes, deltas }: CommonArgs,
 ) => {
     if (!pointTypes?.length || !deltas?.length) {

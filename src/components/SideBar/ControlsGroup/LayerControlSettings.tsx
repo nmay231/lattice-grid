@@ -1,16 +1,20 @@
-import { useAtom, useAtomValue } from "jotai";
+import { useAtom } from "jotai";
 import { useEffect, useState } from "react";
+import { useSnapshot } from "valtio";
 import { constraintSettingsAtom } from "../../../atoms/constraintSettings";
-import { layersAtom } from "../../../atoms/layers";
+import { useLayers } from "../../../atoms/layers";
 import { usePuzzle } from "../../../atoms/puzzle";
-import { UnknownObject } from "../../../globals";
 import { availableLayers } from "../../../logic/layers";
+import { UnknownObject } from "../../../types";
 import { blurActiveElement } from "../../../utils/DOMUtils";
 import { JsonFormsWrapper } from "../../JsonFormsWrapper";
 
 export const LayerControlSettings = () => {
     const puzzle = usePuzzle();
-    const { layers, currentLayerId: id } = useAtomValue(layersAtom);
+
+    const { Layers } = useLayers();
+    const snap = useSnapshot(Layers.state);
+    const id = snap.currentLayerId;
     const layer = puzzle.layers[id || ""];
 
     const [data, setData] = useState<UnknownObject | null>(null);
@@ -31,8 +35,8 @@ export const LayerControlSettings = () => {
         return <></>;
     }
 
-    const layerType = layers.filter((layer) => layer.id === id)[0].layerType;
-    const layerClass = availableLayers[layerType];
+    const layerType = snap.layers[id].type;
+    const layerClass = availableLayers[layerType as keyof typeof availableLayers];
 
     const { schema, uischemaElements } = layerClass.controls || {};
     const uischema = { type: "VerticalLayout", elements: uischemaElements };

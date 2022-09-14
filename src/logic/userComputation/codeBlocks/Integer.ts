@@ -1,4 +1,4 @@
-import { ICodeBlock, IVariableInfo } from "../../../globals";
+import { ICodeBlock, IVariableInfo } from "../../../types";
 import { ComputeManager } from "../ComputeManager";
 
 export interface IInteger {

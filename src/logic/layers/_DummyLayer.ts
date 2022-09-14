@@ -1,10 +1,8 @@
-import { ILayer } from "../../globals";
-
-// The settings type is described separately from ILayer to allow easier custom typing.
+// The settings type is described separately from Layer to allow easier custom typing.
 type Settings = { onlyUsedInternally: string; canContainFunctions: () => void };
 
 // A layer used for testing, and also contains inline documentation (might be out of date, FYI)
-export const DummyLayer: ILayer & { settings: Settings } = {
+export const DummyLayer: any = {
     // Layer ids are unique so that object ids of different layers can be the same without issue
     id: "DO NOT USE",
 
@@ -17,7 +15,7 @@ export const DummyLayer: ILayer & { settings: Settings } = {
     // Layers have settings, obviously, but not all settings are created equal. Generally, these settings can be split into two groups: constraints and controls. The biggest difference is that constraints define what objects are possible in the layer while controls just define how those objects are added to the grid. Put another, changing constraints might require deleting objects because they violate the current constraints; changing controls does not.
 
     // Layers (if they have settings at all), have both .rawSettings and .settings attributes. The rawSettings attr is some JSON object created by a form while settings contains the transformed data that might change the layer's behavior in a more convenient manner. rawSettings is also what is saved in localStorage. When settings change, layer.newSettings is called with the new rawSettings. rawSettings is set to defaultSettings for new layers.
-    defaultSettings: { attr: "for new layers", JSONSerializable: true },
+    // defaultSettings: { attr: "for new layers", JSONSerializable: true },
     rawSettings: {
         attr: "something submitted in the form",
         JSONSerializable: true,
@@ -26,7 +24,7 @@ export const DummyLayer: ILayer & { settings: Settings } = {
         onlyUsedInternally: "yes",
         canContainFunctions: () => true,
     },
-    newSettings: (settingsChange) => ({}),
+    // newSettings: (settingsChange) => ({}),
 
     // The .controls and .constraints attributes describe two separate forms of how to modify rawSettings. They are the same structure (both use JSON Forms). They are only separate because the forms need to be separate.
     constraints: { schema: {}, uischemaElements: [] },

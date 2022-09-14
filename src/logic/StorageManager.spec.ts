@@ -1,5 +1,5 @@
 import { cloneDeep } from "lodash";
-import { HistoryAction } from "../globals";
+import { HistoryAction } from "../types";
 import { StorageManager } from "./StorageManager";
 
 describe("StorageManager", () => {

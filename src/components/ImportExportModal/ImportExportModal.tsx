@@ -5,6 +5,7 @@ import { cloneDeep } from "lodash";
 import { deflate, inflate } from "pako";
 import { useMemo, useRef, useState } from "react";
 import { usePuzzle } from "../../atoms/puzzle";
+import { availableLayers } from "../../logic/layers";
 import { PuzzleManager } from "../../logic/PuzzleManager";
 import { errorNotification } from "../../utils/DOMUtils";
 
@@ -42,7 +43,11 @@ export const importPuzzle = (puzzle: PuzzleManager, text: string) => {
 };
 
 export const ImportExportAtom = atom(false);
-const layersAlwaysPresent = ["Cell Outline", "Selections", "OVERLAY_BLITS_KEY"];
+const layersAlwaysPresent: (keyof typeof availableLayers)[] = [
+    "CellOutlineLayer",
+    "SelectionLayer",
+    "OverlayLayer",
+];
 
 export const ImportExportModal = () => {
     const puzzle = usePuzzle();

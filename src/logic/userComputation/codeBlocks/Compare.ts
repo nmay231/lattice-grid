@@ -1,5 +1,5 @@
 import { UserCodeJSON } from ".";
-import { ICodeBlock, IVariableInfo, VariableCodeBlock } from "../../../globals";
+import { ICodeBlock, IVariableInfo, VariableCodeBlock } from "../../../types";
 import { ComputeManager } from "../ComputeManager";
 import { blockIsVariable, CompilerError } from "../utils";
 

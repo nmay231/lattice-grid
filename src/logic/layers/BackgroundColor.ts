@@ -1,28 +1,37 @@
 import { PolygonBlits } from "../../components/SVGCanvas/Polygon";
-import { ILayer } from "../../globals";
-import { BaseLayer } from "./baseLayer";
+import { Layer, LayerClass } from "../../types";
+import { BaseLayer, methodNotImplemented } from "./baseLayer";
 import { handleEventsCurrentSetting, OnePointProps } from "./controls/onePoint";
 
 interface BackgroundColorProps extends OnePointProps {
+    Type: "BackgroundColorLayer";
     ObjectState: { id: string; points: string[]; state: string };
     RawSettings: { selectedState: string };
 }
 
-type BackgroundColorExtraProps = {
+interface IBackgroundColorLayer extends Layer<BackgroundColorProps> {
     settings: BackgroundColorProps["RawSettings"];
-};
+}
 
-export const BackgroundColorLayer: ILayer<BackgroundColorProps> & BackgroundColorExtraProps = {
-    ...BaseLayer,
-    id: "Background Color",
-    unique: false,
-    ethereal: false,
+export class BackgroundColorLayer
+    extends BaseLayer<BackgroundColorProps>
+    implements IBackgroundColorLayer
+{
+    static ethereal = false;
+    static unique = false;
+    static type = "BackgroundColorLayer" as const;
+    static displayName = "Background Color";
+    static defaultSettings = { selectedState: "blue" };
 
-    defaultSettings: { selectedState: "blue" },
-    rawSettings: { selectedState: "blue" },
-    settings: { selectedState: "blue" },
+    settings = this.rawSettings;
+    handleEvent = methodNotImplemented({ name: "BackgroundColor.handleEvent" });
+    gatherPoints = methodNotImplemented({ name: "BackgroundColor.gatherPoints" });
 
-    controls: {
+    static create: LayerClass<BackgroundColorProps>["create"] = (puzzle) => {
+        return new BackgroundColorLayer(BackgroundColorLayer, puzzle);
+    };
+
+    static controls = {
         schema: {
             type: "object",
             properties: {
@@ -39,9 +48,10 @@ export const BackgroundColorLayer: ILayer<BackgroundColorProps> & BackgroundColo
                 scope: "#/properties/selectedState",
             },
         ],
-    },
+    };
+    static constraints = undefined;
 
-    newSettings({ newSettings }) {
+    newSettings: IBackgroundColorLayer["newSettings"] = ({ newSettings }) => {
         this.rawSettings = newSettings;
         this.settings = {
             selectedState: newSettings.selectedState || "blue",
@@ -57,9 +67,11 @@ export const BackgroundColorLayer: ILayer<BackgroundColorProps> & BackgroundColo
                 { dx: -2, dy: 0 },
             ],
         });
-    },
 
-    getBlits({ storage, grid }) {
+        return {};
+    };
+
+    getBlits: IBackgroundColorLayer["getBlits"] = ({ storage, grid }) => {
         const stored = storage.getStored<BackgroundColorProps>({
             grid,
             layer: this,
@@ -83,5 +95,5 @@ export const BackgroundColorLayer: ILayer<BackgroundColorProps> & BackgroundColo
             style: { fill: color, strokeWidth: 2, stroke: "black" },
             blits: objectsByColor[color],
         }));
-    },
-};
+    };
+}

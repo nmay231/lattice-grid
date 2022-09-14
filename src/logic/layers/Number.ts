@@ -1,8 +1,9 @@
-import { ILayer, LayerProps } from "../../globals";
-import { BaseLayer } from "./baseLayer";
+import { Layer, LayerClass, LayerProps } from "../../types";
+import { BaseLayer, methodNotImplemented } from "./baseLayer";
 import { KeyDownEventHandler } from "./Selection";
 
 export interface NumberProps extends LayerProps {
+    Type: "NumberLayer";
     ObjectState: { state: string; point: string };
     RawSettings: { min: number; max: number };
     ExtraLayerStorageProps: { lastTime: number; lastIds: string[] };
@@ -12,22 +13,35 @@ type NumberSettings = {
     match: (number: number, alternate?: string | null) => string | null | undefined;
 };
 
-type NumberExtraProps = {
+interface INumberLayer extends Layer<NumberProps>, KeyDownEventHandler<NumberProps> {
     settings: NumberSettings;
     _newSettings: (arg: { min: number; max: number }) => NumberSettings;
     // TODO: More specific types
     _nextState: (state: any, oldState: any, event: any) => any;
-};
+}
 
-export const NumberLayer: ILayer<NumberProps> &
-    KeyDownEventHandler<NumberProps> &
-    NumberExtraProps = {
-    ...BaseLayer,
-    id: "Number",
-    unique: false,
-    ethereal: false,
+export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer {
+    static ethereal = false;
+    static unique = false;
+    static type = "NumberLayer" as const;
+    static displayName = "Number";
+    static defaultSettings = { min: 1, max: 9 };
 
-    handleKeyDown({ points: ids, keypress, storage, grid, settings }) {
+    settings: INumberLayer["settings"] = { match: () => "" };
+    handleEvent = methodNotImplemented({ name: "Number.handleEvent" });
+    gatherPoints = methodNotImplemented({ name: "Number.gatherPoints" });
+
+    static create: LayerClass<NumberProps>["create"] = (puzzle) => {
+        return new NumberLayer(NumberLayer, puzzle);
+    };
+
+    handleKeyDown: INumberLayer["handleKeyDown"] = ({
+        points: ids,
+        keypress,
+        storage,
+        grid,
+        settings,
+    }) => {
         const stored = storage.getStored<NumberProps>({ grid, layer: this });
         if (!ids.length) {
             return {};
@@ -60,9 +74,9 @@ export const NumberLayer: ILayer<NumberProps> &
                 id,
             })),
         };
-    },
+    };
 
-    _nextState(state, oldState, keypress) {
+    _nextState: INumberLayer["_nextState"] = (state, oldState, keypress) => {
         const match = this.settings?.match;
         if (keypress === "Backspace") {
             return match(oldState.toString().slice(0, -1), null);
@@ -82,12 +96,10 @@ export const NumberLayer: ILayer<NumberProps> &
         } else {
             return undefined; // Change nothing
         }
-    },
+    };
 
-    defaultSettings: { min: 1, max: 9 },
-    rawSettings: { min: 1, max: 9 },
-
-    constraints: {
+    static controls = undefined;
+    static constraints = {
         schema: {
             type: "object",
             properties: { min: { type: "integer" }, max: { type: "integer" } },
@@ -104,24 +116,25 @@ export const NumberLayer: ILayer<NumberProps> &
                 scope: "#/properties/max",
             },
         ],
-    },
+    };
 
-    settings: {
-        match: () => "",
-    },
-
-    _newSettings({ min, max }) {
+    _newSettings: INumberLayer["_newSettings"] = ({ min, max }) => {
         return {
             match: (number, alternate) =>
                 min <= number && number <= max ? number.toString() : alternate,
         };
-    },
+    };
 
-    newSettings({ newSettings, grid, storage, attachSelectionsHandler }) {
+    newSettings: INumberLayer["newSettings"] = ({
+        newSettings,
+        grid,
+        storage,
+        attachSelectionHandler,
+    }) => {
         this.settings = this._newSettings(newSettings);
         this.rawSettings = newSettings;
 
-        attachSelectionsHandler(this, {});
+        attachSelectionHandler(this, {});
 
         const { objects, renderOrder } = storage.getStored<NumberProps>({
             grid,
@@ -142,9 +155,9 @@ export const NumberLayer: ILayer<NumberProps> &
         }
 
         return { history };
-    },
+    };
 
-    getBlits({ grid, storage }) {
+    getBlits: INumberLayer["getBlits"] = ({ grid, storage }) => {
         const stored = storage.getStored<NumberProps>({ grid, layer: this });
         const { cells } = grid.getPoints({
             connections: {
@@ -176,5 +189,5 @@ export const NumberLayer: ILayer<NumberProps> &
                 },
             },
         ];
-    },
-};
+    };
+}

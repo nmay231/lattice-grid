@@ -1,17 +1,15 @@
 import { LineBlits } from "../../components/SVGCanvas/Line";
-import { ILayer, PointType } from "../../globals";
-import { BaseLayer } from "./baseLayer";
+import { Layer, LayerClass, PointType } from "../../types";
+import { BaseLayer, methodNotImplemented } from "./baseLayer";
 import { handleEventsCurrentSetting, TwoPointProps } from "./controls/twoPoint";
 
-export type SimpleLineSettings = {
-    pointType: PointType;
-    selectedState: { fill: string };
-};
-type SimpleLineExtraProps = {
-    settings: SimpleLineSettings;
-};
+const pointTypes = {
+    "Cell to Cell": "cells",
+    "Corner to Corner": "corners",
+} as const;
 
 export interface SimpleLineProps extends TwoPointProps {
+    Type: "SimpleLineLayer";
     ObjectState: {
         id: string;
         state: { fill: string };
@@ -23,27 +21,26 @@ export interface SimpleLineProps extends TwoPointProps {
     };
 }
 
-const pointTypes = {
-    "Cell to Cell": "cells",
-    "Corner to Corner": "corners",
-} as const;
+interface ISimpleLineLayer extends Layer<SimpleLineProps> {
+    settings: { pointType: PointType; selectedState: { fill: string } };
+}
 
-export const SimpleLineLayer: ILayer<SimpleLineProps> & SimpleLineExtraProps = {
-    ...BaseLayer,
-    id: "Line",
-    unique: false,
-    ethereal: false,
+export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimpleLineLayer {
+    static ethereal = false;
+    static unique = false;
+    static type = "SimpleLineLayer" as const;
+    static displayName = "Line";
+    static defaultSettings = { fill: "green", connections: "Cell to Cell" as const };
 
-    rawSettings: {
-        fill: "green",
-        connections: "Cell to Cell",
-    },
-    defaultSettings: {
-        fill: "green",
-        connections: "Cell to Cell",
-    },
+    settings = { pointType: "cells" as PointType, selectedState: { fill: "green" } };
+    handleEvent = methodNotImplemented({ name: "SimpleLine.handleEvent" });
+    gatherPoints = methodNotImplemented({ name: "SimpleLine.gatherPoints" });
 
-    constraints: {
+    static create: LayerClass<SimpleLineProps>["create"] = (puzzle) => {
+        return new SimpleLineLayer(SimpleLineLayer, puzzle);
+    };
+
+    static constraints = {
         schema: {
             type: "object",
             properties: {
@@ -60,9 +57,9 @@ export const SimpleLineLayer: ILayer<SimpleLineProps> & SimpleLineExtraProps = {
                 scope: "#/properties/connections",
             },
         ],
-    },
+    };
 
-    controls: {
+    static controls = {
         schema: {
             type: "object",
             properties: {
@@ -79,11 +76,9 @@ export const SimpleLineLayer: ILayer<SimpleLineProps> & SimpleLineExtraProps = {
                 scope: "#/properties/fill",
             },
         ],
-    },
+    };
 
-    settings: { pointType: "cells", selectedState: { fill: "green" } },
-
-    newSettings({ newSettings, storage, grid }) {
+    newSettings: ISimpleLineLayer["newSettings"] = ({ newSettings, storage, grid }) => {
         this.rawSettings = this.rawSettings || {};
         let history = null;
         if (this.rawSettings.connections !== newSettings.connections) {
@@ -114,12 +109,10 @@ export const SimpleLineLayer: ILayer<SimpleLineProps> & SimpleLineExtraProps = {
             ],
         });
 
-        if (history) {
-            return { history };
-        }
-    },
+        return { history: history || undefined };
+    };
 
-    getBlits({ storage, grid }) {
+    getBlits: ISimpleLineLayer["getBlits"] = ({ storage, grid }) => {
         const stored = storage.getStored<SimpleLineProps>({
             grid,
             layer: this,
@@ -161,5 +154,5 @@ export const SimpleLineLayer: ILayer<SimpleLineProps> & SimpleLineExtraProps = {
                 },
             },
         ];
-    },
-};
+    };
+}

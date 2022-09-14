@@ -1,102 +1,122 @@
-import { modifiableAtom } from "./modifiableAtom";
+import { arrayMove } from "@dnd-kit/sortable";
+import { proxy } from "valtio";
+import { errorNotification } from "../utils/DOMUtils";
 
-type FakeLayer = {
+// TODO: import { Layer } from "../types"
+export type Layer = {
     id: string;
+    type: string;
+    displayName: string;
     ethereal: boolean;
-    layerType: string;
 };
 
-export type LayersAtomValue = {
-    layers: FakeLayer[];
-    currentLayerId: string | null;
+export type LayersProxyState = {
+    order: Layer["id"][];
+    layers: Record<Layer["id"], Layer>;
+    currentLayerId: null | Layer["id"];
 };
 
-export const initialValue: LayersAtomValue = {
-    layers: [],
-    currentLayerId: null,
-};
-
-// This is in a function to help with testing
-export const makeLayersAtom = () => {
-    const { atom: baseAtom, setValue, getValue } = modifiableAtom(initialValue);
+export const createLayersState = () => {
+    const state = proxy<LayersProxyState>({
+        order: [],
+        layers: {},
+        currentLayerId: null,
+    });
 
     return {
-        // For use in components
-        layersAtom: baseAtom,
+        state,
 
-        // For use outside of components
-        getLayers: getValue,
-
-        setLayers: (layers: LayersAtomValue["layers"]) => {
-            if (!layers.length) {
-                setValue(initialValue);
-            } else {
-                setValue((value) => ({ ...value, layers }));
-            }
+        reset: () => {
+            state.order = [];
+            state.layers = {};
+            state.currentLayerId = null;
         },
 
-        addLayer: (layer: FakeLayer) => {
-            setValue((value) => ({
-                layers: [...value.layers, layer],
-                currentLayerId: layer.ethereal ? value.currentLayerId : layer.id,
-            }));
+        shuffleItemOnto: (beingMoved: Pick<Layer, "id">, target: Pick<Layer, "id">) => {
+            const from = state.order.indexOf(beingMoved.id);
+            const to = state.order.indexOf(target.id);
+            if (from === -1 || to === -1) {
+                return errorNotification({
+                    message:
+                        "Layer id not present in shuffleItemOnto: " +
+                        `${beingMoved.id} => ${target.id} not in ${state.order}`,
+                });
+            }
+            state.order = arrayMove(state.order, from, to);
+        },
+
+        addLayer: (layer: Layer) => {
+            state.order.push(layer.id);
+            state.layers[layer.id] = layer;
+            if (!layer.ethereal) state.currentLayerId = layer.id;
         },
 
         removeLayer: (idToRemove: string) => {
-            setValue((value) => {
-                const layers = [...value.layers];
-                const index = value.layers.map(({ id }) => id).indexOf(idToRemove);
-                layers.splice(index, 1);
+            const { order, layers } = state;
 
-                let currentLayerId = value.currentLayerId;
-                if (currentLayerId === idToRemove) {
-                    let nextId = null;
+            const index = order.indexOf(idToRemove);
+            if (index === -1) {
+                return errorNotification({
+                    message: `removeLayer: ${idToRemove} not in ${order}`,
+                });
+            }
+            order.splice(index, 1);
+            delete layers[idToRemove];
 
-                    // We try to select the next layer without wrapping to the other end
-                    for (const layer of layers.slice(index)) {
-                        if (layer.ethereal) continue;
-                        nextId = layer.id;
+            if (state.currentLayerId === idToRemove) {
+                let nextId = null;
+
+                // We try to select the next layer without wrapping to the other end
+                for (const id of order.slice(index)) {
+                    if (!layers[id].ethereal) {
+                        nextId = id;
                         break;
                     }
+                }
 
-                    // If that fails, try selecting the previous layer
-                    if (nextId === null) {
-                        for (let i = index - 1; i >= 0; i--) {
-                            const layer = layers[i];
-                            if (layer.ethereal) continue;
-                            nextId = layer.id;
+                // If that fails, try selecting the previous layer
+                if (nextId === null) {
+                    for (const id of order.slice(0, index).reverse()) {
+                        if (!layers[id].ethereal) {
+                            nextId = id;
                             break;
                         }
-                        // If THAT fails, then no layer is selectable anyways and currentLayerId should be null
                     }
-                    currentLayerId = nextId;
+                    // If THAT fails, then no layer is selectable anyways and currentLayerId should be null
                 }
-
-                return { layers, currentLayerId };
-            });
+                state.currentLayerId = nextId;
+            }
         },
 
-        selectLayer: (arg: { id: string } | { tab: number }) => {
-            setValue((value) => {
-                const { currentLayerId, layers } = value;
-                if ("id" in arg) {
-                    return { layers, currentLayerId: arg.id };
-                } else if ("tab" in arg && currentLayerId !== null) {
-                    const one = arg.tab; // positive or negative one
-                    let index = layers.map(({ id }) => id).indexOf(currentLayerId);
+        selectLayer: (
+            arg: { id: string } | { tab: number },
+        ): LayersProxyState["currentLayerId"] => {
+            if ("id" in arg) {
+                if (!(arg.id in state.layers) || state.layers[arg.id].ethereal) {
+                    errorNotification({
+                        message: "selectLayer: trying to select a non-existent or ethereal layer",
+                    });
+                    return null;
+                }
+                state.currentLayerId = arg.id;
+                return arg.id;
+            } else if ("tab" in arg && state.currentLayerId !== null) {
+                const one = arg.tab; // positive or negative one
+                const { order } = state;
+                let index = order.indexOf(state.currentLayerId);
 
-                    for (let count = 0; count < layers.length; count++) {
-                        index = (layers.length + index + one) % layers.length;
-                        if (!layers[index].ethereal) {
-                            return { layers, currentLayerId: layers[index].id };
-                        }
+                for (let count = 0; count < order.length; count++) {
+                    index = (order.length + index + one) % order.length;
+                    if (!state.layers[order[index]].ethereal) {
+                        state.currentLayerId = order[index];
+                        return order[index];
                     }
                 }
-                return value;
-            });
+            }
+            return null;
         },
     };
 };
 
-export const { layersAtom, getLayers, setLayers, addLayer, removeLayer, selectLayer } =
-    makeLayersAtom();
+export const Layers = createLayersState();
+export const useLayers = () => ({ Layers });
