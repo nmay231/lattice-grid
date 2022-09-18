@@ -10,7 +10,6 @@ export const initialSettings = {
     actionWindowMs: 600,
 };
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const { atom, setValue, getValue } = modifiableAtom(initialSettings);
 
 // For use in components
