@@ -18,7 +18,7 @@ blocks["Compare"] = {
             .setCheck(null)
             .appendField(
                 new Blockly.FieldDropdown([
-                    // TODO: Have Compare export a map of strings to operations and build the dropdown based on that.
+                    // TODO: Have Compare.ts export a map of strings to operations and build the dropdown based on that.
                     ["<", "<"],
                     [">", ">"],
                     ["=", "="],
