@@ -1,7 +1,10 @@
 export type PolygonBlits = {
     id: string;
     blitter: "polygon";
-    blits: any;
+    blits: Record<
+        string,
+        { points: string[]; style?: React.SVGAttributes<SVGPolygonElement>["style"] }
+    >;
     style: React.SVGAttributes<SVGGElement>["style"];
 };
 

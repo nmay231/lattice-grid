@@ -1,4 +1,6 @@
-import { Layer, LayerClass, UnknownObject } from "../../types";
+import { PolygonBlits } from "../../components/SVGCanvas/Polygon";
+import { TextBlits } from "../../components/SVGCanvas/Text";
+import { Layer, LayerClass } from "../../types";
 import { BaseLayer, methodNotImplemented } from "./baseLayer";
 import { handleEventsUnorderedSets, MultiPointLayerProps } from "./controls/multiPoint";
 import { KeyDownEventHandler } from "./Selection";
@@ -93,8 +95,8 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
             layer: this,
         });
 
-        const cageBlits: Record<string, UnknownObject> = {};
-        const numberBlits: Record<string, UnknownObject> = {};
+        const cageBlits: PolygonBlits["blits"] = {};
+        const numberBlits: TextBlits["blits"] = {};
         for (const id of stored.renderOrder) {
             const object = stored.objects[id];
             const { cageOutline, cells, sorted } = grid.getPoints({
@@ -123,7 +125,10 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
             if (object.state !== null) {
                 const point = sorted[0];
                 const { svgPoint, maxRadius } = cells[point];
-                const corner = [svgPoint[0] - 0.85 * maxRadius, svgPoint[1] - 0.85 * maxRadius];
+                const corner = [svgPoint[0] - 0.85 * maxRadius, svgPoint[1] - 0.85 * maxRadius] as [
+                    number,
+                    number,
+                ];
                 numberBlits[point] = {
                     text: object.state,
                     point: corner,

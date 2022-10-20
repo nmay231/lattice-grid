@@ -1,3 +1,4 @@
+import { TextBlits } from "../../components/SVGCanvas/Text";
 import { Layer, LayerClass, LayerProps } from "../../types";
 import { BaseLayer, methodNotImplemented } from "./baseLayer";
 import { KeyDownEventHandler } from "./Selection";
@@ -169,7 +170,7 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
             points: stored.renderOrder,
         });
 
-        const blits: Record<string, unknown> = {};
+        const blits: TextBlits["blits"] = {};
         for (const id of stored.renderOrder) {
             blits[id] = {
                 text: stored.objects[id].state,
