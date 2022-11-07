@@ -14,10 +14,11 @@ import { randomStringId } from "../../utils/stringUtils";
 import { PuzzleManager } from "../PuzzleManager";
 
 export const methodNotImplemented = ({ name }: { name: string }) => {
-    const message = `Method: ${name} called before implementing!`;
     return (): any => {
-        errorNotification({ message, forever: true });
-        throw Error(message);
+        throw errorNotification({
+            message: `Method: ${name} called before implementing!`,
+            forever: true,
+        });
     };
 };
 

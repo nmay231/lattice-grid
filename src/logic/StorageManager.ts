@@ -103,7 +103,7 @@ export class StorageManager {
         action: HistoryAction,
     ) {
         if (action.object === undefined) {
-            errorNotification({
+            throw errorNotification({
                 message: `Layer ${action.layerId} object undefined: ${action}`,
                 forever: true,
             });

@@ -27,11 +27,10 @@ export const handleEventsCurrentSetting = <LP extends TwoPointProps>(
     { directional, pointTypes, stopOnFirstPoint, deltas }: Arg = {},
 ) => {
     if (!pointTypes?.length || !deltas?.length) {
-        errorNotification({
+        throw errorNotification({
             message: "twoPoint currentSetting was not provided required parameters",
             forever: true,
         });
-        return;
     }
 
     layer.gatherPoints = (event) => {

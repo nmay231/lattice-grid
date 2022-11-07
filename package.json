@@ -79,6 +79,7 @@
             "@typescript-eslint/restrict-template-expressions": "off",
             "prefer-const": "warn",
             "no-trailing-spaces": "error",
+            "no-unreachable": "error",
             "@typescript-eslint/no-use-before-define": "error",
             "@typescript-eslint/require-array-sort-compare": "error"
         }

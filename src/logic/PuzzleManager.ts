@@ -12,6 +12,7 @@ import {
     UnknownObject,
 } from "../types";
 import { errorNotification } from "../utils/DOMUtils";
+import { formatAnything } from "../utils/stringUtils";
 import { ControlsManager } from "./ControlsManager";
 import { SquareGrid } from "./grids/SquareGrid";
 import { availableLayers } from "./layers";
@@ -144,7 +145,9 @@ export class PuzzleManager {
 
             setBlitGroups(blitGroups);
         } else {
-            errorNotification({ message: `Failed to render to canvas: ${JSON.stringify(change)}` });
+            throw errorNotification({
+                message: `Failed to render to canvas: ${formatAnything(change)}`,
+            });
         }
 
         localStorage.setItem("_currentPuzzle", JSON.stringify(this._getParams()));

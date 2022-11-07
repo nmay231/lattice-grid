@@ -73,7 +73,9 @@ export const ImportExportModal = () => {
         }
     }, [puzzle, opened]);
 
-    const noRefSet = () => errorNotification({ message: "Ref not set in import/export textarea" });
+    const noRefSet = () => {
+        throw errorNotification({ message: "Ref not set in import/export textarea" });
+    };
 
     const handleImport = () => {
         if (!textRef.current) return noRefSet();

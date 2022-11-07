@@ -29,8 +29,7 @@ export const SVGCanvas = () => {
     useEffect(() => {
         const current = scrollArea.current;
         if (!current) {
-            errorNotification({ message: "Canvas element not found." });
-            return;
+            throw errorNotification({ message: "Canvas element not found." });
         }
 
         const onWheel = controls.onWheel.bind(controls);

@@ -26,11 +26,10 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
     },
 ) => {
     if (!pointTypes?.length) {
-        errorNotification({
+        throw errorNotification({
             message: "Multipoint handler was not provided required parameters",
             forever: true,
         });
-        return;
     }
 
     // TODO: Allow this to be set by the layer once FSM (or a general gatherPoints method) is implemented.
@@ -222,11 +221,10 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
                 return { discontinueInput: true };
             }
             default: {
-                errorNotification({
+                throw errorNotification({
                     message: `Multipoint unknown event.type=${type}`,
                     forever: true,
                 });
-                return {};
             }
         }
     };

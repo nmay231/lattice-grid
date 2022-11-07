@@ -316,11 +316,10 @@ export class SelectionLayer extends BaseLayer<SelectionProps> implements ISelect
                 return { history, discontinueInput: true };
             }
             default: {
-                errorNotification({
+                throw errorNotification({
                     message: `Unknown event.type in SelectionLayer: ${(event as any).type}`,
                     forever: true,
                 });
-                return {};
             }
         }
     };
