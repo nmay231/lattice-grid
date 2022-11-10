@@ -397,4 +397,6 @@ describe("StorageManager", () => {
         result = storage.redoHistory("grid");
         expect(result).toEqual<HistoryAction[]>([]);
     });
+
+    it.todo("should have tests related to storageReducers");
 });

@@ -208,6 +208,8 @@ export type History = {
     actions: HistoryAction[];
     index: number;
 };
+
+export type StorageReducer<Type> = (puzzle: PuzzleManager, arg: Type) => Type;
 // #endregion
 
 // #region - Rendering
