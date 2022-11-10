@@ -49,9 +49,9 @@
         "lint:types": "tsc"
     },
     "pre-commit": [
-        "lint",
         "lint:types",
-        "test:no-watch"
+        "test:no-watch",
+        "lint"
     ],
     "eslintConfig": {
         "root": true,
