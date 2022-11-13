@@ -155,7 +155,8 @@ export class SelectionLayer extends BaseLayer<SelectionProps> implements ISelect
                     return { history };
                 }
 
-                const storingLayer: Layer & KeyDownEventHandler = (event as any).storingLayer;
+                const storingLayer: Layer & KeyDownEventHandler = (event as NeedsUpdating)
+                    .storingLayer;
 
                 const actions =
                     storingLayer.handleKeyDown?.({
@@ -177,7 +178,7 @@ export class SelectionLayer extends BaseLayer<SelectionProps> implements ISelect
             }
             case "pointerDown":
             case "pointerMove": {
-                stored.groupNumber = stored.groupNumber || 1;
+                stored.extra.groupNumber = stored.extra.groupNumber || 1;
                 const ids = event.points;
 
                 let history: IncompleteHistoryAction[];
@@ -196,15 +197,15 @@ export class SelectionLayer extends BaseLayer<SelectionProps> implements ISelect
                                 },
                             ];
                         } else {
-                            stored.groupNumber += 1;
-                            tempStorage.targetState = stored.groupNumber;
+                            stored.extra.groupNumber += 1;
+                            tempStorage.targetState = stored.extra.groupNumber;
                             history = [
                                 {
                                     id,
                                     layerId: this.id,
                                     batchId: "ignore" as const,
                                     object: {
-                                        state: stored.groupNumber,
+                                        state: stored.extra.groupNumber,
                                         point: id,
                                     },
                                 },
@@ -240,8 +241,8 @@ export class SelectionLayer extends BaseLayer<SelectionProps> implements ISelect
                     }
                 } else {
                     const removeOld = tempStorage.targetState === undefined;
-                    stored.groupNumber = 2;
-                    tempStorage.targetState = stored.groupNumber;
+                    stored.extra.groupNumber = 2;
+                    tempStorage.targetState = stored.extra.groupNumber;
                     tempStorage.removeSingle = false;
                     history = [];
 
@@ -266,7 +267,7 @@ export class SelectionLayer extends BaseLayer<SelectionProps> implements ISelect
                             id,
                             layerId: this.id,
                             batchId: "ignore" as const,
-                            object: { state: stored.groupNumber, point: id },
+                            object: { state: stored.extra.groupNumber, point: id },
                         })),
                     );
                 }
@@ -302,7 +303,7 @@ export class SelectionLayer extends BaseLayer<SelectionProps> implements ISelect
                         object: null,
                     }));
 
-                stored.groupNumber = 2;
+                stored.extra.groupNumber = 2;
                 // Select the objects being modified in the undo/redo actions
                 history.push(
                     ...newIds.map((id) => ({

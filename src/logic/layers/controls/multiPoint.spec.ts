@@ -36,6 +36,7 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         const stored: LayerStorage<MultiPointLayerProps> = {
             renderOrder: [],
             objects: {},
+            extra: {},
         };
         const selectPoints = jest.fn();
         const getBatchId = jest.fn();
@@ -74,6 +75,7 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         const stored: LayerStorage<MultiPointLayerProps> = {
             objects: { a: { id: "a", points: ["a"], state: null } },
             renderOrder: ["a"],
+            extra: {},
         };
         const selectPoints = jest.fn();
         const getBatchId = jest.fn();
@@ -82,7 +84,7 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         essentials.storage.getNewBatchId = getBatchId;
 
         // Select the existing object
-        stored.currentObjectId = "a";
+        stored.extra.currentObjectId = "a";
 
         selectPoints.mockReturnValueOnce(["b"]);
         const fakeEvent: LayerEvent<MultiPointLayerProps> = {
@@ -113,6 +115,7 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         const stored: LayerStorage<MultiPointLayerProps> = {
             renderOrder: [],
             objects: {},
+            extra: {},
         };
         const selectPoints = jest.fn();
         const getBatchId = jest.fn();
@@ -185,7 +188,7 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         const stored: LayerStorage<MultiPointLayerProps> = {
             objects: { "a;b": { id: "a;b", points: ["a", "b"], state: null } },
             renderOrder: ["a;b"],
-            currentObjectId: "a;b",
+            extra: { currentObjectId: "a;b" },
         };
         const selectPoints = jest.fn();
         const getBatchId = jest.fn();
@@ -234,7 +237,7 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         const stored: LayerStorage<MultiPointLayerProps> = {
             objects: { "a;b": { id: "a;b", points: ["a", "b"], state: null } },
             renderOrder: ["a;b"],
-            currentObjectId: "a;b",
+            extra: { currentObjectId: "a;b" },
         };
         const selectPoints = jest.fn();
         const getBatchId = jest.fn();

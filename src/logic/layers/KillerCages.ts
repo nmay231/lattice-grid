@@ -36,9 +36,9 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
             grid,
         });
 
-        if (!stored.currentObjectId) return {};
+        if (!stored.extra.currentObjectId) return {};
 
-        const id = stored.currentObjectId;
+        const id = stored.extra.currentObjectId;
         const object = { ...stored.objects[id] };
 
         if (type === "delete") {
@@ -114,7 +114,7 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
                 points: object.points,
             });
 
-            const style = id === stored.currentObjectId ? { stroke: "#33F" } : undefined;
+            const style = id === stored.extra.currentObjectId ? { stroke: "#33F" } : undefined;
             for (const key in cageOutline.svgPolygons) {
                 cageBlits[`${object.id}-${key}`] = {
                     style,

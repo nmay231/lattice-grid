@@ -24,7 +24,7 @@ export class StorageManager {
 
     addStorage({ grid, layer }: GridAndLayer) {
         this.objects[grid.id] = this.objects[grid.id] ?? {};
-        this.objects[grid.id][layer.id] = { renderOrder: [], objects: {} };
+        this.objects[grid.id][layer.id] = { renderOrder: [], objects: {}, extra: {} };
 
         this.histories[grid.id] = this.histories[grid.id] || {
             actions: [],

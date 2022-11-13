@@ -147,6 +147,7 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
             objects: {
                 "a;b": { id: "a;b", points: ["a", "b"], state: { x: 42 } },
             },
+            extra: {},
         };
         const essentials = getEventEssentials({ stored });
         const selectPoints = jest.fn();
@@ -188,6 +189,7 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
                     state: { different: true },
                 },
             },
+            extra: {},
         };
         const essentials = getEventEssentials({ stored });
         const selectPoints = jest.fn();
@@ -231,6 +233,7 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
             objects: {
                 "1;2": { id: "1;2", points: ["1", "2"], state: { x: 42 } },
             },
+            extra: {},
         };
         const essentials = getEventEssentials({ stored });
         const selectPoints = jest.fn();
@@ -290,6 +293,7 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
             objects: {
                 "1;2": { id: "1;2", points: ["1", "2"], state: { x: 42 } },
             },
+            extra: {},
         };
         const essentials = getEventEssentials({ stored });
         const selectPoints = jest.fn();

@@ -9,6 +9,7 @@ describe("Number Layer", () => {
     const EMPTY_STORED: LayerStorage<NumberProps> = {
         renderOrder: [],
         objects: {},
+        extra: {},
     };
 
     // Used to fake Date.now
@@ -55,6 +56,7 @@ describe("Number Layer", () => {
                 keep: { point: "keep", state: "5" },
                 alsoDelete: { point: "alsoDelete", state: "3" },
             },
+            extra: {},
         };
 
         const result = layer1to9.handleKeyDown({
@@ -78,6 +80,7 @@ describe("Number Layer", () => {
                 "2,2": { point: "2,2", state: "5" },
                 "3,3": { point: "3,3", state: "9" },
             },
+            extra: {},
         };
 
         const result = layer1to9.newSettings({
@@ -102,6 +105,7 @@ describe("Number Layer", () => {
                 "2,2": { point: "2,2", state: "5" },
                 "3,3": { point: "3,3", state: "9" },
             },
+            extra: {},
         };
 
         const result = layer1to9.newSettings({
@@ -130,9 +134,11 @@ describe("Number Layer", () => {
         const stored: LayerStorage<NumberProps> = {
             renderOrder: ["id"],
             objects: { id: { point: "id", state: "4" } },
-            // TODO: This test depends on internals and should eventually be modified so it doesn't
-            lastTime: Date.now(),
-            lastIds: ["id"],
+            extra: {
+                // TODO: This test depends on internals and should eventually be modified so it doesn't
+                lastTime: Date.now(),
+                lastIds: ["id"],
+            },
         };
         fakeNow += 200;
 
@@ -157,9 +163,11 @@ describe("Number Layer", () => {
         const stored: LayerStorage<NumberProps> = {
             renderOrder: ["id"],
             objects: { id: { point: "id", state: "4" } },
-            // TODO: INTERNALS!
-            lastTime: Date.now(),
-            lastIds: ["id"],
+            extra: {
+                // TODO: INTERNALS!
+                lastTime: Date.now(),
+                lastIds: ["id"],
+            },
         };
         fakeNow += 800;
 
@@ -187,9 +195,11 @@ describe("Number Layer", () => {
                 id: { point: "id", state: "4" },
                 id2: { point: "id2", state: "4" },
             },
-            // TODO: INTERNALS!
-            lastTime: Date.now(),
-            lastIds: ["id", "id2"],
+            extra: {
+                // TODO: INTERNALS!
+                lastTime: Date.now(),
+                lastIds: ["id", "id2"],
+            },
         };
         fakeNow += 200;
 
@@ -219,9 +229,11 @@ describe("Number Layer", () => {
                 id: { point: "id", state: "4" },
                 id2: { point: "id2", state: "3" },
             },
-            // INTERNALS!
-            lastTime: Date.now(),
-            lastIds: ["id", "id2"],
+            extra: {
+                // INTERNALS!
+                lastTime: Date.now(),
+                lastIds: ["id", "id2"],
+            },
         };
         fakeNow += 200;
 

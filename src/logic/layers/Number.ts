@@ -48,11 +48,11 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
             return {};
         }
 
-        const timeDelay = Date.now() - (stored.lastTime || 0);
-        stored.lastTime = Date.now();
+        const timeDelay = Date.now() - (stored.extra.lastTime || 0);
+        stored.extra.lastTime = Date.now();
 
-        const selectionChanged = (stored.lastIds || []).join(";") !== ids.join(";");
-        stored.lastIds = ids.slice();
+        const selectionChanged = (stored.extra.lastIds || []).join(";") !== ids.join(";");
+        stored.extra.lastIds = ids.slice();
 
         const states = ids.map((id) => stored.objects[id]?.state);
         const theSame =

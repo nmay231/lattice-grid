@@ -36,6 +36,7 @@ describe("SelectionLayer", () => {
         const stored: LayerStorage<SelectionProps> = {
             renderOrder: [],
             objects: {},
+            extra: {},
         };
         const selection = getFreshSelectionLayer();
         const essentials = eventEssentials({ stored });
@@ -76,6 +77,7 @@ describe("SelectionLayer", () => {
         const stored = {
             objects: { point1: { id: "point1", point: "point1", state: 100 } },
             renderOrder: ["point1"],
+            extra: {},
         };
         const essentials = eventEssentials({ stored });
 
@@ -112,6 +114,7 @@ describe("SelectionLayer", () => {
                 point2: { id: "point2", point: "point2", state: 2 },
             },
             renderOrder: ["point1", "point2"],
+            extra: {},
         } as LayerStorage<SelectionProps>;
         const essentials = eventEssentials({ stored });
 
@@ -161,6 +164,7 @@ describe("SelectionLayer", () => {
                 point1: { id: "point1", point: "point1", state: 2 },
             },
             renderOrder: ["point1"],
+            extra: {},
         } as LayerStorage<SelectionProps>;
         const essentials = eventEssentials({ stored });
 
@@ -205,6 +209,7 @@ describe("SelectionLayer", () => {
                 point3: { point: "point3", state: 100 },
             },
             renderOrder: ["point1", "point2", "point3"],
+            extra: {},
         } as LayerStorage<SelectionProps>;
         const essentials = eventEssentials({ stored });
 
@@ -268,6 +273,7 @@ describe("SelectionLayer", () => {
                 point2: { point: "point2", state: 100 },
             },
             renderOrder: ["point1", "point2"],
+            extra: {},
         } as LayerStorage<SelectionProps>;
         const essentials = eventEssentials({ stored });
 
@@ -360,6 +366,7 @@ describe("SelectionLayer", () => {
                 toKeep: { id: "toKeep", point: "toKeep", state: 1 },
             },
             renderOrder: ["toDeselect", "toKeep"],
+            extra: {},
         } as LayerStorage<SelectionProps>;
         const essentials = eventEssentials({ stored });
 

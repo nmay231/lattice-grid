@@ -64,7 +64,7 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
         const { grid, storage, type, tempStorage } = event;
 
         const stored = storage.getStored<LP>({ layer, grid });
-        const currentObjectId = stored.currentObjectId || "";
+        const currentObjectId = stored.extra.currentObjectId || "";
         if (!currentObjectId && type !== "pointerDown" && type !== "undoRedo") {
             return {}; // Other events only matter if there is an object selected
         }
@@ -80,14 +80,14 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
                     // Allow the layer to delete its state before deleting the object itself.
                     return result;
                 }
-                stored.currentObjectId = undefined;
+                stored.extra.currentObjectId = undefined;
                 return {
                     discontinueInput: true,
                     history: [{ id: currentObjectId, object: null }],
                 };
             }
             case "cancelAction": {
-                stored.currentObjectId = undefined;
+                stored.extra.currentObjectId = undefined;
                 return {
                     discontinueInput: true,
                     history: [
@@ -112,7 +112,7 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
                         // Only remove a cell if the object was already selected
                         tempStorage.removeSingle = true;
                     }
-                    stored.currentObjectId = id;
+                    stored.extra.currentObjectId = id;
 
                     // Force a rerender without polluting history
                     return {
@@ -122,7 +122,7 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
 
                 // Start drawing a new object
                 tempStorage.removeSingle = false;
-                stored.currentObjectId = startPoint;
+                stored.extra.currentObjectId = startPoint;
                 return {
                     history: [
                         {
@@ -196,7 +196,7 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
                     return { discontinueInput: true };
                 }
 
-                stored.currentObjectId = newId;
+                stored.extra.currentObjectId = newId;
                 objectCopy.id = newId;
                 return {
                     discontinueInput: true,
@@ -210,14 +210,14 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
                 // TODO: layer might have sub-layers and action.layerId !== layer.id
                 const last = event.actions[event.actions.length - 1];
                 if (last.object !== null) {
-                    stored.currentObjectId = last.id;
+                    stored.extra.currentObjectId = last.id;
                     return {
                         discontinueInput: true,
                         // TODO: Force render
                         history: [{ ...last, batchId: "ignore" }],
                     };
                 }
-                stored.currentObjectId = undefined;
+                stored.extra.currentObjectId = undefined;
                 return { discontinueInput: true };
             }
             default: {

@@ -1,5 +1,5 @@
 import { cloneDeep } from "lodash";
-import { HistoryAction } from "../types";
+import { HistoryAction, LayerStorage } from "../types";
 import { StorageManager } from "./StorageManager";
 
 describe("StorageManager", () => {
@@ -17,12 +17,14 @@ describe("StorageManager", () => {
         return normalStorage;
     };
 
+    const gridLayer = (grid: string, layer: string) => ({
+        grid: { id: grid },
+        layer: { id: layer },
+    });
+
     it("should add a new object correctly", () => {
         const storage = getNormalStorage();
-        const { objects, renderOrder } = storage.getStored({
-            grid: { id: "grid" },
-            layer: { id: "layer1" },
-        });
+        const { objects, renderOrder } = storage.getStored(gridLayer("grid", "layer1"));
         const action: HistoryAction = {
             id: "objectId",
             layerId: "layer1",
@@ -31,18 +33,16 @@ describe("StorageManager", () => {
         };
         storage._ApplyHistoryAction(objects, renderOrder, action);
 
-        expect(storage.objects["grid"]["layer1"]).toEqual({
+        expect(storage.objects["grid"]["layer1"]).toEqual<LayerStorage>({
             objects: { objectId: { asdf: "something", id: "objectId" } },
             renderOrder: ["objectId"],
+            extra: {},
         });
     });
 
     it("should delete an object correctly", () => {
         const storage = getNormalStorage();
-        const { objects, renderOrder } = storage.getStored({
-            grid: { id: "grid" },
-            layer: { id: "layer1" },
-        });
+        const { objects, renderOrder } = storage.getStored(gridLayer("grid", "layer1"));
         const action: HistoryAction = {
             id: "objectId",
             layerId: "layer1",
@@ -51,18 +51,16 @@ describe("StorageManager", () => {
         };
         storage._ApplyHistoryAction(objects, renderOrder, action);
 
-        expect(storage.objects["grid"]["layer1"]).toEqual({
+        expect(storage.objects["grid"]["layer1"]).toEqual<LayerStorage>({
             objects: {},
             renderOrder: [],
+            extra: {},
         });
     });
 
     it("object placement should be idempotent", () => {
         const storage = getNormalStorage();
-        const { objects, renderOrder } = storage.getStored({
-            grid: { id: "grid" },
-            layer: { id: "layer1" },
-        });
+        const { objects, renderOrder } = storage.getStored(gridLayer("grid", "layer1"));
         const action: HistoryAction = {
             id: "objectId",
             layerId: "layer1",
@@ -72,18 +70,16 @@ describe("StorageManager", () => {
         storage._ApplyHistoryAction(objects, renderOrder, action);
         storage._ApplyHistoryAction(objects, renderOrder, action);
 
-        expect(storage.objects["grid"]["layer1"]).toEqual({
+        expect(storage.objects["grid"]["layer1"]).toEqual<LayerStorage>({
             objects: { objectId: { asdf: "something", id: "objectId" } },
             renderOrder: ["objectId"],
+            extra: {},
         });
     });
 
     it("object deletion should be idempotent", () => {
         const storage = getNormalStorage();
-        const { objects, renderOrder } = storage.getStored({
-            grid: { id: "grid" },
-            layer: { id: "layer1" },
-        });
+        const { objects, renderOrder } = storage.getStored(gridLayer("grid", "layer1"));
         const action: HistoryAction = {
             id: "objectId",
             layerId: "layer1",
@@ -93,9 +89,10 @@ describe("StorageManager", () => {
         storage._ApplyHistoryAction(objects, renderOrder, action);
         storage._ApplyHistoryAction(objects, renderOrder, action);
 
-        expect(storage.objects["grid"]["layer1"]).toEqual({
+        expect(storage.objects["grid"]["layer1"]).toEqual<LayerStorage>({
             objects: {},
             renderOrder: [],
+            extra: {},
         });
     });
 
@@ -134,7 +131,7 @@ describe("StorageManager", () => {
 
         storage.undoHistory("grid");
         // Ensure the initial state is good
-        expect(storage.objects).toEqual({
+        expect(storage.objects).toEqual<StorageManager["objects"]>({
             grid: {
                 layer1: {
                     objects: {
@@ -143,26 +140,28 @@ describe("StorageManager", () => {
                         id3: { asdf: "something3", id: "id3" },
                     },
                     renderOrder: ["id1", "id2", "id3"],
+                    extra: {},
                 },
-                layer2: { objects: {}, renderOrder: [] },
+                layer2: { objects: {}, renderOrder: [], extra: {} },
             },
         });
 
         storage.undoHistory("grid");
         // Undo a batch of actions
-        expect(storage.objects).toEqual({
+        expect(storage.objects).toEqual<StorageManager["objects"]>({
             grid: {
                 layer1: {
                     objects: { id1: { asdf: "something1", id: "id1" } },
                     renderOrder: ["id1"],
+                    extra: {},
                 },
-                layer2: { objects: {}, renderOrder: [] },
+                layer2: { objects: {}, renderOrder: [], extra: {} },
             },
         });
 
         storage.redoHistory("grid");
         // Undo a batch of actions
-        expect(storage.objects).toEqual({
+        expect(storage.objects).toEqual<StorageManager["objects"]>({
             grid: {
                 layer1: {
                     objects: {
@@ -171,8 +170,9 @@ describe("StorageManager", () => {
                         id3: { asdf: "something3", id: "id3" },
                     },
                     renderOrder: ["id1", "id2", "id3"],
+                    extra: {},
                 },
-                layer2: { objects: {}, renderOrder: [] },
+                layer2: { objects: {}, renderOrder: [], extra: {} },
             },
         });
     });
@@ -236,19 +236,20 @@ describe("StorageManager", () => {
         const objectsAfterAction = cloneDeep(storage.objects);
 
         // Ensure the initial states are good
-        expect(objectsBeforeAction).toEqual({
+        expect(objectsBeforeAction).toEqual<StorageManager["objects"]>({
             grid: {
-                layer1: { objects: {}, renderOrder: [] },
-                layer2: { objects: {}, renderOrder: [] },
+                layer1: { objects: {}, renderOrder: [], extra: {} },
+                layer2: { objects: {}, renderOrder: [], extra: {} },
             },
         });
-        expect(objectsAfterAction).toEqual({
+        expect(objectsAfterAction).toEqual<StorageManager["objects"]>({
             grid: {
                 layer1: {
                     objects: { id1: { asdf: "something1", id: "id1" } },
                     renderOrder: ["id1"],
+                    extra: {},
                 },
-                layer2: { objects: {}, renderOrder: [] },
+                layer2: { objects: {}, renderOrder: [], extra: {} },
             },
         });
         const afterRedo: StorageManager["histories"][0] = {
@@ -399,4 +400,8 @@ describe("StorageManager", () => {
     });
 
     it.todo("should have tests related to storageReducers");
+
+    it.todo(
+        "should only prune redo actions when actions will be added to history (think selection layer, add better description)",
+    );
 });

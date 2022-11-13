@@ -187,8 +187,8 @@ export type LayerClass<LP extends LayerProps = LayerProps> = {
 export type LayerStorage<LP extends LayerProps = LayerProps> = {
     renderOrder: string[];
     objects: Record<string, LP["ObjectState"]>;
-    // TODO: Should I nest this property to avoid any future conflicts?
-} & Partial<LP["ExtraLayerStorageProps"]>;
+    extra: Partial<LP["ExtraLayerStorageProps"]>;
+};
 
 export type IncompleteHistoryAction = {
     id: string;

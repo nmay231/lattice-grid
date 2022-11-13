@@ -19,6 +19,7 @@ export const getEventEssentials = <LP extends LayerProps = LayerProps>(
     const _stored: LayerStorage<LP> = stored || {
         objects: {},
         renderOrder: [],
+        extra: {},
     };
 
     return {

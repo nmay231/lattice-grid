@@ -29,6 +29,7 @@ describe("SimpleLine", () => {
             objects: {
                 something: { id: "something", points: [], state: { fill: "" } },
             },
+            extra: {},
         };
         const simpleLine = getSimpleLine({
             stored,
@@ -53,6 +54,7 @@ describe("SimpleLine", () => {
             objects: {
                 something: { id: "something", points: [], state: { fill: "" } },
             },
+            extra: {},
         };
         const simpleLine = getSimpleLine({
             stored,
