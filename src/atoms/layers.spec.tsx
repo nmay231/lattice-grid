@@ -111,7 +111,8 @@ describe("layers atom", () => {
         expect(state.currentLayerId).toEqual("layer4");
         selectLayer({ id: "layer1" });
         expect(state.currentLayerId).toEqual("layer1");
-        selectLayer({ id: "layer2" }); // Ethereal, do not select
+        // Should throw error since layer is ethereal
+        expect(() => selectLayer({ id: "layer2" })).toThrow();
         expect(state.currentLayerId).toEqual("layer1");
     });
 

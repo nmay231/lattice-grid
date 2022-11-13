@@ -1,7 +1,7 @@
 import { ToggleCharactersLayer } from "./ToggleCharacters";
 
 describe("ToggleCharacters", () => {
-    console.log(ToggleCharactersLayer);
+    console.log("todo" || ToggleCharactersLayer);
 
     it.todo("should have tests");
 });
