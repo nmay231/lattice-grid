@@ -1,6 +1,6 @@
 import { cloneDeep } from "lodash";
-import { HistoryAction, LayerStorage } from "../types";
-import { StorageManager } from "./StorageManager";
+import { HistoryAction } from "../types";
+import { LayerStorage, StorageManager } from "./StorageManager";
 
 describe("StorageManager", () => {
     const getNormalStorage = () => {

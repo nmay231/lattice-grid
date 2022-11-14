@@ -15,7 +15,7 @@ export type PuzzleError = {
     objects?: {
         layerId: string;
         gridId: string;
-        objectIds: string[];
+        objectIds: ObjectId[];
     };
 };
 
@@ -65,6 +65,7 @@ export type Vector = [number, number];
 export type Delta = { dx: number; dy: number };
 
 export type PointType = "cells" | "edges" | "corners";
+export type ObjectId = string;
 // #endregion
 
 // #region - Grids
@@ -184,12 +185,6 @@ export type LayerClass<LP extends LayerProps = LayerProps> = {
 // #endregion
 
 // #region - Undo-Redo History
-export type LayerStorage<LP extends LayerProps = LayerProps> = {
-    renderOrder: string[];
-    objects: Record<string, LP["ObjectState"]>;
-    extra: Partial<LP["ExtraLayerStorageProps"]>;
-};
-
 export type IncompleteHistoryAction = {
     id: string;
     layerId?: string;

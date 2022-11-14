@@ -1,5 +1,6 @@
-import { LayerHandlerResult, LayerStorage, NeedsUpdating } from "../../types";
+import { LayerHandlerResult, NeedsUpdating } from "../../types";
 import { getEventEssentials, GetEventEssentialsArg } from "../../utils/testUtils";
+import { LayerStorage } from "../StorageManager";
 import { NumberLayer, NumberProps } from "./Number";
 
 describe("Number Layer", () => {

@@ -2,11 +2,11 @@ import {
     LayerEvent,
     LayerEventEssentials,
     LayerHandlerResult,
-    LayerStorage,
     NeedsUpdating,
     PointerMoveOrDown,
 } from "../../types";
 import { getEventEssentials, GetEventEssentialsArg } from "../../utils/testUtils";
+import { LayerStorage } from "../StorageManager";
 import { SelectionLayer, SelectionProps } from "./Selection";
 
 const getFreshSelectionLayer = () => {
@@ -360,14 +360,12 @@ describe("SelectionLayer", () => {
     it("should select objects affected by undo/redo", () => {
         // We start with two points selected
         const selection = getFreshSelectionLayer();
-        const stored = {
-            objects: {
-                toDeselect: { id: "toDeselect", point: "toDeselect", state: 1 },
-                toKeep: { id: "toKeep", point: "toKeep", state: 1 },
-            },
-            renderOrder: ["toDeselect", "toKeep"],
-            extra: {},
-        } as LayerStorage<SelectionProps>;
+        const stored = new LayerStorage<SelectionProps>();
+        stored.objects = {
+            toDeselect: { id: "toDeselect", point: "toDeselect", state: 1 },
+            toKeep: { id: "toKeep", point: "toKeep", state: 1 },
+        } as LayerStorage<SelectionProps>["objects"];
+        stored.renderOrder = ["toDeselect", "toKeep"];
         const essentials = eventEssentials({ stored });
 
         // The event has two objects with one already selected and one not

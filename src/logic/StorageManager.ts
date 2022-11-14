@@ -5,7 +5,6 @@ import {
     IncompleteHistoryAction,
     Layer,
     LayerProps,
-    LayerStorage,
     NeedsUpdating,
     StorageReducer,
 } from "../types";
@@ -212,4 +211,12 @@ export class StorageManager {
     getNewBatchId() {
         return this._batchId++;
     }
+}
+
+// Sure, this could be in its own file, but I don't feel like it should be just yet...
+export class LayerStorage<LP extends LayerProps = LayerProps> {
+    objects: Record<string, LP["ObjectState"]> = {};
+    extra: Partial<LP["ExtraLayerStorageProps"]> = {};
+    renderOrder: string[] = [];
+    // groups: { question: Set<ObjectId>; answer: Set<ObjectId> } = { answer: new Set(), question: new Set() };
 }
