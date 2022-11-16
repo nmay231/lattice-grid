@@ -56,5 +56,5 @@ export abstract class BaseLayer<LP extends LayerProps>
         layerEvent: PointerMoveOrDown & LayerEventEssentials<LayerProps>,
     ) => string[];
 
-    abstract handleEvent: (layerEvent: LayerEvent<LayerProps>) => LayerHandlerResult;
+    abstract handleEvent: (layerEvent: LayerEvent<LayerProps>) => LayerHandlerResult<LP>;
 }

@@ -4,7 +4,6 @@ import type { PolygonBlits } from "./components/SVGCanvas/Polygon";
 import type { TextBlits } from "./components/SVGCanvas/Text";
 import type { SquareGridParams } from "./logic/grids/SquareGrid";
 import type { availableLayers } from "./logic/layers";
-import type { ISelectionLayer } from "./logic/layers/Selection";
 import type { PuzzleManager } from "./logic/PuzzleManager";
 import type { StorageManager } from "./logic/StorageManager";
 import type { UserCodeJSON } from "./logic/userComputation/codeBlocks";
@@ -79,7 +78,7 @@ export type Grid = {
         includeOutOfBounds?: boolean;
         excludePreviousPoints?: boolean;
     }) => any;
-    getAllPoints: any;
+    getAllPoints: (type: PointType) => Point[];
     selectPointsWithCursor: (arg: {
         // TODO: Change to [number, number]
         cursor: { x: number; y: number };
@@ -136,12 +135,12 @@ export type LayerEvent<LP extends LayerProps> = CleanedDOMEvent & LayerEventEsse
 
 export type NewSettingsEvent<LP extends LayerProps> = LayerEventEssentials<LP> & {
     newSettings: LP["RawSettings"];
-    attachSelectionHandler: ISelectionLayer["attachHandler"];
 };
 
-export type LayerHandlerResult = {
+// TODO: Adding OtherState makes sense for IncompleteHistoryAction, but not for LayerHandlerResult. Should this somehow be another property on LayerProps?
+export type LayerHandlerResult<LP extends LayerProps> = {
     discontinueInput?: boolean;
-    history?: IncompleteHistoryAction[];
+    history?: IncompleteHistoryAction<LP>[];
 };
 
 export type JSONSchema = { schema: NeedsUpdating; uischemaElements: NeedsUpdating[] };
@@ -164,9 +163,11 @@ export type Layer<LP extends LayerProps = LayerProps> = {
     rawSettings: LP["RawSettings"];
     controls?: JSONSchema;
     constraints?: JSONSchema;
-    newSettings: (settingsChange: Omit<NewSettingsEvent<LP>, "tempStorage">) => LayerHandlerResult;
+    newSettings: (
+        settingsChange: Omit<NewSettingsEvent<LP>, "tempStorage">,
+    ) => LayerHandlerResult<LP>;
     gatherPoints: (layerEvent: PointerMoveOrDown & LayerEventEssentials<LP>) => string[];
-    handleEvent: (layerEvent: LayerEvent<LP>) => LayerHandlerResult;
+    handleEvent: (layerEvent: LayerEvent<LP>) => LayerHandlerResult<LP>;
     getBlits: (data: Omit<LayerEventEssentials<LP>, "tempStorage">) => BlitGroup[];
     getOverlayBlits?: (data: Omit<LayerEventEssentials<LP>, "tempStorage">) => BlitGroup[];
 };
@@ -185,20 +186,27 @@ export type LayerClass<LP extends LayerProps = LayerProps> = {
 // #endregion
 
 // #region - Undo-Redo History
-export type IncompleteHistoryAction = {
-    id: string;
-    layerId?: string;
-    batchId?: "ignore" | number;
-    // TODO: More specific types
-    object: any;
-};
-export type HistoryAction = {
+export type IncompleteHistoryAction<LP extends LayerProps = LayerProps, OtherState = any> =
+    | {
+          id: string;
+          layerId: string | undefined;
+          batchId?: "ignore" | number;
+          object: OtherState;
+      }
+    | {
+          id: string;
+          batchId?: "ignore" | number;
+          object: LP["ObjectState"] | null;
+      };
+
+export type HistoryAction<LP extends LayerProps = LayerProps> = {
     id: string;
     layerId: string;
     batchId?: number;
-    object: UnknownObject | null;
+    object: LP["ObjectState"] | null;
     renderIndex: number;
 };
+
 export type History = {
     actions: HistoryAction[];
     index: number;

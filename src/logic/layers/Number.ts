@@ -1,9 +1,9 @@
 import { TextBlits } from "../../components/SVGCanvas/Text";
-import { Layer, LayerClass, LayerProps } from "../../types";
+import { Layer, LayerClass } from "../../types";
 import { BaseLayer, methodNotImplemented } from "./baseLayer";
-import { KeyDownEventHandler } from "./Selection";
+import { handleEventsSelection, KeyDownEventHandler, SelectedProps } from "./controls/selection";
 
-export interface NumberProps extends LayerProps {
+export interface NumberProps extends SelectedProps {
     Type: "NumberLayer";
     ObjectState: { state: string; point: string };
     RawSettings: { min: number; max: number };
@@ -126,16 +126,11 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
         };
     };
 
-    newSettings: INumberLayer["newSettings"] = ({
-        newSettings,
-        grid,
-        storage,
-        attachSelectionHandler,
-    }) => {
+    newSettings: INumberLayer["newSettings"] = ({ newSettings, grid, storage }) => {
         this.settings = this._newSettings(newSettings);
         this.rawSettings = newSettings;
 
-        attachSelectionHandler(this, {});
+        handleEventsSelection(this, {});
 
         const { objects, renderOrder } = storage.getStored<NumberProps>({
             grid,

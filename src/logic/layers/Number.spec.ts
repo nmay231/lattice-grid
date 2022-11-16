@@ -15,25 +15,18 @@ describe("Number Layer", () => {
 
     // Used to fake Date.now
     const START_TIME = 1649519000000;
-    const attachSelectionHandler = jest.fn();
 
     // Layer with numbers 1-9
     const settings1to9 = { min: 1, max: 9 };
     const layer1to9 = NumberLayer.create({ layers: {} } as NeedsUpdating) as NumberLayer;
-    layer1to9.newSettings({
-        ...eventEssentials(),
-        newSettings: settings1to9,
-        attachSelectionHandler,
-    });
+    layer1to9.newSettings({ ...eventEssentials(), newSettings: settings1to9 });
 
     // Layer with numbers -9 to 64
     const settingsN9to64 = { min: -9, max: 64 };
     const layerN9to64 = NumberLayer.create({ layers: {} } as NeedsUpdating) as NumberLayer;
-    layerN9to64.newSettings({
-        ...eventEssentials(),
-        newSettings: settingsN9to64,
-        attachSelectionHandler,
-    });
+    layerN9to64.newSettings({ ...eventEssentials(), newSettings: settingsN9to64 });
+
+    type HistoryType = LayerHandlerResult<NumberProps>["history"];
 
     it("should place numbers", () => {
         const result = layer1to9.handleKeyDown({
@@ -43,7 +36,7 @@ describe("Number Layer", () => {
             points: ["id1", "id2"],
         });
 
-        expect(result.history).toEqual<LayerHandlerResult["history"]>([
+        expect(result.history).toEqual<HistoryType>([
             { id: "id1", object: { point: "id1", state: "1" } },
             { id: "id2", object: { point: "id2", state: "1" } },
         ]);
@@ -67,7 +60,7 @@ describe("Number Layer", () => {
             points: ["toDelete", "alsoDelete"],
         });
 
-        expect(result.history).toEqual<LayerHandlerResult["history"]>([
+        expect(result.history).toEqual<HistoryType>([
             { id: "toDelete", object: null },
             { id: "alsoDelete", object: null },
         ]);
@@ -87,15 +80,10 @@ describe("Number Layer", () => {
         const result = layer1to9.newSettings({
             ...eventEssentials({ stored }),
             newSettings: { min: -1, max: 10 },
-            attachSelectionHandler,
         });
         expect(result?.history).toEqual([]);
 
-        layer1to9.newSettings({
-            ...eventEssentials(),
-            newSettings: settings1to9,
-            attachSelectionHandler,
-        });
+        layer1to9.newSettings({ ...eventEssentials(), newSettings: settings1to9 });
     });
 
     it("should delete objects when the number range decreases", () => {
@@ -112,7 +100,6 @@ describe("Number Layer", () => {
         const result = layer1to9.newSettings({
             ...eventEssentials({ stored }),
             newSettings: { min: 3, max: 7 },
-            attachSelectionHandler,
         });
 
         expect(result?.history).toEqual([
@@ -120,11 +107,7 @@ describe("Number Layer", () => {
             { id: "3,3", object: null },
         ]);
 
-        layer1to9.newSettings({
-            ...eventEssentials(),
-            newSettings: settings1to9,
-            attachSelectionHandler,
-        });
+        layer1to9.newSettings({ ...eventEssentials(), newSettings: settings1to9 });
     });
 
     it("should add a second digit when typed fast enough", () => {
@@ -149,7 +132,7 @@ describe("Number Layer", () => {
             keypress: "2",
             points: ["id"],
         });
-        expect(result.history).toEqual<LayerHandlerResult["history"]>([
+        expect(result.history).toEqual<HistoryType>([
             { id: "id", object: { point: "id", state: "42" } },
         ]);
 
@@ -178,7 +161,7 @@ describe("Number Layer", () => {
             keypress: "2",
             points: ["id"],
         });
-        expect(result.history).toEqual<LayerHandlerResult["history"]>([
+        expect(result.history).toEqual<HistoryType>([
             { id: "id", object: { point: "id", state: "2" } },
         ]);
 
@@ -211,7 +194,7 @@ describe("Number Layer", () => {
             points: ["id", "id3"],
         });
 
-        expect(result.history).toEqual<LayerHandlerResult["history"]>([
+        expect(result.history).toEqual<HistoryType>([
             { id: "id", object: { point: "id", state: "2" } },
             { id: "id3", object: { point: "id3", state: "2" } },
         ]);
@@ -245,7 +228,7 @@ describe("Number Layer", () => {
             points: ["id", "id2"],
         });
 
-        expect(result.history).toEqual<LayerHandlerResult["history"]>([
+        expect(result.history).toEqual<HistoryType>([
             { id: "id", object: { point: "id", state: "2" } },
             { id: "id2", object: { point: "id2", state: "2" } },
         ]);

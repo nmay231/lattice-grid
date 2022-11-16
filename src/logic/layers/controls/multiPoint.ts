@@ -1,8 +1,15 @@
 import { cloneDeep } from "lodash";
-import { Layer, LayerProps, PointType } from "../../../types";
+import {
+    Keypress,
+    Layer,
+    LayerEventEssentials,
+    LayerHandlerResult,
+    LayerProps,
+    Point,
+    PointType,
+} from "../../../types";
 import { errorNotification } from "../../../utils/DOMUtils";
 import { smartSort } from "../../../utils/stringUtils";
-import { KeyDownEventHandler } from "../Selection";
 
 export interface MultiPointLayerProps extends LayerProps {
     ObjectState: { id: string; points: string[]; state: unknown };
@@ -14,12 +21,16 @@ export interface MultiPointLayerProps extends LayerProps {
     };
 }
 
+export type MultiPointKeyDownHandler<LP extends MultiPointLayerProps> = (
+    arg: LayerEventEssentials<LP> & Keypress & { points: Point[] },
+) => LayerHandlerResult<LP>;
+
 export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
     layer: Layer<LP>,
     {
         // TODO: In user settings, rename allowOverlap to "Allow partial overlap"
         allowOverlap = false,
-        handleKeyDown = null as null | KeyDownEventHandler<LP>["handleKeyDown"],
+        handleKeyDown = null as null | MultiPointKeyDownHandler<LP>,
         pointTypes = [] as PointType[],
         overwriteOthers = false,
         ensureConnected = true,
@@ -128,7 +139,7 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
                         {
                             id: startPoint,
                             batchId,
-                            object: { points: [startPoint], state: null },
+                            object: { id: startPoint, points: [startPoint], state: null },
                         },
                     ],
                 };

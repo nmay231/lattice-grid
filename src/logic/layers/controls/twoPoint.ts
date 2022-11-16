@@ -4,7 +4,7 @@ import { errorNotification } from "../../../utils/DOMUtils";
 import { smartSort } from "../../../utils/stringUtils";
 
 export interface TwoPointProps extends LayerProps {
-    ObjectState: { id: string; points: string[]; state: unknown };
+    ObjectState: { points: string[]; state: unknown };
     TempStorage: {
         previousPoint: string;
         batchId: number;

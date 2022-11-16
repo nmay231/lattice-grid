@@ -17,13 +17,12 @@ import { ControlsManager } from "./ControlsManager";
 import { SquareGrid } from "./grids/SquareGrid";
 import { availableLayers } from "./layers";
 import { CellOutlineLayer } from "./layers/CellOutline";
+import { SELECTION_ID } from "./layers/controls/selection";
 import { OverlayLayer } from "./layers/Overlay";
-import { SelectionLayer } from "./layers/Selection";
 import { StorageManager } from "./StorageManager";
 
 export class PuzzleManager {
     layers: {
-        SelectionLayer: SelectionLayer;
         OverlayLayer: OverlayLayer;
         CellOutlineLayer: CellOutlineLayer;
         [K: string]: Layer;
@@ -42,7 +41,6 @@ export class PuzzleManager {
 
     _requiredLayers(): typeof this["layers"] {
         return {
-            SelectionLayer: availableLayers["SelectionLayer"].create(this) as SelectionLayer,
             OverlayLayer: availableLayers["OverlayLayer"].create(this) as OverlayLayer,
             CellOutlineLayer: availableLayers["CellOutlineLayer"].create(this) as CellOutlineLayer,
         };
@@ -51,9 +49,10 @@ export class PuzzleManager {
     _resetLayers() {
         Layers.reset();
         this.layers = this._requiredLayers();
+        this.storage.addStorage({ grid: this.grid, layer: { id: SELECTION_ID } });
 
         // Guarantee that these layers will be present even if the saved puzzle fails to add them
-        const requiredLayers = [CellOutlineLayer, SelectionLayer, OverlayLayer];
+        const requiredLayers = [CellOutlineLayer, OverlayLayer];
         for (const layer of requiredLayers) {
             this.addLayer(layer, null);
         }
@@ -75,9 +74,10 @@ export class PuzzleManager {
     freshPuzzle() {
         this._resetLayers();
         this._loadPuzzle({
-            layers: (
-                ["CellOutlineLayer", "SelectionLayer", "NumberLayer", "OverlayLayer"] as const
-            ).map((id) => ({ id, type: id })),
+            layers: (["CellOutlineLayer", "NumberLayer", "OverlayLayer"] as const).map((id) => ({
+                id,
+                type: id,
+            })),
             grid: { type: "square", width: 10, height: 10, minX: 0, minY: 0 },
         });
         this.renderChange({ type: "draw", layerIds: "all" });
@@ -193,13 +193,11 @@ export class PuzzleManager {
     }
 
     changeLayerSettings(layerId: string, newSettings: any) {
-        const Selection = this.layers["SelectionLayer"];
         const layer = this.layers[layerId];
         const { history } = layer.newSettings({
             newSettings,
             grid: this.grid,
             storage: this.storage,
-            attachSelectionHandler: Selection.attachHandler.bind(Selection),
             settings: getSettings(),
         });
 

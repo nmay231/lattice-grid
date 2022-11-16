@@ -1,27 +1,12 @@
-import {
-    LayerEvent,
-    LayerEventEssentials,
-    LayerHandlerResult,
-    NeedsUpdating,
-    PointerMoveOrDown,
-} from "../../types";
-import { getEventEssentials, GetEventEssentialsArg } from "../../utils/testUtils";
-import { LayerStorage } from "../StorageManager";
-import { SelectionLayer, SelectionProps } from "./Selection";
+import { LayerEvent, LayerHandlerResult, NeedsUpdating, PointerMoveOrDown } from "../../../types";
+import { getEventEssentials } from "../../../utils/testUtils";
+import { LayerStorage } from "../../StorageManager";
+import { handleEventsSelection, SelectedProps, SELECTION_ID } from "./selection";
 
-const getFreshSelectionLayer = () => {
-    delete SelectionLayer.uniqueInstance;
-    return SelectionLayer.create({ layers: {} } as NeedsUpdating) as SelectionLayer;
-};
-
-const storingLayer = { id: "storingLayer", handleKeyDown: jest.fn() };
-
-const eventEssentials = (arg: GetEventEssentialsArg<SelectionProps> = {}) => {
-    return {
-        ...getEventEssentials<SelectionProps>(arg),
-        storingLayer,
-        // TODO: More specific types for storingLayer
-    } as LayerEventEssentials<SelectionProps> & { storingLayer: any };
+const getFreshSelectedLayer = () => {
+    const layer = { id: "DummyLayer" } as NeedsUpdating;
+    handleEventsSelection(layer, {});
+    return layer;
 };
 
 const partialPointerEvent: Omit<PointerMoveOrDown, "points" | "type"> = {
@@ -33,30 +18,25 @@ const partialPointerEvent: Omit<PointerMoveOrDown, "points" | "type"> = {
 
 describe("SelectionLayer", () => {
     it("should select one cell", () => {
-        const stored: LayerStorage<SelectionProps> = {
+        const stored: LayerStorage<SelectedProps> = {
             renderOrder: [],
             objects: {},
             extra: {},
         };
-        const selection = getFreshSelectionLayer();
-        const essentials = eventEssentials({ stored });
+        const layer = getFreshSelectedLayer();
+        const essentials = getEventEssentials({ stored });
 
         // Start tapping/clicking
-        let fakeEvent: LayerEvent<SelectionProps> = {
+        let fakeEvent: LayerEvent<SelectedProps> = {
             ...essentials,
             ...partialPointerEvent,
             type: "pointerDown",
             points: ["point1"],
         };
-        let result = selection.handleEvent(fakeEvent);
+        let result = layer.handleEvent(fakeEvent);
 
-        expect(result.history).toEqual<LayerHandlerResult["history"]>([
-            {
-                id: "point1",
-                layerId: selection.id,
-                batchId: "ignore",
-                object: { point: "point1", state: 2 },
-            },
+        expect(result.history).toEqual<LayerHandlerResult<SelectedProps>["history"]>([
+            { id: "point1", layerId: SELECTION_ID, batchId: "ignore", object: { state: 2 } },
         ]);
         expect(result.discontinueInput).toBeFalsy();
 
@@ -66,38 +46,38 @@ describe("SelectionLayer", () => {
 
         // Pointer up
         fakeEvent = { ...essentials, type: "pointerUp" };
-        result = selection.handleEvent(fakeEvent);
+        result = layer.handleEvent(fakeEvent);
         expect(result.history?.length).toBeFalsy();
         expect(result.discontinueInput).toBeTruthy();
     });
 
     it("should deselect a cell by clicking on it", () => {
         // Setup a grid with exactly one cell selected
-        const selection = getFreshSelectionLayer();
+        const layer = getFreshSelectedLayer();
         const stored = {
-            objects: { point1: { id: "point1", point: "point1", state: 100 } },
+            objects: { point1: { id: "point1", state: 100 } },
             renderOrder: ["point1"],
             extra: {},
         };
-        const essentials = eventEssentials({ stored });
+        const essentials = getEventEssentials({ stored });
 
         // Tap/click that cell
-        let fakeEvent: LayerEvent<SelectionProps> = {
+        let fakeEvent: LayerEvent<SelectedProps> = {
             ...essentials,
             ...partialPointerEvent,
             type: "pointerDown",
             points: ["point1"],
         };
-        selection.handleEvent(fakeEvent);
+        layer.handleEvent(fakeEvent);
 
         fakeEvent = { ...essentials, type: "pointerUp" };
-        const result = selection.handleEvent(fakeEvent);
+        const result = layer.handleEvent(fakeEvent);
 
         // It should be deselected
-        expect(result.history).toEqual<LayerHandlerResult["history"]>([
+        expect(result.history).toEqual<LayerHandlerResult<SelectedProps>["history"]>([
             {
                 id: "point1",
-                layerId: selection.id,
+                layerId: SELECTION_ID,
                 batchId: "ignore",
                 object: null,
             },
@@ -107,38 +87,38 @@ describe("SelectionLayer", () => {
 
     it("should not deselect a clicked cell if there were more than one previously selected", () => {
         // Setup a grid with two cells selected
-        const selection = getFreshSelectionLayer();
+        const layer = getFreshSelectedLayer();
         const stored = {
             objects: {
-                point1: { id: "point1", point: "point1", state: 2 },
-                point2: { id: "point2", point: "point2", state: 2 },
+                point1: { id: "point1", state: 2 },
+                point2: { id: "point2", state: 2 },
             },
             renderOrder: ["point1", "point2"],
             extra: {},
-        } as LayerStorage<SelectionProps>;
-        const essentials = eventEssentials({ stored });
+        } as LayerStorage<SelectedProps>;
+        const essentials = getEventEssentials({ stored });
 
         // Start tapping/clicking the first cell
-        let fakeEvent: LayerEvent<SelectionProps> = {
+        let fakeEvent: LayerEvent<SelectedProps> = {
             ...essentials,
             ...partialPointerEvent,
             type: "pointerDown",
             points: ["point1"],
         };
-        let result = selection.handleEvent(fakeEvent);
+        let result = layer.handleEvent(fakeEvent);
 
-        expect(result.history).toEqual<LayerHandlerResult["history"]>([
+        expect(result.history).toEqual<LayerHandlerResult<SelectedProps>["history"]>([
             {
                 id: "point2",
-                layerId: selection.id,
+                layerId: SELECTION_ID,
                 batchId: "ignore",
                 object: null,
             },
             {
                 id: "point1",
-                layerId: selection.id,
+                layerId: SELECTION_ID,
                 batchId: "ignore",
-                object: { point: "point1", state: 2 },
+                object: { state: 2 },
             },
         ]);
         expect(result.discontinueInput).toBeFalsy();
@@ -149,7 +129,7 @@ describe("SelectionLayer", () => {
 
         // Release the pointer
         fakeEvent = { ...essentials, type: "pointerUp" };
-        result = selection.handleEvent(fakeEvent);
+        result = layer.handleEvent(fakeEvent);
 
         // The first cell should still be selected
         expect(result.history?.length).toBeFalsy();
@@ -158,76 +138,76 @@ describe("SelectionLayer", () => {
 
     it("should deselect a cell when clicking another one", () => {
         // Setup a grid with one cell selected
-        const selection = getFreshSelectionLayer();
+        const layer = getFreshSelectedLayer();
         const stored = {
             objects: {
-                point1: { id: "point1", point: "point1", state: 2 },
+                point1: { id: "point1", state: 2 },
             },
             renderOrder: ["point1"],
             extra: {},
-        } as LayerStorage<SelectionProps>;
-        const essentials = eventEssentials({ stored });
+        } as LayerStorage<SelectedProps>;
+        const essentials = getEventEssentials({ stored });
 
         // Start tapping/clicking a different cell
-        let fakeEvent: LayerEvent<SelectionProps> = {
+        let fakeEvent: LayerEvent<SelectedProps> = {
             ...essentials,
             ...partialPointerEvent,
             type: "pointerDown",
             points: ["point2"],
         };
-        let result = selection.handleEvent(fakeEvent);
-        expect(result.history).toEqual<LayerHandlerResult["history"]>([
+        let result = layer.handleEvent(fakeEvent);
+        expect(result.history).toEqual<LayerHandlerResult<SelectedProps>["history"]>([
             {
                 id: "point1",
-                layerId: selection.id,
+                layerId: SELECTION_ID,
                 batchId: "ignore",
                 object: null,
             },
             {
                 id: "point2",
-                layerId: selection.id,
+                layerId: SELECTION_ID,
                 batchId: "ignore",
-                object: { point: "point2", state: 2 },
+                object: { state: 2 },
             },
         ]);
         expect(result.discontinueInput).toBeFalsy();
 
         // Stop tapping/clicking a different cell
         fakeEvent = { ...essentials, type: "pointerUp" };
-        result = selection.handleEvent(fakeEvent);
+        result = layer.handleEvent(fakeEvent);
         expect(result.history?.length).toBeFalsy();
         expect(result.discontinueInput).toBeTruthy();
     });
 
     it("should add cells to the selection when holding ctrl", () => {
         // Setup a grid with a group of cells selected
-        const selection = getFreshSelectionLayer();
+        const layer = getFreshSelectedLayer();
         const stored = {
             objects: {
-                point1: { point: "point1", state: 100 },
-                point2: { point: "point2", state: 100 },
-                point3: { point: "point3", state: 100 },
+                point1: { state: 100 },
+                point2: { state: 100 },
+                point3: { state: 100 },
             },
             renderOrder: ["point1", "point2", "point3"],
             extra: {},
-        } as LayerStorage<SelectionProps>;
-        const essentials = eventEssentials({ stored });
+        } as LayerStorage<SelectedProps>;
+        const essentials = getEventEssentials({ stored });
 
         // Start tapping/clicking a different cell
-        let fakeEvent: LayerEvent<SelectionProps> = {
+        let fakeEvent: LayerEvent<SelectedProps> = {
             ...essentials,
             ...partialPointerEvent,
             type: "pointerDown",
             ctrlKey: true,
             points: ["point4"],
         };
-        let result = selection.handleEvent(fakeEvent);
-        expect(result.history).toEqual<LayerHandlerResult["history"]>([
+        let result = layer.handleEvent(fakeEvent);
+        expect(result.history).toEqual<LayerHandlerResult<SelectedProps>["history"]>([
             {
                 batchId: "ignore",
                 id: "point4",
-                layerId: selection.id,
-                object: { point: "point4", state: 2 },
+                layerId: SELECTION_ID,
+                object: { state: 2 },
             },
         ]);
         expect(result.discontinueInput).toBeFalsy();
@@ -240,58 +220,58 @@ describe("SelectionLayer", () => {
             ctrlKey: true,
             points: ["point5", "point6"],
         };
-        result = selection.handleEvent(fakeEvent);
-        expect(result.history).toEqual<LayerHandlerResult["history"]>([
+        result = layer.handleEvent(fakeEvent);
+        expect(result.history).toEqual<LayerHandlerResult<SelectedProps>["history"]>([
             {
                 batchId: "ignore",
                 id: "point5",
-                layerId: selection.id,
-                object: { point: "point5", state: 2 },
+                layerId: SELECTION_ID,
+                object: { state: 2 },
             },
             {
                 batchId: "ignore",
                 id: "point6",
-                layerId: selection.id,
-                object: { point: "point6", state: 2 },
+                layerId: SELECTION_ID,
+                object: { state: 2 },
             },
         ]);
         expect(result.discontinueInput).toBeFalsy();
 
         // Stop selecting
         fakeEvent = { ...essentials, type: "pointerUp" };
-        result = selection.handleEvent(fakeEvent);
+        result = layer.handleEvent(fakeEvent);
         expect(result.history?.length).toBeFalsy();
         expect(result.discontinueInput).toBeTruthy();
     });
 
     it("should merge disjoint selections when dragging over an existing group", () => {
         // Setup a grid with a group of cells selected
-        const selection = getFreshSelectionLayer();
+        const layer = getFreshSelectedLayer();
         const stored = {
             objects: {
-                point1: { point: "point1", state: 100 },
-                point2: { point: "point2", state: 100 },
+                point1: { state: 100 },
+                point2: { state: 100 },
             },
             renderOrder: ["point1", "point2"],
             extra: {},
-        } as LayerStorage<SelectionProps>;
-        const essentials = eventEssentials({ stored });
+        } as LayerStorage<SelectedProps>;
+        const essentials = getEventEssentials({ stored });
 
         // Start tapping/clicking a different cell
-        let fakeEvent: LayerEvent<SelectionProps> = {
+        let fakeEvent: LayerEvent<SelectedProps> = {
             ...essentials,
             ...partialPointerEvent,
             type: "pointerDown",
             ctrlKey: true,
             points: ["point3"],
         };
-        let result = selection.handleEvent(fakeEvent);
-        expect(result.history).toEqual<LayerHandlerResult["history"]>([
+        let result = layer.handleEvent(fakeEvent);
+        expect(result.history).toEqual<LayerHandlerResult<SelectedProps>["history"]>([
             {
                 batchId: "ignore",
                 id: "point3",
-                layerId: selection.id,
-                object: { point: "point3", state: 2 },
+                layerId: SELECTION_ID,
+                object: { state: 2 },
             },
         ]);
         expect(result.discontinueInput).toBeFalsy();
@@ -304,42 +284,42 @@ describe("SelectionLayer", () => {
             ctrlKey: true,
             points: ["point2"],
         };
-        result = selection.handleEvent(fakeEvent);
+        result = layer.handleEvent(fakeEvent);
         // They should be in the same group now
-        expect(result.history).toEqual<LayerHandlerResult["history"]>([
+        expect(result.history).toEqual<LayerHandlerResult<SelectedProps>["history"]>([
             {
                 batchId: "ignore",
                 id: "point1",
-                layerId: selection.id,
-                object: { point: "point1", state: 2 },
+                layerId: SELECTION_ID,
+                object: { state: 2 },
             },
             {
                 batchId: "ignore",
                 id: "point2",
-                layerId: selection.id,
-                object: { point: "point2", state: 2 },
+                layerId: SELECTION_ID,
+                object: { state: 2 },
             },
         ]);
         expect(result.discontinueInput).toBeFalsy();
 
         // Stop selecting
         fakeEvent = { ...essentials, type: "pointerUp" };
-        result = selection.handleEvent(fakeEvent);
+        result = layer.handleEvent(fakeEvent);
         expect(result.history?.length).toBeFalsy();
         expect(result.discontinueInput).toBeTruthy();
     });
 
     it("should batch together storingLayer actions", () => {
-        const selection = getFreshSelectionLayer();
-        const essentials = eventEssentials();
+        const layer = getFreshSelectedLayer();
+        const essentials = getEventEssentials();
 
         // Have the storing layer return two objects
-        const fakeEvent: LayerEvent<SelectionProps> = {
+        const fakeEvent: LayerEvent<SelectedProps> = {
             ...essentials,
             type: "keyDown",
             keypress: "your face",
         };
-        storingLayer.handleKeyDown.mockReturnValue({
+        layer.handleKeyDown = jest.fn().mockReturnValue({
             history: [
                 { id: "id1", object: { asdf: "something1" } },
                 { id: "id2", object: { asdf: "something2" } },
@@ -347,10 +327,10 @@ describe("SelectionLayer", () => {
         });
         (fakeEvent.storage.getNewBatchId as jest.Mock).mockReturnValueOnce(1);
 
-        const result = selection.handleEvent(fakeEvent);
+        const result = layer.handleEvent(fakeEvent);
 
         // They should be transformed to have the same batchId
-        expect(result.history).toEqual<LayerHandlerResult["history"]>([
+        expect(result.history).toEqual<LayerHandlerResult<SelectedProps>["history"]>([
             { id: "id1", object: { asdf: "something1" }, batchId: 1 },
             { id: "id2", object: { asdf: "something2" }, batchId: 1 },
         ]);
@@ -359,56 +339,55 @@ describe("SelectionLayer", () => {
 
     it("should select objects affected by undo/redo", () => {
         // We start with two points selected
-        const selection = getFreshSelectionLayer();
-        const stored = new LayerStorage<SelectionProps>();
+        const layer = getFreshSelectedLayer();
+        const stored = new LayerStorage<SelectedProps>();
         stored.objects = {
-            toDeselect: { id: "toDeselect", point: "toDeselect", state: 1 },
-            toKeep: { id: "toKeep", point: "toKeep", state: 1 },
-        } as LayerStorage<SelectionProps>["objects"];
+            toDeselect: { id: "toDeselect", state: 1 },
+            toKeep: { id: "toKeep", state: 1 },
+        } as LayerStorage<SelectedProps>["objects"];
         stored.renderOrder = ["toDeselect", "toKeep"];
-        const essentials = eventEssentials({ stored });
+        const essentials = getEventEssentials({ stored });
 
         // The event has two objects with one already selected and one not
-        const fakeEvent: LayerEvent<SelectionProps> = {
+        const fakeEvent: LayerEvent<SelectedProps> = {
             ...essentials,
             type: "undoRedo",
             actions: [
                 {
-                    // TODO: Actually, shouldn't it select the objects based on its points, not its id?
                     id: "toKeep",
-                    layerId: storingLayer.id,
+                    layerId: layer.id,
                     object: {},
                     renderIndex: -1,
                 },
                 {
                     id: "toSelect",
-                    layerId: storingLayer.id,
+                    layerId: layer.id,
                     object: {},
                     renderIndex: -1,
                 },
             ],
         };
-        const result = selection.handleEvent(fakeEvent);
+        const result = layer.handleEvent(fakeEvent);
 
         // Only "toKeep" and "toSelect" should remain
-        expect(result.history).toEqual<LayerHandlerResult["history"]>([
+        expect(result.history).toEqual<LayerHandlerResult<SelectedProps>["history"]>([
             {
                 batchId: "ignore",
                 id: "toDeselect",
-                layerId: selection.id,
+                layerId: SELECTION_ID,
                 object: null,
             },
             {
                 batchId: "ignore",
                 id: "toKeep",
-                layerId: selection.id,
-                object: { point: "toKeep", state: 2 },
+                layerId: SELECTION_ID,
+                object: { state: 2 },
             },
             {
                 batchId: "ignore",
                 id: "toSelect",
-                layerId: selection.id,
-                object: { point: "toSelect", state: 2 },
+                layerId: SELECTION_ID,
+                object: { state: 2 },
             },
         ]);
         expect(result.discontinueInput).toBeTruthy();

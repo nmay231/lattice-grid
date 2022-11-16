@@ -1,8 +1,8 @@
 import { TextBlits } from "../../components/SVGCanvas/Text";
-import { Layer, LayerClass, LayerProps, Vector } from "../../types";
+import { Layer, LayerClass, Vector } from "../../types";
 import { errorNotification } from "../../utils/DOMUtils";
 import { BaseLayer, methodNotImplemented } from "./baseLayer";
-import { KeyDownEventHandler } from "./Selection";
+import { handleEventsSelection, KeyDownEventHandler, SelectedProps } from "./controls/selection";
 
 type RawSettings = {
     // caseSwap allows upper- and lower-case letters to be used as separate characters but to be merged if there's no ambiguity.
@@ -11,7 +11,7 @@ type RawSettings = {
     displayStyle: "center" | "topBottom"; // | "circle" | "tapa",
 };
 
-interface ToggleCharactersProps extends LayerProps {
+interface ToggleCharactersProps extends SelectedProps {
     Type: "ToggleCharactersLayer";
     ObjectState: { state: string };
     RawSettings: RawSettings;
@@ -104,16 +104,11 @@ export class ToggleCharactersLayer
         };
     };
 
-    newSettings: IToggleCharactersLayer["newSettings"] = ({
-        newSettings,
-        grid,
-        storage,
-        attachSelectionHandler,
-    }) => {
+    newSettings: IToggleCharactersLayer["newSettings"] = ({ newSettings, grid, storage }) => {
         this.settings = this._newSettings(newSettings);
         this.rawSettings = newSettings;
 
-        attachSelectionHandler(this, {});
+        handleEventsSelection(this, {});
 
         const { objects, renderOrder } = storage.getStored<ToggleCharactersProps>({
             grid,

@@ -1,9 +1,12 @@
 import { PolygonBlits } from "../../components/SVGCanvas/Polygon";
 import { TextBlits } from "../../components/SVGCanvas/Text";
-import { Layer, LayerClass } from "../../types";
+import { Layer, LayerClass, NeedsUpdating } from "../../types";
 import { BaseLayer, methodNotImplemented } from "./baseLayer";
-import { handleEventsUnorderedSets, MultiPointLayerProps } from "./controls/multiPoint";
-import { KeyDownEventHandler } from "./Selection";
+import {
+    handleEventsUnorderedSets,
+    MultiPointKeyDownHandler,
+    MultiPointLayerProps,
+} from "./controls/multiPoint";
 
 interface KillerCagesProps extends MultiPointLayerProps {
     Type: "KillerCagesLayer";
@@ -11,7 +14,7 @@ interface KillerCagesProps extends MultiPointLayerProps {
 }
 
 interface IKillerCagesLayer extends Layer<KillerCagesProps> {
-    _handleKeyDown: KeyDownEventHandler["handleKeyDown"];
+    _handleKeyDown: MultiPointKeyDownHandler<KillerCagesProps>;
     _nextState: (state: string, keypress: string) => string | number | null;
 }
 
@@ -80,7 +83,7 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
 
     newSettings: IKillerCagesLayer["newSettings"] = () => {
         handleEventsUnorderedSets(this, {
-            handleKeyDown: this._handleKeyDown.bind(this),
+            handleKeyDown: this._handleKeyDown.bind(this) as NeedsUpdating, // Screw you typescript
             pointTypes: ["cells"],
             ensureConnected: false, // TODO: Change to true when properly implemented
             allowOverlap: true, // TODO: Change to false when properly implemented

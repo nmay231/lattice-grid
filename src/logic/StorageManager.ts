@@ -81,7 +81,7 @@ export class StorageManager {
         }
 
         for (const puzzleObject of puzzleObjects) {
-            const layerId = puzzleObject.layerId || layer.id;
+            const layerId = (puzzleObject as NeedsUpdating).layerId || layer.id;
             const { objects, renderOrder } = this.objects[grid.id][layerId];
 
             const action = this.masterReducer({} as NeedsUpdating, {

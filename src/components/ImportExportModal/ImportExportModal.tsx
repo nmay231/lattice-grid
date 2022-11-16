@@ -43,11 +43,7 @@ export const importPuzzle = (puzzle: PuzzleManager, text: string) => {
 };
 
 export const ImportExportAtom = atom(false);
-const layersAlwaysPresent: (keyof typeof availableLayers)[] = [
-    "CellOutlineLayer",
-    "SelectionLayer",
-    "OverlayLayer",
-];
+const layersAlwaysPresent: (keyof typeof availableLayers)[] = ["CellOutlineLayer", "OverlayLayer"];
 
 export const ImportExportModal = () => {
     const puzzle = usePuzzle();

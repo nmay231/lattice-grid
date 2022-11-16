@@ -4,8 +4,6 @@ import { LayerStorage } from "../StorageManager";
 import { SimpleLineLayer, SimpleLineProps } from "./SimpleLine";
 
 describe("SimpleLine", () => {
-    const attachSelectionHandler = jest.fn();
-
     type Arg = {
         stored?: LayerStorage<SimpleLineProps>;
         settings?: SimpleLineProps["RawSettings"];
@@ -14,7 +12,6 @@ describe("SimpleLine", () => {
         const simpleLine = SimpleLineLayer.create({ layers: {} } as NeedsUpdating);
         simpleLine.newSettings({
             ...getEventEssentials({ stored }),
-            attachSelectionHandler,
             newSettings: settings || {
                 connections: "Cell to Cell",
                 fill: "green",
@@ -39,7 +36,6 @@ describe("SimpleLine", () => {
 
         const result = simpleLine.newSettings({
             ...getEventEssentials({ stored }),
-            attachSelectionHandler,
             newSettings: {
                 connections: "Corner to Corner",
                 fill: "green",
@@ -64,7 +60,6 @@ describe("SimpleLine", () => {
 
         const result = simpleLine.newSettings({
             ...getEventEssentials({ stored }),
-            attachSelectionHandler,
             newSettings: {
                 connections: "Cell to Cell",
                 fill: "blue",
