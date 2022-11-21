@@ -7,6 +7,7 @@ import {
     MultiPointKeyDownHandler,
     MultiPointLayerProps,
 } from "./controls/multiPoint";
+import { DO_NOTHING, numberTyper } from "./controls/numberTyper";
 
 interface KillerCagesProps extends MultiPointLayerProps {
     Type: "KillerCagesLayer";
@@ -15,7 +16,7 @@ interface KillerCagesProps extends MultiPointLayerProps {
 
 interface IKillerCagesLayer extends Layer<KillerCagesProps> {
     _handleKeyDown: MultiPointKeyDownHandler<KillerCagesProps>;
-    _nextState: (state: string, keypress: string) => string | number | null;
+    _numberTyper: ReturnType<typeof numberTyper>;
 }
 
 export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKillerCagesLayer {
@@ -28,6 +29,9 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
     settings = this.rawSettings;
     handleEvent = methodNotImplemented({ name: "KillerCages.handleEvent" });
     gatherPoints = methodNotImplemented({ name: "KillerCages.gatherPoints" });
+    _numberTyper = methodNotImplemented({
+        name: "KillerCages._numberTyper",
+    }) as IKillerCagesLayer["_numberTyper"];
 
     static create: LayerClass<KillerCagesProps>["create"] = (puzzle) => {
         return new KillerCagesLayer(KillerCagesLayer, puzzle);
@@ -42,40 +46,20 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
         if (!stored.extra.currentObjectId) return {};
 
         const id = stored.extra.currentObjectId;
-        const object = { ...stored.objects[id] };
+        const object = stored.objects[id];
 
         if (type === "delete") {
             if (object.state === null) return {};
             return { history: [{ id, object: { ...object, state: null } }] };
         }
 
-        const state = this._nextState(object.state ?? "", keypress);
+        const state = this._numberTyper(object.state || "", { type, keypress });
 
-        if (state === object.state) {
+        if (state === object.state || state === DO_NOTHING) {
             return {}; // No change necessary
         }
 
-        object.state = state === null ? null : state.toString();
-        return { history: [{ id, object }] };
-    };
-
-    _nextState: IKillerCagesLayer["_nextState"] = (state, keypress) => {
-        if (keypress === "Backspace") {
-            return state.toString().slice(0, -1) || null;
-        } else if (keypress === "Delete") {
-            return null;
-        } else if (keypress === "-") {
-            // TODO: Keep the minus sign as part of an inProgress object and remove it when we deselect things.
-            return -1 * parseInt(state) || "-";
-        } else if (keypress === "+" || keypress === "=") {
-            return Math.abs(parseInt(state)) || null;
-        } else if (/^[0-9]$/.test(keypress)) {
-            return parseInt(state + keypress);
-        } else if (/^[a-fA-F]$/.test(keypress)) {
-            return parseInt(keypress.toLowerCase(), 16);
-        } else {
-            return state || null;
-        }
+        return { history: [{ id, object: { ...object, state } }] };
     };
 
     static controls = undefined;
