@@ -1,8 +1,15 @@
 import { cloneDeep } from "lodash";
-import { Layer, LayerProps, PointType } from "../../../types";
+import {
+    Keypress,
+    Layer,
+    LayerEventEssentials,
+    LayerHandlerResult,
+    LayerProps,
+    Point,
+    PointType,
+} from "../../../types";
 import { errorNotification } from "../../../utils/DOMUtils";
 import { smartSort } from "../../../utils/stringUtils";
-import { KeyDownEventHandler } from "../Selection";
 
 export interface MultiPointLayerProps extends LayerProps {
     ObjectState: { id: string; points: string[]; state: unknown };
@@ -14,23 +21,26 @@ export interface MultiPointLayerProps extends LayerProps {
     };
 }
 
+export type MultiPointKeyDownHandler<LP extends MultiPointLayerProps> = (
+    arg: LayerEventEssentials<LP> & Keypress & { points: Point[] },
+) => LayerHandlerResult<LP>;
+
 export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
     layer: Layer<LP>,
     {
         // TODO: In user settings, rename allowOverlap to "Allow partial overlap"
         allowOverlap = false,
-        handleKeyDown = null as null | KeyDownEventHandler<LP>["handleKeyDown"],
+        handleKeyDown = null as null | MultiPointKeyDownHandler<LP>,
         pointTypes = [] as PointType[],
         overwriteOthers = false,
         ensureConnected = true,
     },
 ) => {
     if (!pointTypes?.length) {
-        errorNotification({
+        throw errorNotification({
             message: "Multipoint handler was not provided required parameters",
             forever: true,
         });
-        return;
     }
 
     // TODO: Allow this to be set by the layer once FSM (or a general gatherPoints method) is implemented.
@@ -65,7 +75,7 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
         const { grid, storage, type, tempStorage } = event;
 
         const stored = storage.getStored<LP>({ layer, grid });
-        const currentObjectId = stored.currentObjectId || "";
+        const currentObjectId = stored.extra.currentObjectId || "";
         if (!currentObjectId && type !== "pointerDown" && type !== "undoRedo") {
             return {}; // Other events only matter if there is an object selected
         }
@@ -81,14 +91,14 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
                     // Allow the layer to delete its state before deleting the object itself.
                     return result;
                 }
-                stored.currentObjectId = undefined;
+                stored.extra.currentObjectId = undefined;
                 return {
                     discontinueInput: true,
                     history: [{ id: currentObjectId, object: null }],
                 };
             }
             case "cancelAction": {
-                stored.currentObjectId = undefined;
+                stored.extra.currentObjectId = undefined;
                 return {
                     discontinueInput: true,
                     history: [
@@ -113,7 +123,7 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
                         // Only remove a cell if the object was already selected
                         tempStorage.removeSingle = true;
                     }
-                    stored.currentObjectId = id;
+                    stored.extra.currentObjectId = id;
 
                     // Force a rerender without polluting history
                     return {
@@ -123,13 +133,13 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
 
                 // Start drawing a new object
                 tempStorage.removeSingle = false;
-                stored.currentObjectId = startPoint;
+                stored.extra.currentObjectId = startPoint;
                 return {
                     history: [
                         {
                             id: startPoint,
                             batchId,
-                            object: { points: [startPoint], state: null },
+                            object: { id: startPoint, points: [startPoint], state: null },
                         },
                     ],
                 };
@@ -197,7 +207,7 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
                     return { discontinueInput: true };
                 }
 
-                stored.currentObjectId = newId;
+                stored.extra.currentObjectId = newId;
                 objectCopy.id = newId;
                 return {
                     discontinueInput: true,
@@ -211,22 +221,21 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
                 // TODO: layer might have sub-layers and action.layerId !== layer.id
                 const last = event.actions[event.actions.length - 1];
                 if (last.object !== null) {
-                    stored.currentObjectId = last.id;
+                    stored.extra.currentObjectId = last.id;
                     return {
                         discontinueInput: true,
                         // TODO: Force render
                         history: [{ ...last, batchId: "ignore" }],
                     };
                 }
-                stored.currentObjectId = undefined;
+                stored.extra.currentObjectId = undefined;
                 return { discontinueInput: true };
             }
             default: {
-                errorNotification({
+                throw errorNotification({
                     message: `Multipoint unknown event.type=${type}`,
                     forever: true,
                 });
-                return {};
             }
         }
     };

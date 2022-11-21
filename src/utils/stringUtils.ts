@@ -1,5 +1,7 @@
 import { randomId } from "@mantine/hooks";
 
+export { format as formatAnything } from "util";
+
 export const keypressString = (
     event: Pick<KeyboardEvent, "key" | "ctrlKey" | "shiftKey">,
 ): string => {

@@ -1,6 +1,7 @@
-import { Layer, LayerEvent, LayerStorage, PointerMoveOrDown } from "../../../types";
+import { IncompleteHistoryAction, Layer, LayerEvent, PointerMoveOrDown } from "../../../types";
 import { smartSort } from "../../../utils/stringUtils";
 import { getEventEssentials } from "../../../utils/testUtils";
+import { LayerStorage } from "../../StorageManager";
 import { DummyLayer } from "../_DummyLayer";
 import { handleEventsUnorderedSets, MultiPointLayerProps } from "./multiPoint";
 
@@ -29,6 +30,8 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
     // TODO: This and the other controls tests might have to be rewritten to be more clear and more consistent. It's pretty much a hodge-pogge of assertions at the moment, which I guess is better than nothing for now...
     // For example, we have to call layer.gatherPoints each time because it's not a pure function. It's purposely not pure, but that doesn't have to be if modified appropriately.
 
+    type HistoryType = IncompleteHistoryAction<MultiPointLayerProps>[];
+
     it("should draw a new single-point object when none were selected", () => {
         const layer = getFakeLayer();
         applySettings(layer);
@@ -36,6 +39,7 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         const stored: LayerStorage<MultiPointLayerProps> = {
             renderOrder: [],
             objects: {},
+            extra: {},
         };
         const selectPoints = jest.fn();
         const getBatchId = jest.fn();
@@ -54,8 +58,8 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
 
         getBatchId.mockReturnValueOnce(1);
         let result = layer.handleEvent({ ...fakeEvent, points });
-        expect(result.history).toEqual([
-            { batchId: 1, id: "a", object: { points: ["a"], state: null } },
+        expect(result.history).toEqual<HistoryType>([
+            { batchId: 1, id: "a", object: { id: "a", points: ["a"], state: null } },
         ]);
         expect(result.discontinueInput).toBeFalsy();
 
@@ -74,6 +78,7 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         const stored: LayerStorage<MultiPointLayerProps> = {
             objects: { a: { id: "a", points: ["a"], state: null } },
             renderOrder: ["a"],
+            extra: {},
         };
         const selectPoints = jest.fn();
         const getBatchId = jest.fn();
@@ -82,7 +87,7 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         essentials.storage.getNewBatchId = getBatchId;
 
         // Select the existing object
-        stored.currentObjectId = "a";
+        stored.extra.currentObjectId = "a";
 
         selectPoints.mockReturnValueOnce(["b"]);
         const fakeEvent: LayerEvent<MultiPointLayerProps> = {
@@ -94,8 +99,8 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
 
         getBatchId.mockReturnValueOnce(1);
         let result = layer.handleEvent({ ...fakeEvent, points });
-        expect(result.history).toEqual([
-            { batchId: 1, id: "b", object: { points: ["b"], state: null } },
+        expect(result.history).toEqual<HistoryType>([
+            { batchId: 1, id: "b", object: { id: "b", points: ["b"], state: null } },
         ]);
         expect(result.discontinueInput).toBeFalsy();
         stored.objects.b = result.history?.[0].object;
@@ -113,6 +118,7 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         const stored: LayerStorage<MultiPointLayerProps> = {
             renderOrder: [],
             objects: {},
+            extra: {},
         };
         const selectPoints = jest.fn();
         const getBatchId = jest.fn();
@@ -132,8 +138,8 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
 
         getBatchId.mockReturnValueOnce(1);
         let result = layer.handleEvent({ ...fakeEvent, points });
-        expect(result.history).toEqual([
-            { batchId: 1, id: "b", object: { points: ["b"], state: null } },
+        expect(result.history).toEqual<HistoryType>([
+            { batchId: 1, id: "b", object: { id: "b", points: ["b"], state: null } },
         ]);
         expect(result.discontinueInput).toBeFalsy();
 
@@ -148,7 +154,9 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
 
         result = layer.handleEvent({ ...fakeEvent, points });
         points = [...points].sort(smartSort);
-        expect(result.history).toEqual([{ batchId: 1, id: "b", object: { points, state: null } }]);
+        expect(result.history).toEqual<HistoryType>([
+            { batchId: 1, id: "b", object: { id: "b", points, state: null } },
+        ]);
         expect(result.discontinueInput).toBeFalsy();
 
         stored.objects.b = result.history?.[0].object;
@@ -161,13 +169,15 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
 
         result = layer.handleEvent({ ...fakeEvent, points });
         points = ["b", "c"];
-        expect(result.history).toEqual([{ batchId: 1, id: "b", object: { points, state: null } }]);
+        expect(result.history).toEqual<HistoryType>([
+            { batchId: 1, id: "b", object: { id: "b", points, state: null } },
+        ]);
         expect(result.discontinueInput).toBeFalsy();
 
         stored.objects.b = result.history?.[0].object;
 
         result = layer.handleEvent({ ...fakeEvent, type: "pointerUp" });
-        expect(result.history).toEqual([
+        expect(result.history).toEqual<HistoryType>([
             { batchId: 1, id: "b", object: null },
             {
                 batchId: 1,
@@ -185,7 +195,7 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         const stored: LayerStorage<MultiPointLayerProps> = {
             objects: { "a;b": { id: "a;b", points: ["a", "b"], state: null } },
             renderOrder: ["a;b"],
-            currentObjectId: "a;b",
+            extra: { currentObjectId: "a;b" },
         };
         const selectPoints = jest.fn();
         const getBatchId = jest.fn();
@@ -203,7 +213,7 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
 
         getBatchId.mockReturnValueOnce(1);
         let result = layer.handleEvent({ ...fakeEvent, points });
-        expect(result.history).toEqual([
+        expect(result.history).toEqual<HistoryType>([
             // TODO: Required to force a rerender
             {
                 batchId: 1,
@@ -214,7 +224,7 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         expect(result.discontinueInput).toBeFalsy();
 
         result = layer.handleEvent({ ...fakeEvent, type: "pointerUp" });
-        expect(result.history).toEqual([
+        expect(result.history).toEqual<HistoryType>([
             { batchId: 1, id: "a;b", object: null },
             {
                 batchId: 1,
@@ -234,7 +244,7 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         const stored: LayerStorage<MultiPointLayerProps> = {
             objects: { "a;b": { id: "a;b", points: ["a", "b"], state: null } },
             renderOrder: ["a;b"],
-            currentObjectId: "a;b",
+            extra: { currentObjectId: "a;b" },
         };
         const selectPoints = jest.fn();
         const getBatchId = jest.fn();
@@ -270,7 +280,7 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
 
         // End on the starting point
         result = layer.handleEvent({ ...fakeEvent, type: "pointerUp" });
-        expect(result.history).toEqual([
+        expect(result.history).toEqual<HistoryType>([
             { batchId: 1, id: "a;b", object: null },
             {
                 batchId: 1,

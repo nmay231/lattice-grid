@@ -1,10 +1,23 @@
-import { Layer, LayerProps, PointType } from "../../../types";
+import { Layer, LayerHandlerResult, LayerProps, PointType } from "../../../types";
 import { errorNotification } from "../../../utils/DOMUtils";
 
 type CommonArgs = { pointTypes: PointType[]; deltas: any };
 
+export interface OnePointProps<ObjectState> extends LayerProps {
+    ObjectState: { state: ObjectState };
+    TempStorage: {
+        blacklist: string[];
+        previousPoint: string;
+        batchId: number;
+        targetState: ObjectState | null;
+    };
+}
+
 const pointGatherer =
-    ({ pointTypes, deltas }: CommonArgs): Layer<OnePointProps>["gatherPoints"] =>
+    <ObjectState>({
+        pointTypes,
+        deltas,
+    }: CommonArgs): Layer<OnePointProps<ObjectState>>["gatherPoints"] =>
     ({ grid, cursor, tempStorage }) => {
         let newPoints = grid.selectPointsWithCursor({
             cursor: cursor,
@@ -25,43 +38,33 @@ const pointGatherer =
         return newPoints;
     };
 
-export type MinimalSettings = { selectedState: unknown };
-
-export interface OnePointProps extends LayerProps {
-    ObjectState: { id: string; points: string[]; state: unknown };
-    TempStorage: {
-        blacklist: string[];
-        previousPoint: string;
-        batchId: number;
-        targetState: unknown;
-    };
-}
-
-export const handleEventsCycleStates = <LP extends OnePointProps>(
+export const handleEventsCycleStates = <
+    LP extends OnePointProps<ObjectState>,
+    ObjectState = unknown,
+>(
     layer: Layer<LP>,
-    { states, pointTypes, deltas }: CommonArgs & { states: unknown[] },
+    { states, pointTypes, deltas }: CommonArgs & { states: ObjectState[] },
 ) => {
     if (!states?.length || !pointTypes?.length) {
-        errorNotification({
+        throw errorNotification({
             message: "onePoint cycleStates was not provided required parameters",
             forever: true,
         });
-        return;
     }
 
     layer.gatherPoints = pointGatherer({ pointTypes, deltas });
 
-    layer.handleEvent = (event) => {
+    layer.handleEvent = (event): LayerHandlerResult<LP> => {
         if (event.type !== "pointerDown" && event.type !== "pointerMove") {
             return { discontinueInput: true };
         }
 
         const { grid, storage, tempStorage } = event;
 
-        const stored = storage.getStored<OnePointProps>({ grid, layer });
+        const stored = storage.getStored<OnePointProps<ObjectState>>({ grid, layer });
         const newPoints = event.points;
 
-        let state: LP["TempStorage"]["targetState"];
+        let state: ObjectState | null;
         if (tempStorage.targetState !== undefined) {
             state = tempStorage.targetState;
         } else {
@@ -84,40 +87,39 @@ export const handleEventsCycleStates = <LP extends OnePointProps>(
     };
 };
 
-export const handleEventsCurrentSetting = <LP extends OnePointProps>(
-    layer: Layer<LP> & { settings: { selectedState: any } },
+export const handleEventsCurrentSetting = <
+    LP extends OnePointProps<ObjectState>,
+    ObjectState = unknown,
+>(
+    layer: Layer<LP> & { settings: { selectedState: ObjectState } },
     { pointTypes, deltas }: CommonArgs,
 ) => {
     if (!pointTypes?.length || !deltas?.length) {
-        errorNotification({
+        throw errorNotification({
             message: "onePoint currentSetting was not provided required parameters",
             forever: true,
         });
-        return;
     }
 
     layer.gatherPoints = pointGatherer({ pointTypes, deltas });
 
-    layer.handleEvent = (event) => {
+    layer.handleEvent = (event): LayerHandlerResult<LP> => {
         if (event.type !== "pointerDown" && event.type !== "pointerMove") {
             return { discontinueInput: true };
         }
 
         const { grid, storage, tempStorage } = event;
 
-        const stored = storage.getStored<OnePointProps>({ grid, layer });
+        const stored = storage.getStored<OnePointProps<ObjectState>>({ grid, layer });
         const newPoints = event.points;
 
         if (tempStorage.targetState === undefined) {
-            if (stored.objects[newPoints[0]]?.state === layer.settings.selectedState) {
-                tempStorage.targetState = null;
-            } else {
-                tempStorage.targetState = layer.settings.selectedState;
-            }
+            const isSame = stored.objects[newPoints[0]]?.state === layer.settings.selectedState;
+            tempStorage.targetState = isSame ? null : layer.settings.selectedState;
         }
 
         tempStorage.batchId = tempStorage.batchId ?? storage.getNewBatchId();
-        const state = tempStorage.targetState;
+        const state: ObjectState | null = tempStorage.targetState;
         const history = newPoints.map((id) => ({
             id,
             batchId: tempStorage.batchId,

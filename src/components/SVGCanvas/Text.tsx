@@ -4,7 +4,16 @@ import { errorNotification } from "../../utils/DOMUtils";
 export type TextBlits = {
     id: string;
     blitter: "text";
-    blits: any;
+    blits: Record<
+        string,
+        {
+            text: string;
+            point: [number, number];
+            size?: number;
+            textLength?: number;
+            lengthAdjust?: string;
+        }
+    >;
     style: {
         originY: "top" | "center" | "bottom";
         originX: "left" | "center" | "right";

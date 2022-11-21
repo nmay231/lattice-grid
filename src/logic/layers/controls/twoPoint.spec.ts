@@ -1,5 +1,6 @@
-import { Layer, LayerEvent, LayerStorage, PointerMoveOrDown } from "../../../types";
+import { Layer, LayerEvent, PointerMoveOrDown } from "../../../types";
 import { getEventEssentials } from "../../../utils/testUtils";
+import { LayerStorage } from "../../StorageManager";
 import { DummyLayer } from "../_DummyLayer";
 import { handleEventsCurrentSetting, MinimalSettings, TwoPointProps } from "./twoPoint";
 
@@ -145,8 +146,9 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
         const stored: LayerStorage<TwoPointProps> = {
             renderOrder: ["a;b"],
             objects: {
-                "a;b": { id: "a;b", points: ["a", "b"], state: { x: 42 } },
+                "a;b": { points: ["a", "b"], state: { x: 42 } },
             },
+            extra: {},
         };
         const essentials = getEventEssentials({ stored });
         const selectPoints = jest.fn();
@@ -181,13 +183,8 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
 
         const stored: LayerStorage<TwoPointProps> = {
             renderOrder: ["a;b"],
-            objects: {
-                "a;b": {
-                    id: "a;b",
-                    points: ["a", "b"],
-                    state: { different: true },
-                },
-            },
+            objects: { "a;b": { points: ["a", "b"], state: { different: true } } },
+            extra: {},
         };
         const essentials = getEventEssentials({ stored });
         const selectPoints = jest.fn();
@@ -228,9 +225,8 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
 
         const stored: LayerStorage<TwoPointProps> = {
             renderOrder: ["1;2"],
-            objects: {
-                "1;2": { id: "1;2", points: ["1", "2"], state: { x: 42 } },
-            },
+            objects: { "1;2": { points: ["1", "2"], state: { x: 42 } } },
+            extra: {},
         };
         const essentials = getEventEssentials({ stored });
         const selectPoints = jest.fn();
@@ -288,8 +284,9 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
         const stored: LayerStorage<TwoPointProps> = {
             renderOrder: ["1;2"],
             objects: {
-                "1;2": { id: "1;2", points: ["1", "2"], state: { x: 42 } },
+                "1;2": { points: ["1", "2"], state: { x: 42 } },
             },
+            extra: {},
         };
         const essentials = getEventEssentials({ stored });
         const selectPoints = jest.fn();

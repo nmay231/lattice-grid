@@ -5,9 +5,11 @@ import {
     IncompleteHistoryAction,
     Layer,
     LayerProps,
-    LayerStorage,
+    NeedsUpdating,
+    StorageReducer,
 } from "../types";
 import { errorNotification } from "../utils/DOMUtils";
+import { formatAnything } from "../utils/stringUtils";
 
 type GridAndLayer = { grid: Pick<Grid, "id">; layer: Pick<Layer, "id"> };
 
@@ -16,9 +18,12 @@ export class StorageManager {
 
     histories: Record<Grid["id"], History> = {};
 
+    masterReducer: StorageReducer<HistoryAction | null> = (puzzle, action) => action;
+    storageReducers: Array<typeof this.masterReducer> = [];
+
     addStorage({ grid, layer }: GridAndLayer) {
         this.objects[grid.id] = this.objects[grid.id] ?? {};
-        this.objects[grid.id][layer.id] = { renderOrder: [], objects: {} };
+        this.objects[grid.id][layer.id] = { renderOrder: [], objects: {}, extra: {} };
 
         this.histories[grid.id] = this.histories[grid.id] || {
             actions: [],
@@ -33,6 +38,28 @@ export class StorageManager {
 
     getStored<LP extends LayerProps = LayerProps>({ grid, layer }: GridAndLayer) {
         return this.objects[grid.id][layer.id] as LayerStorage<LP>;
+    }
+
+    // TODO: Have storageReducers subscribe to the layers they need, allow controlling the order they run, etc.
+    addStorageReducer(reducer: typeof this.masterReducer) {
+        this.storageReducers.push(reducer);
+        this.masterReducer = (puzzle, action) =>
+            this.storageReducers.reduce((prev, reduce) => reduce(puzzle, prev), action);
+    }
+
+    removeStorageReducer(reducer: typeof this.masterReducer) {
+        const index = this.storageReducers.indexOf(reducer);
+        if (index > -1) {
+            this.storageReducers.splice(index, 1);
+            this.masterReducer = (puzzle, action) =>
+                this.storageReducers.reduce((prev, reduce) => reduce(puzzle, prev), action);
+        } else {
+            errorNotification({
+                message: `Storage: Failed to remove a reducer ${formatAnything(
+                    reducer,
+                )}. Reducer was never added or already removed!`,
+            });
+        }
     }
 
     addToHistory(
@@ -54,10 +81,10 @@ export class StorageManager {
         }
 
         for (const puzzleObject of puzzleObjects) {
-            const layerId = puzzleObject.layerId || layer.id;
+            const layerId = (puzzleObject as NeedsUpdating).layerId || layer.id;
             const { objects, renderOrder } = this.objects[grid.id][layerId];
 
-            const action: HistoryAction = {
+            const action = this.masterReducer({} as NeedsUpdating, {
                 id: puzzleObject.id,
                 layerId,
                 batchId: Number(puzzleObject.batchId),
@@ -66,7 +93,10 @@ export class StorageManager {
                     puzzleObject.id in objects
                         ? renderOrder.indexOf(puzzleObject.id)
                         : renderOrder.length,
-            };
+            });
+            if (!action) {
+                continue; // One of the reducers chose to ignore this action
+            }
 
             const undoAction = this._ApplyHistoryAction(objects, renderOrder, action);
 
@@ -103,7 +133,7 @@ export class StorageManager {
         action: HistoryAction,
     ) {
         if (action.object === undefined) {
-            errorNotification({
+            throw errorNotification({
                 message: `Layer ${action.layerId} object undefined: ${action}`,
                 forever: true,
             });
@@ -181,4 +211,12 @@ export class StorageManager {
     getNewBatchId() {
         return this._batchId++;
     }
+}
+
+// Sure, this could be in its own file, but I don't feel like it should be just yet...
+export class LayerStorage<LP extends LayerProps = LayerProps> {
+    objects: Record<string, LP["ObjectState"]> = {};
+    extra: Partial<LP["ExtraLayerStorageProps"]> = {};
+    renderOrder: string[] = [];
+    // groups: { question: Set<ObjectId>; answer: Set<ObjectId> } = { answer: new Set(), question: new Set() };
 }

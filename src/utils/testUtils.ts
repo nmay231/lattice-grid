@@ -1,5 +1,5 @@
-import { StorageManager } from "../logic/StorageManager";
-import { LayerEventEssentials, LayerProps, LayerStorage } from "../types";
+import { LayerStorage, StorageManager } from "../logic/StorageManager";
+import { LayerEventEssentials, LayerProps } from "../types";
 
 export type GetEventEssentialsArg<LP extends LayerProps> = {
     stored?: LayerStorage<LP>;
@@ -16,10 +16,7 @@ export const getEventEssentials = <LP extends LayerProps = LayerProps>(
         getPoints: () => [],
         selectPointsWithCursor: () => [],
     };
-    const _stored: LayerStorage<LP> = stored || {
-        objects: {},
-        renderOrder: [],
-    };
+    const _stored = stored || new LayerStorage<LP>();
 
     return {
         grid,

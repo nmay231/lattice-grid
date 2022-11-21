@@ -43,11 +43,7 @@ export const importPuzzle = (puzzle: PuzzleManager, text: string) => {
 };
 
 export const ImportExportAtom = atom(false);
-const layersAlwaysPresent: (keyof typeof availableLayers)[] = [
-    "CellOutlineLayer",
-    "SelectionLayer",
-    "OverlayLayer",
-];
+const layersAlwaysPresent: (keyof typeof availableLayers)[] = ["CellOutlineLayer", "OverlayLayer"];
 
 export const ImportExportModal = () => {
     const puzzle = usePuzzle();
@@ -73,7 +69,9 @@ export const ImportExportModal = () => {
         }
     }, [puzzle, opened]);
 
-    const noRefSet = () => errorNotification({ message: "Ref not set in import/export textarea" });
+    const noRefSet = () => {
+        throw errorNotification({ message: "Ref not set in import/export textarea" });
+    };
 
     const handleImport = () => {
         if (!textRef.current) return noRefSet();

@@ -1,4 +1,5 @@
 import { NotificationProps, showNotification } from "@mantine/notifications";
+import { formatAnything } from "./stringUtils";
 
 export const blurActiveElement = () => {
     // Sometimes, I hate JS... Why event loop? WHY?
@@ -16,4 +17,5 @@ export const errorNotification = (
         autoClose: !forever && 4000,
         ...rest,
     });
+    return new Error(formatAnything(rest.message));
 };

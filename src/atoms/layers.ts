@@ -36,7 +36,7 @@ export const createLayersState = () => {
             const from = state.order.indexOf(beingMoved.id);
             const to = state.order.indexOf(target.id);
             if (from === -1 || to === -1) {
-                return errorNotification({
+                throw errorNotification({
                     message:
                         "Layer id not present in shuffleItemOnto: " +
                         `${beingMoved.id} => ${target.id} not in ${state.order}`,
@@ -56,7 +56,7 @@ export const createLayersState = () => {
 
             const index = order.indexOf(idToRemove);
             if (index === -1) {
-                return errorNotification({
+                throw errorNotification({
                     message: `removeLayer: ${idToRemove} not in ${order}`,
                 });
             }
@@ -93,10 +93,9 @@ export const createLayersState = () => {
         ): LayersProxyState["currentLayerId"] => {
             if ("id" in arg) {
                 if (!(arg.id in state.layers) || state.layers[arg.id].ethereal) {
-                    errorNotification({
+                    throw errorNotification({
                         message: "selectLayer: trying to select a non-existent or ethereal layer",
                     });
-                    return null;
                 }
                 state.currentLayerId = arg.id;
                 return arg.id;

@@ -1,7 +1,13 @@
-import { Layer, LayerClass, UnknownObject } from "../../types";
+import { PolygonBlits } from "../../components/SVGCanvas/Polygon";
+import { TextBlits } from "../../components/SVGCanvas/Text";
+import { Layer, LayerClass, NeedsUpdating } from "../../types";
 import { BaseLayer, methodNotImplemented } from "./baseLayer";
-import { handleEventsUnorderedSets, MultiPointLayerProps } from "./controls/multiPoint";
-import { KeyDownEventHandler } from "./Selection";
+import {
+    handleEventsUnorderedSets,
+    MultiPointKeyDownHandler,
+    MultiPointLayerProps,
+} from "./controls/multiPoint";
+import { DO_NOTHING, numberTyper } from "./controls/numberTyper";
 
 interface KillerCagesProps extends MultiPointLayerProps {
     Type: "KillerCagesLayer";
@@ -9,8 +15,8 @@ interface KillerCagesProps extends MultiPointLayerProps {
 }
 
 interface IKillerCagesLayer extends Layer<KillerCagesProps> {
-    _handleKeyDown: KeyDownEventHandler["handleKeyDown"];
-    _nextState: (state: string, keypress: string) => string | number | null;
+    _handleKeyDown: MultiPointKeyDownHandler<KillerCagesProps>;
+    _numberTyper: ReturnType<typeof numberTyper>;
 }
 
 export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKillerCagesLayer {
@@ -23,6 +29,9 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
     settings = this.rawSettings;
     handleEvent = methodNotImplemented({ name: "KillerCages.handleEvent" });
     gatherPoints = methodNotImplemented({ name: "KillerCages.gatherPoints" });
+    _numberTyper = methodNotImplemented({
+        name: "KillerCages._numberTyper",
+    }) as IKillerCagesLayer["_numberTyper"];
 
     static create: LayerClass<KillerCagesProps>["create"] = (puzzle) => {
         return new KillerCagesLayer(KillerCagesLayer, puzzle);
@@ -34,43 +43,23 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
             grid,
         });
 
-        if (!stored.currentObjectId) return {};
+        if (!stored.extra.currentObjectId) return {};
 
-        const id = stored.currentObjectId;
-        const object = { ...stored.objects[id] };
+        const id = stored.extra.currentObjectId;
+        const object = stored.objects[id];
 
         if (type === "delete") {
             if (object.state === null) return {};
             return { history: [{ id, object: { ...object, state: null } }] };
         }
 
-        const state = this._nextState(object.state ?? "", keypress);
+        const state = this._numberTyper(object.state || "", { type, keypress });
 
-        if (state === object.state) {
+        if (state === object.state || state === DO_NOTHING) {
             return {}; // No change necessary
         }
 
-        object.state = state === null ? null : state.toString();
-        return { history: [{ id, object }] };
-    };
-
-    _nextState: IKillerCagesLayer["_nextState"] = (state, keypress) => {
-        if (keypress === "Backspace") {
-            return state.toString().slice(0, -1) || null;
-        } else if (keypress === "Delete") {
-            return null;
-        } else if (keypress === "-") {
-            // TODO: Keep the minus sign as part of an inProgress object and remove it when we deselect things.
-            return -1 * parseInt(state) || "-";
-        } else if (keypress === "+" || keypress === "=") {
-            return Math.abs(parseInt(state)) || null;
-        } else if (/^[0-9]$/.test(keypress)) {
-            return parseInt(state + keypress);
-        } else if (/^[a-fA-F]$/.test(keypress)) {
-            return parseInt(keypress.toLowerCase(), 16);
-        } else {
-            return state || null;
-        }
+        return { history: [{ id, object: { ...object, state } }] };
     };
 
     static controls = undefined;
@@ -78,7 +67,7 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
 
     newSettings: IKillerCagesLayer["newSettings"] = () => {
         handleEventsUnorderedSets(this, {
-            handleKeyDown: this._handleKeyDown.bind(this),
+            handleKeyDown: this._handleKeyDown.bind(this) as NeedsUpdating, // Screw you typescript
             pointTypes: ["cells"],
             ensureConnected: false, // TODO: Change to true when properly implemented
             allowOverlap: true, // TODO: Change to false when properly implemented
@@ -93,8 +82,8 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
             layer: this,
         });
 
-        const cageBlits: Record<string, UnknownObject> = {};
-        const numberBlits: Record<string, UnknownObject> = {};
+        const cageBlits: PolygonBlits["blits"] = {};
+        const numberBlits: TextBlits["blits"] = {};
         for (const id of stored.renderOrder) {
             const object = stored.objects[id];
             const { cageOutline, cells, sorted } = grid.getPoints({
@@ -112,7 +101,7 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
                 points: object.points,
             });
 
-            const style = id === stored.currentObjectId ? { stroke: "#33F" } : undefined;
+            const style = id === stored.extra.currentObjectId ? { stroke: "#33F" } : undefined;
             for (const key in cageOutline.svgPolygons) {
                 cageBlits[`${object.id}-${key}`] = {
                     style,
@@ -123,7 +112,10 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
             if (object.state !== null) {
                 const point = sorted[0];
                 const { svgPoint, maxRadius } = cells[point];
-                const corner = [svgPoint[0] - 0.85 * maxRadius, svgPoint[1] - 0.85 * maxRadius];
+                const corner = [svgPoint[0] - 0.85 * maxRadius, svgPoint[1] - 0.85 * maxRadius] as [
+                    number,
+                    number,
+                ];
                 numberBlits[point] = {
                     text: object.state,
                     point: corner,

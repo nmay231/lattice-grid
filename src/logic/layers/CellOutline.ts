@@ -2,9 +2,11 @@ import { BlitGroup, Layer, LayerClass, LayerEventEssentials } from "../../types"
 import { BaseLayer, methodNotImplemented } from "./baseLayer";
 import { handleEventsCycleStates, OnePointProps } from "./controls/onePoint";
 
-interface CellOutlineProps extends OnePointProps {
+type ObjectState = true;
+
+interface CellOutlineProps extends OnePointProps<ObjectState> {
     Type: "CellOutlineLayer";
-    ObjectState: { id: string; points: string[]; state: true };
+    ObjectState: { id: string; points: string[]; state: ObjectState };
 }
 
 type ICellOutlineLayer = Layer<CellOutlineProps>;

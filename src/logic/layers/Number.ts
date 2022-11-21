@@ -1,23 +1,17 @@
-import { Layer, LayerClass, LayerProps } from "../../types";
+import { TextBlits } from "../../components/SVGCanvas/Text";
+import { Layer, LayerClass } from "../../types";
 import { BaseLayer, methodNotImplemented } from "./baseLayer";
-import { KeyDownEventHandler } from "./Selection";
+import { DO_NOTHING, numberTyper } from "./controls/numberTyper";
+import { handleEventsSelection, KeyDownEventHandler, SelectedProps } from "./controls/selection";
 
-export interface NumberProps extends LayerProps {
+export interface NumberProps extends SelectedProps {
     Type: "NumberLayer";
     ObjectState: { state: string; point: string };
-    RawSettings: { min: number; max: number };
-    ExtraLayerStorageProps: { lastTime: number; lastIds: string[] };
+    RawSettings: { max: number; negatives: boolean };
 }
 
-type NumberSettings = {
-    match: (number: number, alternate?: string | null) => string | null | undefined;
-};
-
 interface INumberLayer extends Layer<NumberProps>, KeyDownEventHandler<NumberProps> {
-    settings: NumberSettings;
-    _newSettings: (arg: { min: number; max: number }) => NumberSettings;
-    // TODO: More specific types
-    _nextState: (state: any, oldState: any, event: any) => any;
+    _numberTyper: ReturnType<typeof numberTyper>;
 }
 
 export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer {
@@ -25,11 +19,13 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
     static unique = false;
     static type = "NumberLayer" as const;
     static displayName = "Number";
-    static defaultSettings = { min: 1, max: 9 };
+    static defaultSettings = { max: 9, negatives: false };
 
-    settings: INumberLayer["settings"] = { match: () => "" };
     handleEvent = methodNotImplemented({ name: "Number.handleEvent" });
     gatherPoints = methodNotImplemented({ name: "Number.gatherPoints" });
+    _numberTyper = methodNotImplemented({
+        name: "Number._numberTyper",
+    }) as INumberLayer["_numberTyper"];
 
     static create: LayerClass<NumberProps>["create"] = (puzzle) => {
         return new NumberLayer(NumberLayer, puzzle);
@@ -37,78 +33,47 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
 
     handleKeyDown: INumberLayer["handleKeyDown"] = ({
         points: ids,
+        type,
         keypress,
         storage,
         grid,
-        settings,
     }) => {
         const stored = storage.getStored<NumberProps>({ grid, layer: this });
         if (!ids.length) {
             return {};
         }
 
-        const timeDelay = Date.now() - (stored.lastTime || 0);
-        stored.lastTime = Date.now();
-
-        const selectionChanged = (stored.lastIds || []).join(";") !== ids.join(";");
-        stored.lastIds = ids.slice();
-
         const states = ids.map((id) => stored.objects[id]?.state);
-        const theSame =
-            states[states.length - 1] ===
-            states.reduce((prev, next) => (prev === next ? next : "DNE"));
+        const theSame = !!(states as Array<string | false>).reduce((prev, next) =>
+            prev === next ? next : false,
+        );
 
-        let state = theSame ? states[0] : "";
-        if (timeDelay > settings.actionWindowMs || selectionChanged) {
-            state = this._nextState("", state, keypress);
-        } else {
-            state = this._nextState(state, state, keypress);
-        }
+        const state = theSame ? states[0] : "";
+        const event = { type, keypress };
+        const newState = this._numberTyper(state, event);
 
-        if (state === undefined) {
+        if (newState === DO_NOTHING) {
             return {};
         }
         return {
             history: ids.map((id) => ({
-                object: state === null ? null : { state, point: id },
+                object: newState === null ? null : { state: newState, point: id },
                 id,
             })),
         };
-    };
-
-    _nextState: INumberLayer["_nextState"] = (state, oldState, keypress) => {
-        const match = this.settings?.match;
-        if (keypress === "Backspace") {
-            return match(oldState.toString().slice(0, -1), null);
-        } else if (keypress === "Delete") {
-            return null;
-        } else if (keypress === "-") {
-            // TODO: Keep the minus sign as part of an inProgress object and remove it when we deselect things.
-            return match(-1 * parseInt(oldState)) ?? "-";
-        } else if (keypress === "+" || keypress === "=") {
-            return match(oldState && Math.abs(parseInt(oldState)), undefined);
-        } else if (/^[0-9]$/.test(keypress)) {
-            // TODO: Temporary solution
-            // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
-            return match(parseInt(state + keypress), oldState);
-        } else if (/^[a-fA-F]$/.test(keypress)) {
-            return match(parseInt(keypress.toLowerCase(), 36), oldState);
-        } else {
-            return undefined; // Change nothing
-        }
     };
 
     static controls = undefined;
     static constraints = {
         schema: {
             type: "object",
-            properties: { min: { type: "integer" }, max: { type: "integer" } },
+            properties: { negatives: { type: "boolean" }, max: { type: "integer" } },
         },
         uischemaElements: [
             {
                 type: "Control",
-                label: "Minimum",
-                scope: "#/properties/min",
+                label: "Allow Negatives",
+                scope: "#/properties/negatives",
             },
             {
                 type: "Control",
@@ -118,23 +83,11 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
         ],
     };
 
-    _newSettings: INumberLayer["_newSettings"] = ({ min, max }) => {
-        return {
-            match: (number, alternate) =>
-                min <= number && number <= max ? number.toString() : alternate,
-        };
-    };
-
-    newSettings: INumberLayer["newSettings"] = ({
-        newSettings,
-        grid,
-        storage,
-        attachSelectionHandler,
-    }) => {
-        this.settings = this._newSettings(newSettings);
+    newSettings: INumberLayer["newSettings"] = ({ newSettings, grid, storage }) => {
         this.rawSettings = newSettings;
+        this._numberTyper = numberTyper(newSettings);
 
-        attachSelectionHandler(this, {});
+        handleEventsSelection(this, {});
 
         const { objects, renderOrder } = storage.getStored<NumberProps>({
             grid,
@@ -144,12 +97,11 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
         const history = [];
 
         // Delete numbers that are out of range
+        const min = newSettings.negatives ? -newSettings.max : 0;
+        const max = newSettings.max;
         for (const id of renderOrder) {
-            const object = objects[id];
-            if (
-                parseInt(object.state) < newSettings.min ||
-                parseInt(object.state) > newSettings.max
-            ) {
+            const state = parseInt(objects[id].state);
+            if (state < min || state > max) {
                 history.push({ object: null, id });
             }
         }
@@ -169,7 +121,7 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
             points: stored.renderOrder,
         });
 
-        const blits: Record<string, unknown> = {};
+        const blits: TextBlits["blits"] = {};
         for (const id of stored.renderOrder) {
             blits[id] = {
                 text: stored.objects[id].state,

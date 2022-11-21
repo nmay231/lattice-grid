@@ -14,10 +14,11 @@ import { randomStringId } from "../../utils/stringUtils";
 import { PuzzleManager } from "../PuzzleManager";
 
 export const methodNotImplemented = ({ name }: { name: string }) => {
-    const message = `Method: ${name} called before implementing!`;
     return (): any => {
-        errorNotification({ message, forever: true });
-        throw Error(message);
+        throw errorNotification({
+            message: `Method: ${name} called before implementing!`,
+            forever: true,
+        });
     };
 };
 
@@ -55,5 +56,5 @@ export abstract class BaseLayer<LP extends LayerProps>
         layerEvent: PointerMoveOrDown & LayerEventEssentials<LayerProps>,
     ) => string[];
 
-    abstract handleEvent: (layerEvent: LayerEvent<LayerProps>) => LayerHandlerResult;
+    abstract handleEvent: (layerEvent: LayerEvent<LayerProps>) => LayerHandlerResult<LP>;
 }

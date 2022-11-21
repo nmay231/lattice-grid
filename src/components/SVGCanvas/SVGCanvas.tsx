@@ -29,8 +29,7 @@ export const SVGCanvas = () => {
     useEffect(() => {
         const current = scrollArea.current;
         if (!current) {
-            errorNotification({ message: "Canvas element not found." });
-            return;
+            throw errorNotification({ message: "Canvas element not found." });
         }
 
         const onWheel = controls.onWheel.bind(controls);
@@ -61,7 +60,7 @@ export const SVGCanvas = () => {
                                     const Blitter = blitters[group.blitter];
                                     return (
                                         <Blitter
-                                            blits={group.blits}
+                                            blits={group.blits as NeedsUpdating}
                                             // I was hoping typescript would be smarter...
                                             style={group.style as NeedsUpdating}
                                             key={id + group.id}

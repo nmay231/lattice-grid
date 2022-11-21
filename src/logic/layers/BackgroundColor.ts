@@ -3,10 +3,11 @@ import { Layer, LayerClass } from "../../types";
 import { BaseLayer, methodNotImplemented } from "./baseLayer";
 import { handleEventsCurrentSetting, OnePointProps } from "./controls/onePoint";
 
-interface BackgroundColorProps extends OnePointProps {
+type Color = string;
+
+interface BackgroundColorProps extends OnePointProps<Color> {
     Type: "BackgroundColorLayer";
-    ObjectState: { id: string; points: string[]; state: string };
-    RawSettings: { selectedState: string };
+    RawSettings: { selectedState: Color };
 }
 
 interface IBackgroundColorLayer extends Layer<BackgroundColorProps> {
@@ -81,7 +82,7 @@ export class BackgroundColorLayer
             points: [...stored.renderOrder],
         });
 
-        const objectsByColor: Record<string, PolygonBlits["blits"]> = {};
+        const objectsByColor: Record<Color, PolygonBlits["blits"]> = {};
         for (const id of stored.renderOrder) {
             const { state } = stored.objects[id];
             objectsByColor[state] = objectsByColor[state] ?? {};
