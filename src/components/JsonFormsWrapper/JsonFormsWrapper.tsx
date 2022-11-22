@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // import { JsonSchema, UISchemaElement } from "@jsonforms/core";
 // import { JsonForms } from "@jsonforms/react";
 // import { vanillaCells, vanillaRenderers } from "@jsonforms/vanilla-renderers";

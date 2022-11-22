@@ -126,6 +126,7 @@ describe("layers atom", () => {
         selectLayer({ id: "layer3" });
         removeLayer("layer2");
 
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { layer2, ...layers } = fullState.layers;
         expect(state).toEqual<LayersProxyState>({
             order: [fullState.order[0], fullState.order[2], fullState.order[3]],
