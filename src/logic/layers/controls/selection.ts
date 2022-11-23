@@ -34,6 +34,7 @@ const layerId = SELECTION_ID;
 
 export const handleEventsSelection = <LP extends SelectedProps>(
     layer: Layer<LP> & KeyDownEventHandler<LP>,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     arg: any, // TODO
 ) => {
     layer.gatherPoints = (event) => {

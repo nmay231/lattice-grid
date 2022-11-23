@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import { Layer, LayerEvent, PointerMoveOrDown } from "../../../types";
 import { getEventEssentials } from "../../../utils/testUtils";
 import { LayerStorage } from "../../StorageManager";
@@ -45,7 +46,7 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
         const layer = getFakeLayer();
         applySettings(layer);
 
-        const selectPoints = jest.fn();
+        const selectPoints = vi.fn();
         const essentials = getEventEssentials<TwoPointProps>();
         essentials.grid.selectPointsWithCursor = selectPoints;
 
@@ -82,7 +83,7 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
         const layer = getFakeLayer();
         applySettings(layer);
 
-        const selectPoints = jest.fn();
+        const selectPoints = vi.fn();
         const essentials = getEventEssentials<TwoPointProps>();
         essentials.grid.selectPointsWithCursor = selectPoints;
 
@@ -151,7 +152,7 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
             extra: {},
         };
         const essentials = getEventEssentials({ stored });
-        const selectPoints = jest.fn();
+        const selectPoints = vi.fn();
         essentials.grid.selectPointsWithCursor = selectPoints;
 
         selectPoints.mockReturnValueOnce(["b"]);
@@ -187,7 +188,7 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
             extra: {},
         };
         const essentials = getEventEssentials({ stored });
-        const selectPoints = jest.fn();
+        const selectPoints = vi.fn();
         essentials.grid.selectPointsWithCursor = selectPoints;
 
         selectPoints.mockReturnValueOnce(["b"]);
@@ -229,7 +230,7 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
             extra: {},
         };
         const essentials = getEventEssentials({ stored });
-        const selectPoints = jest.fn();
+        const selectPoints = vi.fn();
         essentials.grid.selectPointsWithCursor = selectPoints;
 
         selectPoints.mockReturnValueOnce(["3"]);
@@ -289,7 +290,7 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
             extra: {},
         };
         const essentials = getEventEssentials({ stored });
-        const selectPoints = jest.fn();
+        const selectPoints = vi.fn();
         essentials.grid.selectPointsWithCursor = selectPoints;
 
         selectPoints.mockReturnValueOnce(["1"]);

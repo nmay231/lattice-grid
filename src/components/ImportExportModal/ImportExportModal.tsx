@@ -9,6 +9,8 @@ import { availableLayers } from "../../logic/layers";
 import { PuzzleManager } from "../../logic/PuzzleManager";
 import { errorNotification } from "../../utils/DOMUtils";
 
+const layersAlwaysPresent: (keyof typeof availableLayers)[] = ["CellOutlineLayer", "OverlayLayer"];
+
 export const importPuzzle = (puzzle: PuzzleManager, text: string) => {
     text = text.trim();
     if (/^https?:\/\//.test(text)) {
@@ -43,7 +45,6 @@ export const importPuzzle = (puzzle: PuzzleManager, text: string) => {
 };
 
 export const ImportExportAtom = atom(false);
-const layersAlwaysPresent: (keyof typeof availableLayers)[] = ["CellOutlineLayer", "OverlayLayer"];
 
 export const ImportExportModal = () => {
     const puzzle = usePuzzle();

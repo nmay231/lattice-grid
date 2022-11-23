@@ -43,6 +43,7 @@ export const BlocklyModal: React.FC = () => {
         } as any);
 
         workspace.addChangeListener((event: any) => {
+            // eslint-disable-next-line no-constant-condition
             if (false) {
                 console.log(event.type);
                 if (["move"].includes(event.type)) console.log(event);

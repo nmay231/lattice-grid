@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import { IncompleteHistoryAction, Layer, LayerEvent, PointerMoveOrDown } from "../../../types";
 import { smartSort } from "../../../utils/stringUtils";
 import { getEventEssentials } from "../../../utils/testUtils";
@@ -41,8 +42,8 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
             objects: {},
             extra: {},
         };
-        const selectPoints = jest.fn();
-        const getBatchId = jest.fn();
+        const selectPoints = vi.fn();
+        const getBatchId = vi.fn();
         const essentials = getEventEssentials({ stored });
         essentials.grid.selectPointsWithCursor = selectPoints;
         essentials.storage.getNewBatchId = getBatchId;
@@ -80,8 +81,8 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
             renderOrder: ["a"],
             extra: {},
         };
-        const selectPoints = jest.fn();
-        const getBatchId = jest.fn();
+        const selectPoints = vi.fn();
+        const getBatchId = vi.fn();
         const essentials = getEventEssentials({ stored });
         essentials.grid.selectPointsWithCursor = selectPoints;
         essentials.storage.getNewBatchId = getBatchId;
@@ -120,8 +121,8 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
             objects: {},
             extra: {},
         };
-        const selectPoints = jest.fn();
-        const getBatchId = jest.fn();
+        const selectPoints = vi.fn();
+        const getBatchId = vi.fn();
         const essentials = getEventEssentials({ stored });
         essentials.grid.selectPointsWithCursor = selectPoints;
         essentials.storage.getNewBatchId = getBatchId;
@@ -197,8 +198,8 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
             renderOrder: ["a;b"],
             extra: { currentObjectId: "a;b" },
         };
-        const selectPoints = jest.fn();
-        const getBatchId = jest.fn();
+        const selectPoints = vi.fn();
+        const getBatchId = vi.fn();
         const essentials = getEventEssentials({ stored });
         essentials.grid.selectPointsWithCursor = selectPoints;
         essentials.storage.getNewBatchId = getBatchId;
@@ -246,8 +247,8 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
             renderOrder: ["a;b"],
             extra: { currentObjectId: "a;b" },
         };
-        const selectPoints = jest.fn();
-        const getBatchId = jest.fn();
+        const selectPoints = vi.fn();
+        const getBatchId = vi.fn();
         const essentials = getEventEssentials<MultiPointLayerProps>({ stored });
         essentials.grid.selectPointsWithCursor = selectPoints;
         essentials.storage.getNewBatchId = getBatchId;

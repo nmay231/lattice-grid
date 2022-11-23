@@ -1,6 +1,6 @@
 import { randomId } from "@mantine/hooks";
 
-export { format as formatAnything } from "util";
+export { format as formatAnything } from "node-inspect-extracted";
 
 export const keypressString = (
     event: Pick<KeyboardEvent, "key" | "ctrlKey" | "shiftKey">,

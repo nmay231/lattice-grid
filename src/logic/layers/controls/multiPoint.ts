@@ -29,10 +29,13 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
     layer: Layer<LP>,
     {
         // TODO: In user settings, rename allowOverlap to "Allow partial overlap"
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         allowOverlap = false,
         handleKeyDown = null as null | MultiPointKeyDownHandler<LP>,
         pointTypes = [] as PointType[],
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         overwriteOthers = false,
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         ensureConnected = true,
     },
 ) => {

@@ -11,7 +11,7 @@ export const AboutPage = () => {
                         The vision of this project is to provide an interface for making pencil
                         puzzles and developing puzzle variants without in-depth coding knowledge.
                         This is an alpha release to get the word out and to get early feedback (and
-                        to see if I'm not completely crazy).
+                        to see if I&#39;m not completely crazy).
                     </Text>
                     <Text>Here are some of the eventual goals this project hopes to achieve.</Text>
                     <ul>

@@ -1,6 +1,6 @@
 import { atom } from "jotai";
 
-type SubscriptionContainer<T extends any> = {
+type SubscriptionContainer<T> = {
     subs: Array<(value: T | ((old: T) => T)) => void>;
     value: T;
 };
@@ -11,7 +11,7 @@ const isNotFunction = <T>(arg: any): arg is T => {
 };
 
 const setAtom =
-    <T extends any>(subscriptions: SubscriptionContainer<T>) =>
+    <T>(subscriptions: SubscriptionContainer<T>) =>
     (value: T | ((old: T) => T)) => {
         subscriptions.subs.forEach((setValue) => setValue(value));
         subscriptions.value = isNotFunction<T>(value)
@@ -19,7 +19,7 @@ const setAtom =
             : (value as (old: T) => T)(subscriptions.value);
     };
 
-export const modifiableAtom = <T extends any = any>(initialValue: T) => {
+export const modifiableAtom = <T = any>(initialValue: T) => {
     const atom_ = atom(initialValue);
     const subscriptions: SubscriptionContainer<T> = {
         subs: [],
