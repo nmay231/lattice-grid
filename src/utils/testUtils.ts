@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import { LayerStorage, StorageManager } from "../logic/StorageManager";
 import { LayerEventEssentials, LayerProps } from "../types";
 
@@ -22,8 +23,8 @@ export const getEventEssentials = <LP extends LayerProps = LayerProps>(
         grid,
         storage: {
             ...new StorageManager(),
-            getStored: jest.fn(() => _stored),
-            getNewBatchId: jest.fn(),
+            getStored: vi.fn(() => _stored),
+            getNewBatchId: vi.fn(),
         } as any as StorageManager,
         tempStorage,
         settings: {

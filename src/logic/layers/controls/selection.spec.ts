@@ -319,13 +319,13 @@ describe("SelectionLayer", () => {
             type: "keyDown",
             keypress: "your face",
         };
-        layer.handleKeyDown = jest.fn().mockReturnValue({
+        layer.handleKeyDown = vi.fn().mockReturnValue({
             history: [
                 { id: "id1", object: { asdf: "something1" } },
                 { id: "id2", object: { asdf: "something2" } },
             ],
         });
-        (fakeEvent.storage.getNewBatchId as jest.Mock).mockReturnValueOnce(1);
+        (fakeEvent.storage.getNewBatchId as ReturnType<typeof vi.fn>).mockReturnValueOnce(1);
 
         const result = layer.handleEvent(fakeEvent);
 
