@@ -52,7 +52,7 @@
     "scripts": {
         "start": "vite",
         "build": "vite build",
-        "checkdeps": "depcheck --ignores 'pre-commit,@emotion/react,prettier-plugin-organize-imports'",
+        "checkdeps": "yarn outdated; depcheck --ignores 'pre-commit,@emotion/react,prettier-plugin-organize-imports'",
         "test": "vitest watch",
         "test:no-watch": "vitest run --changed",
         "lint": "prettier --check . && eslint .",
