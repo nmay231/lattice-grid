@@ -1,6 +1,5 @@
 import { cloneDeep } from "lodash";
 import {
-    JSONSchema,
     Layer,
     LayerClass,
     LayerEvent,
