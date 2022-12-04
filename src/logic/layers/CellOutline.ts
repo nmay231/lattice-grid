@@ -12,7 +12,7 @@ interface CellOutlineProps extends OnePointProps<ObjectState> {
 type ICellOutlineLayer = Layer<CellOutlineProps>;
 
 export class CellOutlineLayer extends BaseLayer<CellOutlineProps> implements ICellOutlineLayer {
-    static ethereal = true;
+    static ethereal = false;
     static unique = true;
     static type = "CellOutlineLayer" as const;
     static displayName = "Cell Outline";
@@ -54,15 +54,16 @@ export class CellOutlineLayer extends BaseLayer<CellOutlineProps> implements ICe
             layer: this,
         });
 
-        const blacklist = stored.renderOrder.filter((key) => stored.objects[key].state);
+        const blacklist = stored.renderOrder;
+        const points = grid.getAllPoints("cells").filter((point) => !blacklist.includes(point));
         const { cells, gridEdge } = grid.getPoints({
+            points,
             connections: {
                 cells: {
                     edges: { corners: { svgPoint: true } },
                     shrinkwrap: { key: "gridEdge", svgPolygons: { inset: -4 } },
                 },
             },
-            blacklist,
         });
 
         const Nothing = { x1: 0, x2: 0, y1: 0, y2: 0 };

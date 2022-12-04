@@ -187,9 +187,7 @@ export class SquareGrid implements Grid {
     getPoints({
         points: stringPoints = [],
         connections,
-        blacklist = [],
         includeOutOfBounds = false,
-        excludePreviousPoints = true,
     }: GetPointsArg) {
         const finalResult: any = {};
         const points = stringPoints.map(this._stringToGridPoint.bind(this));
@@ -198,9 +196,7 @@ export class SquareGrid implements Grid {
             const pointType = key as PointType;
             const justGridPoints = points.length
                 ? points.filter(({ type }) => type === pointType)
-                : this._getAllGridPoints(pointType).filter(
-                      ({ x, y }) => !blacklist.includes(`${x},${y}`),
-                  );
+                : this._getAllGridPoints(pointType);
 
             finalResult[pointType] = {};
             const gridPoints = [];
@@ -213,11 +209,9 @@ export class SquareGrid implements Grid {
             this._getPoints({
                 pointType,
                 connections: connections[pointType],
-                blacklist,
                 gridPoints,
                 finalResult,
                 includeOutOfBounds,
-                excludePreviousPoints,
             });
         }
 
@@ -233,13 +227,10 @@ export class SquareGrid implements Grid {
     _getPoints({
         pointType,
         connections,
-        blacklist = [],
         gridPoints,
         finalResult,
         includeOutOfBounds,
-        excludePreviousPoints,
     }: InternalGetPointsArg) {
-        const nextBlacklist = [...blacklist];
         for (const key in connections) {
             const nextType = key as PointType;
             let deltas;
@@ -273,14 +264,8 @@ export class SquareGrid implements Grid {
                                 type: nextType,
                             };
                             const nextString = `${nextPoint.x},${nextPoint.y}`;
-                            if (
-                                blacklist.includes(nextString) ||
-                                (!includeOutOfBounds && this._outOfBounds(nextPoint))
-                            ) {
+                            if (!includeOutOfBounds && this._outOfBounds(nextPoint)) {
                                 continue;
-                            }
-                            if (excludePreviousPoints) {
-                                nextBlacklist.push(nextString);
                             }
 
                             const nextResult =
@@ -297,8 +282,6 @@ export class SquareGrid implements Grid {
                         pointType: nextType,
                         connections: connections[nextType],
                         gridPoints: newGridPoints,
-                        blacklist: nextBlacklist,
-                        excludePreviousPoints,
                         includeOutOfBounds,
                         finalResult,
                     });
@@ -332,14 +315,8 @@ export class SquareGrid implements Grid {
                                 type: nextType,
                             };
                             const nextString = `${nextPoint.x},${nextPoint.y}`;
-                            if (
-                                blacklist.includes(nextString) ||
-                                (!includeOutOfBounds && this._outOfBounds(nextPoint))
-                            ) {
+                            if (!includeOutOfBounds && this._outOfBounds(nextPoint)) {
                                 continue;
-                            }
-                            if (excludePreviousPoints) {
-                                nextBlacklist.push(nextString);
                             }
 
                             const nextResult =
@@ -356,8 +333,6 @@ export class SquareGrid implements Grid {
                         pointType: nextType,
                         connections: connections[nextType],
                         gridPoints: newGridPoints,
-                        blacklist: nextBlacklist,
-                        excludePreviousPoints,
                         includeOutOfBounds,
                         finalResult,
                     });

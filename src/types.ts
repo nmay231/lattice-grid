@@ -74,9 +74,7 @@ export type Grid = {
     getPoints: (arg: {
         points?: Point[];
         connections: NeedsUpdating;
-        blacklist?: Point[]; // TODO: Is this needed?
         includeOutOfBounds?: boolean;
-        excludePreviousPoints?: boolean;
     }) => NeedsUpdating;
     getAllPoints: (type: PointType) => Point[];
     selectPointsWithCursor: (arg: {
