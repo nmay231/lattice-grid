@@ -1,12 +1,12 @@
 import { TextBlits } from "../../components/SVGCanvas/Text";
-import { Layer, LayerClass } from "../../types";
+import { Layer, LayerClass, Point } from "../../types";
 import { BaseLayer, methodNotImplemented } from "./baseLayer";
 import { DO_NOTHING, numberTyper } from "./controls/numberTyper";
 import { handleEventsSelection, KeyDownEventHandler, SelectedProps } from "./controls/selection";
 
 export interface NumberProps extends SelectedProps {
     Type: "NumberLayer";
-    ObjectState: { state: string; point: string };
+    ObjectState: { state: string; point: Point };
     RawSettings: { max: number; negatives: boolean };
 }
 

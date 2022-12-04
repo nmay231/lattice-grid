@@ -167,7 +167,11 @@ export class PuzzleManager {
         return data;
     }
 
-    addLayer(layerClass: LayerClass<any>, id: string | null, settings?: UnknownObject): string {
+    addLayer(
+        layerClass: LayerClass<any>,
+        id: Layer["id"] | null,
+        settings?: UnknownObject,
+    ): Layer["id"] {
         const layer = new layerClass(layerClass, this);
         if (id) layer.id = id;
         this.layers[layer.id] = layer;
@@ -183,7 +187,7 @@ export class PuzzleManager {
         return layer.id;
     }
 
-    removeLayer(id: string) {
+    removeLayer(id: Layer["id"]) {
         if (id in this.layers) {
             delete this.layers[id];
             this.storage.removeStorage({ grid: this.grid, layer: { id } });
@@ -192,7 +196,7 @@ export class PuzzleManager {
         }
     }
 
-    changeLayerSettings(layerId: string, newSettings: any) {
+    changeLayerSettings(layerId: Layer["id"], newSettings: any) {
         const layer = this.layers[layerId];
         const { history } = layer.newSettings({
             newSettings,

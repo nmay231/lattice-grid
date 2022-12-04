@@ -1,5 +1,5 @@
 import { LineBlits } from "../../components/SVGCanvas/Line";
-import { Layer, LayerClass, PointType } from "../../types";
+import { Layer, LayerClass, ObjectId, Point, PointType } from "../../types";
 import { BaseLayer, methodNotImplemented } from "./baseLayer";
 import { handleEventsCurrentSetting, TwoPointProps } from "./controls/twoPoint";
 
@@ -11,9 +11,9 @@ const pointTypes = {
 export interface SimpleLineProps extends TwoPointProps {
     Type: "SimpleLineLayer";
     ObjectState: {
-        id: string;
+        id: ObjectId;
         state: { fill: string };
-        points: string[];
+        points: Point[];
     };
     RawSettings: {
         connections: keyof typeof pointTypes;

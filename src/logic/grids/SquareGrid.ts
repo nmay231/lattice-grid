@@ -1,5 +1,5 @@
 import { getSettings } from "../../atoms/settings";
-import { Grid, PointType } from "../../types";
+import { Grid, Point, PointType } from "../../types";
 import { errorNotification } from "../../utils/DOMUtils";
 import { hopStraight } from "../algorithms/hopStraight";
 
@@ -184,15 +184,6 @@ export class SquareGrid implements Grid {
         return [];
     }
 
-    /**
-     * @description Select points and certain attributes depending on how they are connected to other points
-     * @param {Object} args - Arguments are passed as an object
-     * @param {Object} args.connections - A nested object used to select neighboring points in a chain similar to a graph network. See examples in existing layers.
-     * @param {string[]} [args.points] - Optionally specify from which points are neighbors selected. If not provided, all points of the relevant type are used.
-     * @param {string[]} [args.blacklist] - Optionally prevent certain points from being selecting.
-     * @param {boolean} [args.includeOutOfBounds] - If true, include points outside the range of the current grid. Default: false
-     * @param {boolean} [args.excludePreviousPoints] - If true, add previously selected points to the blacklist as you go down the chain. Default: true
-     */
     getPoints({
         points: stringPoints = [],
         connections,
@@ -440,8 +431,8 @@ export class SquareGrid implements Grid {
                     }
                     const [primary, secondary] = direction.toUpperCase();
 
-                    type Point = { x: number; y: number };
-                    const sorts: Record<string, (a: Point, b: Point) => number> = {
+                    type XYPoint = { x: number; y: number };
+                    const sorts: Record<string, (a: XYPoint, b: XYPoint) => number> = {
                         N: (a, b) => a.y - b.y,
                         S: (a, b) => b.y - a.y,
                         E: (a, b) => b.x - a.x,
@@ -637,8 +628,8 @@ export class SquareGrid implements Grid {
         return result;
     }
 
-    _stringToGridPoint(string: string): GridPoint {
-        const [, x_, y_] = /^(-?\d+),(-?\d+)$/.exec(string) || [];
+    _stringToGridPoint(point: Point): GridPoint {
+        const [, x_, y_] = /^(-?\d+),(-?\d+)$/.exec(point) || [];
         const x = parseInt(x_);
         const y = parseInt(y_);
         const xEven = (x >> 1) << 1 === x,

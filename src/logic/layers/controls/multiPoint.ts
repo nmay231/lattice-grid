@@ -5,6 +5,7 @@ import {
     LayerEventEssentials,
     LayerHandlerResult,
     LayerProps,
+    ObjectId,
     Point,
     PointType,
 } from "../../../types";
@@ -12,10 +13,10 @@ import { errorNotification } from "../../../utils/DOMUtils";
 import { smartSort } from "../../../utils/stringUtils";
 
 export interface MultiPointLayerProps extends LayerProps {
-    ObjectState: { id: string; points: string[]; state: unknown };
-    ExtraLayerStorageProps: { currentObjectId: string };
+    ObjectState: { id: ObjectId; points: Point[]; state: unknown };
+    ExtraLayerStorageProps: { currentObjectId: ObjectId };
     TempStorage: {
-        previousPoint: string;
+        previousPoint: Point;
         batchId: number;
         removeSingle: boolean;
     };

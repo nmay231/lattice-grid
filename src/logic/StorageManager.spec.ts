@@ -1,5 +1,5 @@
 import { cloneDeep } from "lodash";
-import { HistoryAction } from "../types";
+import { HistoryAction, Layer, Grid } from "../types";
 import { LayerStorage, StorageManager } from "./StorageManager";
 
 describe("StorageManager", () => {
@@ -17,7 +17,7 @@ describe("StorageManager", () => {
         return normalStorage;
     };
 
-    const gridLayer = (grid: string, layer: string) => ({
+    const gridLayer = (grid: Grid["id"], layer: Layer["id"]) => ({
         grid: { id: grid },
         layer: { id: layer },
     });

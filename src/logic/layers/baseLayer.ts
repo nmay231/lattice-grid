@@ -7,6 +7,7 @@ import {
     LayerEventEssentials,
     LayerHandlerResult,
     LayerProps,
+    Point,
     PointerMoveOrDown,
 } from "../../types";
 import { errorNotification } from "../../utils/DOMUtils";
@@ -22,7 +23,6 @@ export const methodNotImplemented = ({ name }: { name: string }) => {
     };
 };
 
-// Change this to only contain properties that layers would add at runtime (i.e. remove id, ethereal, and unique since those should always be defined on init)
 export abstract class BaseLayer<LP extends LayerProps>
     implements Omit<Layer<LP>, "newSettings" | "getBlits">
 {
@@ -33,13 +33,13 @@ export abstract class BaseLayer<LP extends LayerProps>
     static defaultSettings = {};
 
     type: LP["Type"];
-    id: string;
-    ethereal: boolean;
-    displayName: string;
-    unique: boolean;
+    id: Layer["id"];
+    ethereal: Layer["ethereal"];
+    displayName: Layer["displayName"];
+    unique: Layer["unique"];
     rawSettings: LP["RawSettings"] = {};
-    controls?: JSONSchema;
-    constraints?: JSONSchema;
+    controls?: Layer["controls"];
+    constraints?: Layer["constraints"];
 
     constructor(klass: LayerClass<LP>, puzzle: PuzzleManager) {
         this.id = klass.unique ? klass.type : randomStringId(Object.keys(puzzle.layers));
@@ -54,7 +54,7 @@ export abstract class BaseLayer<LP extends LayerProps>
 
     abstract gatherPoints: (
         layerEvent: PointerMoveOrDown & LayerEventEssentials<LayerProps>,
-    ) => string[];
+    ) => Point[];
 
     abstract handleEvent: (layerEvent: LayerEvent<LayerProps>) => LayerHandlerResult<LP>;
 }

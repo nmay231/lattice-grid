@@ -1,4 +1,4 @@
-import { Layer, LayerHandlerResult, LayerProps, PointType } from "../../../types";
+import { Layer, LayerHandlerResult, LayerProps, Point, PointType } from "../../../types";
 import { errorNotification } from "../../../utils/DOMUtils";
 
 type CommonArgs = { pointTypes: PointType[]; deltas: any };
@@ -6,8 +6,8 @@ type CommonArgs = { pointTypes: PointType[]; deltas: any };
 export interface OnePointProps<ObjectState> extends LayerProps {
     ObjectState: { state: ObjectState };
     TempStorage: {
-        blacklist: string[];
-        previousPoint: string;
+        blacklist: Point[];
+        previousPoint: Point;
         batchId: number;
         targetState: ObjectState | null;
     };

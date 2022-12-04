@@ -1,12 +1,12 @@
 import { isEqual } from "lodash";
-import { Layer, LayerProps, PointType, UnknownObject } from "../../../types";
+import { Layer, LayerProps, Point, PointType, UnknownObject } from "../../../types";
 import { errorNotification } from "../../../utils/DOMUtils";
 import { smartSort } from "../../../utils/stringUtils";
 
 export interface TwoPointProps extends LayerProps {
-    ObjectState: { points: string[]; state: unknown };
+    ObjectState: { points: Point[]; state: unknown };
     TempStorage: {
-        previousPoint: string;
+        previousPoint: Point;
         batchId: number;
         targetState: null | UnknownObject;
     };

@@ -12,8 +12,8 @@ import type { UserCodeJSON } from "./logic/userComputation/codeBlocks";
 export type PuzzleError = {
     message: string;
     objects?: {
-        layerId: string;
-        gridId: string;
+        layerId: Layer["id"];
+        gridId: Grid["id"];
         objectIds: ObjectId[];
     };
 };
@@ -21,7 +21,7 @@ export type PuzzleError = {
 export type CompilerErrorDetails = {
     message: string;
     isInternal?: boolean;
-    codeBlockIds: string[];
+    codeBlockIds: UserCodeJSON["id"][];
 };
 
 export type ICodeBlock<T extends UserCodeJSON = UserCodeJSON> = {
@@ -72,12 +72,12 @@ export type Grid = {
     id: string;
     // TODO: More specific types
     getPoints: (arg: {
-        points?: string[];
-        connections: any;
-        blacklist?: string[]; // TODO: Is this needed?
+        points?: Point[];
+        connections: NeedsUpdating;
+        blacklist?: Point[]; // TODO: Is this needed?
         includeOutOfBounds?: boolean;
         excludePreviousPoints?: boolean;
-    }) => any;
+    }) => NeedsUpdating;
     getAllPoints: (type: PointType) => Point[];
     selectPointsWithCursor: (arg: {
         // TODO: Change to [number, number]
@@ -85,8 +85,8 @@ export type Grid = {
         pointTypes: PointType[];
         // TODO: implement deltas as Finite State Machines for more capabilities and better cross-compatibility between grid types
         deltas: Delta[];
-        previousPoint?: string | null;
-    }) => string[];
+        previousPoint?: Point | null;
+    }) => Point[];
     getParams(): LocalStorageData["grid"];
     setParams(params?: SquareGridParams): void;
     getCanvasRequirements: () => {
@@ -108,7 +108,7 @@ export type Grid = {
 // #region - Layers
 export type PointerMoveOrDown = {
     type: "pointerDown" | "pointerMove";
-    points: string[];
+    points: Point[];
     cursor: { x: number; y: number };
     altKey: boolean;
     ctrlKey: boolean;
@@ -166,7 +166,7 @@ export type Layer<LP extends LayerProps = LayerProps> = {
     newSettings: (
         settingsChange: Omit<NewSettingsEvent<LP>, "tempStorage">,
     ) => LayerHandlerResult<LP>;
-    gatherPoints: (layerEvent: PointerMoveOrDown & LayerEventEssentials<LP>) => string[];
+    gatherPoints: (layerEvent: PointerMoveOrDown & LayerEventEssentials<LP>) => Point[];
     handleEvent: (layerEvent: LayerEvent<LP>) => LayerHandlerResult<LP>;
     getBlits: (data: Omit<LayerEventEssentials<LP>, "tempStorage">) => BlitGroup[];
     getOverlayBlits?: (data: Omit<LayerEventEssentials<LP>, "tempStorage">) => BlitGroup[];
@@ -188,20 +188,20 @@ export type LayerClass<LP extends LayerProps = LayerProps> = {
 // #region - Undo-Redo History
 export type IncompleteHistoryAction<LP extends LayerProps = LayerProps, OtherState = any> =
     | {
-          id: string;
-          layerId: string | undefined;
+          id: ObjectId;
+          layerId: Layer["id"] | undefined;
           batchId?: "ignore" | number;
           object: OtherState;
       }
     | {
-          id: string;
+          id: ObjectId;
           batchId?: "ignore" | number;
           object: LP["ObjectState"] | null;
       };
 
 export type HistoryAction<LP extends LayerProps = LayerProps> = {
-    id: string;
-    layerId: string;
+    id: ObjectId;
+    layerId: Layer["id"];
     batchId?: number;
     object: LP["ObjectState"] | null;
     renderIndex: number;
@@ -217,8 +217,8 @@ export type StorageReducer<Type> = (puzzle: PuzzleManager, arg: Type) => Type;
 
 // #region - Rendering
 export type RenderChange =
-    | { type: "draw"; layerIds: string[] | "all" }
-    | { type: "delete"; layerId: string }
+    | { type: "draw"; layerIds: Layer["id"][] | "all" }
+    | { type: "delete"; layerId: Layer["id"] }
     | { type: "switchLayer" }
     | { type: "reorder" };
 
