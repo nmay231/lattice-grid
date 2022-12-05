@@ -50,18 +50,18 @@
         "vitest": "^0.25.2"
     },
     "scripts": {
-        "start": "vite",
+        "dev": "vite",
         "build": "vite build",
         "checkdeps": "yarn outdated; depcheck --ignores 'pre-commit,@emotion/react,prettier-plugin-organize-imports'",
-        "test": "vitest watch",
-        "test:no-watch": "vitest run --changed",
-        "lint": "prettier --check . && eslint .",
-        "lint:fix": "prettier --write . && eslint --fix .",
-        "typecheck": "tsc"
+        "test:watch": "vitest watch",
+        "test:once": "vitest run --changed",
+        "lint": "prettier --ignore-path .gitignore --check . && eslint --ignore-path .gitignore .",
+        "lint:fix": "prettier --ignore-path .gitignore --write . && eslint --ignore-path .gitignore --fix .",
+        "typecheck": "tsc --noEmit"
     },
     "pre-commit": [
         "typecheck",
-        "test:no-watch",
+        "test:once",
         "lint"
     ],
     "browserslist": {

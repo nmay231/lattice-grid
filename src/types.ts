@@ -64,7 +64,7 @@ export type Vector = [number, number];
 export type Delta = { dx: number; dy: number };
 
 export type PointType = "cells" | "edges" | "corners";
-export type ObjectId = string; // TODO: Allow symbols
+export type ObjectId = string;
 // #endregion
 
 // #region - Grids
