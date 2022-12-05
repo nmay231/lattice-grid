@@ -56,6 +56,45 @@ export interface IVariableInfo {
 }
 // #endregion
 
+// #region - Events
+export type PointerMoveOrDown = {
+    type: "pointerDown" | "pointerMove";
+    points: Point[];
+    cursor: { x: number; y: number };
+    altKey: boolean;
+    ctrlKey: boolean;
+    shiftKey: boolean;
+};
+
+export type Keypress = { type: "keyDown" | "delete"; keypress: string };
+
+export type CleanedDOMEvent =
+    | { type: "cancelAction" }
+    | { type: "pointerUp" }
+    | { type: "undoRedo"; actions: HistoryAction[] }
+    | Keypress
+    | PointerMoveOrDown;
+
+export type LayerEventEssentials<LP extends LayerProps> = {
+    grid: Pick<Grid, "id" | "getAllPoints" | "getPoints" | "selectPointsWithCursor">;
+    storage: StorageManager;
+    settings: typeof initialSettings;
+    tempStorage: Partial<LP["TempStorage"]>;
+};
+
+export type LayerEvent<LP extends LayerProps> = CleanedDOMEvent & LayerEventEssentials<LP>;
+
+export type NewSettingsEvent<LP extends LayerProps> = LayerEventEssentials<LP> & {
+    newSettings: LP["RawSettings"];
+};
+
+// TODO: Adding OtherState makes sense for IncompleteHistoryAction, but not for LayerHandlerResult. Should this somehow be another property on LayerProps?
+export type LayerHandlerResult<LP extends LayerProps> = {
+    discontinueInput?: boolean;
+    history?: IncompleteHistoryAction<LP>[];
+};
+// #endregion
+
 // #region - Explicit Type Names
 // TODO: Replace all relevant instances of the plain types with these explicit types.
 // It helps with changing all of the types if necessary, and also with being explicit with how composite types are used.
@@ -64,6 +103,7 @@ export type Vector = [number, number];
 export type Delta = { dx: number; dy: number };
 
 export type PointType = "cells" | "edges" | "corners";
+export type EditMode = "question" | "answer";
 export type ObjectId = string;
 // #endregion
 
@@ -104,43 +144,6 @@ export type Grid = {
 // #endregion
 
 // #region - Layers
-export type PointerMoveOrDown = {
-    type: "pointerDown" | "pointerMove";
-    points: Point[];
-    cursor: { x: number; y: number };
-    altKey: boolean;
-    ctrlKey: boolean;
-    shiftKey: boolean;
-};
-
-export type Keypress = { type: "keyDown" | "delete"; keypress: string };
-
-export type CleanedDOMEvent =
-    | { type: "cancelAction" }
-    | { type: "pointerUp" }
-    | { type: "undoRedo"; actions: HistoryAction[] }
-    | Keypress
-    | PointerMoveOrDown;
-
-export type LayerEventEssentials<LP extends LayerProps> = {
-    grid: Pick<Grid, "id" | "getAllPoints" | "getPoints" | "selectPointsWithCursor">;
-    storage: StorageManager;
-    settings: typeof initialSettings;
-    tempStorage: Partial<LP["TempStorage"]>;
-};
-
-export type LayerEvent<LP extends LayerProps> = CleanedDOMEvent & LayerEventEssentials<LP>;
-
-export type NewSettingsEvent<LP extends LayerProps> = LayerEventEssentials<LP> & {
-    newSettings: LP["RawSettings"];
-};
-
-// TODO: Adding OtherState makes sense for IncompleteHistoryAction, but not for LayerHandlerResult. Should this somehow be another property on LayerProps?
-export type LayerHandlerResult<LP extends LayerProps> = {
-    discontinueInput?: boolean;
-    history?: IncompleteHistoryAction<LP>[];
-};
-
 export type JSONSchema = { schema: NeedsUpdating; uischemaElements: NeedsUpdating[] };
 
 export type LayerProps = {

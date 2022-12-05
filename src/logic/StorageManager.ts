@@ -14,6 +14,14 @@ import { formatAnything } from "../utils/stringUtils";
 
 type GridAndLayer = { grid: Pick<Grid, "id">; layer: Pick<Layer, "id"> };
 
+// Sure, this could be in its own file, but I don't feel like it should be just yet...
+export class LayerStorage<LP extends LayerProps = LayerProps> {
+    objects: Record<ObjectId, LP["ObjectState"]> = {};
+    extra: Partial<LP["ExtraLayerStorageProps"]> = {};
+    renderOrder: ObjectId[] = [];
+    // groups: { question: Set<ObjectId>; answer: Set<ObjectId> } = { answer: new Set(), question: new Set() };
+}
+
 export class StorageManager {
     objects: Record<Grid["id"], Record<Layer["id"], LayerStorage>> = {};
 
@@ -212,12 +220,4 @@ export class StorageManager {
     getNewBatchId() {
         return this._batchId++;
     }
-}
-
-// Sure, this could be in its own file, but I don't feel like it should be just yet...
-export class LayerStorage<LP extends LayerProps = LayerProps> {
-    objects: Record<ObjectId, LP["ObjectState"]> = {};
-    extra: Partial<LP["ExtraLayerStorageProps"]> = {};
-    renderOrder: ObjectId[] = [];
-    // groups: { question: Set<ObjectId>; answer: Set<ObjectId> } = { answer: new Set(), question: new Set() };
 }

@@ -1,8 +1,10 @@
+import { proxy } from "valtio";
 import { getBlitGroups, OVERLAY_LAYER_ID, setBlitGroups } from "../atoms/blits";
 import { setCanvasSize } from "../atoms/canvasSize";
 import { Layers } from "../atoms/layers";
 import { getSettings } from "../atoms/settings";
 import {
+    EditMode,
     Grid,
     Layer,
     LayerClass,
@@ -31,6 +33,10 @@ export class PuzzleManager {
     grid: Grid = new SquareGrid();
     storage = new StorageManager();
     controls = new ControlsManager(this);
+    settings = proxy({
+        editMode: "question" as EditMode,
+        // TODO: pageMode: "setting" | "settingTest?" | "solving" | "competition"
+    });
 
     constructor() {
         this.layers = this._requiredLayers();

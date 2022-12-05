@@ -5,6 +5,7 @@ import { usePuzzle } from "../../../atoms/puzzle";
 import { blurActiveElement } from "../../../utils/DOMUtils";
 import { ImportExportAtom } from "../../ImportExportModal/ImportExportModal";
 import { Group as Collapse } from "../Group";
+import { PuzzleModeToggle } from "./PuzzleModeToggle";
 import { ResizeGridButton } from "./ResizeGridButton";
 
 export const MainGroup = () => {
@@ -15,6 +16,7 @@ export const MainGroup = () => {
         <Collapse name="Puzzle" expanded>
             <Center style={{ width: "100%" }} my="sm" component={Group}>
                 <Stack>
+                    <PuzzleModeToggle />
                     <ResizeGridButton />
                     <Button onClick={() => toggleImportExportModal(true)}>Import / Export</Button>
                     <Button
