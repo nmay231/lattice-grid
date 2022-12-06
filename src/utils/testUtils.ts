@@ -1,5 +1,6 @@
 import { vi } from "vitest";
-import { LayerStorage, StorageManager } from "../logic/StorageManager";
+import { LayerStorage } from "../logic/LayerStorage";
+import { StorageManager } from "../logic/StorageManager";
 import { LayerEventEssentials, LayerProps } from "../types";
 
 export type GetEventEssentialsArg<LP extends LayerProps> = {

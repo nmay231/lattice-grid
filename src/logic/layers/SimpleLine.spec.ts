@@ -1,6 +1,6 @@
 import { NeedsUpdating } from "../../types";
 import { getEventEssentials } from "../../utils/testUtils";
-import { LayerStorage } from "../StorageManager";
+import { LayerStorage } from "../LayerStorage";
 import { SimpleLineLayer, SimpleLineProps } from "./SimpleLine";
 
 describe("SimpleLine", () => {

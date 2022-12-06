@@ -1,6 +1,6 @@
 import { LayerEvent, LayerHandlerResult, NeedsUpdating, PointerMoveOrDown } from "../../../types";
 import { getEventEssentials } from "../../../utils/testUtils";
-import { LayerStorage } from "../../StorageManager";
+import { LayerStorage } from "../../LayerStorage";
 import { handleEventsSelection, SelectedProps, SELECTION_ID } from "./selection";
 
 const getFreshSelectedLayer = () => {

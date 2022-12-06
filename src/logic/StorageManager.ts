@@ -5,40 +5,14 @@ import {
     Layer,
     LayerProps,
     NeedsUpdating,
-    ObjectId,
     PartialHistoryAction,
     StorageReducer,
 } from "../types";
 import { errorNotification } from "../utils/DOMUtils";
 import { formatAnything } from "../utils/stringUtils";
+import { LayerStorage } from "./LayerStorage";
 
 type GridAndLayer = { grid: Pick<Grid, "id">; layer: Pick<Layer, "id"> };
-
-// Sure, this could be in its own file, but I don't feel like it should be just yet...
-export class LayerStorage<LP extends LayerProps = LayerProps> {
-    renderOrder: ObjectId[] = [];
-    objects: Record<ObjectId, LP["ObjectState"]> = {};
-    extra: Partial<LP["ExtraLayerStorageProps"]> = {};
-
-    // Helper function for tests
-    // TODO: Relocate to a separate function?
-    static fromObjects<LP extends LayerProps>({
-        ids,
-        objs,
-    }: {
-        ids: ObjectId[];
-        objs: LP["ObjectState"][];
-    }) {
-        const storage = new LayerStorage<LP>();
-
-        storage.renderOrder = ids;
-        ids.forEach((id, index) => {
-            storage.objects[id] = objs[index];
-        });
-
-        return storage;
-    }
-}
 
 export class StorageManager {
     objects: Record<Grid["id"], Record<Layer["id"], LayerStorage>> = {};

@@ -2,7 +2,7 @@ import { vi } from "vitest";
 import { Layer, LayerEvent, PartialHistoryAction, PointerMoveOrDown } from "../../../types";
 import { smartSort } from "../../../utils/stringUtils";
 import { getEventEssentials } from "../../../utils/testUtils";
-import { LayerStorage } from "../../StorageManager";
+import { LayerStorage } from "../../LayerStorage";
 import { DummyLayer } from "../_DummyLayer";
 import { handleEventsUnorderedSets, MultiPointLayerProps } from "./multiPoint";
 

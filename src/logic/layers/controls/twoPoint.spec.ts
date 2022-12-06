@@ -1,7 +1,7 @@
 import { vi } from "vitest";
 import { Layer, LayerEvent, PointerMoveOrDown } from "../../../types";
 import { getEventEssentials } from "../../../utils/testUtils";
-import { LayerStorage } from "../../StorageManager";
+import { LayerStorage } from "../../LayerStorage";
 import { DummyLayer } from "../_DummyLayer";
 import { handleEventsCurrentSetting, MinimalSettings, TwoPointProps } from "./twoPoint";
 
