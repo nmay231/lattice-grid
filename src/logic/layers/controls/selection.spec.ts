@@ -18,11 +18,7 @@ const partialPointerEvent: Omit<PointerMoveOrDown, "points" | "type"> = {
 
 describe("SelectionLayer", () => {
     it("should select one cell", () => {
-        const stored: LayerStorage<SelectedProps> = {
-            renderOrder: [],
-            objects: {},
-            extra: {},
-        };
+        const stored = new LayerStorage<SelectedProps>();
         const layer = getFreshSelectedLayer();
         const essentials = getEventEssentials({ stored });
 
@@ -54,11 +50,10 @@ describe("SelectionLayer", () => {
     it("should deselect a cell by clicking on it", () => {
         // Setup a grid with exactly one cell selected
         const layer = getFreshSelectedLayer();
-        const stored = {
-            objects: { point1: { id: "point1", state: 100 } },
-            renderOrder: ["point1"],
-            extra: {},
-        };
+        const stored = LayerStorage.fromObjects<SelectedProps>({
+            ids: ["point1"],
+            objs: [{ point1: { id: "point1", state: 100 } }],
+        });
         const essentials = getEventEssentials({ stored });
 
         // Tap/click that cell
@@ -88,14 +83,13 @@ describe("SelectionLayer", () => {
     it("should not deselect a clicked cell if there were more than one previously selected", () => {
         // Setup a grid with two cells selected
         const layer = getFreshSelectedLayer();
-        const stored = {
-            objects: {
-                point1: { id: "point1", state: 2 },
-                point2: { id: "point2", state: 2 },
-            },
-            renderOrder: ["point1", "point2"],
-            extra: {},
-        } as LayerStorage<SelectedProps>;
+        const stored = LayerStorage.fromObjects<SelectedProps>({
+            ids: ["point1", "point2"],
+            objs: [
+                { id: "point1", state: 2 },
+                { id: "point2", state: 2 },
+            ],
+        });
         const essentials = getEventEssentials({ stored });
 
         // Start tapping/clicking the first cell
@@ -139,13 +133,10 @@ describe("SelectionLayer", () => {
     it("should deselect a cell when clicking another one", () => {
         // Setup a grid with one cell selected
         const layer = getFreshSelectedLayer();
-        const stored = {
-            objects: {
-                point1: { id: "point1", state: 2 },
-            },
-            renderOrder: ["point1"],
-            extra: {},
-        } as LayerStorage<SelectedProps>;
+        const stored = LayerStorage.fromObjects<SelectedProps>({
+            ids: ["point1"],
+            objs: [{ id: "point1", state: 2 }],
+        });
         const essentials = getEventEssentials({ stored });
 
         // Start tapping/clicking a different cell
@@ -182,15 +173,10 @@ describe("SelectionLayer", () => {
     it("should add cells to the selection when holding ctrl", () => {
         // Setup a grid with a group of cells selected
         const layer = getFreshSelectedLayer();
-        const stored = {
-            objects: {
-                point1: { state: 100 },
-                point2: { state: 100 },
-                point3: { state: 100 },
-            },
-            renderOrder: ["point1", "point2", "point3"],
-            extra: {},
-        } as LayerStorage<SelectedProps>;
+        const stored = LayerStorage.fromObjects<SelectedProps>({
+            ids: ["point1", "point2", "point3"],
+            objs: [{ state: 100 }, { state: 100 }, { state: 100 }],
+        });
         const essentials = getEventEssentials({ stored });
 
         // Start tapping/clicking a different cell
@@ -247,14 +233,10 @@ describe("SelectionLayer", () => {
     it("should merge disjoint selections when dragging over an existing group", () => {
         // Setup a grid with a group of cells selected
         const layer = getFreshSelectedLayer();
-        const stored = {
-            objects: {
-                point1: { state: 100 },
-                point2: { state: 100 },
-            },
-            renderOrder: ["point1", "point2"],
-            extra: {},
-        } as LayerStorage<SelectedProps>;
+        const stored = LayerStorage.fromObjects<SelectedProps>({
+            ids: ["point1", "point2"],
+            objs: [{ state: 100 }, { state: 100 }],
+        });
         const essentials = getEventEssentials({ stored });
 
         // Start tapping/clicking a different cell

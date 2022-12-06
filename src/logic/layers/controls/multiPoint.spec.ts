@@ -37,11 +37,7 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         const layer = getFakeLayer();
         applySettings(layer);
 
-        const stored: LayerStorage<MultiPointLayerProps> = {
-            renderOrder: [],
-            objects: {},
-            extra: {},
-        };
+        const stored = new LayerStorage<MultiPointLayerProps>();
         const selectPoints = vi.fn();
         const getBatchId = vi.fn();
         const essentials = getEventEssentials({ stored });
@@ -76,11 +72,10 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         const layer = getFakeLayer();
         applySettings(layer);
 
-        const stored: LayerStorage<MultiPointLayerProps> = {
-            objects: { a: { id: "a", points: ["a"], state: null } },
-            renderOrder: ["a"],
-            extra: {},
-        };
+        const stored = LayerStorage.fromObjects({
+            ids: ["a"],
+            objs: [{ id: "a", points: ["a"], state: null }],
+        });
         const selectPoints = vi.fn();
         const getBatchId = vi.fn();
         const essentials = getEventEssentials({ stored });
@@ -116,11 +111,7 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         const layer = getFakeLayer();
         applySettings(layer);
 
-        const stored: LayerStorage<MultiPointLayerProps> = {
-            renderOrder: [],
-            objects: {},
-            extra: {},
-        };
+        const stored = new LayerStorage<MultiPointLayerProps>();
         const selectPoints = vi.fn();
         const getBatchId = vi.fn();
         const essentials = getEventEssentials({ stored });
@@ -193,11 +184,11 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         const layer = getFakeLayer();
         applySettings(layer);
 
-        const stored: LayerStorage<MultiPointLayerProps> = {
-            objects: { "a;b": { id: "a;b", points: ["a", "b"], state: null } },
-            renderOrder: ["a;b"],
-            extra: { currentObjectId: "a;b" },
-        };
+        const stored = LayerStorage.fromObjects<MultiPointLayerProps>({
+            ids: ["a;b"],
+            objs: [{ id: "a;b", points: ["a", "b"], state: null }],
+        });
+        stored.extra = { currentObjectId: "a;b" };
         const selectPoints = vi.fn();
         const getBatchId = vi.fn();
         const essentials = getEventEssentials({ stored });
@@ -242,11 +233,11 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         const layer = getFakeLayer();
         applySettings(layer);
 
-        const stored: LayerStorage<MultiPointLayerProps> = {
-            objects: { "a;b": { id: "a;b", points: ["a", "b"], state: null } },
-            renderOrder: ["a;b"],
-            extra: { currentObjectId: "a;b" },
-        };
+        const stored = LayerStorage.fromObjects<MultiPointLayerProps>({
+            ids: ["a;b"],
+            objs: [{ id: "a;b", points: ["a", "b"], state: null }],
+        });
+        stored.extra = { currentObjectId: "a;b" };
         const selectPoints = vi.fn();
         const getBatchId = vi.fn();
         const essentials = getEventEssentials<MultiPointLayerProps>({ stored });

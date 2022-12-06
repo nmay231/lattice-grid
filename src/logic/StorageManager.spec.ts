@@ -33,10 +33,9 @@ describe("StorageManager", () => {
         };
         storage._ApplyHistoryAction(objects, renderOrder, action);
 
-        expect(storage.objects["grid"]["layer1"]).toEqual<LayerStorage>({
+        expect(storage.objects["grid"]["layer1"]).toMatchObject<Partial<LayerStorage>>({
             objects: { objectId: { asdf: "something", id: "objectId" } },
             renderOrder: ["objectId"],
-            extra: {},
         });
     });
 
@@ -51,10 +50,9 @@ describe("StorageManager", () => {
         };
         storage._ApplyHistoryAction(objects, renderOrder, action);
 
-        expect(storage.objects["grid"]["layer1"]).toEqual<LayerStorage>({
+        expect(storage.objects["grid"]["layer1"]).toMatchObject<Partial<LayerStorage>>({
             objects: {},
             renderOrder: [],
-            extra: {},
         });
     });
 
@@ -70,7 +68,7 @@ describe("StorageManager", () => {
         storage._ApplyHistoryAction(objects, renderOrder, action);
         storage._ApplyHistoryAction(objects, renderOrder, action);
 
-        expect(storage.objects["grid"]["layer1"]).toEqual<LayerStorage>({
+        expect(storage.objects["grid"]["layer1"]).toMatchObject<Partial<LayerStorage>>({
             objects: { objectId: { asdf: "something", id: "objectId" } },
             renderOrder: ["objectId"],
             extra: {},
@@ -89,7 +87,7 @@ describe("StorageManager", () => {
         storage._ApplyHistoryAction(objects, renderOrder, action);
         storage._ApplyHistoryAction(objects, renderOrder, action);
 
-        expect(storage.objects["grid"]["layer1"]).toEqual<LayerStorage>({
+        expect(storage.objects["grid"]["layer1"]).toMatchObject<Partial<LayerStorage>>({
             objects: {},
             renderOrder: [],
             extra: {},
@@ -130,50 +128,32 @@ describe("StorageManager", () => {
         ]);
 
         storage.undoHistory("grid");
-        // Ensure the initial state is good
-        expect(storage.objects).toEqual<StorageManager["objects"]>({
-            grid: {
-                layer1: {
-                    objects: {
-                        id1: { asdf: "something1", id: "id1" },
-                        id2: { asdf: "something2", id: "id2" },
-                        id3: { asdf: "something3", id: "id3" },
-                    },
-                    renderOrder: ["id1", "id2", "id3"],
-                    extra: {},
-                },
-                layer2: { objects: {}, renderOrder: [], extra: {} },
+        // An non-batched undo should not affect the batched actions
+        expect(storage.objects["grid"]["layer1"]).toMatchObject<Partial<LayerStorage>>({
+            objects: {
+                id1: { asdf: "something1", id: "id1" },
+                id2: { asdf: "something2", id: "id2" },
+                id3: { asdf: "something3", id: "id3" },
             },
+            renderOrder: ["id1", "id2", "id3"],
         });
 
         storage.undoHistory("grid");
         // Undo a batch of actions
-        expect(storage.objects).toEqual<StorageManager["objects"]>({
-            grid: {
-                layer1: {
-                    objects: { id1: { asdf: "something1", id: "id1" } },
-                    renderOrder: ["id1"],
-                    extra: {},
-                },
-                layer2: { objects: {}, renderOrder: [], extra: {} },
-            },
+        expect(storage.objects["grid"]["layer1"]).toMatchObject<Partial<LayerStorage>>({
+            objects: { id1: { asdf: "something1", id: "id1" } },
+            renderOrder: ["id1"],
         });
 
         storage.redoHistory("grid");
         // Undo a batch of actions
-        expect(storage.objects).toEqual<StorageManager["objects"]>({
-            grid: {
-                layer1: {
-                    objects: {
-                        id1: { asdf: "something1", id: "id1" },
-                        id2: { asdf: "something2", id: "id2" },
-                        id3: { asdf: "something3", id: "id3" },
-                    },
-                    renderOrder: ["id1", "id2", "id3"],
-                    extra: {},
-                },
-                layer2: { objects: {}, renderOrder: [], extra: {} },
+        expect(storage.objects["grid"]["layer1"]).toMatchObject<Partial<LayerStorage>>({
+            objects: {
+                id1: { asdf: "something1", id: "id1" },
+                id2: { asdf: "something2", id: "id2" },
+                id3: { asdf: "something3", id: "id3" },
             },
+            renderOrder: ["id1", "id2", "id3"],
         });
     });
 
@@ -236,22 +216,15 @@ describe("StorageManager", () => {
         const objectsAfterAction = cloneDeep(storage.objects);
 
         // Ensure the initial states are good
-        expect(objectsBeforeAction).toEqual<StorageManager["objects"]>({
-            grid: {
-                layer1: { objects: {}, renderOrder: [], extra: {} },
-                layer2: { objects: {}, renderOrder: [], extra: {} },
-            },
+        expect(objectsBeforeAction["grid"]["layer1"]).toMatchObject<Partial<LayerStorage>>({
+            objects: {},
+            renderOrder: [],
         });
-        expect(objectsAfterAction).toEqual<StorageManager["objects"]>({
-            grid: {
-                layer1: {
-                    objects: { id1: { asdf: "something1", id: "id1" } },
-                    renderOrder: ["id1"],
-                    extra: {},
-                },
-                layer2: { objects: {}, renderOrder: [], extra: {} },
-            },
+        expect(objectsAfterAction["grid"]["layer1"]).toMatchObject<Partial<LayerStorage>>({
+            objects: { id1: { asdf: "something1", id: "id1" } },
+            renderOrder: ["id1"],
         });
+
         const afterRedo: StorageManager["histories"][0] = {
             actions: [
                 {
