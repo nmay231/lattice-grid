@@ -1,5 +1,5 @@
 import { vi } from "vitest";
-import { IncompleteHistoryAction, Layer, LayerEvent, PointerMoveOrDown } from "../../../types";
+import { Layer, LayerEvent, PartialHistoryAction, PointerMoveOrDown } from "../../../types";
 import { smartSort } from "../../../utils/stringUtils";
 import { getEventEssentials } from "../../../utils/testUtils";
 import { LayerStorage } from "../../StorageManager";
@@ -31,7 +31,7 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
     // TODO: This and the other controls tests might have to be rewritten to be more clear and more consistent. It's pretty much a hodge-pogge of assertions at the moment, which I guess is better than nothing for now...
     // For example, we have to call layer.gatherPoints each time because it's not a pure function. It's purposely not pure, but that doesn't have to be if modified appropriately.
 
-    type HistoryType = IncompleteHistoryAction<MultiPointLayerProps>[];
+    type HistoryType = PartialHistoryAction<MultiPointLayerProps>[];
 
     it("should draw a new single-point object when none were selected", () => {
         const layer = getFakeLayer();

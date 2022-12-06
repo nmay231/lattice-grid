@@ -2,11 +2,11 @@ import {
     Grid,
     History,
     HistoryAction,
-    IncompleteHistoryAction,
     Layer,
     LayerProps,
     NeedsUpdating,
     ObjectId,
+    PartialHistoryAction,
     StorageReducer,
 } from "../types";
 import { errorNotification } from "../utils/DOMUtils";
@@ -74,7 +74,7 @@ export class StorageManager {
     addToHistory(
         grid: Pick<Grid, "id">,
         layer: Pick<Layer, "id">,
-        puzzleObjects?: IncompleteHistoryAction[],
+        puzzleObjects?: PartialHistoryAction[],
     ) {
         if (!puzzleObjects?.length) {
             return;

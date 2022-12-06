@@ -1,10 +1,10 @@
 import {
-    IncompleteHistoryAction,
     Keypress,
     Layer,
     LayerEventEssentials,
     LayerHandlerResult,
     LayerProps,
+    PartialHistoryAction,
     Point,
 } from "../../../types";
 import { errorNotification } from "../../../utils/DOMUtils";
@@ -73,7 +73,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
     layer.handleEvent = (event) => {
         const { grid, storage, tempStorage } = event;
         const internal = storage.getStored<InternalProps>({ grid, layer: { id: layerId } });
-        let history: IncompleteHistoryAction<LP, InternalProps["ObjectState"]>[];
+        let history: PartialHistoryAction<LP, InternalProps["ObjectState"]>[];
 
         switch (event.type) {
             case "cancelAction": {
@@ -234,7 +234,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
             case "undoRedo": {
                 const newIds = event.actions.map(({ id }) => id);
                 // Clear old selection
-                const history: IncompleteHistoryAction[] = internal.renderOrder
+                const history: PartialHistoryAction[] = internal.renderOrder
                     // TODO: This doesn't account for actions that do not apply to external layer. Do I need to fix?
                     .filter((oldId) => newIds.indexOf(oldId) === -1)
                     .map((oldId) => ({

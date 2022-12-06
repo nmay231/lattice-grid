@@ -91,7 +91,7 @@ export type NewSettingsEvent<LP extends LayerProps> = LayerEventEssentials<LP> &
 // TODO: Adding OtherState makes sense for IncompleteHistoryAction, but not for LayerHandlerResult. Should this somehow be another property on LayerProps?
 export type LayerHandlerResult<LP extends LayerProps> = {
     discontinueInput?: boolean;
-    history?: IncompleteHistoryAction<LP>[];
+    history?: PartialHistoryAction<LP>[];
 };
 // #endregion
 
@@ -187,7 +187,7 @@ export type LayerClass<LP extends LayerProps = LayerProps> = {
 // #endregion
 
 // #region - Undo-Redo History
-export type IncompleteHistoryAction<LP extends LayerProps = LayerProps, OtherState = any> =
+export type PartialHistoryAction<LP extends LayerProps = LayerProps, OtherState = any> =
     | {
           id: ObjectId;
           layerId: Layer["id"] | undefined;
