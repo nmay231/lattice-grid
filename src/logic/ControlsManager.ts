@@ -118,7 +118,8 @@ export class ControlsManager {
             this.resetControls();
         }
 
-        storage.addToHistory(grid, layer, history);
+        storage.addToHistory({ puzzle: this.puzzle, layerId: layer.id, actions: history });
+
         this.puzzle.renderChange({ type: "draw", layerIds: [layer.id] });
     }
 
@@ -232,9 +233,11 @@ export class ControlsManager {
         } else if (keypress === "ctrl-z" || keypress === "ctrl-y") {
             // TODO: Eventually, I want layers to be able to switch the current layer (specifically SelectionLayer for sudoku ctrl/shift behavior)
             // Perhaps, I can use that mechanism for storage to switch the current layer when undoing/redoing
-            const { storage, grid } = this.puzzle;
+            const { storage } = this.puzzle;
             const appliedActions =
-                keypress === "ctrl-z" ? storage.undoHistory(grid.id) : storage.redoHistory(grid.id);
+                keypress === "ctrl-z"
+                    ? storage.undoHistory(this.puzzle)
+                    : storage.redoHistory(this.puzzle);
 
             if (appliedActions.length) {
                 const newLayerId = appliedActions[appliedActions.length - 1].layerId;

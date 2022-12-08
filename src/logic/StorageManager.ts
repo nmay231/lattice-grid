@@ -1,4 +1,5 @@
 import {
+    EditMode,
     Grid,
     History,
     HistoryAction,
@@ -11,8 +12,14 @@ import {
 import { errorNotification } from "../utils/DOMUtils";
 import { formatAnything } from "../utils/stringUtils";
 import { LayerStorage } from "./LayerStorage";
+import { PuzzleManager } from "./PuzzleManager";
 
 type GridAndLayer = { grid: Pick<Grid, "id">; layer: Pick<Layer, "id"> };
+// TODO: Recursive Pick type?
+export type PuzzleForStorage = {
+    grid: Pick<PuzzleManager["grid"], "id">;
+    settings: Pick<PuzzleManager["settings"], "editMode">;
+};
 
 export class StorageManager {
     objects: Record<Grid["id"], Record<Layer["id"], LayerStorage>> = {};
@@ -26,10 +33,14 @@ export class StorageManager {
         this.objects[grid.id] = this.objects[grid.id] ?? {};
         this.objects[grid.id][layer.id] = new LayerStorage();
 
-        this.histories[grid.id] = this.histories[grid.id] || {
-            actions: [],
-            index: 0,
-        };
+        // TODO: Use typescript `satisfies`
+        // TODO: Actually, I just need to implement that data structure that handles this automatically because editModes might eventually be dynamic
+        (["question", "answer"] as EditMode[]).forEach((editMode) => {
+            this.histories[`${grid.id}-${editMode}`] = this.histories[`${grid.id}-${editMode}`] || {
+                actions: [],
+                index: 0,
+            };
+        });
     }
 
     removeStorage({ grid, layer }: GridAndLayer) {
@@ -63,36 +74,40 @@ export class StorageManager {
         }
     }
 
-    addToHistory(
-        grid: Pick<Grid, "id">,
-        layer: Pick<Layer, "id">,
-        puzzleObjects?: PartialHistoryAction[],
-    ) {
-        if (!puzzleObjects?.length) {
+    addToHistory({
+        puzzle,
+        layerId: defaultLayerId,
+        actions,
+    }: {
+        puzzle: PuzzleForStorage;
+        layerId: Layer["id"];
+        actions?: PartialHistoryAction[];
+    }) {
+        if (!actions?.length) {
             return;
         }
 
-        const history = this.histories[grid.id];
+        const history = this.histories[`${puzzle.grid.id}-${puzzle.settings.editMode}`];
 
-        const historyChanges = puzzleObjects.filter(({ batchId }) => batchId !== "ignore").length;
+        const historyChanges = actions.filter(({ batchId }) => batchId !== "ignore").length;
 
         if (history.index < history.actions.length && historyChanges) {
             // Only prune redo actions when actions will be added to history
             history.actions.splice(history.index);
         }
 
-        for (const puzzleObject of puzzleObjects) {
-            const layerId = (puzzleObject as NeedsUpdating).layerId || layer.id;
-            const { objects, renderOrder } = this.objects[grid.id][layerId];
+        for (const partialAction of actions) {
+            const layerId = (partialAction as NeedsUpdating).layerId || defaultLayerId;
+            const { objects, renderOrder } = this.objects[puzzle.grid.id][layerId];
 
             const action = this.masterReducer({} as NeedsUpdating, {
-                id: puzzleObject.id,
+                id: partialAction.id,
                 layerId,
-                batchId: Number(puzzleObject.batchId),
-                object: puzzleObject.object,
+                batchId: partialAction.batchId && Number(partialAction.batchId),
+                object: partialAction.object,
                 renderIndex:
-                    puzzleObject.id in objects
-                        ? renderOrder.indexOf(puzzleObject.id)
+                    partialAction.id in objects
+                        ? renderOrder.indexOf(partialAction.id)
                         : renderOrder.length,
             });
             if (!action) {
@@ -101,7 +116,7 @@ export class StorageManager {
 
             const undoAction = this._ApplyHistoryAction(objects, renderOrder, action);
 
-            if (puzzleObject.batchId === "ignore") {
+            if (partialAction.batchId === "ignore") {
                 continue; // Do not include in history
             }
 
@@ -111,8 +126,8 @@ export class StorageManager {
             if (
                 lastAction?.batchId &&
                 lastAction.layerId === layerId &&
-                lastAction.id === puzzleObject.id &&
-                lastAction.batchId === puzzleObject.batchId
+                lastAction.id === partialAction.id &&
+                lastAction.batchId === partialAction.batchId
             ) {
                 // By not pushing actions to history, the actions are merged
 
@@ -162,8 +177,8 @@ export class StorageManager {
         return undoAction;
     }
 
-    undoHistory(historyId: Grid["id"]) {
-        const history = this.histories[historyId];
+    undoHistory(puzzle: PuzzleForStorage) {
+        const history = this.histories[`${puzzle.grid.id}-${puzzle.settings.editMode}`];
         if (history.index <= 0) {
             return [];
         }
@@ -173,7 +188,7 @@ export class StorageManager {
         do {
             history.index--;
             action = history.actions[history.index];
-            const { objects, renderOrder } = this.objects[historyId][action.layerId];
+            const { objects, renderOrder } = this.objects[puzzle.grid.id][action.layerId];
 
             const redo = this._ApplyHistoryAction(objects, renderOrder, action);
             // Replace the action with its opposite
@@ -185,8 +200,8 @@ export class StorageManager {
         return returnedActions;
     }
 
-    redoHistory(historyId: Grid["id"]) {
-        const history = this.histories[historyId];
+    redoHistory(puzzle: PuzzleForStorage) {
+        const history = this.histories[`${puzzle.grid.id}-${puzzle.settings.editMode}`];
         if (history.index >= history.actions.length) {
             return [];
         }
@@ -195,7 +210,7 @@ export class StorageManager {
         const returnedActions: HistoryAction[] = [];
         do {
             action = history.actions[history.index];
-            const { objects, renderOrder } = this.objects[historyId][action.layerId];
+            const { objects, renderOrder } = this.objects[puzzle.grid.id][action.layerId];
 
             const undo = this._ApplyHistoryAction(objects, renderOrder, action);
             // Replace the action with its opposite

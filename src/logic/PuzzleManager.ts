@@ -212,7 +212,7 @@ export class PuzzleManager {
         });
 
         if (history?.length) {
-            this.storage.addToHistory(this.grid, layer, history);
+            this.storage.addToHistory({ puzzle: this, layerId: layer.id, actions: history });
         }
     }
 }
