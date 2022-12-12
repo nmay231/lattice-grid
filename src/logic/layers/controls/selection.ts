@@ -77,7 +77,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
 
         switch (event.type) {
             case "cancelAction": {
-                history = internal.renderOrder.map((id) => ({
+                history = internal.objects.keys().map((id) => ({
                     id,
                     layerId,
                     batchId: "ignore" as const,
@@ -102,14 +102,14 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                         id,
                         layerId,
                         batchId: "ignore" as const,
-                        object: id in internal.objects ? null : { state: 1 },
+                        object: internal.objects.has(id) ? null : { state: 1 },
                     }));
                     return {
                         history,
                     };
                 }
 
-                const actions = layer.handleKeyDown({ ...event, points: internal.renderOrder });
+                const actions = layer.handleKeyDown({ ...event, points: internal.objects.keys() });
                 const batchId = storage.getNewBatchId();
 
                 return {
@@ -163,13 +163,17 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                                 object: null,
                             }));
                     } else {
-                        const groupsToMerge = new Set(ids.map((id) => internal.objects[id]?.state));
+                        const groupsToMerge = new Set(
+                            ids.map((id) => internal.objects.get(id)?.state),
+                        );
                         const allIds = ids
                             .filter((id) => !(id in internal.objects))
                             .concat(
-                                internal.renderOrder.filter((id) =>
-                                    groupsToMerge.has(internal.objects[id].state),
-                                ),
+                                internal.objects
+                                    .keys()
+                                    .filter((id) =>
+                                        groupsToMerge.has(internal.objects.get(id).state),
+                                    ),
                             );
                         const state = tempStorage.targetState;
                         history = allIds.map((id) => ({
@@ -187,7 +191,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                     history = [];
 
                     if (removeOld) {
-                        const oldIds = internal.renderOrder;
+                        const oldIds = internal.objects.keys();
                         history = oldIds
                             .filter((toDelete) => ids.indexOf(toDelete) === -1)
                             .map((toDelete) => ({
@@ -221,7 +225,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                         discontinueInput: true,
                         history: [
                             {
-                                id: internal.renderOrder[0],
+                                id: internal.objects.keys()[0],
                                 layerId,
                                 batchId: "ignore" as const,
                                 object: null,
@@ -234,7 +238,8 @@ export const handleEventsSelection = <LP extends SelectedProps>(
             case "undoRedo": {
                 const newIds = event.actions.map(({ id }) => id);
                 // Clear old selection
-                const history: PartialHistoryAction[] = internal.renderOrder
+                const history: PartialHistoryAction[] = internal.objects
+                    .keys()
                     // TODO: This doesn't account for actions that do not apply to external layer. Do I need to fix?
                     .filter((oldId) => newIds.indexOf(oldId) === -1)
                     .map((oldId) => ({
@@ -271,8 +276,8 @@ export const handleEventsSelection = <LP extends SelectedProps>(
     layer.getOverlayBlits = ({ grid, storage }) => {
         // TODO: Selection can be made by multiple layers, but not all layers support the same cells/corners selection. In the future, I need to filter the points by the type of points selectable by the current layer.
         const stored = storage.getStored<InternalProps>({ grid, layer: { id: layerId } });
-        const points = stored.renderOrder.filter((key) => stored.objects[key].state);
-        const states = points.map((id) => stored.objects[id].state);
+        const points = stored.objects.keys().filter((key) => stored.objects.get(key).state);
+        const states = points.map((id) => stored.objects.get(id).state);
 
         const blits: Record<string, any> = {};
         if (points.length) {

@@ -54,7 +54,7 @@ export class CellOutlineLayer extends BaseLayer<CellOutlineProps> implements ICe
             layer: this,
         });
 
-        const blacklist = stored.renderOrder;
+        const blacklist = stored.objects.keys();
         const points = grid.getAllPoints("cells").filter((point) => !blacklist.includes(point));
         const { cells, gridEdge } = grid.getPoints({
             points,

@@ -1,8 +1,8 @@
 import { LayerProps, ObjectId } from "../types";
+import { OrderedMap } from "../utils/OrderedMap";
 
 export class LayerStorage<LP extends LayerProps = LayerProps> {
-    renderOrder: ObjectId[] = [];
-    objects: Record<ObjectId, LP["ObjectState"]> = {};
+    objects = new OrderedMap<LP["ObjectState"]>();
     extra: Partial<LP["ExtraLayerStorageProps"]> = {};
 
     // Helper function for tests
@@ -16,10 +16,7 @@ export class LayerStorage<LP extends LayerProps = LayerProps> {
     }) {
         const storage = new LayerStorage<LP>();
 
-        storage.renderOrder = ids;
-        ids.forEach((id, index) => {
-            storage.objects[id] = objs[index];
-        });
+        ids.forEach((id, index) => storage.objects.set(id, objs[index]));
 
         return storage;
     }

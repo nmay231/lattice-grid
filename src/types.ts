@@ -205,7 +205,7 @@ export type HistoryAction<LP extends LayerProps = LayerProps> = {
     layerId: Layer["id"];
     batchId?: number;
     object: LP["ObjectState"] | null;
-    renderIndex: number;
+    nextObjectId: ObjectId | null;
 };
 
 export type History = {

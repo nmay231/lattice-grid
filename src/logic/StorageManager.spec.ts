@@ -1,7 +1,8 @@
 import { cloneDeep } from "lodash";
-import { EditMode, Grid, History, HistoryAction, Layer } from "../types";
-import { LayerStorage } from "./LayerStorage";
+import { EditMode, Grid, History, HistoryAction, Layer, UnknownObject } from "../types";
 import { PuzzleForStorage, StorageManager } from "./StorageManager";
+
+type HistoryEntries = Array<[string, UnknownObject]>;
 
 const getNormalStorage = () => {
     const normalStorage = new StorageManager();
@@ -30,94 +31,84 @@ const gridLayer = (grid: Grid["id"], layer: Layer["id"]) => ({
 describe("StorageManager", () => {
     it("should add a new object correctly", () => {
         const storage = getNormalStorage();
-        const { objects, renderOrder } = storage.getStored(gridLayer("grid", "layer1"));
+        const { objects } = storage.getStored(gridLayer("grid", "layer1"));
         const action: HistoryAction = {
             id: "objectId",
             layerId: "layer1",
             object: { asdf: "something" },
-            renderIndex: 0,
+            nextObjectId: null,
         };
-        storage._ApplyHistoryAction(objects, renderOrder, action);
+        storage._ApplyHistoryAction({ objects, action });
 
-        expect(storage.objects["grid"]["layer1"]).toMatchObject<Partial<LayerStorage>>({
-            objects: { objectId: { asdf: "something", id: "objectId" } },
-            renderOrder: ["objectId"],
-        });
+        expect(storage.objects["grid"]["layer1"].objects.entries()).toEqual<HistoryEntries>([
+            ["objectId", { asdf: "something", id: "objectId" }],
+        ]);
     });
 
     it("should delete an object correctly", () => {
         const storage = getNormalStorage();
-        const { objects, renderOrder } = storage.getStored(gridLayer("grid", "layer1"));
+        const { objects } = storage.getStored(gridLayer("grid", "layer1"));
         const action: HistoryAction = {
             id: "objectId",
             layerId: "layer1",
             object: null,
-            renderIndex: -1,
+            nextObjectId: null,
         };
-        storage._ApplyHistoryAction(objects, renderOrder, action);
+        storage._ApplyHistoryAction({ objects, action });
 
-        expect(storage.objects["grid"]["layer1"]).toMatchObject<Partial<LayerStorage>>({
-            objects: {},
-            renderOrder: [],
-        });
+        expect(storage.objects["grid"]["layer1"].objects.entries()).toEqual<HistoryEntries>([]);
     });
 
     it("object placement should be idempotent", () => {
         const storage = getNormalStorage();
-        const { objects, renderOrder } = storage.getStored(gridLayer("grid", "layer1"));
+        const { objects } = storage.getStored(gridLayer("grid", "layer1"));
         const action: HistoryAction = {
             id: "objectId",
             layerId: "layer1",
             object: { asdf: "something" },
-            renderIndex: 0,
+            nextObjectId: null,
         };
-        storage._ApplyHistoryAction(objects, renderOrder, action);
-        storage._ApplyHistoryAction(objects, renderOrder, action);
+        storage._ApplyHistoryAction({ objects, action });
+        storage._ApplyHistoryAction({ objects, action });
 
-        expect(storage.objects["grid"]["layer1"]).toMatchObject<Partial<LayerStorage>>({
-            objects: { objectId: { asdf: "something", id: "objectId" } },
-            renderOrder: ["objectId"],
-            extra: {},
-        });
+        expect(storage.objects["grid"]["layer1"].objects.entries()).toEqual<HistoryEntries>([
+            ["objectId", { asdf: "something", id: "objectId" }],
+        ]);
     });
 
     it("object deletion should be idempotent", () => {
         const storage = getNormalStorage();
-        const { objects, renderOrder } = storage.getStored(gridLayer("grid", "layer1"));
+        const { objects } = storage.getStored(gridLayer("grid", "layer1"));
         const action: HistoryAction = {
             id: "objectId",
             layerId: "layer1",
             object: null,
-            renderIndex: -1,
+            nextObjectId: null,
         };
-        storage._ApplyHistoryAction(objects, renderOrder, action);
-        storage._ApplyHistoryAction(objects, renderOrder, action);
+        storage._ApplyHistoryAction({ objects, action });
+        storage._ApplyHistoryAction({ objects, action });
 
-        expect(storage.objects["grid"]["layer1"]).toMatchObject<Partial<LayerStorage>>({
-            objects: {},
-            renderOrder: [],
-            extra: {},
-        });
+        expect(storage.objects["grid"]["layer1"].objects.entries()).toEqual<HistoryEntries>([]);
     });
 
     it("should return the same object when inverted twice", () => {
         const storage = getNormalStorage();
-        const { objects, renderOrder } = storage.getStored(gridLayer("grid", "layer1"));
+        const { objects } = storage.getStored(gridLayer("grid", "layer1"));
         const action: HistoryAction = {
             id: "objectId",
             layerId: "layer1",
             object: { asdf: "something" },
-            renderIndex: 0,
+            nextObjectId: null,
         };
-        const inverse = storage._ApplyHistoryAction(objects, renderOrder, action);
+        const inverse = storage._ApplyHistoryAction({ objects, action });
         expect(inverse).toEqual({
             id: "objectId",
             layerId: "layer1",
             object: null,
-            renderIndex: -1,
+            nextObjectId: null,
         });
 
-        const sameAction = storage._ApplyHistoryAction(objects, renderOrder, action);
+        const sameAction = storage._ApplyHistoryAction({ objects, action });
         expect(sameAction).toEqual<HistoryAction>(action);
     });
 
@@ -137,32 +128,25 @@ describe("StorageManager", () => {
 
         storage.undoHistory(puzzle);
         // An non-batched undo should not affect the batched actions
-        expect(storage.objects["grid"]["layer1"]).toMatchObject<Partial<LayerStorage>>({
-            objects: {
-                id1: { asdf: "something1", id: "id1" },
-                id2: { asdf: "something2", id: "id2" },
-                id3: { asdf: "something3", id: "id3" },
-            },
-            renderOrder: ["id1", "id2", "id3"],
-        });
+        expect(storage.objects["grid"]["layer1"].objects.entries()).toEqual<HistoryEntries>([
+            ["id1", { asdf: "something1", id: "id1" }],
+            ["id2", { asdf: "something2", id: "id2" }],
+            ["id3", { asdf: "something3", id: "id3" }],
+        ]);
 
         storage.undoHistory(puzzle);
         // Undo a batch of actions
-        expect(storage.objects["grid"]["layer1"]).toMatchObject<Partial<LayerStorage>>({
-            objects: { id1: { asdf: "something1", id: "id1" } },
-            renderOrder: ["id1"],
-        });
+        expect(storage.objects["grid"]["layer1"].objects.entries()).toEqual<HistoryEntries>([
+            ["id1", { asdf: "something1", id: "id1" }],
+        ]);
 
         storage.redoHistory(puzzle);
         // Undo a batch of actions
-        expect(storage.objects["grid"]["layer1"]).toMatchObject<Partial<LayerStorage>>({
-            objects: {
-                id1: { asdf: "something1", id: "id1" },
-                id2: { asdf: "something2", id: "id2" },
-                id3: { asdf: "something3", id: "id3" },
-            },
-            renderOrder: ["id1", "id2", "id3"],
-        });
+        expect(storage.objects["grid"]["layer1"].objects.entries()).toEqual<HistoryEntries>([
+            ["id1", { asdf: "something1", id: "id1" }],
+            ["id2", { asdf: "something2", id: "id2" }],
+            ["id3", { asdf: "something3", id: "id3" }],
+        ]);
     });
 
     it("should merge batched actions affecting the same object", () => {
@@ -240,21 +224,17 @@ describe("StorageManager", () => {
         const objectsAfterAction = cloneDeep(storage.objects);
 
         // Ensure the initial states are good
-        expect(objectsBeforeAction["grid"]["layer1"]).toMatchObject<Partial<LayerStorage>>({
-            objects: {},
-            renderOrder: [],
-        });
-        expect(objectsAfterAction["grid"]["layer1"]).toMatchObject<Partial<LayerStorage>>({
-            objects: { id1: { asdf: "something1", id: "id1" } },
-            renderOrder: ["id1"],
-        });
+        expect(objectsBeforeAction["grid"]["layer1"].objects.entries()).toEqual<HistoryEntries>([]);
+        expect(objectsAfterAction["grid"]["layer1"].objects.entries()).toEqual<HistoryEntries>([
+            ["id1", { asdf: "something1", id: "id1" }],
+        ]);
 
         const afterRedo: StorageManager["histories"][0] = {
             actions: [
                 {
                     id: "id1",
                     layerId: "layer1",
-                    renderIndex: -1,
+                    nextObjectId: null,
                     object: null,
                 },
             ],
@@ -265,7 +245,7 @@ describe("StorageManager", () => {
                 {
                     id: "id1",
                     layerId: "layer1",
-                    renderIndex: 0,
+                    nextObjectId: null,
                     object: { id: "id1", asdf: "something1" },
                 },
             ],
@@ -375,7 +355,7 @@ describe("StorageManager", () => {
                 id: "id2",
                 layerId: "layer2",
                 object: null,
-                renderIndex: -1,
+                nextObjectId: null,
             },
         ]);
 
@@ -385,7 +365,7 @@ describe("StorageManager", () => {
                 id: "id1",
                 layerId: "layer1",
                 object: null,
-                renderIndex: -1,
+                nextObjectId: null,
             },
         ]);
 
@@ -398,7 +378,7 @@ describe("StorageManager", () => {
                 id: "id1",
                 layerId: "layer1",
                 object: { asdf: "something1", id: "id1" },
-                renderIndex: 0,
+                nextObjectId: null,
             },
         ]);
 
@@ -408,7 +388,7 @@ describe("StorageManager", () => {
                 id: "id2",
                 layerId: "layer2",
                 object: { asdf: "something2", id: "id2" },
-                renderIndex: 0,
+                nextObjectId: null,
             },
         ]);
 

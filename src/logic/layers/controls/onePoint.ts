@@ -68,8 +68,8 @@ export const handleEventsCycleStates = <
         if (tempStorage.targetState !== undefined) {
             state = tempStorage.targetState;
         } else {
-            if (newPoints[0] in stored.objects) {
-                const index = 1 + states.indexOf(stored.objects[newPoints[0]].state);
+            if (stored.objects.has(newPoints[0])) {
+                const index = 1 + states.indexOf(stored.objects.get(newPoints[0]).state);
                 state = index < states.length ? states[index] : null;
             } else {
                 state = states[0];
@@ -114,7 +114,7 @@ export const handleEventsCurrentSetting = <
         const newPoints = event.points;
 
         if (tempStorage.targetState === undefined) {
-            const isSame = stored.objects[newPoints[0]]?.state === layer.settings.selectedState;
+            const isSame = stored.objects.get(newPoints[0])?.state === layer.settings.selectedState;
             tempStorage.targetState = isSame ? null : layer.settings.selectedState;
         }
 

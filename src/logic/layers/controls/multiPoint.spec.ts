@@ -60,8 +60,7 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         ]);
         expect(result.discontinueInput).toBeFalsy();
 
-        stored.objects.a = result.history?.[0].object;
-        stored.renderOrder.push("a");
+        stored.objects.set("a", result.history?.[0].object);
 
         result = layer.handleEvent({ ...fakeEvent, type: "pointerUp" });
         expect(result.history?.length).toBeFalsy();
@@ -99,8 +98,7 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
             { batchId: 1, id: "b", object: { id: "b", points: ["b"], state: null } },
         ]);
         expect(result.discontinueInput).toBeFalsy();
-        stored.objects.b = result.history?.[0].object;
-        stored.renderOrder.push("b");
+        stored.objects.set("b", result.history?.[0].object);
 
         result = layer.handleEvent({ ...fakeEvent, type: "pointerUp" });
         expect(result.history?.length).toBeFalsy();
@@ -135,8 +133,7 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         ]);
         expect(result.discontinueInput).toBeFalsy();
 
-        stored.objects.b = result.history?.[0].object;
-        stored.renderOrder.push("b");
+        stored.objects.set("b", result.history?.[0].object);
 
         // Expand the object
         selectPoints.mockReturnValueOnce(["c", "a"]);
@@ -151,7 +148,7 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         ]);
         expect(result.discontinueInput).toBeFalsy();
 
-        stored.objects.b = result.history?.[0].object;
+        stored.objects.set("b", result.history?.[0].object);
 
         // Shrink the object
         selectPoints.mockReturnValueOnce(["b"]);
@@ -166,7 +163,7 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         ]);
         expect(result.discontinueInput).toBeFalsy();
 
-        stored.objects.b = result.history?.[0].object;
+        stored.objects.set("b", result.history?.[0].object);
 
         result = layer.handleEvent({ ...fakeEvent, type: "pointerUp" });
         expect(result.history).toEqual<HistoryType>([
@@ -261,14 +258,14 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         points = layer.gatherPoints(fakeEvent);
 
         result = layer.handleEvent({ ...fakeEvent, points });
-        stored.objects["a;b"] = result.history?.[0].object;
+        stored.objects.set("a;b", result.history?.[0].object);
 
         // Shrink
         selectPoints.mockReturnValueOnce(["d", "b"]);
         points = layer.gatherPoints(fakeEvent);
 
         result = layer.handleEvent({ ...fakeEvent, points });
-        stored.objects["a;b"] = result.history?.[0].object;
+        stored.objects.set("a;b", result.history?.[0].object);
 
         // End on the starting point
         result = layer.handleEvent({ ...fakeEvent, type: "pointerUp" });

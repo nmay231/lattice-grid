@@ -98,23 +98,20 @@ export class StorageManager {
 
         for (const partialAction of actions) {
             const layerId = (partialAction as NeedsUpdating).layerId || defaultLayerId;
-            const { objects, renderOrder } = this.objects[puzzle.grid.id][layerId];
+            const { objects } = this.objects[puzzle.grid.id][layerId];
 
             const action = this.masterReducer({} as NeedsUpdating, {
                 id: partialAction.id,
                 layerId,
                 batchId: partialAction.batchId && Number(partialAction.batchId),
                 object: partialAction.object,
-                renderIndex:
-                    partialAction.id in objects
-                        ? renderOrder.indexOf(partialAction.id)
-                        : renderOrder.length,
+                nextObjectId: objects.getNextKey(partialAction.id),
             });
             if (!action) {
                 continue; // One of the reducers chose to ignore this action
             }
 
-            const undoAction = this._ApplyHistoryAction(objects, renderOrder, action);
+            const undoAction = this._ApplyHistoryAction({ objects, action });
 
             if (partialAction.batchId === "ignore") {
                 continue; // Do not include in history
@@ -143,11 +140,13 @@ export class StorageManager {
         }
     }
 
-    _ApplyHistoryAction(
-        objects: LayerStorage["objects"],
-        renderOrder: LayerStorage["renderOrder"],
-        action: HistoryAction,
-    ) {
+    _ApplyHistoryAction({
+        objects,
+        action,
+    }: {
+        objects: LayerStorage["objects"];
+        action: HistoryAction;
+    }) {
         if (action.object === undefined) {
             throw errorNotification({
                 message: `Layer ${action.layerId} object undefined: ${action}`,
@@ -157,21 +156,16 @@ export class StorageManager {
 
         const undoAction: HistoryAction = {
             ...action,
-            object: objects[action.id] || null,
-            renderIndex: renderOrder.indexOf(action.id),
+            object: objects.get(action.id) || null,
+            nextObjectId: objects.getNextKey(action.id),
         };
 
-        if (action.id in objects) {
-            renderOrder.splice(renderOrder.indexOf(action.id), 1);
-        }
-
         if (action.object === null) {
-            delete objects[action.id];
+            objects.delete(action.id);
         } else {
-            renderOrder.splice(action.renderIndex, 0, action.id);
             // TODO: This should not be done here, but instead done by the layer: history: [createObject({ id, points })]
             action.object = { ...action.object, id: action.id };
-            objects[action.id] = action.object;
+            objects.set(action.id, action.object, action.nextObjectId);
         }
 
         return undoAction;
@@ -188,9 +182,9 @@ export class StorageManager {
         do {
             history.index--;
             action = history.actions[history.index];
-            const { objects, renderOrder } = this.objects[puzzle.grid.id][action.layerId];
+            const { objects } = this.objects[puzzle.grid.id][action.layerId];
 
-            const redo = this._ApplyHistoryAction(objects, renderOrder, action);
+            const redo = this._ApplyHistoryAction({ objects, action });
             // Replace the action with its opposite
             history.actions.splice(history.index, 1, redo);
 
@@ -210,9 +204,9 @@ export class StorageManager {
         const returnedActions: HistoryAction[] = [];
         do {
             action = history.actions[history.index];
-            const { objects, renderOrder } = this.objects[puzzle.grid.id][action.layerId];
+            const { objects } = this.objects[puzzle.grid.id][action.layerId];
 
-            const undo = this._ApplyHistoryAction(objects, renderOrder, action);
+            const undo = this._ApplyHistoryAction({ objects, action });
             // Replace the action with its opposite
             history.actions.splice(history.index, 1, undo);
             history.index++;

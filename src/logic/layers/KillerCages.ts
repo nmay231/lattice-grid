@@ -46,7 +46,7 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
         if (!stored.extra.currentObjectId) return {};
 
         const id = stored.extra.currentObjectId;
-        const object = stored.objects[id];
+        const object = stored.objects.get(id);
 
         if (type === "delete") {
             if (object.state === null) return {};
@@ -84,8 +84,8 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
 
         const cageBlits: PolygonBlits["blits"] = {};
         const numberBlits: TextBlits["blits"] = {};
-        for (const id of stored.renderOrder) {
-            const object = stored.objects[id];
+        for (const id of stored.objects.keys()) {
+            const object = stored.objects.get(id);
             const { cageOutline, cells, sorted } = grid.getPoints({
                 connections: {
                     cells: {

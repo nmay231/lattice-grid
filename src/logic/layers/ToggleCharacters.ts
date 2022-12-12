@@ -110,7 +110,7 @@ export class ToggleCharactersLayer
 
         handleEventsSelection(this, {});
 
-        const { objects, renderOrder } = storage.getStored<ToggleCharactersProps>({
+        const { objects } = storage.getStored<ToggleCharactersProps>({
             grid,
             layer: this,
         });
@@ -118,12 +118,11 @@ export class ToggleCharactersLayer
         const history = [];
 
         // Exclude disallowed characters
-        for (const id of renderOrder) {
-            const object = objects[id];
-            const newState = [...object.state]
+        for (const [id, { state }] of objects.entries()) {
+            const newState = [...state]
                 .filter((char) => this.settings.characters.indexOf(char) > -1)
                 .join("");
-            if (newState !== object.state) {
+            if (newState !== state) {
                 history.push({
                     object: { state: newState, point: id },
                     id,
@@ -152,7 +151,7 @@ export class ToggleCharactersLayer
         if (keypress === "Delete") {
             return {
                 history: ids
-                    .filter((id) => id in stored.objects)
+                    .filter((id) => stored.objects.has(id))
                     .map((id) => ({ id, object: null })),
             };
         }
@@ -162,7 +161,7 @@ export class ToggleCharactersLayer
             return {};
         }
 
-        const states = ids.map((id) => stored.objects[id]?.state || "");
+        const states = ids.map((id) => stored.objects.get(id)?.state || "");
         const allIncluded = states.reduce((prev, next) => prev && next.indexOf(char) > -1, true);
 
         let newStates: string[];
@@ -192,7 +191,7 @@ export class ToggleCharactersLayer
             layer: this,
         });
 
-        const ids = stored.renderOrder.filter((id) => stored.objects[id].state);
+        const ids = stored.objects.keys().filter((id) => stored.objects.get(id).state);
 
         const { cells } = grid.getPoints({
             connections: {
@@ -208,20 +207,20 @@ export class ToggleCharactersLayer
         let style: TextBlits["style"];
         if (this.settings.displayStyle === "center") {
             style = { originX: "center", originY: "center" };
-            for (const id of stored.renderOrder) {
+            for (const [id, { state }] of stored.objects.entries()) {
                 blits[id] = {
-                    text: stored.objects[id].state,
+                    text: state,
                     point: cells[id].svgPoint,
                     size: Math.min(
                         cells[id].maxRadius / 1.5,
-                        (cells[id].maxRadius * 4) / (stored.objects[id].state.length + 1),
+                        (cells[id].maxRadius * 4) / (state.length + 1),
                     ),
                 };
             }
         } else if (this.settings.displayStyle === "topBottom") {
             style = { originX: "left", originY: "center" };
-            for (const id of stored.renderOrder) {
-                const text = stored.objects[id].state;
+            for (const [id, { state }] of stored.objects.entries()) {
+                const text = state;
                 const split = Math.max(2, Math.ceil(text.length / 2));
                 const radius = cells[id].maxRadius as number;
                 const point = cells[id].svgPoint as Vector;

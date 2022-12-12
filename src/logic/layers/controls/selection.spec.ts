@@ -37,8 +37,7 @@ describe("SelectionLayer", () => {
         expect(result.discontinueInput).toBeFalsy();
 
         // Manually add the selected cell
-        stored.objects.point1 = result.history?.[0].object;
-        stored.renderOrder.push("point1");
+        stored.objects.set("point1", result.history?.[0].object);
 
         // Pointer up
         fakeEvent = { ...essentials, type: "pointerUp" };
@@ -118,8 +117,7 @@ describe("SelectionLayer", () => {
         expect(result.discontinueInput).toBeFalsy();
 
         // Manually deselect the second cell
-        stored.renderOrder.splice(1, 1);
-        delete stored.objects.point2;
+        stored.objects.delete("point1");
 
         // Release the pointer
         fakeEvent = { ...essentials, type: "pointerUp" };
@@ -323,11 +321,8 @@ describe("SelectionLayer", () => {
         // We start with two points selected
         const layer = getFreshSelectedLayer();
         const stored = new LayerStorage<SelectedProps>();
-        stored.objects = {
-            toDeselect: { id: "toDeselect", state: 1 },
-            toKeep: { id: "toKeep", state: 1 },
-        } as LayerStorage<SelectedProps>["objects"];
-        stored.renderOrder = ["toDeselect", "toKeep"];
+        stored.objects.set("toDeselect", { id: "toDeselect", state: 1 });
+        stored.objects.set("toKeep", { id: "toKeep", state: 1 });
         const essentials = getEventEssentials({ stored });
 
         // The event has two objects with one already selected and one not
@@ -339,13 +334,13 @@ describe("SelectionLayer", () => {
                     id: "toKeep",
                     layerId: layer.id,
                     object: {},
-                    renderIndex: -1,
+                    nextObjectId: null,
                 },
                 {
                     id: "toSelect",
                     layerId: layer.id,
                     object: {},
-                    renderIndex: -1,
+                    nextObjectId: null,
                 },
             ],
         };

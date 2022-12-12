@@ -84,7 +84,7 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
         if (this.rawSettings.connections !== newSettings.connections) {
             // Clear stored if the type of connections allowed changes (because that would allow impossible-to-draw lines otherwise).
             const stored = storage.getStored({ grid, layer: this });
-            history = stored.renderOrder.map((id) => ({ id, object: null }));
+            history = stored.objects.keys().map((id) => ({ id, object: null }));
         }
 
         this.rawSettings = newSettings;
@@ -118,7 +118,7 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
             layer: this,
         });
 
-        let allPoints = stored.renderOrder.flatMap((id) => stored.objects[id].points);
+        let allPoints = stored.objects.values().flatMap(({ points }) => points);
         allPoints = allPoints.filter((point, index) => index === allPoints.indexOf(point));
         const { [this.settings.pointType]: pointInfo } = grid.getPoints({
             connections: { [this.settings.pointType]: { svgPoint: true } },
@@ -126,14 +126,11 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
         });
 
         const blits: LineBlits["blits"] = {};
-        for (const id of stored.renderOrder) {
-            const {
-                state: { fill },
-                points,
-            } = stored.objects[id];
+        for (const [id, object] of stored.objects.entries()) {
+            const { state, points } = object;
             blits[id] = {
                 style: {
-                    stroke: fill, // Yes, this is a misnomer. Oh well
+                    stroke: state.fill, // Yes, fill is a misnomer. Oh well
                 },
                 x1: pointInfo[points[0]].svgPoint[0],
                 y1: pointInfo[points[0]].svgPoint[1],

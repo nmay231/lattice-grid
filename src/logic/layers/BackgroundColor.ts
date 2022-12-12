@@ -79,12 +79,12 @@ export class BackgroundColorLayer
         });
         const { cells } = grid.getPoints({
             connections: { cells: { svgOutline: true } },
-            points: [...stored.renderOrder],
+            points: [...stored.objects.keys()],
         });
 
         const objectsByColor: Record<Color, PolygonBlits["blits"]> = {};
-        for (const id of stored.renderOrder) {
-            const { state } = stored.objects[id];
+        for (const id of stored.objects.keys()) {
+            const { state } = stored.objects.get(id);
             objectsByColor[state] = objectsByColor[state] ?? {};
             objectsByColor[state][id] = { points: cells[id].svgOutline };
         }

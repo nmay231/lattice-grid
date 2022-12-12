@@ -83,7 +83,7 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
         if (!currentObjectId && type !== "pointerDown" && type !== "undoRedo") {
             return {}; // Other events only matter if there is an object selected
         }
-        const object = stored.objects[currentObjectId];
+        const object = stored.objects.get(currentObjectId);
 
         switch (type) {
             case "keyDown": {
@@ -116,9 +116,9 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
                 const batchId = tempStorage.batchId;
                 // There's only one point with pointerDown
                 const startPoint = event.points[0];
-                const overlap = stored.renderOrder.filter(
-                    (id) => stored.objects[id].points.indexOf(startPoint) > -1,
-                );
+                const overlap = stored.objects
+                    .keys()
+                    .filter((id) => stored.objects.get(id).points.indexOf(startPoint) > -1);
 
                 if (overlap.length) {
                     // Select the topmost existing object
@@ -131,7 +131,7 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
 
                     // Force a rerender without polluting history
                     return {
-                        history: [{ id, object: stored.objects[id], batchId }],
+                        history: [{ id, object: stored.objects.get(id), batchId }],
                     };
                 }
 
