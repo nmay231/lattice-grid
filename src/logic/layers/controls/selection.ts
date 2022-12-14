@@ -32,6 +32,21 @@ export type KeyDownEventHandler<LP extends SelectedProps = SelectedProps> = {
 export const SELECTION_ID = "Selection";
 const layerId = SELECTION_ID;
 
+const obj = <LP extends SelectedProps>({
+    id,
+    object,
+}: {
+    id: string;
+    object: InternalProps["ObjectState"] | null;
+}): PartialHistoryAction<LP> => ({
+    id,
+    layerId,
+    object,
+    batchId: "ignore",
+    storageMode: "question",
+});
+export const _selectionObjMaker = obj; // For testing.
+
 export const handleEventsSelection = <LP extends SelectedProps>(
     layer: Layer<LP> & KeyDownEventHandler<LP>,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -77,33 +92,24 @@ export const handleEventsSelection = <LP extends SelectedProps>(
 
         switch (event.type) {
             case "cancelAction": {
-                history = internal.objects.keys().map((id) => ({
-                    id,
-                    layerId,
-                    batchId: "ignore" as const,
-                    object: null,
-                }));
+                history = internal.objects.keys().map((id) => obj({ id, object: null }));
                 return { discontinueInput: true, history };
             }
             case "delete":
             case "keyDown": {
                 if (event.keypress === "ctrl-a") {
-                    history = grid.getAllPoints("cells").map((id) => ({
-                        id,
-                        // layerId,
-                        batchId: "ignore" as const,
-                        object: { state: 1 },
-                    }));
+                    history = grid
+                        .getAllPoints("cells")
+                        .map((id) => obj({ id, object: { state: 1 } }));
                     return {
                         history,
                     };
                 } else if (event.keypress === "ctrl-i") {
-                    history = grid.getAllPoints("cells").map((id) => ({
-                        id,
-                        layerId,
-                        batchId: "ignore" as const,
-                        object: internal.objects.has(id) ? null : { state: 1 },
-                    }));
+                    history = grid
+                        .getAllPoints("cells")
+                        .map((id) =>
+                            obj({ id, object: internal.objects.has(id) ? null : { state: 1 } }),
+                        );
                     return {
                         history,
                     };
@@ -133,35 +139,16 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                         const id = ids[0];
                         if (id in internal.objects) {
                             tempStorage.targetState = null;
-                            history = [
-                                {
-                                    id,
-                                    layerId,
-                                    batchId: "ignore" as const,
-                                    object: null,
-                                },
-                            ];
+                            history = [obj({ id, object: null })];
                         } else {
                             internal.extra.groupNumber += 1;
                             tempStorage.targetState = internal.extra.groupNumber;
-                            history = [
-                                {
-                                    id,
-                                    layerId,
-                                    batchId: "ignore" as const,
-                                    object: { state: internal.extra.groupNumber },
-                                },
-                            ];
+                            history = [obj({ id, object: { state: internal.extra.groupNumber } })];
                         }
                     } else if (tempStorage.targetState === null) {
                         history = ids
                             .filter((id) => id in internal.objects)
-                            .map((id) => ({
-                                id,
-                                layerId,
-                                batchId: "ignore" as const,
-                                object: null,
-                            }));
+                            .map((id) => obj({ id, object: null }));
                     } else {
                         const groupsToMerge = new Set(
                             ids.map((id) => internal.objects.get(id)?.state),
@@ -176,12 +163,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                                     ),
                             );
                         const state = tempStorage.targetState;
-                        history = allIds.map((id) => ({
-                            id,
-                            layerId,
-                            batchId: "ignore" as const,
-                            object: { state },
-                        }));
+                        history = allIds.map((id) => obj({ id, object: { state } }));
                     }
                 } else {
                     const removeOld = tempStorage.targetState === undefined;
@@ -194,12 +176,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                         const oldIds = internal.objects.keys();
                         history = oldIds
                             .filter((toDelete) => ids.indexOf(toDelete) === -1)
-                            .map((toDelete) => ({
-                                id: toDelete,
-                                layerId,
-                                batchId: "ignore" as const,
-                                object: null,
-                            }));
+                            .map((toDelete) => obj({ id: toDelete, object: null }));
 
                         if (oldIds.length === 1 && oldIds[0] === ids[0]) {
                             tempStorage.removeSingle = true;
@@ -207,14 +184,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                     }
 
                     const state = internal.extra.groupNumber;
-                    history.push(
-                        ...ids.map((id) => ({
-                            id,
-                            layerId,
-                            batchId: "ignore" as const,
-                            object: { state },
-                        })),
-                    );
+                    history.push(...ids.map((id) => obj({ id, object: { state } })));
                 }
 
                 return { history };
@@ -223,14 +193,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                 if (tempStorage.removeSingle) {
                     return {
                         discontinueInput: true,
-                        history: [
-                            {
-                                id: internal.objects.keys()[0],
-                                layerId,
-                                batchId: "ignore" as const,
-                                object: null,
-                            },
-                        ],
+                        history: [obj({ id: internal.objects.keys()[0], object: null })],
                     };
                 }
                 return { discontinueInput: true };
@@ -242,23 +205,13 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                     .keys()
                     // TODO: This doesn't account for actions that do not apply to external layer. Do I need to fix?
                     .filter((oldId) => newIds.indexOf(oldId) === -1)
-                    .map((oldId) => ({
-                        id: oldId,
-                        layerId,
-                        batchId: "ignore" as const,
-                        object: null,
-                    }));
+                    .map((oldId) => obj({ id: oldId, object: null }));
 
                 internal.extra.groupNumber = 2;
                 // Select the objects being modified in the undo/redo actions
                 history.push(
-                    ...newIds.map((id) => ({
-                        id,
-                        layerId,
-                        batchId: "ignore" as const,
-                        // TODO: This implicitly removes group information (b/c state=2). However, it seems really difficult to resolve unless selections are kept in history, but that opens up a whole can of worms.
-                        object: { state: 2 },
-                    })),
+                    // TODO: This implicitly removes group information (b/c state=2). However, it seems really difficult to resolve unless selections are kept in history, but that opens up a whole can of worms.
+                    ...newIds.map((id) => obj({ id, object: { state: 2 } })),
                 );
                 return { history, discontinueInput: true };
             }

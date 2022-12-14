@@ -1,6 +1,7 @@
 import { TextBlits } from "../../components/SVGCanvas/Text";
 import { Layer, LayerClass, Vector } from "../../types";
 import { errorNotification } from "../../utils/DOMUtils";
+import { bySubset } from "../../utils/structureUtils";
 import { BaseLayer, methodNotImplemented } from "./baseLayer";
 import { handleEventsSelection, KeyDownEventHandler, SelectedProps } from "./controls/selection";
 
@@ -185,13 +186,16 @@ export class ToggleCharactersLayer
         };
     };
 
-    getBlits: IToggleCharactersLayer["getBlits"] = ({ storage, grid }) => {
+    getBlits: IToggleCharactersLayer["getBlits"] = ({ storage, grid, editMode }) => {
         const stored = storage.getStored<ToggleCharactersProps>({
             grid,
             layer: this,
         });
 
-        const ids = stored.objects.keys().filter((id) => stored.objects.get(id).state);
+        const ids = stored.objects
+            .keys()
+            .filter(bySubset(stored.groups.getGroup(editMode)))
+            .filter((id) => stored.objects.get(id).state);
 
         const { cells } = grid.getPoints({
             connections: {
@@ -219,8 +223,7 @@ export class ToggleCharactersLayer
             }
         } else if (this.settings.displayStyle === "topBottom") {
             style = { originX: "left", originY: "center" };
-            for (const [id, { state }] of stored.objects.entries()) {
-                const text = state;
+            for (const [id, { state: text }] of stored.objects.entries()) {
                 const split = Math.max(2, Math.ceil(text.length / 2));
                 const radius = cells[id].maxRadius as number;
                 const point = cells[id].svgPoint as Vector;

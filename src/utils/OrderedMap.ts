@@ -24,6 +24,11 @@ export class OrderedMap<V> {
         return this.map[key];
     }
 
+    getPrevKey(key: string): string | null {
+        const i = this.order.indexOf(key);
+        return i === -1 || i === 0 ? null : this.order[i - 1];
+    }
+
     getNextKey(key: string): string | null {
         const i = this.order.indexOf(key);
         return i === -1 || i === this.order.length - 1 ? null : this.order[i + 1];
@@ -97,5 +102,11 @@ export class IndexedOrderedMap<V> extends OrderedMap<V> {
             this.currentKey = nextId;
         }
         return true;
+    }
+
+    select(key: string) {
+        if (key in this.map && this.selectable(this.map[key])) {
+            this.currentKey = key;
+        }
     }
 }

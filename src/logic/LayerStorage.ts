@@ -1,22 +1,50 @@
-import { LayerProps, ObjectId } from "../types";
+import { EditMode, LayerProps, ObjectId, StorageMode } from "../types";
 import { OrderedMap } from "../utils/OrderedMap";
+
+class DisjointSets<Groups extends string = string> {
+    byKey: Record<string, Groups> = {};
+    byGroup: Partial<Record<Groups, Set<string>>> = {};
+
+    setKey(key: string, group: Groups) {
+        if (key in this.byKey) {
+            this.getGroup(this.byKey[key]).delete(key);
+        }
+        this.getGroup(group).add(key);
+        this.byKey[key] = group;
+    }
+
+    deleteKey(key: string) {
+        if (key in this.byKey) {
+            this.getGroup(this.byKey[key]).delete(key);
+            delete this.byKey[key];
+        }
+    }
+
+    getGroup(group: Groups): Set<string> {
+        return (this.byGroup[group] = this.byGroup[group] || new Set());
+    }
+}
 
 export class LayerStorage<LP extends LayerProps = LayerProps> {
     objects = new OrderedMap<LP["ObjectState"]>();
     extra: Partial<LP["ExtraLayerStorageProps"]> = {};
+    groups = new DisjointSets<StorageMode>();
 
-    // Helper function for tests
-    // TODO: Relocate to a separate function?
     static fromObjects<LP extends LayerProps>({
         ids,
         objs,
+        editMode = "question",
     }: {
         ids: ObjectId[];
         objs: LP["ObjectState"][];
+        editMode?: EditMode;
     }) {
         const storage = new LayerStorage<LP>();
 
-        ids.forEach((id, index) => storage.objects.set(id, objs[index]));
+        ids.forEach((id, index) => {
+            storage.objects.set(id, objs[index]);
+            storage.groups.setKey(id, editMode);
+        });
 
         return storage;
     }

@@ -124,6 +124,7 @@ export class PuzzleManager {
                     grid: this.grid,
                     storage: this.storage,
                     settings,
+                    editMode: this.settings.editMode,
                 }) || [];
             setBlitGroups(blitGroups);
         } else if (change.type === "draw") {
@@ -135,6 +136,7 @@ export class PuzzleManager {
                     grid: this.grid,
                     storage: this.storage,
                     settings,
+                    editMode: this.settings.editMode,
                 }) || [];
 
             // TODO: Allowing layerIds === "all" is mostly used for resizing the grid. How to efficiently redraw layers that depend on the size of the grid. Are there even layers other than grids that need to rerender on resizes? If there are, should they have to explicitly subscribe to these events?
@@ -146,6 +148,7 @@ export class PuzzleManager {
                     grid: this.grid,
                     storage: this.storage,
                     settings,
+                    editMode: this.settings.editMode,
                 });
             }
 

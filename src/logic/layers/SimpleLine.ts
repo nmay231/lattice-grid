@@ -1,5 +1,6 @@
 import { LineBlits } from "../../components/SVGCanvas/Line";
 import { Layer, LayerClass, ObjectId, Point, PointType } from "../../types";
+import { bySubset } from "../../utils/structureUtils";
 import { BaseLayer, methodNotImplemented } from "./baseLayer";
 import { handleEventsCurrentSetting, TwoPointProps } from "./controls/twoPoint";
 
@@ -112,13 +113,17 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
         return { history: history || undefined };
     };
 
-    getBlits: ISimpleLineLayer["getBlits"] = ({ storage, grid }) => {
+    getBlits: ISimpleLineLayer["getBlits"] = ({ storage, grid, editMode }) => {
         const stored = storage.getStored<SimpleLineProps>({
             grid,
             layer: this,
         });
 
-        let allPoints = stored.objects.values().flatMap(({ points }) => points);
+        const renderOrder = stored.objects
+            .keys()
+            .filter(bySubset(stored.groups.getGroup(editMode)));
+
+        let allPoints = renderOrder.map((id) => stored.objects.get(id).points).flat();
         allPoints = allPoints.filter((point, index) => index === allPoints.indexOf(point));
         const { [this.settings.pointType]: pointInfo } = grid.getPoints({
             connections: { [this.settings.pointType]: { svgPoint: true } },
@@ -126,12 +131,10 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
         });
 
         const blits: LineBlits["blits"] = {};
-        for (const [id, object] of stored.objects.entries()) {
-            const { state, points } = object;
+        for (const id of renderOrder) {
+            const { state, points } = stored.objects.get(id);
             blits[id] = {
-                style: {
-                    stroke: state.fill, // Yes, fill is a misnomer. Oh well
-                },
+                style: { stroke: state.fill },
                 x1: pointInfo[points[0]].svgPoint[0],
                 y1: pointInfo[points[0]].svgPoint[1],
                 x2: pointInfo[points[1]].svgPoint[0],

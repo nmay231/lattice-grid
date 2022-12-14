@@ -1,5 +1,6 @@
 import { TextBlits } from "../../components/SVGCanvas/Text";
 import { Layer, LayerClass, Point } from "../../types";
+import { bySubset } from "../../utils/structureUtils";
 import { BaseLayer, methodNotImplemented } from "./baseLayer";
 import { DO_NOTHING, numberTyper } from "./controls/numberTyper";
 import { handleEventsSelection, KeyDownEventHandler, SelectedProps } from "./controls/selection";
@@ -109,8 +110,9 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
         return { history };
     };
 
-    getBlits: INumberLayer["getBlits"] = ({ grid, storage }) => {
+    getBlits: INumberLayer["getBlits"] = ({ grid, storage, editMode }) => {
         const stored = storage.getStored<NumberProps>({ grid, layer: this });
+        const points = stored.objects.keys().filter(bySubset(stored.groups.getGroup(editMode)));
         const { cells } = grid.getPoints({
             connections: {
                 cells: {
@@ -118,13 +120,13 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
                     maxRadius: { shape: "square", size: "large" },
                 },
             },
-            points: [...stored.objects.keys()],
+            points,
         });
 
         const blits: TextBlits["blits"] = {};
-        for (const [id, object] of stored.objects.entries()) {
+        for (const id of points) {
             blits[id] = {
-                text: object.state,
+                text: stored.objects.get(id).state,
                 point: cells[id].svgPoint,
                 size: cells[id].maxRadius * 1.6,
             };

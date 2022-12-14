@@ -1,6 +1,7 @@
 import { PolygonBlits } from "../../components/SVGCanvas/Polygon";
 import { TextBlits } from "../../components/SVGCanvas/Text";
 import { Layer, LayerClass, NeedsUpdating } from "../../types";
+import { bySubset } from "../../utils/structureUtils";
 import { BaseLayer, methodNotImplemented } from "./baseLayer";
 import {
     handleEventsUnorderedSets,
@@ -76,15 +77,18 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
         return {};
     };
 
-    getBlits: IKillerCagesLayer["getBlits"] = ({ storage, grid }) => {
+    getBlits: IKillerCagesLayer["getBlits"] = ({ storage, grid, editMode }) => {
         const stored = storage.getStored<KillerCagesProps>({
             grid,
             layer: this,
         });
+        const renderOrder = stored.objects
+            .keys()
+            .filter(bySubset(stored.groups.getGroup(editMode)));
 
         const cageBlits: PolygonBlits["blits"] = {};
         const numberBlits: TextBlits["blits"] = {};
-        for (const id of stored.objects.keys()) {
+        for (const id of renderOrder) {
             const object = stored.objects.get(id);
             const { cageOutline, cells, sorted } = grid.getPoints({
                 connections: {

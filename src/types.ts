@@ -104,6 +104,7 @@ export type Delta = { dx: number; dy: number };
 
 export type PointType = "cells" | "edges" | "corners";
 export type EditMode = "question" | "answer";
+export type StorageMode = "question" | "answer" | "ui";
 export type ObjectId = string;
 // #endregion
 
@@ -169,8 +170,12 @@ export type Layer<LP extends LayerProps = LayerProps> = {
     ) => LayerHandlerResult<LP>;
     gatherPoints: (layerEvent: PointerMoveOrDown & LayerEventEssentials<LP>) => Point[];
     handleEvent: (layerEvent: LayerEvent<LP>) => LayerHandlerResult<LP>;
-    getBlits: (data: Omit<LayerEventEssentials<LP>, "tempStorage">) => BlitGroup[];
-    getOverlayBlits?: (data: Omit<LayerEventEssentials<LP>, "tempStorage">) => BlitGroup[];
+    getBlits: (
+        data: Omit<LayerEventEssentials<LP>, "tempStorage"> & { editMode: EditMode },
+    ) => BlitGroup[];
+    getOverlayBlits?: (
+        data: Omit<LayerEventEssentials<LP>, "tempStorage"> & { editMode: EditMode },
+    ) => BlitGroup[];
 };
 
 export type LayerClass<LP extends LayerProps = LayerProps> = {
@@ -187,18 +192,14 @@ export type LayerClass<LP extends LayerProps = LayerProps> = {
 // #endregion
 
 // #region - Undo-Redo History
-export type PartialHistoryAction<LP extends LayerProps = LayerProps, OtherState = any> =
-    | {
-          id: ObjectId;
-          layerId: Layer["id"] | undefined;
-          batchId?: "ignore" | number;
-          object: OtherState;
-      }
-    | {
-          id: ObjectId;
-          batchId?: "ignore" | number;
-          object: LP["ObjectState"] | null;
-      };
+export type PartialHistoryAction<LP extends LayerProps = LayerProps, OtherState = any> = {
+    id: ObjectId;
+    batchId?: "ignore" | number;
+    storageMode?: StorageMode;
+} & (
+    | { layerId: Layer["id"] | undefined; object: OtherState }
+    | { object: LP["ObjectState"] | null }
+);
 
 export type HistoryAction<LP extends LayerProps = LayerProps> = {
     id: ObjectId;

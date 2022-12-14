@@ -1,4 +1,4 @@
-import { BlitGroup, Layer, LayerClass, LayerEventEssentials, ObjectId, Point } from "../../types";
+import { Layer, LayerClass, ObjectId, Point } from "../../types";
 import { BaseLayer, methodNotImplemented } from "./baseLayer";
 import { handleEventsCycleStates, OnePointProps } from "./controls/onePoint";
 
@@ -12,7 +12,7 @@ interface CellOutlineProps extends OnePointProps<ObjectState> {
 type ICellOutlineLayer = Layer<CellOutlineProps>;
 
 export class CellOutlineLayer extends BaseLayer<CellOutlineProps> implements ICellOutlineLayer {
-    static ethereal = false;
+    static ethereal = true;
     static unique = true;
     static type = "CellOutlineLayer" as const;
     static displayName = "Cell Outline";
@@ -24,8 +24,12 @@ export class CellOutlineLayer extends BaseLayer<CellOutlineProps> implements ICe
         return CellOutlineLayer.uniqueInstance;
     };
 
-    handleEvent = methodNotImplemented({ name: "CellOutline.handleEvent" });
-    gatherPoints = methodNotImplemented({ name: "CellOutline.gatherPoints" });
+    handleEvent: ICellOutlineLayer["handleEvent"] = methodNotImplemented({
+        name: "CellOutline.handleEvent",
+    });
+    gatherPoints: ICellOutlineLayer["gatherPoints"] = methodNotImplemented({
+        name: "CellOutline.gatherPoints",
+    });
 
     static controls = undefined;
     static constraints = undefined;
@@ -42,20 +46,30 @@ export class CellOutlineLayer extends BaseLayer<CellOutlineProps> implements ICe
                 { dx: -2, dy: 0 },
             ],
         });
+        this.handleEvent = (arg) => {
+            const result = this.handleEvent(arg);
+            return {
+                ...result,
+                history: (result.history || []).map((action) => ({
+                    ...action,
+                    editMode: "question",
+                })),
+            };
+        };
         return {};
     }
 
-    getBlits({
-        storage,
-        grid,
-    }: Omit<LayerEventEssentials<CellOutlineProps>, "tempStorage">): BlitGroup[] {
+    getBlits: ICellOutlineLayer["getBlits"] = ({ storage, grid, editMode }) => {
+        if (editMode === "answer") return [];
+
         const stored = storage.getStored<CellOutlineProps>({
             grid,
             layer: this,
         });
 
-        const blacklist = stored.objects.keys();
-        const points = grid.getAllPoints("cells").filter((point) => !blacklist.includes(point));
+        // TODO: Would I eventually support modifying the grid in the answer editMode? Does that even make sense?
+        const blacklist = stored.groups.getGroup("question");
+        const points = grid.getAllPoints("cells").filter((point) => !blacklist.has(point));
         const { cells, gridEdge } = grid.getPoints({
             points,
             connections: {
@@ -117,5 +131,5 @@ export class CellOutlineLayer extends BaseLayer<CellOutlineProps> implements ICe
                 },
             },
         ];
-    }
+    };
 }
