@@ -376,13 +376,13 @@ describe("selection controls", () => {
             type: "undoRedo",
             actions: [
                 {
-                    id: "toKeep",
+                    objectId: "toKeep",
                     layerId: layer.id,
                     object: {},
                     nextObjectId: null,
                 },
                 {
-                    id: "toSelect",
+                    objectId: "toSelect",
                     layerId: layer.id,
                     object: {},
                     nextObjectId: null,

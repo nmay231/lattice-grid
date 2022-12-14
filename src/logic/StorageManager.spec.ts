@@ -33,7 +33,7 @@ describe("StorageManager", () => {
         const storage = getNormalStorage();
         const { objects, groups } = storage.getStored(gridLayer("grid", "layer1"));
         const action: HistoryAction = {
-            id: "objectId",
+            objectId: "objectId",
             layerId: "layer1",
             object: { asdf: "something" },
             nextObjectId: null,
@@ -49,7 +49,7 @@ describe("StorageManager", () => {
         const storage = getNormalStorage();
         const { objects, groups } = storage.getStored(gridLayer("grid", "layer1"));
         const action: HistoryAction = {
-            id: "objectId",
+            objectId: "objectId",
             layerId: "layer1",
             object: null,
             nextObjectId: null,
@@ -63,7 +63,7 @@ describe("StorageManager", () => {
         const storage = getNormalStorage();
         const { objects, groups } = storage.getStored(gridLayer("grid", "layer1"));
         const action: HistoryAction = {
-            id: "objectId",
+            objectId: "objectId",
             layerId: "layer1",
             object: { asdf: "something" },
             nextObjectId: null,
@@ -80,7 +80,7 @@ describe("StorageManager", () => {
         const storage = getNormalStorage();
         const { objects, groups } = storage.getStored(gridLayer("grid", "layer1"));
         const action: HistoryAction = {
-            id: "objectId",
+            objectId: "objectId",
             layerId: "layer1",
             object: null,
             nextObjectId: null,
@@ -95,7 +95,7 @@ describe("StorageManager", () => {
         const storage = getNormalStorage();
         const { objects, groups } = storage.getStored(gridLayer("grid", "layer1"));
         const action: HistoryAction = {
-            id: "objectId",
+            objectId: "objectId",
             layerId: "layer1",
             object: { asdf: "something" },
             nextObjectId: null,
@@ -106,8 +106,8 @@ describe("StorageManager", () => {
             action,
             storageMode: "question",
         });
-        expect(inverse).toEqual({
-            id: "objectId",
+        expect(inverse).toEqual<HistoryAction>({
+            objectId: "objectId",
             layerId: "layer1",
             object: null,
             nextObjectId: null,
@@ -244,7 +244,7 @@ describe("StorageManager", () => {
         const afterRedo: StorageManager["histories"][0] = {
             actions: [
                 {
-                    id: "id1",
+                    objectId: "id1",
                     layerId: "layer1",
                     nextObjectId: null,
                     object: null,
@@ -255,7 +255,7 @@ describe("StorageManager", () => {
         const afterUndo: StorageManager["histories"][0] = {
             actions: [
                 {
-                    id: "id1",
+                    objectId: "id1",
                     layerId: "layer1",
                     nextObjectId: null,
                     object: { asdf: "something1" },
@@ -364,7 +364,7 @@ describe("StorageManager", () => {
         result = storage.undoHistory(puzzle);
         expect(result).toMatchObject<HistoryAction[]>([
             {
-                id: "id2",
+                objectId: "id2",
                 layerId: "layer2",
                 object: null,
                 nextObjectId: null,
@@ -374,7 +374,7 @@ describe("StorageManager", () => {
         result = storage.undoHistory(puzzle);
         expect(result).toMatchObject<HistoryAction[]>([
             {
-                id: "id1",
+                objectId: "id1",
                 layerId: "layer1",
                 object: null,
                 nextObjectId: null,
@@ -387,7 +387,7 @@ describe("StorageManager", () => {
         result = storage.redoHistory(puzzle);
         expect(result).toMatchObject<HistoryAction[]>([
             {
-                id: "id1",
+                objectId: "id1",
                 layerId: "layer1",
                 object: { asdf: "something1" },
                 nextObjectId: null,
@@ -397,7 +397,7 @@ describe("StorageManager", () => {
         result = storage.redoHistory(puzzle);
         expect(result).toMatchObject<HistoryAction[]>([
             {
-                id: "id2",
+                objectId: "id2",
                 layerId: "layer2",
                 object: { asdf: "something2" },
                 nextObjectId: null,

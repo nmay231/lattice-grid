@@ -202,7 +202,7 @@ export type PartialHistoryAction<LP extends LayerProps = LayerProps, OtherState 
 );
 
 export type HistoryAction<LP extends LayerProps = LayerProps> = {
-    id: ObjectId;
+    objectId: ObjectId;
     layerId: Layer["id"];
     batchId?: number;
     object: LP["ObjectState"] | null;

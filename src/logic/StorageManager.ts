@@ -107,7 +107,7 @@ export class StorageManager {
             const history = this.histories[`${gridId}-${storageMode}`];
 
             const action = this.masterReducer({} as NeedsUpdating, {
-                id: partialAction.id,
+                objectId: partialAction.id,
                 layerId,
                 // This relies on NaN !== (anything including NaN)
                 batchId: partialAction.batchId && Number(partialAction.batchId),
@@ -130,7 +130,7 @@ export class StorageManager {
             if (
                 lastAction?.batchId &&
                 lastAction.layerId === layerId &&
-                lastAction.id === partialAction.id &&
+                lastAction.objectId === partialAction.id &&
                 lastAction.batchId === partialAction.batchId
             ) {
                 // By not pushing actions to history, the actions are merged
@@ -157,16 +157,16 @@ export class StorageManager {
 
         const undoAction: HistoryAction = {
             ...action,
-            object: objects.get(action.id) || null,
-            nextObjectId: objects.getNextKey(action.id),
+            object: objects.get(action.objectId) || null,
+            nextObjectId: objects.getNextKey(action.objectId),
         };
 
         if (action.object === null) {
-            objects.delete(action.id);
-            groups.deleteKey(action.id);
+            objects.delete(action.objectId);
+            groups.deleteKey(action.objectId);
         } else {
-            objects.set(action.id, action.object, action.nextObjectId);
-            groups.setKey(action.id, storageMode);
+            objects.set(action.objectId, action.object, action.nextObjectId);
+            groups.setKey(action.objectId, storageMode);
         }
 
         return undoAction;

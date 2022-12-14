@@ -199,7 +199,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                 return { discontinueInput: true };
             }
             case "undoRedo": {
-                const newIds = event.actions.map(({ id }) => id);
+                const newIds = event.actions.map(({ objectId: id }) => id);
                 // Clear old selection
                 const history: PartialHistoryAction[] = internal.objects
                     .keys()

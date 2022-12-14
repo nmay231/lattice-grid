@@ -75,7 +75,7 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
 
     // TODO: Should I allow multiple current objects? (so I can do `ctrl-a, del` and things like that)
     // TODO: Handle moving objects with long presses (?)
-    layer.handleEvent = (event) => {
+    layer.handleEvent = (event): LayerHandlerResult<LP> => {
         const { grid, storage, type, tempStorage } = event;
 
         const stored = storage.getStored<LP>({ layer, grid });
@@ -225,11 +225,11 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
                 // TODO: layer might have sub-layers and action.layerId !== layer.id
                 const last = event.actions[event.actions.length - 1];
                 if (last.object !== null) {
-                    stored.extra.currentObjectId = last.id;
+                    stored.extra.currentObjectId = last.objectId;
                     return {
                         discontinueInput: true,
                         // TODO: Force render
-                        history: [{ ...last, batchId: "ignore" }],
+                        history: [{ ...last, id: last.objectId, batchId: "ignore" }],
                     };
                 }
                 stored.extra.currentObjectId = undefined;
