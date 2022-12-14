@@ -41,7 +41,7 @@ describe("StorageManager", () => {
         storage._ApplyHistoryAction({ objects, groups, action, storageMode: "question" });
 
         expect(storage.objects["grid"]["layer1"].objects.entries()).toEqual<HistoryEntries>([
-            ["objectId", { asdf: "something", id: "objectId" }],
+            ["objectId", { asdf: "something" }],
         ]);
     });
 
@@ -72,7 +72,7 @@ describe("StorageManager", () => {
         storage._ApplyHistoryAction({ objects, groups, action, storageMode: "question" });
 
         expect(storage.objects["grid"]["layer1"].objects.entries()).toEqual<HistoryEntries>([
-            ["objectId", { asdf: "something", id: "objectId" }],
+            ["objectId", { asdf: "something" }],
         ]);
     });
 
@@ -139,23 +139,23 @@ describe("StorageManager", () => {
         storage.undoHistory(puzzle);
         // An non-batched undo should not affect the batched actions
         expect(storage.objects["grid"]["layer1"].objects.entries()).toEqual<HistoryEntries>([
-            ["id1", { asdf: "something1", id: "id1" }],
-            ["id2", { asdf: "something2", id: "id2" }],
-            ["id3", { asdf: "something3", id: "id3" }],
+            ["id1", { asdf: "something1" }],
+            ["id2", { asdf: "something2" }],
+            ["id3", { asdf: "something3" }],
         ]);
 
         storage.undoHistory(puzzle);
         // Undo a batch of actions
         expect(storage.objects["grid"]["layer1"].objects.entries()).toEqual<HistoryEntries>([
-            ["id1", { asdf: "something1", id: "id1" }],
+            ["id1", { asdf: "something1" }],
         ]);
 
         storage.redoHistory(puzzle);
         // Undo a batch of actions
         expect(storage.objects["grid"]["layer1"].objects.entries()).toEqual<HistoryEntries>([
-            ["id1", { asdf: "something1", id: "id1" }],
-            ["id2", { asdf: "something2", id: "id2" }],
-            ["id3", { asdf: "something3", id: "id3" }],
+            ["id1", { asdf: "something1" }],
+            ["id2", { asdf: "something2" }],
+            ["id3", { asdf: "something3" }],
         ]);
     });
 
@@ -238,7 +238,7 @@ describe("StorageManager", () => {
         // Ensure the initial states are good
         expect(objectsBeforeAction["grid"]["layer1"].objects.entries()).toEqual<HistoryEntries>([]);
         expect(objectsAfterAction["grid"]["layer1"].objects.entries()).toEqual<HistoryEntries>([
-            ["id1", { asdf: "something1", id: "id1" }],
+            ["id1", { asdf: "something1" }],
         ]);
 
         const afterRedo: StorageManager["histories"][0] = {
@@ -258,7 +258,7 @@ describe("StorageManager", () => {
                     id: "id1",
                     layerId: "layer1",
                     nextObjectId: null,
-                    object: { id: "id1", asdf: "something1" },
+                    object: { asdf: "something1" },
                 },
             ],
             index: 0,
@@ -389,7 +389,7 @@ describe("StorageManager", () => {
             {
                 id: "id1",
                 layerId: "layer1",
-                object: { asdf: "something1", id: "id1" },
+                object: { asdf: "something1" },
                 nextObjectId: null,
             },
         ]);
@@ -399,7 +399,7 @@ describe("StorageManager", () => {
             {
                 id: "id2",
                 layerId: "layer2",
-                object: { asdf: "something2", id: "id2" },
+                object: { asdf: "something2" },
                 nextObjectId: null,
             },
         ]);

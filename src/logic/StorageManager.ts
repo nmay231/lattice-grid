@@ -155,13 +155,6 @@ export class StorageManager {
     ) {
         const { objects, groups, action, storageMode } = arg;
 
-        if (action.object === undefined) {
-            throw errorNotification({
-                message: `Layer ${action.layerId} object undefined: ${action}`,
-                forever: true,
-            });
-        }
-
         const undoAction: HistoryAction = {
             ...action,
             object: objects.get(action.id) || null,
@@ -172,8 +165,6 @@ export class StorageManager {
             objects.delete(action.id);
             groups.deleteKey(action.id);
         } else {
-            // TODO: This should not be done here, but instead done by the layer: history: [createObject({ id, points })]
-            action.object = { ...action.object, id: action.id };
             objects.set(action.id, action.object, action.nextObjectId);
             groups.setKey(action.id, storageMode);
         }
