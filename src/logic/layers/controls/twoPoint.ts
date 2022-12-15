@@ -33,10 +33,9 @@ export const handleEventsCurrentSetting = <LP extends TwoPointProps>(
         });
     }
 
-    layer.gatherPoints = (event) => {
-        const { grid, tempStorage } = event;
+    layer.gatherPoints = ({ grid, tempStorage, cursor }) => {
         const newPoints = grid.selectPointsWithCursor({
-            cursor: event.cursor,
+            cursor,
             pointTypes,
             deltas,
             previousPoint: tempStorage.previousPoint,
