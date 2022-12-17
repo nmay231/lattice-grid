@@ -119,37 +119,37 @@ export class PuzzleManager {
             const blitGroups = { ...getBlitGroups() };
             const layer = this.layers[currentLayerId];
 
-            blitGroups[OVERLAY_LAYER_ID] =
+            blitGroups[`${OVERLAY_LAYER_ID}-question`] =
                 layer.getOverlayBlits?.({
                     grid: this.grid,
                     storage: this.storage,
                     settings,
-                    editMode: this.settings.editMode,
                 }) || [];
             setBlitGroups(blitGroups);
         } else if (change.type === "draw") {
             const blitGroups = { ...getBlitGroups() };
 
             // Only render the overlay blits of the current layer
-            blitGroups[OVERLAY_LAYER_ID] =
+            blitGroups[`${OVERLAY_LAYER_ID}-question`] =
                 this.layers[currentLayerId].getOverlayBlits?.({
                     grid: this.grid,
                     storage: this.storage,
                     settings,
-                    editMode: this.settings.editMode,
                 }) || [];
 
             // TODO: Allowing layerIds === "all" is mostly used for resizing the grid. How to efficiently redraw layers that depend on the size of the grid. Are there even layers other than grids that need to rerender on resizes? If there are, should they have to explicitly subscribe to these events?
             const layerIds = new Set(change.layerIds === "all" ? order : change.layerIds);
 
             for (const layerId of layerIds) {
-                const layer = this.layers[layerId];
-                blitGroups[layer.id] = layer.getBlits({
-                    grid: this.grid,
-                    storage: this.storage,
-                    settings,
-                    editMode: this.settings.editMode,
-                });
+                for (const editMode of ["question", "answer"] as const) {
+                    const layer = this.layers[layerId];
+                    blitGroups[`${layer.id}-${editMode}`] = layer.getBlits({
+                        grid: this.grid,
+                        storage: this.storage,
+                        settings,
+                        editMode,
+                    });
+                }
             }
 
             setBlitGroups(blitGroups);

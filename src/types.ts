@@ -173,9 +173,7 @@ export type Layer<LP extends LayerProps = LayerProps> = {
     getBlits: (
         data: Omit<LayerEventEssentials<LP>, "tempStorage"> & { editMode: EditMode },
     ) => BlitGroup[];
-    getOverlayBlits?: (
-        data: Omit<LayerEventEssentials<LP>, "tempStorage"> & { editMode: EditMode },
-    ) => BlitGroup[];
+    getOverlayBlits?: (data: Omit<LayerEventEssentials<LP>, "tempStorage">) => BlitGroup[];
 };
 
 export type LayerClass<LP extends LayerProps = LayerProps> = {
