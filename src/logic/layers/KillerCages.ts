@@ -1,6 +1,7 @@
 import { PolygonBlits } from "../../components/SVGCanvas/Polygon";
 import { TextBlits } from "../../components/SVGCanvas/Text";
 import { Layer, LayerClass, NeedsUpdating } from "../../types";
+import { bySubset } from "../../utils/structureUtils";
 import { BaseLayer, methodNotImplemented } from "./baseLayer";
 import {
     handleEventsUnorderedSets,
@@ -46,7 +47,7 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
         if (!stored.extra.currentObjectId) return {};
 
         const id = stored.extra.currentObjectId;
-        const object = stored.objects[id];
+        const object = stored.objects.get(id);
 
         if (type === "delete") {
             if (object.state === null) return {};
@@ -76,16 +77,19 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
         return {};
     };
 
-    getBlits: IKillerCagesLayer["getBlits"] = ({ storage, grid }) => {
+    getBlits: IKillerCagesLayer["getBlits"] = ({ storage, grid, editMode }) => {
         const stored = storage.getStored<KillerCagesProps>({
             grid,
             layer: this,
         });
+        const renderOrder = stored.objects
+            .keys()
+            .filter(bySubset(stored.groups.getGroup(editMode)));
 
         const cageBlits: PolygonBlits["blits"] = {};
         const numberBlits: TextBlits["blits"] = {};
-        for (const id of stored.renderOrder) {
-            const object = stored.objects[id];
+        for (const id of renderOrder) {
+            const object = stored.objects.get(id);
             const { cageOutline, cells, sorted } = grid.getPoints({
                 connections: {
                     cells: {
@@ -103,7 +107,7 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
 
             const style = id === stored.extra.currentObjectId ? { stroke: "#33F" } : undefined;
             for (const key in cageOutline.svgPolygons) {
-                cageBlits[`${object.id}-${key}`] = {
+                cageBlits[`${id}-${key}`] = {
                     style,
                     points: cageOutline.svgPolygons[key],
                 };

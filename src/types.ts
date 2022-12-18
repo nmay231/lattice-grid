@@ -12,8 +12,8 @@ import type { UserCodeJSON } from "./logic/userComputation/codeBlocks";
 export type PuzzleError = {
     message: string;
     objects?: {
-        layerId: string;
-        gridId: string;
+        layerId: Layer["id"];
+        gridId: Grid["id"];
         objectIds: ObjectId[];
     };
 };
@@ -21,7 +21,7 @@ export type PuzzleError = {
 export type CompilerErrorDetails = {
     message: string;
     isInternal?: boolean;
-    codeBlockIds: string[];
+    codeBlockIds: UserCodeJSON["id"][];
 };
 
 export type ICodeBlock<T extends UserCodeJSON = UserCodeJSON> = {
@@ -56,59 +56,10 @@ export interface IVariableInfo {
 }
 // #endregion
 
-// #region - Explicit Type Names
-// TODO: Replace all relevant instances of the plain types with these explicit types.
-// It helps with changing all of the types if necessary, and also with being explicit with how composite types are used.
-export type Point = string;
-export type Vector = [number, number];
-export type Delta = { dx: number; dy: number };
-
-export type PointType = "cells" | "edges" | "corners";
-export type ObjectId = string; // TODO: Allow symbols
-// #endregion
-
-// #region - Grids
-export type Grid = {
-    id: string;
-    // TODO: More specific types
-    getPoints: (arg: {
-        points?: string[];
-        connections: any;
-        blacklist?: string[]; // TODO: Is this needed?
-        includeOutOfBounds?: boolean;
-        excludePreviousPoints?: boolean;
-    }) => any;
-    getAllPoints: (type: PointType) => Point[];
-    selectPointsWithCursor: (arg: {
-        // TODO: Change to [number, number]
-        cursor: { x: number; y: number };
-        pointTypes: PointType[];
-        // TODO: implement deltas as Finite State Machines for more capabilities and better cross-compatibility between grid types
-        deltas: Delta[];
-        previousPoint?: string | null;
-    }) => string[];
-    getParams(): LocalStorageData["grid"];
-    setParams(params?: SquareGridParams): void;
-    getCanvasRequirements: () => {
-        minX: number;
-        minY: number;
-        width: number;
-        height: number;
-    };
-    getCanvasResizers: () => {
-        name: string;
-        x: number;
-        y: number;
-        rotate: number;
-        resize: (amount: number) => void;
-    }[];
-};
-// #endregion
-
-// #region - Layers
+// #region - Events
 export type PointerMoveOrDown = {
     type: "pointerDown" | "pointerMove";
-    points: string[];
+    points: Point[];
     cursor: { x: number; y: number };
     altKey: boolean;
     ctrlKey: boolean;
@@ -140,9 +91,60 @@ export type NewSettingsEvent<LP extends LayerProps> = LayerEventEssentials<LP> &
 // TODO: Adding OtherState makes sense for IncompleteHistoryAction, but not for LayerHandlerResult. Should this somehow be another property on LayerProps?
 export type LayerHandlerResult<LP extends LayerProps> = {
     discontinueInput?: boolean;
-    history?: IncompleteHistoryAction<LP>[];
+    history?: PartialHistoryAction<LP>[];
 };
+// #endregion
 
+// #region - Explicit Type Names
+// TODO: Replace all relevant instances of the plain types with these explicit types.
+// It helps with changing all of the types if necessary, and also with being explicit with how composite types are used.
+export type Point = string;
+export type Vector = [number, number];
+export type Delta = { dx: number; dy: number };
+
+export type PointType = "cells" | "edges" | "corners";
+export type EditMode = "question" | "answer";
+export type StorageMode = "question" | "answer" | "ui";
+export type ObjectId = string;
+// #endregion
+
+// #region - Grids
+export type Grid = {
+    id: string;
+    // TODO: More specific types
+    getPoints: (arg: {
+        points?: Point[];
+        connections: NeedsUpdating;
+        includeOutOfBounds?: boolean;
+    }) => NeedsUpdating;
+    getAllPoints: (type: PointType) => Point[];
+    selectPointsWithCursor: (arg: {
+        // TODO: Change to [number, number]
+        cursor: { x: number; y: number };
+        pointTypes: PointType[];
+        // TODO: implement deltas as Finite State Machines for more capabilities and better cross-compatibility between grid types
+        deltas: Delta[];
+        previousPoint?: Point | null;
+    }) => Point[];
+    getParams(): LocalStorageData["grid"];
+    setParams(params?: SquareGridParams): void;
+    getCanvasRequirements: () => {
+        minX: number;
+        minY: number;
+        width: number;
+        height: number;
+    };
+    getCanvasResizers: () => {
+        name: string;
+        x: number;
+        y: number;
+        rotate: number;
+        resize: (amount: number) => void;
+    }[];
+};
+// #endregion
+
+// #region - Layers
 export type JSONSchema = { schema: NeedsUpdating; uischemaElements: NeedsUpdating[] };
 
 export type LayerProps = {
@@ -166,9 +168,11 @@ export type Layer<LP extends LayerProps = LayerProps> = {
     newSettings: (
         settingsChange: Omit<NewSettingsEvent<LP>, "tempStorage">,
     ) => LayerHandlerResult<LP>;
-    gatherPoints: (layerEvent: PointerMoveOrDown & LayerEventEssentials<LP>) => string[];
+    gatherPoints: (layerEvent: PointerMoveOrDown & LayerEventEssentials<LP>) => Point[];
     handleEvent: (layerEvent: LayerEvent<LP>) => LayerHandlerResult<LP>;
-    getBlits: (data: Omit<LayerEventEssentials<LP>, "tempStorage">) => BlitGroup[];
+    getBlits: (
+        data: Omit<LayerEventEssentials<LP>, "tempStorage"> & { editMode: EditMode },
+    ) => BlitGroup[];
     getOverlayBlits?: (data: Omit<LayerEventEssentials<LP>, "tempStorage">) => BlitGroup[];
 };
 
@@ -186,25 +190,21 @@ export type LayerClass<LP extends LayerProps = LayerProps> = {
 // #endregion
 
 // #region - Undo-Redo History
-export type IncompleteHistoryAction<LP extends LayerProps = LayerProps, OtherState = any> =
-    | {
-          id: string;
-          layerId: string | undefined;
-          batchId?: "ignore" | number;
-          object: OtherState;
-      }
-    | {
-          id: string;
-          batchId?: "ignore" | number;
-          object: LP["ObjectState"] | null;
-      };
+export type PartialHistoryAction<LP extends LayerProps = LayerProps, OtherState = any> = {
+    id: ObjectId;
+    batchId?: "ignore" | number;
+    storageMode?: StorageMode;
+} & (
+    | { layerId: Layer["id"] | undefined; object: OtherState }
+    | { object: LP["ObjectState"] | null }
+);
 
 export type HistoryAction<LP extends LayerProps = LayerProps> = {
-    id: string;
-    layerId: string;
+    objectId: ObjectId;
+    layerId: Layer["id"];
     batchId?: number;
     object: LP["ObjectState"] | null;
-    renderIndex: number;
+    nextObjectId: ObjectId | null;
 };
 
 export type History = {
@@ -217,8 +217,8 @@ export type StorageReducer<Type> = (puzzle: PuzzleManager, arg: Type) => Type;
 
 // #region - Rendering
 export type RenderChange =
-    | { type: "draw"; layerIds: string[] | "all" }
-    | { type: "delete"; layerId: string }
+    | { type: "draw"; layerIds: Layer["id"][] | "all" }
+    | { type: "delete"; layerId: Layer["id"] }
     | { type: "switchLayer" }
     | { type: "reorder" };
 

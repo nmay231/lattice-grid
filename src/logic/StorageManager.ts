@@ -2,19 +2,27 @@ import {
     Grid,
     History,
     HistoryAction,
-    IncompleteHistoryAction,
     Layer,
     LayerProps,
     NeedsUpdating,
+    PartialHistoryAction,
+    StorageMode,
     StorageReducer,
 } from "../types";
 import { errorNotification } from "../utils/DOMUtils";
 import { formatAnything } from "../utils/stringUtils";
+import { LayerStorage } from "./LayerStorage";
+import { PuzzleManager } from "./PuzzleManager";
 
 type GridAndLayer = { grid: Pick<Grid, "id">; layer: Pick<Layer, "id"> };
+// TODO: Recursive Pick type?
+export type PuzzleForStorage = {
+    grid: Pick<PuzzleManager["grid"], "id">;
+    settings: Pick<PuzzleManager["settings"], "editMode">;
+};
 
 export class StorageManager {
-    objects: Record<Grid["id"], Record<string, LayerStorage>> = {};
+    objects: Record<Grid["id"], Record<Layer["id"], LayerStorage>> = {};
 
     histories: Record<Grid["id"], History> = {};
 
@@ -23,12 +31,16 @@ export class StorageManager {
 
     addStorage({ grid, layer }: GridAndLayer) {
         this.objects[grid.id] = this.objects[grid.id] ?? {};
-        this.objects[grid.id][layer.id] = { renderOrder: [], objects: {}, extra: {} };
+        this.objects[grid.id][layer.id] = new LayerStorage();
 
-        this.histories[grid.id] = this.histories[grid.id] || {
-            actions: [],
-            index: 0,
-        };
+        // TODO: Use typescript `satisfies`
+        // TODO: Actually, I just need to implement that data structure that handles this automatically because editModes might eventually be dynamic
+        (["question", "answer", "ui"] as StorageMode[]).forEach((mode) => {
+            this.histories[`${grid.id}-${mode}`] = this.histories[`${grid.id}-${mode}`] || {
+                actions: [],
+                index: 0,
+            };
+        });
     }
 
     removeStorage({ grid, layer }: GridAndLayer) {
@@ -62,45 +74,53 @@ export class StorageManager {
         }
     }
 
-    addToHistory(
-        grid: Pick<Grid, "id">,
-        layer: Pick<Layer, "id">,
-        puzzleObjects?: IncompleteHistoryAction[],
-    ) {
-        if (!puzzleObjects?.length) {
+    addToHistory(arg: {
+        puzzle: PuzzleForStorage;
+        layerId: Layer["id"];
+        actions?: PartialHistoryAction[];
+    }) {
+        const { puzzle, layerId: defaultLayerId, actions } = arg;
+
+        if (!actions?.length) {
             return;
         }
+        const gridId = puzzle.grid.id;
+        const defaultEditMode = puzzle.settings.editMode;
 
-        const history = this.histories[grid.id];
+        const defaultHistory = this.histories[`${gridId}-${defaultEditMode}`];
 
-        const historyChanges = puzzleObjects.filter(({ batchId }) => batchId !== "ignore").length;
+        const historyChanges = actions.filter(
+            ({ batchId, storageMode: editMode }) =>
+                // This is a landmine for future bugs isn't it...
+                batchId !== "ignore" && (!editMode || editMode === defaultEditMode),
+        ).length;
 
-        if (history.index < history.actions.length && historyChanges) {
+        if (defaultHistory.index < defaultHistory.actions.length && historyChanges) {
             // Only prune redo actions when actions will be added to history
-            history.actions.splice(history.index);
+            defaultHistory.actions.splice(defaultHistory.index);
         }
 
-        for (const puzzleObject of puzzleObjects) {
-            const layerId = (puzzleObject as NeedsUpdating).layerId || layer.id;
-            const { objects, renderOrder } = this.objects[grid.id][layerId];
+        for (const partialAction of actions) {
+            const layerId = (partialAction as NeedsUpdating).layerId || defaultLayerId;
+            const storageMode = partialAction.storageMode || defaultEditMode;
+            const { objects, groups } = this.objects[gridId][layerId];
+            const history = this.histories[`${gridId}-${storageMode}`];
 
             const action = this.masterReducer({} as NeedsUpdating, {
-                id: puzzleObject.id,
+                objectId: partialAction.id,
                 layerId,
-                batchId: Number(puzzleObject.batchId),
-                object: puzzleObject.object,
-                renderIndex:
-                    puzzleObject.id in objects
-                        ? renderOrder.indexOf(puzzleObject.id)
-                        : renderOrder.length,
+                // This relies on NaN !== (anything including NaN)
+                batchId: partialAction.batchId && Number(partialAction.batchId),
+                object: partialAction.object,
+                nextObjectId: objects.getNextKey(partialAction.id),
             });
             if (!action) {
                 continue; // One of the reducers chose to ignore this action
             }
 
-            const undoAction = this._ApplyHistoryAction(objects, renderOrder, action);
+            const undoAction = this._ApplyHistoryAction({ objects, groups, action, storageMode });
 
-            if (puzzleObject.batchId === "ignore") {
+            if (partialAction.batchId === "ignore") {
                 continue; // Do not include in history
             }
 
@@ -110,8 +130,8 @@ export class StorageManager {
             if (
                 lastAction?.batchId &&
                 lastAction.layerId === layerId &&
-                lastAction.id === puzzleObject.id &&
-                lastAction.batchId === puzzleObject.batchId
+                lastAction.objectId === partialAction.id &&
+                lastAction.batchId === partialAction.batchId
             ) {
                 // By not pushing actions to history, the actions are merged
 
@@ -128,41 +148,36 @@ export class StorageManager {
     }
 
     _ApplyHistoryAction(
-        objects: LayerStorage["objects"],
-        renderOrder: LayerStorage["renderOrder"],
-        action: HistoryAction,
+        arg: Pick<LayerStorage, "objects" | "groups"> & {
+            action: HistoryAction;
+            storageMode: StorageMode;
+        },
     ) {
-        if (action.object === undefined) {
-            throw errorNotification({
-                message: `Layer ${action.layerId} object undefined: ${action}`,
-                forever: true,
-            });
-        }
+        const { objects, groups, action, storageMode } = arg;
 
         const undoAction: HistoryAction = {
             ...action,
-            object: objects[action.id] || null,
-            renderIndex: renderOrder.indexOf(action.id),
+            object: objects.get(action.objectId) || null,
+            nextObjectId: objects.getNextKey(action.objectId),
         };
 
-        if (action.id in objects) {
-            renderOrder.splice(renderOrder.indexOf(action.id), 1);
-        }
-
         if (action.object === null) {
-            delete objects[action.id];
+            objects.delete(action.objectId);
+            groups.deleteKey(action.objectId);
         } else {
-            renderOrder.splice(action.renderIndex, 0, action.id);
-            // TODO: This should not be done here, but instead done by the layer: history: [createObject({ id, points })]
-            action.object = { ...action.object, id: action.id };
-            objects[action.id] = action.object;
+            objects.set(action.objectId, action.object, action.nextObjectId);
+            groups.setKey(action.objectId, storageMode);
         }
 
         return undoAction;
     }
 
-    undoHistory(historyId: Grid["id"]) {
-        const history = this.histories[historyId];
+    undoHistory(puzzle: PuzzleForStorage) {
+        const {
+            grid: { id: gridId },
+            settings: { editMode: storageMode },
+        } = puzzle;
+        const history = this.histories[`${gridId}-${storageMode}`];
         if (history.index <= 0) {
             return [];
         }
@@ -172,9 +187,9 @@ export class StorageManager {
         do {
             history.index--;
             action = history.actions[history.index];
-            const { objects, renderOrder } = this.objects[historyId][action.layerId];
+            const { objects, groups } = this.objects[gridId][action.layerId];
 
-            const redo = this._ApplyHistoryAction(objects, renderOrder, action);
+            const redo = this._ApplyHistoryAction({ objects, groups, action, storageMode });
             // Replace the action with its opposite
             history.actions.splice(history.index, 1, redo);
 
@@ -184,8 +199,12 @@ export class StorageManager {
         return returnedActions;
     }
 
-    redoHistory(historyId: Grid["id"]) {
-        const history = this.histories[historyId];
+    redoHistory(puzzle: PuzzleForStorage) {
+        const {
+            grid: { id: gridId },
+            settings: { editMode: storageMode },
+        } = puzzle;
+        const history = this.histories[`${gridId}-${storageMode}`];
         if (history.index >= history.actions.length) {
             return [];
         }
@@ -194,9 +213,9 @@ export class StorageManager {
         const returnedActions: HistoryAction[] = [];
         do {
             action = history.actions[history.index];
-            const { objects, renderOrder } = this.objects[historyId][action.layerId];
+            const { objects, groups } = this.objects[gridId][action.layerId];
 
-            const undo = this._ApplyHistoryAction(objects, renderOrder, action);
+            const undo = this._ApplyHistoryAction({ objects, groups, action, storageMode });
             // Replace the action with its opposite
             history.actions.splice(history.index, 1, undo);
             history.index++;
@@ -211,12 +230,4 @@ export class StorageManager {
     getNewBatchId() {
         return this._batchId++;
     }
-}
-
-// Sure, this could be in its own file, but I don't feel like it should be just yet...
-export class LayerStorage<LP extends LayerProps = LayerProps> {
-    objects: Record<string, LP["ObjectState"]> = {};
-    extra: Partial<LP["ExtraLayerStorageProps"]> = {};
-    renderOrder: string[] = [];
-    // groups: { question: Set<ObjectId>; answer: Set<ObjectId> } = { answer: new Set(), question: new Set() };
 }

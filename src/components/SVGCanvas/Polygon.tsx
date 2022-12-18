@@ -1,9 +1,11 @@
+import { Point } from "../../types";
+
 export type PolygonBlits = {
     id: string;
     blitter: "polygon";
     blits: Record<
         string,
-        { points: string[]; style?: React.SVGAttributes<SVGPolygonElement>["style"] }
+        { points: Point[]; style?: React.SVGAttributes<SVGPolygonElement>["style"] }
     >;
     style: React.SVGAttributes<SVGGElement>["style"];
 };

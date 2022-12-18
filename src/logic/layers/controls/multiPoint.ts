@@ -5,6 +5,7 @@ import {
     LayerEventEssentials,
     LayerHandlerResult,
     LayerProps,
+    ObjectId,
     Point,
     PointType,
 } from "../../../types";
@@ -12,10 +13,10 @@ import { errorNotification } from "../../../utils/DOMUtils";
 import { smartSort } from "../../../utils/stringUtils";
 
 export interface MultiPointLayerProps extends LayerProps {
-    ObjectState: { id: string; points: string[]; state: unknown };
-    ExtraLayerStorageProps: { currentObjectId: string };
+    ObjectState: { points: Point[]; state: unknown };
+    ExtraLayerStorageProps: { currentObjectId: ObjectId };
     TempStorage: {
-        previousPoint: string;
+        previousPoint: Point;
         batchId: number;
         removeSingle: boolean;
     };
@@ -74,7 +75,7 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
 
     // TODO: Should I allow multiple current objects? (so I can do `ctrl-a, del` and things like that)
     // TODO: Handle moving objects with long presses (?)
-    layer.handleEvent = (event) => {
+    layer.handleEvent = (event): LayerHandlerResult<LP> => {
         const { grid, storage, type, tempStorage } = event;
 
         const stored = storage.getStored<LP>({ layer, grid });
@@ -82,7 +83,7 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
         if (!currentObjectId && type !== "pointerDown" && type !== "undoRedo") {
             return {}; // Other events only matter if there is an object selected
         }
-        const object = stored.objects[currentObjectId];
+        const object = stored.objects.get(currentObjectId);
 
         switch (type) {
             case "keyDown": {
@@ -115,9 +116,9 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
                 const batchId = tempStorage.batchId;
                 // There's only one point with pointerDown
                 const startPoint = event.points[0];
-                const overlap = stored.renderOrder.filter(
-                    (id) => stored.objects[id].points.indexOf(startPoint) > -1,
-                );
+                const overlap = stored.objects
+                    .keys()
+                    .filter((id) => stored.objects.get(id).points.indexOf(startPoint) > -1);
 
                 if (overlap.length) {
                     // Select the topmost existing object
@@ -130,7 +131,7 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
 
                     // Force a rerender without polluting history
                     return {
-                        history: [{ id, object: stored.objects[id], batchId }],
+                        history: [{ id, object: stored.objects.get(id), batchId }],
                     };
                 }
 
@@ -142,7 +143,7 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
                         {
                             id: startPoint,
                             batchId,
-                            object: { id: startPoint, points: [startPoint], state: null },
+                            object: { points: [startPoint], state: null },
                         },
                     ],
                 };
@@ -211,7 +212,6 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
                 }
 
                 stored.extra.currentObjectId = newId;
-                objectCopy.id = newId;
                 return {
                     discontinueInput: true,
                     history: [
@@ -224,11 +224,11 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
                 // TODO: layer might have sub-layers and action.layerId !== layer.id
                 const last = event.actions[event.actions.length - 1];
                 if (last.object !== null) {
-                    stored.extra.currentObjectId = last.id;
+                    stored.extra.currentObjectId = last.objectId;
                     return {
                         discontinueInput: true,
                         // TODO: Force render
-                        history: [{ ...last, batchId: "ignore" }],
+                        history: [{ ...last, id: last.objectId, batchId: "ignore" }],
                     };
                 }
                 stored.extra.currentObjectId = undefined;

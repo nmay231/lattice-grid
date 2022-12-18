@@ -1,12 +1,13 @@
 import { TextBlits } from "../../components/SVGCanvas/Text";
-import { Layer, LayerClass } from "../../types";
+import { Layer, LayerClass, Point } from "../../types";
+import { bySubset } from "../../utils/structureUtils";
 import { BaseLayer, methodNotImplemented } from "./baseLayer";
 import { DO_NOTHING, numberTyper } from "./controls/numberTyper";
 import { handleEventsSelection, KeyDownEventHandler, SelectedProps } from "./controls/selection";
 
 export interface NumberProps extends SelectedProps {
     Type: "NumberLayer";
-    ObjectState: { state: string; point: string };
+    ObjectState: { state: string; point: Point };
     RawSettings: { max: number; negatives: boolean };
 }
 
@@ -43,7 +44,7 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
             return {};
         }
 
-        const states = ids.map((id) => stored.objects[id]?.state);
+        const states = ids.map((id) => stored.objects.get(id)?.state);
         const theSame = !!(states as Array<string | false>).reduce((prev, next) =>
             prev === next ? next : false,
         );
@@ -89,7 +90,7 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
 
         handleEventsSelection(this, {});
 
-        const { objects, renderOrder } = storage.getStored<NumberProps>({
+        const { objects } = storage.getStored<NumberProps>({
             grid,
             layer: this,
         });
@@ -99,8 +100,8 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
         // Delete numbers that are out of range
         const min = newSettings.negatives ? -newSettings.max : 0;
         const max = newSettings.max;
-        for (const id of renderOrder) {
-            const state = parseInt(objects[id].state);
+        for (const [id, object] of objects.entries()) {
+            const state = parseInt(object.state);
             if (state < min || state > max) {
                 history.push({ object: null, id });
             }
@@ -109,8 +110,9 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
         return { history };
     };
 
-    getBlits: INumberLayer["getBlits"] = ({ grid, storage }) => {
+    getBlits: INumberLayer["getBlits"] = ({ grid, storage, editMode }) => {
         const stored = storage.getStored<NumberProps>({ grid, layer: this });
+        const points = stored.objects.keys().filter(bySubset(stored.groups.getGroup(editMode)));
         const { cells } = grid.getPoints({
             connections: {
                 cells: {
@@ -118,13 +120,13 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
                     maxRadius: { shape: "square", size: "large" },
                 },
             },
-            points: stored.renderOrder,
+            points,
         });
 
         const blits: TextBlits["blits"] = {};
-        for (const id of stored.renderOrder) {
+        for (const id of points) {
             blits[id] = {
-                text: stored.objects[id].state,
+                text: stored.objects.get(id).state,
                 point: cells[id].svgPoint,
                 size: cells[id].maxRadius * 1.6,
             };

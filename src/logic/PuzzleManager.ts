@@ -1,8 +1,10 @@
+import { proxy } from "valtio";
 import { getBlitGroups, OVERLAY_LAYER_ID, setBlitGroups } from "../atoms/blits";
 import { setCanvasSize } from "../atoms/canvasSize";
 import { Layers } from "../atoms/layers";
 import { getSettings } from "../atoms/settings";
 import {
+    EditMode,
     Grid,
     Layer,
     LayerClass,
@@ -31,6 +33,10 @@ export class PuzzleManager {
     grid: Grid = new SquareGrid();
     storage = new StorageManager();
     controls = new ControlsManager(this);
+    settings = proxy({
+        editMode: "question" as EditMode,
+        // TODO: pageMode: "setting" | "settingTest?" | "solving" | "competition"
+    });
 
     constructor() {
         this.layers = this._requiredLayers();
@@ -113,7 +119,7 @@ export class PuzzleManager {
             const blitGroups = { ...getBlitGroups() };
             const layer = this.layers[currentLayerId];
 
-            blitGroups[OVERLAY_LAYER_ID] =
+            blitGroups[`${OVERLAY_LAYER_ID}-question`] =
                 layer.getOverlayBlits?.({
                     grid: this.grid,
                     storage: this.storage,
@@ -124,7 +130,7 @@ export class PuzzleManager {
             const blitGroups = { ...getBlitGroups() };
 
             // Only render the overlay blits of the current layer
-            blitGroups[OVERLAY_LAYER_ID] =
+            blitGroups[`${OVERLAY_LAYER_ID}-question`] =
                 this.layers[currentLayerId].getOverlayBlits?.({
                     grid: this.grid,
                     storage: this.storage,
@@ -135,12 +141,15 @@ export class PuzzleManager {
             const layerIds = new Set(change.layerIds === "all" ? order : change.layerIds);
 
             for (const layerId of layerIds) {
-                const layer = this.layers[layerId];
-                blitGroups[layer.id] = layer.getBlits({
-                    grid: this.grid,
-                    storage: this.storage,
-                    settings,
-                });
+                for (const editMode of ["question", "answer"] as const) {
+                    const layer = this.layers[layerId];
+                    blitGroups[`${layer.id}-${editMode}`] = layer.getBlits({
+                        grid: this.grid,
+                        storage: this.storage,
+                        settings,
+                        editMode,
+                    });
+                }
             }
 
             setBlitGroups(blitGroups);
@@ -167,7 +176,11 @@ export class PuzzleManager {
         return data;
     }
 
-    addLayer(layerClass: LayerClass<any>, id: string | null, settings?: UnknownObject): string {
+    addLayer(
+        layerClass: LayerClass<any>,
+        id: Layer["id"] | null,
+        settings?: UnknownObject,
+    ): Layer["id"] {
         const layer = new layerClass(layerClass, this);
         if (id) layer.id = id;
         this.layers[layer.id] = layer;
@@ -183,7 +196,7 @@ export class PuzzleManager {
         return layer.id;
     }
 
-    removeLayer(id: string) {
+    removeLayer(id: Layer["id"]) {
         if (id in this.layers) {
             delete this.layers[id];
             this.storage.removeStorage({ grid: this.grid, layer: { id } });
@@ -192,7 +205,7 @@ export class PuzzleManager {
         }
     }
 
-    changeLayerSettings(layerId: string, newSettings: any) {
+    changeLayerSettings(layerId: Layer["id"], newSettings: any) {
         const layer = this.layers[layerId];
         const { history } = layer.newSettings({
             newSettings,
@@ -202,7 +215,7 @@ export class PuzzleManager {
         });
 
         if (history?.length) {
-            this.storage.addToHistory(this.grid, layer, history);
+            this.storage.addToHistory({ puzzle: this, layerId: layer.id, actions: history });
         }
     }
 }

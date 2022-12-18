@@ -24,7 +24,7 @@ export const importPuzzle = (puzzle: PuzzleManager, text: string) => {
                 message: "malformed puzzle string",
             });
 
-        puzzle.storage.histories[puzzle.grid.id] = { actions: [], index: 0 };
+        puzzle.storage.histories = {};
         puzzle._resetLayers();
         puzzle._loadPuzzle(puzzleData.params);
         puzzle.resizeCanvas();

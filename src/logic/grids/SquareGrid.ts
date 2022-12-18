@@ -1,7 +1,7 @@
 import { getSettings } from "../../atoms/settings";
-import { Grid, PointType } from "../../types";
+import { Grid, Point, PointType, Vector } from "../../types";
 import { errorNotification } from "../../utils/DOMUtils";
-import { hopStraight } from "../algorithms/hopStraight";
+import { euclidean, hopStraight } from "../algorithms/hopStraight";
 
 export type SquareGridParams = {
     type: "square";
@@ -113,33 +113,24 @@ export class SquareGrid implements Grid {
         cursor.x /= halfCell;
         cursor.y /= halfCell;
 
-        const firstPoint = [Math.floor(cursor.x), Math.floor(cursor.y)];
-        let targetPoints = [];
-        const gridPoint = this._stringToGridPoint(firstPoint.toString());
-        if (gridPoint.type === "edges") {
-            targetPoints.push(
-                [firstPoint[0] + 1, firstPoint[1]],
-                [firstPoint[0], firstPoint[1] + 1],
-                cursor.y - firstPoint[1] < cursor.x - firstPoint[0]
-                    ? [firstPoint[0] + 1, firstPoint[1] + 1]
-                    : firstPoint,
-            );
-        } else {
-            targetPoints.push(
-                firstPoint,
-                [firstPoint[0] + 1, firstPoint[1] + 1],
-                1 + firstPoint[1] - cursor.y < cursor.x - firstPoint[0]
-                    ? [firstPoint[0], firstPoint[1] + 1]
-                    : [firstPoint[0] + 1, firstPoint[1]],
-            );
-        }
+        const firstPoint = [Math.floor(cursor.x), Math.floor(cursor.y)] as Vector;
+        const closestPoints = [
+            firstPoint,
+            [firstPoint[0] + 1, firstPoint[1]],
+            [firstPoint[0], firstPoint[1] + 1],
+            [firstPoint[0] + 1, firstPoint[1] + 1],
+        ]
+            .map((p) => this._stringToGridPoint(p.toString()))
+            .filter(({ type }) => pointTypes.includes(type));
 
         if (previousPoint === null) {
-            // TODO: This is stupid, but will do for now
-            return targetPoints
-                .map((p) => this._stringToGridPoint(p.toString()))
-                .filter(({ type }) => pointTypes.indexOf(type) > -1)
-                .map(({ x, y }) => `${x},${y}`);
+            const closestCorrectType = closestPoints.reduce((prev, next) =>
+                euclidean(prev.x, prev.y, cursor.x, cursor.y) <
+                euclidean(next.x, next.y, cursor.x, cursor.y)
+                    ? prev
+                    : next,
+            );
+            return [`${closestCorrectType.x},${closestCorrectType.y}`];
         }
 
         let previousGridPoint = previousPoint.split(",").map((x) => parseInt(x)) as [
@@ -149,10 +140,12 @@ export class SquareGrid implements Grid {
         const nearby = deltas.map(
             ({ dx, dy }) => `${previousGridPoint[0] + dx},${previousGridPoint[1] + dy}`,
         );
-        const intersection = targetPoints
-            .map((p) => p.toString())
-            .filter((targetPoint) => nearby.indexOf(targetPoint) > -1);
+        const targetPointsString = closestPoints.map(({ x, y }) => `${x},${y}`);
+        const intersection = targetPointsString.filter(
+            (targetPoint) => nearby.indexOf(targetPoint) > -1,
+        );
         if (intersection.length) {
+            // TODO: Technically, not the closest, but whatever.
             return intersection.slice(0, 1);
         }
 
@@ -161,44 +154,32 @@ export class SquareGrid implements Grid {
             deltas,
             cursor: [cursor.x, cursor.y],
         });
-        targetPoints = targetPoints.map((p) => p.toString());
-        const points = [];
+        const points = [previousGridPoint.toString()];
 
         let maxIteration = 100; // Prevent infinite loops
         while (maxIteration > 0) {
-            const next = generator.next(previousGridPoint).value?.map((v) => Math.round(v)) as [
-                number,
-                number,
-            ];
-            const string = previousGridPoint?.join(",");
-            if (!next || points.indexOf(string) > -1) {
+            const next = generator.next(previousGridPoint).value?.map((v) => Math.round(v)) as
+                | [number, number]
+                | null;
+            const string = previousGridPoint.toString();
+            if (!next || points.includes(string)) {
                 return [];
             }
             previousGridPoint = next;
             points.push(string);
-            if (targetPoints.indexOf(string) > -1) {
-                return points;
+            if (targetPointsString.includes(string)) {
+                // Exclude starting point.
+                return points.slice(1);
             }
             maxIteration -= 1;
         }
         return [];
     }
 
-    /**
-     * @description Select points and certain attributes depending on how they are connected to other points
-     * @param {Object} args - Arguments are passed as an object
-     * @param {Object} args.connections - A nested object used to select neighboring points in a chain similar to a graph network. See examples in existing layers.
-     * @param {string[]} [args.points] - Optionally specify from which points are neighbors selected. If not provided, all points of the relevant type are used.
-     * @param {string[]} [args.blacklist] - Optionally prevent certain points from being selecting.
-     * @param {boolean} [args.includeOutOfBounds] - If true, include points outside the range of the current grid. Default: false
-     * @param {boolean} [args.excludePreviousPoints] - If true, add previously selected points to the blacklist as you go down the chain. Default: true
-     */
     getPoints({
         points: stringPoints = [],
         connections,
-        blacklist = [],
         includeOutOfBounds = false,
-        excludePreviousPoints = true,
     }: GetPointsArg) {
         const finalResult: any = {};
         const points = stringPoints.map(this._stringToGridPoint.bind(this));
@@ -207,9 +188,7 @@ export class SquareGrid implements Grid {
             const pointType = key as PointType;
             const justGridPoints = points.length
                 ? points.filter(({ type }) => type === pointType)
-                : this._getAllGridPoints(pointType).filter(
-                      ({ x, y }) => !blacklist.includes(`${x},${y}`),
-                  );
+                : this._getAllGridPoints(pointType);
 
             finalResult[pointType] = {};
             const gridPoints = [];
@@ -222,11 +201,9 @@ export class SquareGrid implements Grid {
             this._getPoints({
                 pointType,
                 connections: connections[pointType],
-                blacklist,
                 gridPoints,
                 finalResult,
                 includeOutOfBounds,
-                excludePreviousPoints,
             });
         }
 
@@ -242,13 +219,10 @@ export class SquareGrid implements Grid {
     _getPoints({
         pointType,
         connections,
-        blacklist = [],
         gridPoints,
         finalResult,
         includeOutOfBounds,
-        excludePreviousPoints,
     }: InternalGetPointsArg) {
-        const nextBlacklist = [...blacklist];
         for (const key in connections) {
             const nextType = key as PointType;
             let deltas;
@@ -282,14 +256,8 @@ export class SquareGrid implements Grid {
                                 type: nextType,
                             };
                             const nextString = `${nextPoint.x},${nextPoint.y}`;
-                            if (
-                                blacklist.includes(nextString) ||
-                                (!includeOutOfBounds && this._outOfBounds(nextPoint))
-                            ) {
+                            if (!includeOutOfBounds && this._outOfBounds(nextPoint)) {
                                 continue;
-                            }
-                            if (excludePreviousPoints) {
-                                nextBlacklist.push(nextString);
                             }
 
                             const nextResult =
@@ -306,8 +274,6 @@ export class SquareGrid implements Grid {
                         pointType: nextType,
                         connections: connections[nextType],
                         gridPoints: newGridPoints,
-                        blacklist: nextBlacklist,
-                        excludePreviousPoints,
                         includeOutOfBounds,
                         finalResult,
                     });
@@ -341,14 +307,8 @@ export class SquareGrid implements Grid {
                                 type: nextType,
                             };
                             const nextString = `${nextPoint.x},${nextPoint.y}`;
-                            if (
-                                blacklist.includes(nextString) ||
-                                (!includeOutOfBounds && this._outOfBounds(nextPoint))
-                            ) {
+                            if (!includeOutOfBounds && this._outOfBounds(nextPoint)) {
                                 continue;
-                            }
-                            if (excludePreviousPoints) {
-                                nextBlacklist.push(nextString);
                             }
 
                             const nextResult =
@@ -365,8 +325,6 @@ export class SquareGrid implements Grid {
                         pointType: nextType,
                         connections: connections[nextType],
                         gridPoints: newGridPoints,
-                        blacklist: nextBlacklist,
-                        excludePreviousPoints,
                         includeOutOfBounds,
                         finalResult,
                     });
@@ -440,8 +398,8 @@ export class SquareGrid implements Grid {
                     }
                     const [primary, secondary] = direction.toUpperCase();
 
-                    type Point = { x: number; y: number };
-                    const sorts: Record<string, (a: Point, b: Point) => number> = {
+                    type XYPoint = { x: number; y: number };
+                    const sorts: Record<string, (a: XYPoint, b: XYPoint) => number> = {
                         N: (a, b) => a.y - b.y,
                         S: (a, b) => b.y - a.y,
                         E: (a, b) => b.x - a.x,
@@ -637,8 +595,8 @@ export class SquareGrid implements Grid {
         return result;
     }
 
-    _stringToGridPoint(string: string): GridPoint {
-        const [, x_, y_] = /^(-?\d+),(-?\d+)$/.exec(string) || [];
+    _stringToGridPoint(point: Point): GridPoint {
+        const [, x_, y_] = /^(-?\d+),(-?\d+)$/.exec(point) || [];
         const x = parseInt(x_);
         const y = parseInt(y_);
         const xEven = (x >> 1) << 1 === x,

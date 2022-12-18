@@ -1,5 +1,6 @@
 import { LineBlits } from "../../components/SVGCanvas/Line";
-import { Layer, LayerClass, PointType } from "../../types";
+import { Layer, LayerClass, ObjectId, Point, PointType } from "../../types";
+import { bySubset } from "../../utils/structureUtils";
 import { BaseLayer, methodNotImplemented } from "./baseLayer";
 import { handleEventsCurrentSetting, TwoPointProps } from "./controls/twoPoint";
 
@@ -11,9 +12,9 @@ const pointTypes = {
 export interface SimpleLineProps extends TwoPointProps {
     Type: "SimpleLineLayer";
     ObjectState: {
-        id: string;
+        id: ObjectId;
         state: { fill: string };
-        points: string[];
+        points: Point[];
     };
     RawSettings: {
         connections: keyof typeof pointTypes;
@@ -84,7 +85,7 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
         if (this.rawSettings.connections !== newSettings.connections) {
             // Clear stored if the type of connections allowed changes (because that would allow impossible-to-draw lines otherwise).
             const stored = storage.getStored({ grid, layer: this });
-            history = stored.renderOrder.map((id) => ({ id, object: null }));
+            history = stored.objects.keys().map((id) => ({ id, object: null }));
         }
 
         this.rawSettings = newSettings;
@@ -112,13 +113,17 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
         return { history: history || undefined };
     };
 
-    getBlits: ISimpleLineLayer["getBlits"] = ({ storage, grid }) => {
+    getBlits: ISimpleLineLayer["getBlits"] = ({ storage, grid, editMode }) => {
         const stored = storage.getStored<SimpleLineProps>({
             grid,
             layer: this,
         });
 
-        let allPoints = stored.renderOrder.flatMap((id) => stored.objects[id].points);
+        const renderOrder = stored.objects
+            .keys()
+            .filter(bySubset(stored.groups.getGroup(editMode)));
+
+        let allPoints = renderOrder.map((id) => stored.objects.get(id).points).flat();
         allPoints = allPoints.filter((point, index) => index === allPoints.indexOf(point));
         const { [this.settings.pointType]: pointInfo } = grid.getPoints({
             connections: { [this.settings.pointType]: { svgPoint: true } },
@@ -126,15 +131,10 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
         });
 
         const blits: LineBlits["blits"] = {};
-        for (const id of stored.renderOrder) {
-            const {
-                state: { fill },
-                points,
-            } = stored.objects[id];
+        for (const id of renderOrder) {
+            const { state, points } = stored.objects.get(id);
             blits[id] = {
-                style: {
-                    stroke: fill, // Yes, this is a misnomer. Oh well
-                },
+                style: { stroke: state.fill },
                 x1: pointInfo[points[0]].svgPoint[0],
                 y1: pointInfo[points[0]].svgPoint[1],
                 x2: pointInfo[points[1]].svgPoint[0],

@@ -1,20 +1,14 @@
 import { LayerHandlerResult, NeedsUpdating } from "../../types";
 import { getEventEssentials, GetEventEssentialsArg } from "../../utils/testUtils";
-import { LayerStorage } from "../StorageManager";
+import { LayerStorage } from "../LayerStorage";
 import { NumberLayer, NumberProps } from "./Number";
 
 describe("Number Layer", () => {
     const eventEssentials = (arg: GetEventEssentialsArg<NumberProps> = {}) =>
         getEventEssentials(arg);
 
-    const EMPTY_STORED: LayerStorage<NumberProps> = {
-        renderOrder: [],
-        objects: {},
-        extra: {},
-    };
-
     // Layer with numbers 0-9
-    const settings9 = { max: 9, negatives: true };
+    const settings9 = { max: 9, negatives: false };
     const layer9 = NumberLayer.create({ layers: {} } as NeedsUpdating) as NumberLayer;
     layer9.newSettings({ ...eventEssentials(), newSettings: settings9 });
 
@@ -40,15 +34,14 @@ describe("Number Layer", () => {
     });
 
     it("should delete some numbers", () => {
-        const stored: typeof EMPTY_STORED = {
-            renderOrder: ["toDelete", "keep", "alsoDelete"],
-            objects: {
-                toDelete: { point: "toDelete", state: "1" },
-                keep: { point: "keep", state: "5" },
-                alsoDelete: { point: "alsoDelete", state: "3" },
-            },
-            extra: {},
-        };
+        const stored = LayerStorage.fromObjects<NumberProps>({
+            ids: ["toDelete", "keep", "alsoDelete"],
+            objs: [
+                { point: "toDelete", state: "1" },
+                { point: "keep", state: "5" },
+                { point: "alsoDelete", state: "3" },
+            ],
+        });
 
         const result = layer9.handleKeyDown({
             ...eventEssentials({ stored }),
@@ -64,43 +57,41 @@ describe("Number Layer", () => {
     });
 
     it("should not delete objects when the number range increases", () => {
-        const stored: LayerStorage<NumberProps> = {
-            renderOrder: ["1,1", "2,2", "3,3"],
-            objects: {
-                "1,1": { point: "1,1", state: "0" },
-                "2,2": { point: "2,2", state: "5" },
-                "3,3": { point: "3,3", state: "9" },
-            },
-            extra: {},
-        };
+        const stored = LayerStorage.fromObjects<NumberProps>({
+            ids: ["1,1", "2,2", "3,3"],
+            objs: [
+                { point: "1,1", state: "0" },
+                { point: "2,2", state: "5" },
+                { point: "3,3", state: "9" },
+            ],
+        });
 
         const result = layer9.newSettings({
             ...eventEssentials({ stored }),
             newSettings: { max: 10, negatives: true },
         });
-        expect(result?.history).toEqual([]);
+        expect(result.history).toEqual<HistoryType>([]);
 
         layer9.newSettings({ ...eventEssentials(), newSettings: settings9 });
     });
 
     it("should delete objects when the number range decreases", () => {
-        const stored: LayerStorage<NumberProps> = {
-            renderOrder: ["1,1", "2,2", "3,3", "4,4"],
-            objects: {
-                "1,1": { point: "1,1", state: "-10" },
-                "2,2": { point: "2,2", state: "0" },
-                "3,3": { point: "3,3", state: "5" },
-                "4,4": { point: "4,4", state: "42" },
-            },
-            extra: {},
-        };
+        const stored = LayerStorage.fromObjects<NumberProps>({
+            ids: ["1,1", "2,2", "3,3", "4,4"],
+            objs: [
+                { point: "1,1", state: "-10" },
+                { point: "2,2", state: "0" },
+                { point: "3,3", state: "5" },
+                { point: "4,4", state: "42" },
+            ],
+        });
 
         const result = layer64.newSettings({
             ...eventEssentials({ stored }),
             newSettings: { max: 7, negatives: false },
         });
 
-        expect(result?.history).toEqual([
+        expect(result.history).toEqual<HistoryType>([
             { id: "1,1", object: null },
             { id: "4,4", object: null },
         ]);

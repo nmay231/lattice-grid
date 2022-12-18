@@ -39,10 +39,10 @@ export class ObjectSelector implements ICodeBlock<IObjectSelector> {
     }
 
     getValue() {
-        const { objects, renderOrder } = this.compute.puzzle.storage.getStored({
+        const { objects } = this.compute.puzzle.storage.getStored({
             grid: this.grid,
             layer: this.compute.puzzle.layers[this.json.layerId],
         });
-        return renderOrder.map((id) => objects[id]);
+        return objects.values();
     }
 }

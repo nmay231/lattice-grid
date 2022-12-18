@@ -1,10 +1,10 @@
 import {
-    IncompleteHistoryAction,
     Keypress,
     Layer,
     LayerEventEssentials,
     LayerHandlerResult,
     LayerProps,
+    PartialHistoryAction,
     Point,
 } from "../../../types";
 import { errorNotification } from "../../../utils/DOMUtils";
@@ -31,6 +31,21 @@ export type KeyDownEventHandler<LP extends SelectedProps = SelectedProps> = {
 
 export const SELECTION_ID = "Selection";
 const layerId = SELECTION_ID;
+
+const obj = <LP extends SelectedProps>({
+    id,
+    object,
+}: {
+    id: string;
+    object: InternalProps["ObjectState"] | null;
+}): PartialHistoryAction<LP> => ({
+    id,
+    layerId,
+    object,
+    batchId: "ignore",
+    storageMode: "question",
+});
+export const _selectionObjMaker = obj; // For testing.
 
 export const handleEventsSelection = <LP extends SelectedProps>(
     layer: Layer<LP> & KeyDownEventHandler<LP>,
@@ -73,43 +88,34 @@ export const handleEventsSelection = <LP extends SelectedProps>(
     layer.handleEvent = (event) => {
         const { grid, storage, tempStorage } = event;
         const internal = storage.getStored<InternalProps>({ grid, layer: { id: layerId } });
-        let history: IncompleteHistoryAction<LP, InternalProps["ObjectState"]>[];
+        let history: PartialHistoryAction<LP, InternalProps["ObjectState"]>[];
 
         switch (event.type) {
             case "cancelAction": {
-                history = internal.renderOrder.map((id) => ({
-                    id,
-                    layerId,
-                    batchId: "ignore" as const,
-                    object: null,
-                }));
+                history = internal.objects.keys().map((id) => obj({ id, object: null }));
                 return { discontinueInput: true, history };
             }
             case "delete":
             case "keyDown": {
                 if (event.keypress === "ctrl-a") {
-                    history = grid.getAllPoints("cells").map((id) => ({
-                        id,
-                        // layerId,
-                        batchId: "ignore" as const,
-                        object: { state: 1 },
-                    }));
+                    history = grid
+                        .getAllPoints("cells")
+                        .map((id) => obj({ id, object: { state: 1 } }));
                     return {
                         history,
                     };
                 } else if (event.keypress === "ctrl-i") {
-                    history = grid.getAllPoints("cells").map((id) => ({
-                        id,
-                        layerId,
-                        batchId: "ignore" as const,
-                        object: id in internal.objects ? null : { state: 1 },
-                    }));
+                    history = grid
+                        .getAllPoints("cells")
+                        .map((id) =>
+                            obj({ id, object: internal.objects.has(id) ? null : { state: 1 } }),
+                        );
                     return {
                         history,
                     };
                 }
 
-                const actions = layer.handleKeyDown({ ...event, points: internal.renderOrder });
+                const actions = layer.handleKeyDown({ ...event, points: internal.objects.keys() });
                 const batchId = storage.getNewBatchId();
 
                 return {
@@ -133,51 +139,31 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                         const id = ids[0];
                         if (id in internal.objects) {
                             tempStorage.targetState = null;
-                            history = [
-                                {
-                                    id,
-                                    layerId,
-                                    batchId: "ignore" as const,
-                                    object: null,
-                                },
-                            ];
+                            history = [obj({ id, object: null })];
                         } else {
                             internal.extra.groupNumber += 1;
                             tempStorage.targetState = internal.extra.groupNumber;
-                            history = [
-                                {
-                                    id,
-                                    layerId,
-                                    batchId: "ignore" as const,
-                                    object: { state: internal.extra.groupNumber },
-                                },
-                            ];
+                            history = [obj({ id, object: { state: internal.extra.groupNumber } })];
                         }
                     } else if (tempStorage.targetState === null) {
                         history = ids
                             .filter((id) => id in internal.objects)
-                            .map((id) => ({
-                                id,
-                                layerId,
-                                batchId: "ignore" as const,
-                                object: null,
-                            }));
+                            .map((id) => obj({ id, object: null }));
                     } else {
-                        const groupsToMerge = new Set(ids.map((id) => internal.objects[id]?.state));
+                        const groupsToMerge = new Set(
+                            ids.map((id) => internal.objects.get(id)?.state),
+                        );
                         const allIds = ids
                             .filter((id) => !(id in internal.objects))
                             .concat(
-                                internal.renderOrder.filter((id) =>
-                                    groupsToMerge.has(internal.objects[id].state),
-                                ),
+                                internal.objects
+                                    .keys()
+                                    .filter((id) =>
+                                        groupsToMerge.has(internal.objects.get(id).state),
+                                    ),
                             );
                         const state = tempStorage.targetState;
-                        history = allIds.map((id) => ({
-                            id,
-                            layerId,
-                            batchId: "ignore" as const,
-                            object: { state },
-                        }));
+                        history = allIds.map((id) => obj({ id, object: { state } }));
                     }
                 } else {
                     const removeOld = tempStorage.targetState === undefined;
@@ -187,15 +173,10 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                     history = [];
 
                     if (removeOld) {
-                        const oldIds = internal.renderOrder;
+                        const oldIds = internal.objects.keys();
                         history = oldIds
                             .filter((toDelete) => ids.indexOf(toDelete) === -1)
-                            .map((toDelete) => ({
-                                id: toDelete,
-                                layerId,
-                                batchId: "ignore" as const,
-                                object: null,
-                            }));
+                            .map((toDelete) => obj({ id: toDelete, object: null }));
 
                         if (oldIds.length === 1 && oldIds[0] === ids[0]) {
                             tempStorage.removeSingle = true;
@@ -203,14 +184,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                     }
 
                     const state = internal.extra.groupNumber;
-                    history.push(
-                        ...ids.map((id) => ({
-                            id,
-                            layerId,
-                            batchId: "ignore" as const,
-                            object: { state },
-                        })),
-                    );
+                    history.push(...ids.map((id) => obj({ id, object: { state } })));
                 }
 
                 return { history };
@@ -219,41 +193,25 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                 if (tempStorage.removeSingle) {
                     return {
                         discontinueInput: true,
-                        history: [
-                            {
-                                id: internal.renderOrder[0],
-                                layerId,
-                                batchId: "ignore" as const,
-                                object: null,
-                            },
-                        ],
+                        history: [obj({ id: internal.objects.keys()[0], object: null })],
                     };
                 }
                 return { discontinueInput: true };
             }
             case "undoRedo": {
-                const newIds = event.actions.map(({ id }) => id);
+                const newIds = event.actions.map(({ objectId: id }) => id);
                 // Clear old selection
-                const history: IncompleteHistoryAction[] = internal.renderOrder
+                const history: PartialHistoryAction[] = internal.objects
+                    .keys()
                     // TODO: This doesn't account for actions that do not apply to external layer. Do I need to fix?
                     .filter((oldId) => newIds.indexOf(oldId) === -1)
-                    .map((oldId) => ({
-                        id: oldId,
-                        layerId,
-                        batchId: "ignore" as const,
-                        object: null,
-                    }));
+                    .map((oldId) => obj({ id: oldId, object: null }));
 
                 internal.extra.groupNumber = 2;
                 // Select the objects being modified in the undo/redo actions
                 history.push(
-                    ...newIds.map((id) => ({
-                        id,
-                        layerId,
-                        batchId: "ignore" as const,
-                        // TODO: This implicitly removes group information (b/c state=2). However, it seems really difficult to resolve unless selections are kept in history, but that opens up a whole can of worms.
-                        object: { state: 2 },
-                    })),
+                    // TODO: This implicitly removes group information (b/c state=2). However, it seems really difficult to resolve unless selections are kept in history, but that opens up a whole can of worms.
+                    ...newIds.map((id) => obj({ id, object: { state: 2 } })),
                 );
                 return { history, discontinueInput: true };
             }
@@ -271,8 +229,8 @@ export const handleEventsSelection = <LP extends SelectedProps>(
     layer.getOverlayBlits = ({ grid, storage }) => {
         // TODO: Selection can be made by multiple layers, but not all layers support the same cells/corners selection. In the future, I need to filter the points by the type of points selectable by the current layer.
         const stored = storage.getStored<InternalProps>({ grid, layer: { id: layerId } });
-        const points = stored.renderOrder.filter((key) => stored.objects[key].state);
-        const states = points.map((id) => stored.objects[id].state);
+        const points = stored.objects.keys().filter((key) => stored.objects.get(key).state);
+        const states = points.map((id) => stored.objects.get(id).state);
 
         const blits: Record<string, any> = {};
         if (points.length) {

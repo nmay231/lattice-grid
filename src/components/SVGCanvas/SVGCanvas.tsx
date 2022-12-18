@@ -5,7 +5,7 @@ import { blitsAtom } from "../../atoms/blits";
 import { canvasSizeAtom } from "../../atoms/canvasSize";
 import { useLayers } from "../../atoms/layers";
 import { usePuzzle } from "../../atoms/puzzle";
-import { NeedsUpdating } from "../../types";
+import { BlitGroup, Layer, NeedsUpdating, StorageMode } from "../../types";
 import { errorNotification } from "../../utils/DOMUtils";
 import { Line } from "./Line";
 import { Polygon } from "./Polygon";
@@ -17,6 +17,28 @@ const blitters = {
     line: Line,
     text: Text,
 } as const;
+
+const blitList = ({
+    groups,
+    layerId,
+    storageMode,
+}: {
+    groups: BlitGroup[];
+    layerId: Layer["id"];
+    storageMode: StorageMode;
+}) => {
+    return groups.map((group) => {
+        const Blitter = blitters[group.blitter];
+        return (
+            <Blitter
+                blits={group.blits as NeedsUpdating}
+                // I was hoping typescript would be smarter...
+                style={group.style as NeedsUpdating}
+                key={`${layerId}-${storageMode}-${group.id}`}
+            />
+        );
+    });
+};
 
 export const SVGCanvas = () => {
     const controls = usePuzzle().controls;
@@ -54,20 +76,20 @@ export const SVGCanvas = () => {
             >
                 <div className={styling.innerContainer} {...controls.eventListeners}>
                     <svg viewBox={`${minX} ${minY} ${width} ${height}`}>
-                        {snap.order.flatMap(
-                            (id) =>
-                                blitGroups[id]?.map((group) => {
-                                    const Blitter = blitters[group.blitter];
-                                    return (
-                                        <Blitter
-                                            blits={group.blits as NeedsUpdating}
-                                            // I was hoping typescript would be smarter...
-                                            style={group.style as NeedsUpdating}
-                                            key={id + group.id}
-                                        />
-                                    );
-                                }) || [],
-                        )}
+                        {snap.order.flatMap((id) => {
+                            // TODO: Allow question and answer to be reordered. Also fix this monstrosity.
+                            const question = blitList({
+                                groups: blitGroups[`${id}-question`] || [],
+                                layerId: id,
+                                storageMode: "question",
+                            });
+                            const answer = blitList({
+                                groups: blitGroups[`${id}-answer`] || [],
+                                layerId: id,
+                                storageMode: "answer",
+                            });
+                            return question.concat(answer);
+                        })}
                     </svg>
                 </div>
             </div>
