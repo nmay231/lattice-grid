@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { RouteProps, useHistory } from "react-router-dom";
-import { usePuzzle } from "../atoms/puzzle";
 import { importPuzzle } from "../components/ImportExportModal/ImportExportModal";
+import { usePuzzle } from "../state/puzzle";
 
 export const RedirectHome: React.FC<RouteProps> = ({ location }) => {
     const history = useHistory();

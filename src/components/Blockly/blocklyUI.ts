@@ -1,6 +1,6 @@
-import { Layers } from "../../atoms/layers";
 import { UserCodeJSON } from "../../logic/userComputation/codeBlocks";
 import { DEFAULT_ALIAS_NAME } from "../../logic/userComputation/utils";
+import { Layers } from "../../state/layers";
 import { Blockly } from "../../utils/Blockly";
 
 // TODO: this.setTooltip("") and other helpful things like colour and such

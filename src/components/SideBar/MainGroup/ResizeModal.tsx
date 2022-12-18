@@ -2,8 +2,8 @@ import { Button, Modal, Paper } from "@mantine/core";
 import { atom, useAtom } from "jotai";
 import { useEffect, useMemo } from "react";
 import { IoIosArrowDown, IoIosArrowUp } from "react-icons/io";
-import { canvasSizeAtom } from "../../../atoms/canvasSize";
-import { usePuzzle } from "../../../atoms/puzzle";
+import { canvasSizeAtom } from "../../../state/canvasSize";
+import { usePuzzle } from "../../../state/puzzle";
 import { ReactComponent as SquareGridIcon } from "./SquareGridIcon.svg";
 
 export const resizeModalAtom = atom(false);

@@ -2,11 +2,11 @@ import { Button, Drawer, Grid, Text } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { useAtom, useSetAtom } from "jotai";
 import React, { useEffect, useRef, useState } from "react";
-import { modifiableAtom } from "../../atoms/modifiableAtom";
-import { usePuzzle } from "../../atoms/puzzle";
 import { blocklyToolbox } from "../../logic/userComputation/codeBlocks";
 import { ComputeManager } from "../../logic/userComputation/ComputeManager";
 import { addAliasCategoryToToolbox } from "../../logic/userComputation/utils";
+import { modifiableAtom } from "../../state/modifiableAtom";
+import { usePuzzle } from "../../state/puzzle";
 import { Blockly } from "../../utils/Blockly";
 import { codeGen } from "./customCodeGen";
 

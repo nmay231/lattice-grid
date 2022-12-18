@@ -1,4 +1,4 @@
-import { OVERLAY_LAYER_ID } from "../../atoms/blits";
+import { OVERLAY_LAYER_ID } from "../../state/blits";
 import { Layer, LayerClass, LayerProps } from "../../types";
 import { BaseLayer, methodNotImplemented } from "./baseLayer";
 

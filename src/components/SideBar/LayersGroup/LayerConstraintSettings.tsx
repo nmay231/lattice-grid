@@ -2,10 +2,10 @@ import { useAtom } from "jotai";
 import { isEqual } from "lodash";
 import { useEffect } from "react";
 import { useSnapshot } from "valtio";
-import { constraintSettingsAtom } from "../../../atoms/constraintSettings";
-import { useLayers } from "../../../atoms/layers";
-import { usePuzzle } from "../../../atoms/puzzle";
 import { availableLayers } from "../../../logic/layers";
+import { constraintSettingsAtom } from "../../../state/constraintSettings";
+import { useLayers } from "../../../state/layers";
+import { usePuzzle } from "../../../state/puzzle";
 import { blurActiveElement } from "../../../utils/DOMUtils";
 import { JsonFormsWrapper } from "../../JsonFormsWrapper";
 

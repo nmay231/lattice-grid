@@ -1,6 +1,6 @@
 import { SegmentedControl } from "@mantine/core";
 import { useSnapshot } from "valtio";
-import { usePuzzle } from "../../../atoms/puzzle";
+import { usePuzzle } from "../../../state/puzzle";
 import { EditMode } from "../../../types";
 
 export const PuzzleModeToggle = () => {

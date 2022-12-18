@@ -1,10 +1,10 @@
 import { useAtomValue } from "jotai";
 import { useEffect, useRef } from "react";
 import { useSnapshot } from "valtio";
-import { blitsAtom } from "../../atoms/blits";
-import { canvasSizeAtom } from "../../atoms/canvasSize";
-import { useLayers } from "../../atoms/layers";
-import { usePuzzle } from "../../atoms/puzzle";
+import { blitsAtom } from "../../state/blits";
+import { canvasSizeAtom } from "../../state/canvasSize";
+import { useLayers } from "../../state/layers";
+import { usePuzzle } from "../../state/puzzle";
 import { BlitGroup, Layer, NeedsUpdating, StorageMode } from "../../types";
 import { errorNotification } from "../../utils/DOMUtils";
 import { Line } from "./Line";

@@ -1,8 +1,8 @@
 import { proxy } from "valtio";
-import { getBlitGroups, OVERLAY_LAYER_ID, setBlitGroups } from "../atoms/blits";
-import { setCanvasSize } from "../atoms/canvasSize";
-import { Layers } from "../atoms/layers";
-import { getSettings } from "../atoms/settings";
+import { getBlitGroups, OVERLAY_LAYER_ID, setBlitGroups } from "../state/blits";
+import { setCanvasSize } from "../state/canvasSize";
+import { Layers } from "../state/layers";
+import { getSettings } from "../state/settings";
 import {
     EditMode,
     Grid,

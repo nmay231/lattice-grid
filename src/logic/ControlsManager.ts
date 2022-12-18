@@ -1,8 +1,8 @@
 import { clamp } from "lodash";
-import { getCanvasSize, setCanvasSize } from "../atoms/canvasSize";
-import { Layers } from "../atoms/layers";
-import { getSettings } from "../atoms/settings";
 import { blocklyModalIsOpen, setBlocklyModalOpen } from "../components/Blockly/BlocklyModal";
+import { getCanvasSize, setCanvasSize } from "../state/canvasSize";
+import { Layers } from "../state/layers";
+import { getSettings } from "../state/settings";
 import {
     CleanedDOMEvent,
     Layer,

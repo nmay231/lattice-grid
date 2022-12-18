@@ -1,4 +1,4 @@
-import { getSettings } from "../../atoms/settings";
+import { getSettings } from "../../state/settings";
 import { Grid, Point, PointType, Vector } from "../../types";
 import { errorNotification } from "../../utils/DOMUtils";
 import { euclidean, hopStraight } from "../algorithms/hopStraight";

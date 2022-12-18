@@ -1,7 +1,7 @@
 import { Button, Center, Group, Stack } from "@mantine/core";
 import { useSetAtom } from "jotai";
 import { Link } from "react-router-dom";
-import { usePuzzle } from "../../../atoms/puzzle";
+import { usePuzzle } from "../../../state/puzzle";
 import { blurActiveElement } from "../../../utils/DOMUtils";
 import { ImportExportAtom } from "../../ImportExportModal/ImportExportModal";
 import { Group as Collapse } from "../Group";

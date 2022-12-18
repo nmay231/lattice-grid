@@ -1,4 +1,3 @@
-import type { initialSettings } from "./atoms/settings";
 import type { LineBlits } from "./components/SVGCanvas/Line";
 import type { PolygonBlits } from "./components/SVGCanvas/Polygon";
 import type { TextBlits } from "./components/SVGCanvas/Text";
@@ -7,6 +6,7 @@ import type { availableLayers } from "./logic/layers";
 import type { PuzzleManager } from "./logic/PuzzleManager";
 import type { StorageManager } from "./logic/StorageManager";
 import type { UserCodeJSON } from "./logic/userComputation/codeBlocks";
+import type { initialSettings } from "./state/settings";
 
 // #region - Compilation
 export type PuzzleError = {

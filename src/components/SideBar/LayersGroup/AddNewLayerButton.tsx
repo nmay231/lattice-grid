@@ -1,7 +1,7 @@
 import { Select } from "@mantine/core";
 import { useState } from "react";
-import { usePuzzle } from "../../../atoms/puzzle";
 import { availableLayers } from "../../../logic/layers";
+import { usePuzzle } from "../../../state/puzzle";
 import { blurActiveElement } from "../../../utils/DOMUtils";
 import { smartSort } from "../../../utils/stringUtils";
 

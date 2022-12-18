@@ -14,8 +14,8 @@ import {
 } from "@dnd-kit/sortable";
 import { IoMdCheckmark, IoMdClose } from "react-icons/io";
 import { useSnapshot } from "valtio";
-import { useLayers } from "../../../atoms/layers";
-import { usePuzzle } from "../../../atoms/puzzle";
+import { useLayers } from "../../../state/layers";
+import { usePuzzle } from "../../../state/puzzle";
 import { blurActiveElement } from "../../../utils/DOMUtils";
 import { SortableItem } from "../../SortableItem";
 import styling from "./LayerList.module.css";

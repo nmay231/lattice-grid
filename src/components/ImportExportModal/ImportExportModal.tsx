@@ -4,9 +4,9 @@ import { atom, useAtom } from "jotai";
 import { cloneDeep } from "lodash";
 import { deflate, inflate } from "pako";
 import { useMemo, useRef, useState } from "react";
-import { usePuzzle } from "../../atoms/puzzle";
 import { availableLayers } from "../../logic/layers";
 import { PuzzleManager } from "../../logic/PuzzleManager";
+import { usePuzzle } from "../../state/puzzle";
 import { errorNotification } from "../../utils/DOMUtils";
 
 const layersAlwaysPresent: (keyof typeof availableLayers)[] = ["CellOutlineLayer", "OverlayLayer"];
