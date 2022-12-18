@@ -56,7 +56,7 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         getBatchId.mockReturnValueOnce(1);
         let result = layer.handleEvent({ ...fakeEvent, points });
         expect(result.history).toEqual<HistoryType>([
-            { batchId: 1, id: "a", object: { id: "a", points: ["a"], state: null } },
+            { batchId: 1, id: "a", object: { points: ["a"], state: null } },
         ]);
         expect(result.discontinueInput).toBeFalsy();
 
@@ -71,9 +71,9 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         const layer = getFakeLayer();
         applySettings(layer);
 
-        const stored = LayerStorage.fromObjects({
+        const stored = LayerStorage.fromObjects<MultiPointLayerProps>({
             ids: ["a"],
-            objs: [{ id: "a", points: ["a"], state: null }],
+            objs: [{ points: ["a"], state: null }],
         });
         const selectPoints = vi.fn();
         const getBatchId = vi.fn();
@@ -95,7 +95,7 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         getBatchId.mockReturnValueOnce(1);
         let result = layer.handleEvent({ ...fakeEvent, points });
         expect(result.history).toEqual<HistoryType>([
-            { batchId: 1, id: "b", object: { id: "b", points: ["b"], state: null } },
+            { batchId: 1, id: "b", object: { points: ["b"], state: null } },
         ]);
         expect(result.discontinueInput).toBeFalsy();
         stored.objects.set("b", result.history?.[0].object);
@@ -129,7 +129,7 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         getBatchId.mockReturnValueOnce(1);
         let result = layer.handleEvent({ ...fakeEvent, points });
         expect(result.history).toEqual<HistoryType>([
-            { batchId: 1, id: "b", object: { id: "b", points: ["b"], state: null } },
+            { batchId: 1, id: "b", object: { points: ["b"], state: null } },
         ]);
         expect(result.discontinueInput).toBeFalsy();
 
@@ -144,7 +144,7 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         result = layer.handleEvent({ ...fakeEvent, points });
         points = [...points].sort(smartSort);
         expect(result.history).toEqual<HistoryType>([
-            { batchId: 1, id: "b", object: { id: "b", points, state: null } },
+            { batchId: 1, id: "b", object: { points, state: null } },
         ]);
         expect(result.discontinueInput).toBeFalsy();
 
@@ -159,7 +159,7 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         result = layer.handleEvent({ ...fakeEvent, points });
         points = ["b", "c"];
         expect(result.history).toEqual<HistoryType>([
-            { batchId: 1, id: "b", object: { id: "b", points, state: null } },
+            { batchId: 1, id: "b", object: { points, state: null } },
         ]);
         expect(result.discontinueInput).toBeFalsy();
 
@@ -171,7 +171,7 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
             {
                 batchId: 1,
                 id: "b;c",
-                object: { id: "b;c", points, state: null },
+                object: { points, state: null },
             },
         ]);
         expect(result.discontinueInput).toBeTruthy();
@@ -183,7 +183,7 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
 
         const stored = LayerStorage.fromObjects<MultiPointLayerProps>({
             ids: ["a;b"],
-            objs: [{ id: "a;b", points: ["a", "b"], state: null }],
+            objs: [{ points: ["a", "b"], state: null }],
         });
         stored.extra = { currentObjectId: "a;b" };
         const selectPoints = vi.fn();
@@ -207,7 +207,7 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
             {
                 batchId: 1,
                 id: "a;b",
-                object: { id: "a;b", points: ["a", "b"], state: null },
+                object: { points: ["a", "b"], state: null },
             },
         ]);
         expect(result.discontinueInput).toBeFalsy();
@@ -218,7 +218,7 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
             {
                 batchId: 1,
                 id: "a",
-                object: { id: "a", points: ["a"], state: null },
+                object: { points: ["a"], state: null },
             },
         ]);
         expect(result.discontinueInput).toBeTruthy();
@@ -232,7 +232,7 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
 
         const stored = LayerStorage.fromObjects<MultiPointLayerProps>({
             ids: ["a;b"],
-            objs: [{ id: "a;b", points: ["a", "b"], state: null }],
+            objs: [{ points: ["a", "b"], state: null }],
         });
         stored.extra = { currentObjectId: "a;b" };
         const selectPoints = vi.fn();
@@ -275,7 +275,7 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
                 batchId: 1,
                 // Point b should remain even though the event started and ended on it
                 id: "a;b;c",
-                object: { id: "a;b;c", points: ["a", "b", "c"], state: null },
+                object: { points: ["a", "b", "c"], state: null },
             },
         ]);
         expect(result.discontinueInput).toBeTruthy();

@@ -107,7 +107,7 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
 
             const style = id === stored.extra.currentObjectId ? { stroke: "#33F" } : undefined;
             for (const key in cageOutline.svgPolygons) {
-                cageBlits[`${object.id}-${key}`] = {
+                cageBlits[`${id}-${key}`] = {
                     style,
                     points: cageOutline.svgPolygons[key],
                 };

@@ -13,7 +13,7 @@ import { errorNotification } from "../../../utils/DOMUtils";
 import { smartSort } from "../../../utils/stringUtils";
 
 export interface MultiPointLayerProps extends LayerProps {
-    ObjectState: { id: ObjectId; points: Point[]; state: unknown };
+    ObjectState: { points: Point[]; state: unknown };
     ExtraLayerStorageProps: { currentObjectId: ObjectId };
     TempStorage: {
         previousPoint: Point;
@@ -143,7 +143,7 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
                         {
                             id: startPoint,
                             batchId,
-                            object: { id: startPoint, points: [startPoint], state: null },
+                            object: { points: [startPoint], state: null },
                         },
                     ],
                 };
@@ -212,7 +212,6 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
                 }
 
                 stored.extra.currentObjectId = newId;
-                objectCopy.id = newId;
                 return {
                     discontinueInput: true,
                     history: [
