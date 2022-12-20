@@ -342,6 +342,7 @@ export class SquareGrid implements Grid {
                     if (connections[nextType] !== true) {
                         // TODO
                         throw errorNotification({
+                            error: null,
                             message: "Params for svgPoint are not supported!",
                             forever: true,
                         });
@@ -358,6 +359,7 @@ export class SquareGrid implements Grid {
                     if (connections[nextType] !== true) {
                         // TODO
                         throw errorNotification({
+                            error: null,
                             message: "Params for svgOutline are not supported!",
                             forever: true,
                         });
@@ -399,6 +401,7 @@ export class SquareGrid implements Grid {
 
                     if (typeof direction !== "string" || direction.length !== 2) {
                         throw errorNotification({
+                            error: null,
                             message: `param direction required to be string of length two instead of "${direction}"`,
                             forever: true,
                         });
@@ -485,7 +488,7 @@ export class SquareGrid implements Grid {
                     break;
                 }
                 default:
-                    throw errorNotification({ message: "", forever: true });
+                    throw errorNotification({ error: null, message: "", forever: true });
             }
         }
     }
@@ -567,6 +570,7 @@ export class SquareGrid implements Grid {
             }
             if (maxIteration <= 0) {
                 throw errorNotification({
+                    error: null,
                     message: "Reached iteration limit in shrinkwrap inner loop",
                     forever: true,
                 });
@@ -602,6 +606,7 @@ export class SquareGrid implements Grid {
         }
         if (maxIteration <= 0) {
             throw errorNotification({
+                error: null,
                 message: "Reached iteration limit in shrinkwrap outer loop",
                 forever: true,
             });
@@ -653,7 +658,11 @@ export class SquareGrid implements Grid {
             }
             return arr;
         } else {
-            throw errorNotification({ message: `Unrecognized point type=${type}`, forever: true });
+            throw errorNotification({
+                error: null,
+                message: `Unrecognized point type=${type}`,
+                forever: true,
+            });
         }
     }
 

@@ -268,8 +268,8 @@ export class ControlsManager {
         rawEvent.preventDefault();
 
         if (rawEvent.deltaMode !== rawEvent.DOM_DELTA_PIXEL)
-            // TODO: How to show only once?
             errorNotification({
+                error: null,
                 title: "I don't know what WheelEvent.deltaMode means...",
                 message:
                     "FYI, scaling the grid with scrolling might be buggy. Submit a bug report if you get this error.",

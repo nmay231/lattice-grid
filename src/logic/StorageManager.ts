@@ -67,6 +67,7 @@ export class StorageManager {
                 this.storageReducers.reduce((prev, reduce) => reduce(puzzle, prev), action);
         } else {
             errorNotification({
+                error: null,
                 message: `Storage: Failed to remove a reducer ${formatAnything(
                     reducer,
                 )}. Reducer was never added or already removed!`,

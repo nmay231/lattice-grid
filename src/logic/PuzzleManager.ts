@@ -146,6 +146,7 @@ export class PuzzleManager {
             }
         } else {
             throw errorNotification({
+                error: null,
                 message: `Failed to render to canvas: ${formatAnything(change)}`,
             });
         }

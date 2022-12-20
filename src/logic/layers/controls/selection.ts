@@ -217,6 +217,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
             }
             default: {
                 throw errorNotification({
+                    error: null,
                     message: `Unknown event.type in selected layer ${layer.displayName}: ${
                         (event as any).type
                     }`,

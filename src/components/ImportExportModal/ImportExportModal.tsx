@@ -7,6 +7,7 @@ import { proxy, useSnapshot } from "valtio";
 import { availableLayers } from "../../logic/layers";
 import { PuzzleManager } from "../../logic/PuzzleManager";
 import { usePuzzle } from "../../state/puzzle";
+import { NeedsUpdating } from "../../types";
 import { errorNotification } from "../../utils/DOMUtils";
 
 const layersAlwaysPresent: (keyof typeof availableLayers)[] = ["CellOutlineLayer", "OverlayLayer"];
@@ -20,6 +21,7 @@ export const importPuzzle = (puzzle: PuzzleManager, text: string) => {
         const puzzleData = JSON.parse(inflate(Buffer.from(text, "base64"), { to: "string" }));
         if (puzzleData?.version !== "alpha-0")
             return errorNotification({
+                error: null,
                 title: "Failed to parse",
                 message: "malformed puzzle string",
             });
@@ -35,11 +37,11 @@ export const importPuzzle = (puzzle: PuzzleManager, text: string) => {
         }
         puzzle.storage.objects = puzzleData.objects;
         puzzle.renderChange({ type: "draw", layerIds: "all" });
-    } catch (e) {
-        // Really nailing these error messages
-        errorNotification({
+    } catch (error: NeedsUpdating) {
+        throw errorNotification({
+            error,
             title: "Failed to parse",
-            message: (e as any).message || "Bad puzzle data or unknown error",
+            message: "Bad puzzle data or unknown error",
         });
     }
 };
@@ -72,7 +74,7 @@ export const ImportExportModal = () => {
     }, [puzzle, modalSnap.modal]);
 
     const noRefSet = () => {
-        throw errorNotification({ message: "Ref not set in import/export textarea" });
+        throw errorNotification({ error: null, message: "Ref not set in import/export textarea" });
     };
 
     const handleImport = () => {
@@ -91,9 +93,10 @@ export const ImportExportModal = () => {
                 textRef.current.value = text;
                 handleImport();
             })
-            .catch(() => {
+            .catch((error) => {
                 setImportAttempted(true);
                 errorNotification({
+                    error,
                     title: "Failed to paste",
                     message:
                         "You have prevented us from pasting using this button. You can still manually paste into the text field above and click Load.",

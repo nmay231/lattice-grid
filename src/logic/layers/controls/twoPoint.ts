@@ -28,6 +28,7 @@ export const handleEventsCurrentSetting = <LP extends TwoPointProps>(
 ) => {
     if (!pointTypes?.length || !deltas?.length) {
         throw errorNotification({
+            error: null,
             message: "twoPoint currentSetting was not provided required parameters",
             forever: true,
         });

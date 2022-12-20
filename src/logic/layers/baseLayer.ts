@@ -16,6 +16,7 @@ import { PuzzleManager } from "../PuzzleManager";
 export const methodNotImplemented = ({ name }: { name: string }) => {
     return (): any => {
         throw errorNotification({
+            error: null,
             message: `Method: ${name} called before implementing!`,
             forever: true,
         });
