@@ -33,7 +33,7 @@ export const LayerList = () => {
 
     const handleDragEnd = ({ active, over }: DragEndEvent) => {
         if (over?.id && active.id !== over.id) {
-            Layers.shuffleItemOnto(active, over);
+            Layers.shuffleItemOnto(active as { id: string }, over as { id: string });
             puzzle.renderChange({ type: "reorder" });
         }
         blurActiveElement();
