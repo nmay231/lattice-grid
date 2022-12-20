@@ -1,4 +1,4 @@
-import { atom } from "jotai";
+import { proxy } from "valtio";
 import { UnknownObject } from "../types";
 
-export const constraintSettingsAtom = atom<null | UnknownObject>(null);
+export const constraintSettingsProxy = proxy({ settings: null as null | UnknownObject });

@@ -1,8 +1,7 @@
-import { useAtomValue } from "jotai";
 import { useEffect, useRef } from "react";
 import { useSnapshot } from "valtio";
-import { blitsAtom } from "../../state/blits";
-import { canvasSizeAtom } from "../../state/canvasSize";
+import { blitGroupsProxy } from "../../state/blits";
+import { canvasSizeProxy } from "../../state/canvasSize";
 import { useLayers } from "../../state/layers";
 import { usePuzzle } from "../../state/puzzle";
 import { BlitGroup, Layer, NeedsUpdating, StorageMode } from "../../types";
@@ -42,10 +41,10 @@ const blitList = ({
 
 export const SVGCanvas = () => {
     const controls = usePuzzle().controls;
-    const blitGroups = useAtomValue(blitsAtom);
+    const blitGroupsSnap = useSnapshot(blitGroupsProxy);
     const { Layers } = useLayers();
     const snap = useSnapshot(Layers.state);
-    const { minX, minY, width, height, zoom } = useAtomValue(canvasSizeAtom);
+    const { minX, minY, width, height, zoom } = useSnapshot(canvasSizeProxy);
 
     const scrollArea = useRef<HTMLDivElement>(null);
     useEffect(() => {
@@ -79,12 +78,12 @@ export const SVGCanvas = () => {
                         {snap.order.flatMap((id) => {
                             // TODO: Allow question and answer to be reordered. Also fix this monstrosity.
                             const question = blitList({
-                                groups: blitGroups[`${id}-question`] || [],
+                                groups: blitGroupsSnap[`${id}-question`] || [],
                                 layerId: id,
                                 storageMode: "question",
                             });
                             const answer = blitList({
-                                groups: blitGroups[`${id}-answer`] || [],
+                                groups: blitGroupsSnap[`${id}-answer`] || [],
                                 layerId: id,
                                 storageMode: "answer",
                             });

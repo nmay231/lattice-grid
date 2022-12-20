@@ -1,16 +1,14 @@
 import { Button, Center, Group, Stack } from "@mantine/core";
-import { useSetAtom } from "jotai";
 import { Link } from "react-router-dom";
 import { usePuzzle } from "../../../state/puzzle";
 import { blurActiveElement } from "../../../utils/DOMUtils";
-import { ImportExportAtom } from "../../ImportExportModal/ImportExportModal";
+import { modalProxy } from "../../ImportExportModal/ImportExportModal";
 import { Group as Collapse } from "../Group";
 import { PuzzleModeToggle } from "./PuzzleModeToggle";
 import { ResizeGridButton } from "./ResizeGridButton";
 
 export const MainGroup = () => {
     const puzzle = usePuzzle();
-    const toggleImportExportModal = useSetAtom(ImportExportAtom);
 
     return (
         <Collapse name="Puzzle" expanded>
@@ -18,7 +16,9 @@ export const MainGroup = () => {
                 <Stack>
                     <PuzzleModeToggle />
                     <ResizeGridButton />
-                    <Button onClick={() => toggleImportExportModal(true)}>Import / Export</Button>
+                    <Button onClick={() => (modalProxy.modal = "import-export")}>
+                        Import / Export
+                    </Button>
                     <Button
                         color="red"
                         onClick={() => {

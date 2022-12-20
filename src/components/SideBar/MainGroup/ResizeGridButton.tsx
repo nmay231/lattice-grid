@@ -1,9 +1,6 @@
 import { Button } from "@mantine/core";
-import { useAtom } from "jotai";
-import { resizeModalAtom } from "./ResizeModal";
+import { modalProxy } from "./ResizeModal";
 
 export const ResizeGridButton = () => {
-    const [show, setShow] = useAtom(resizeModalAtom);
-
-    return <Button onClick={() => setShow(!show)}>Resize Grid</Button>;
+    return <Button onClick={() => (modalProxy.modal = "resize-grid")}>Resize Grid</Button>;
 };

@@ -110,10 +110,13 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
         return { history };
     };
 
-    getBlits: INumberLayer["getBlits"] = ({ grid, storage, editMode }) => {
+    getBlits: INumberLayer["getBlits"] = ({ grid, storage, settings }) => {
         const stored = storage.getStored<NumberProps>({ grid, layer: this });
-        const points = stored.objects.keys().filter(bySubset(stored.groups.getGroup(editMode)));
+        const points = stored.objects
+            .keys()
+            .filter(bySubset(stored.groups.getGroup(settings.editMode)));
         const { cells } = grid.getPoints({
+            settings,
             connections: {
                 cells: {
                     svgPoint: true,

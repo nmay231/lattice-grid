@@ -58,6 +58,7 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
     layer.gatherPoints = (event) => {
         const { grid, tempStorage } = event;
         const newPoints = grid.selectPointsWithCursor({
+            settings: event.settings,
             cursor: event.cursor,
             pointTypes,
             deltas,

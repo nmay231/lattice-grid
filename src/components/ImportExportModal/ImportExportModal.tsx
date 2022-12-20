@@ -1,9 +1,9 @@
 import { Box, Button, Center, Divider, Group, Modal, Text, Textarea } from "@mantine/core";
 import { useClipboard } from "@mantine/hooks";
-import { atom, useAtom } from "jotai";
 import { cloneDeep } from "lodash";
 import { deflate, inflate } from "pako";
 import { useMemo, useRef, useState } from "react";
+import { proxy, useSnapshot } from "valtio";
 import { availableLayers } from "../../logic/layers";
 import { PuzzleManager } from "../../logic/PuzzleManager";
 import { usePuzzle } from "../../state/puzzle";
@@ -44,18 +44,18 @@ export const importPuzzle = (puzzle: PuzzleManager, text: string) => {
     }
 };
 
-export const ImportExportAtom = atom(false);
+export const modalProxy = proxy({ modal: null as "import-export" | null });
 
 export const ImportExportModal = () => {
     const puzzle = usePuzzle();
     const [importAttempted, setImportAttempted] = useState(false);
     const textRef = useRef<HTMLTextAreaElement>(null);
-    const [opened, setOpened] = useAtom(ImportExportAtom);
+    const modalSnap = useSnapshot(modalProxy);
 
     const { copied, copy, error: copyError } = useClipboard({ timeout: 3000 });
 
     const puzzleString = useMemo(() => {
-        if (opened) {
+        if (modalProxy.modal === "import-export") {
             const objects = cloneDeep(puzzle.storage.objects);
             const grid = objects[puzzle.grid.id];
             for (const layerId of layersAlwaysPresent) {
@@ -68,7 +68,8 @@ export const ImportExportModal = () => {
             ).toString("base64");
             return `${window.location.origin}/?${string}`;
         }
-    }, [puzzle, opened]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [puzzle, modalSnap.modal]);
 
     const noRefSet = () => {
         throw errorNotification({ message: "Ref not set in import/export textarea" });
@@ -77,7 +78,7 @@ export const ImportExportModal = () => {
     const handleImport = () => {
         if (!textRef.current) return noRefSet();
         importPuzzle(puzzle, textRef.current.value);
-        setOpened(false);
+        modalProxy.modal = null;
     };
 
     const handlePaste = () => {
@@ -102,9 +103,9 @@ export const ImportExportModal = () => {
 
     return (
         <Modal
-            opened={opened}
+            opened={modalSnap.modal === "import-export"}
             title="Import / Export Puzzle"
-            onClose={() => setOpened(false)}
+            onClose={() => (modalProxy.modal = null)}
             size="lg"
             {...puzzle.controls.stopPropagation}
         >

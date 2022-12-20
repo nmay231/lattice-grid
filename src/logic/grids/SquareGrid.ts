@@ -1,7 +1,7 @@
-import { getSettings } from "../../state/settings";
 import { Grid, Point, PointType, Vector } from "../../types";
 import { errorNotification } from "../../utils/DOMUtils";
 import { euclidean, hopStraight } from "../algorithms/hopStraight";
+import { PuzzleManager } from "../PuzzleManager";
 
 export type SquareGridParams = {
     type: "square";
@@ -46,15 +46,15 @@ export class SquareGrid implements Grid {
         this.y0 = params?.minY ?? 0;
     }
 
-    getCanvasRequirements() {
-        const { cellSize, borderPadding } = getSettings();
+    getCanvasRequirements: Grid["getCanvasRequirements"] = ({ settings }) => {
+        const { cellSize, borderPadding } = settings;
         return {
             minX: this.x0 * cellSize - borderPadding,
             minY: this.y0 * cellSize - borderPadding,
             width: this.width * cellSize + 2 * borderPadding,
             height: this.height * cellSize + 2 * borderPadding,
         };
-    }
+    };
 
     getCanvasResizers() {
         // TODO: introduce corner resizers that resize two sides at the same time.
@@ -100,14 +100,15 @@ export class SquareGrid implements Grid {
         ];
     }
 
-    selectPointsWithCursor({
+    selectPointsWithCursor: Grid["selectPointsWithCursor"] = ({
+        settings,
         cursor,
         pointTypes,
         // TODO: implement deltas as Finite State Machines for more capabilities and better cross-compatibility between grid types
         deltas,
         previousPoint = null,
-    }: Parameters<Grid["selectPointsWithCursor"]>[0]) {
-        const { cellSize } = getSettings();
+    }) => {
+        const { cellSize } = settings;
         const halfCell = cellSize / 2;
 
         cursor.x /= halfCell;
@@ -174,9 +175,10 @@ export class SquareGrid implements Grid {
             maxIteration -= 1;
         }
         return [];
-    }
+    };
 
     getPoints({
+        settings,
         points: stringPoints = [],
         connections,
         includeOutOfBounds = false,
@@ -199,6 +201,7 @@ export class SquareGrid implements Grid {
             }
 
             this._getPoints({
+                settings,
                 pointType,
                 connections: connections[pointType],
                 gridPoints,
@@ -217,6 +220,7 @@ export class SquareGrid implements Grid {
     }
 
     _getPoints({
+        settings,
         pointType,
         connections,
         gridPoints,
@@ -271,6 +275,7 @@ export class SquareGrid implements Grid {
                         }
                     }
                     this._getPoints({
+                        settings,
                         pointType: nextType,
                         connections: connections[nextType],
                         gridPoints: newGridPoints,
@@ -322,6 +327,7 @@ export class SquareGrid implements Grid {
                         }
                     }
                     this._getPoints({
+                        settings,
                         pointType: nextType,
                         connections: connections[nextType],
                         gridPoints: newGridPoints,
@@ -341,7 +347,7 @@ export class SquareGrid implements Grid {
                         });
                     }
 
-                    const { cellSize } = getSettings();
+                    const { cellSize } = settings;
                     const halfCell = cellSize / 2;
                     for (const { point, result } of gridPoints) {
                         result[nextType] = [point.x * halfCell, point.y * halfCell];
@@ -357,7 +363,7 @@ export class SquareGrid implements Grid {
                         });
                     }
 
-                    const { cellSize } = getSettings();
+                    const { cellSize } = settings;
                     const halfCell = cellSize / 2;
                     for (const { point, result } of gridPoints) {
                         result[nextType] = [
@@ -376,6 +382,7 @@ export class SquareGrid implements Grid {
 
                     if (svgPolygons) {
                         result.svgPolygons = this._shrinkwrap({
+                            settings,
                             gridPoints: gridPoints.map(({ point }) => point),
                             inset: svgPolygons.inset ?? 0,
                         });
@@ -454,7 +461,7 @@ export class SquareGrid implements Grid {
                 case "corners->maxRadius":
                 case "edges->maxRadius": {
                     const { shape, size } = connections[nextType];
-                    let radius = getSettings().cellSize / 2;
+                    let radius = settings.cellSize / 2;
 
                     // I'm literally making up these values as I go along...
                     const shapeMap: Record<PointType, Record<string, number>> = {
@@ -483,7 +490,15 @@ export class SquareGrid implements Grid {
         }
     }
 
-    _shrinkwrap({ gridPoints, inset }: { gridPoints: GridPoint[]; inset?: number }) {
+    _shrinkwrap({
+        settings,
+        gridPoints,
+        inset,
+    }: {
+        settings: PuzzleManager["settings"];
+        gridPoints: GridPoint[];
+        inset?: number;
+    }) {
         inset = inset || 0;
         const cellPoints: [number, number][] = [];
         const edgesLeft: Record<string, [number, number]> = {};
@@ -561,7 +576,7 @@ export class SquareGrid implements Grid {
 
             // Convert the edges of the loop to corners and add the inset
             const cornerLoop = [];
-            const { cellSize } = getSettings();
+            const { cellSize } = settings;
             const absInset = Math.abs(inset);
 
             for (let i = 0; i < edgeLoop.length; i++) {

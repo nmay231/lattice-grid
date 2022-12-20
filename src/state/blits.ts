@@ -1,18 +1,8 @@
-import { atom } from "jotai";
+import { proxy } from "valtio";
 import { OverlayLayer } from "../logic/layers/Overlay";
-import { BlitGroup, Layer } from "../types";
-import { modifiableAtom } from "./modifiableAtom";
+import { BlitGroup, Layer, ValtioRef } from "../types";
 
-const {
-    atom: baseAtom,
-    setValue,
-    getValue,
-} = modifiableAtom({} as Record<Layer["id"], BlitGroup[]>);
-
-// Make it read only by not including a setter function
-export const blitsAtom = atom((get) => get(baseAtom));
-export const getBlitGroups = getValue;
-export const setBlitGroups = setValue;
+export const blitGroupsProxy = proxy({} as Record<Layer["id"], ValtioRef<BlitGroup[]>>);
 
 // TODO: Change this to a Symbol in the future?
 export const OVERLAY_LAYER_ID: OverlayLayer["type"] = "OverlayLayer";

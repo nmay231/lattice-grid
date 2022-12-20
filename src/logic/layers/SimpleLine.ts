@@ -113,7 +113,7 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
         return { history: history || undefined };
     };
 
-    getBlits: ISimpleLineLayer["getBlits"] = ({ storage, grid, editMode }) => {
+    getBlits: ISimpleLineLayer["getBlits"] = ({ grid, storage, settings }) => {
         const stored = storage.getStored<SimpleLineProps>({
             grid,
             layer: this,
@@ -121,11 +121,12 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
 
         const renderOrder = stored.objects
             .keys()
-            .filter(bySubset(stored.groups.getGroup(editMode)));
+            .filter(bySubset(stored.groups.getGroup(settings.editMode)));
 
         let allPoints = renderOrder.map((id) => stored.objects.get(id).points).flat();
         allPoints = allPoints.filter((point, index) => index === allPoints.indexOf(point));
         const { [this.settings.pointType]: pointInfo } = grid.getPoints({
+            settings,
             connections: { [this.settings.pointType]: { svgPoint: true } },
             points: allPoints,
         });

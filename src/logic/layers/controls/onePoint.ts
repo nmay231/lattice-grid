@@ -18,8 +18,9 @@ const pointGatherer =
         pointTypes,
         deltas,
     }: CommonArgs): Layer<OnePointProps<ObjectState>>["gatherPoints"] =>
-    ({ grid, cursor, tempStorage }) => {
+    ({ grid, settings, cursor, tempStorage }) => {
         let newPoints = grid.selectPointsWithCursor({
+            settings,
             cursor: cursor,
             pointTypes,
             deltas,

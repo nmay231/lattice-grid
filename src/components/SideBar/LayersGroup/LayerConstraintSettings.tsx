@@ -1,9 +1,8 @@
-import { useAtom } from "jotai";
 import { isEqual } from "lodash";
 import { useEffect } from "react";
 import { useSnapshot } from "valtio";
 import { availableLayers } from "../../../logic/layers";
-import { constraintSettingsAtom } from "../../../state/constraintSettings";
+import { constraintSettingsProxy } from "../../../state/constraintSettings";
 import { useLayers } from "../../../state/layers";
 import { usePuzzle } from "../../../state/puzzle";
 import { blurActiveElement } from "../../../utils/DOMUtils";
@@ -13,27 +12,29 @@ const noSettingsPreset = <i>No settings for this layer</i>;
 
 export const LayerConstraintSettings = () => {
     const puzzle = usePuzzle();
-    const { Layers } = useLayers();
-    const snap = useSnapshot(Layers.state);
-    const id = snap.currentLayerId;
+    const {
+        Layers: { state: layersState },
+    } = useLayers();
+    const layersSnap = useSnapshot(layersState);
+    const id = layersSnap.currentLayerId;
     const layer = id && puzzle.layers[id];
 
-    const [data, setData] = useAtom(constraintSettingsAtom);
+    const settingsSnap = useSnapshot(constraintSettingsProxy);
 
     useEffect(() => {
         if (layer) {
-            setData(layer.rawSettings);
+            constraintSettingsProxy.settings = layer.rawSettings;
         }
-    }, [layer, setData]);
+    }, [layer]);
 
     if (!layer || !id) {
         return <i>Add a layer to get started</i>;
     }
-    if (!data) {
+    if (!settingsSnap.settings) {
         return noSettingsPreset;
     }
 
-    const layerType = snap.layers[id].type;
+    const layerType = layersSnap.layers[id].type;
     const layerClass = availableLayers[layerType as keyof typeof availableLayers];
 
     if (!layerClass.constraints) {
@@ -43,26 +44,26 @@ export const LayerConstraintSettings = () => {
     const { schema, uischemaElements } = layerClass.constraints || {};
     const uischema = { type: "VerticalLayout", elements: uischemaElements };
 
-    const changed = !isEqual(data, layer.rawSettings);
+    const changed = !isEqual(settingsSnap.settings, layer.rawSettings);
 
     const handleSubmit: React.FormEventHandler = (event) => {
         event.preventDefault();
 
-        puzzle.changeLayerSettings(id, data);
+        puzzle.changeLayerSettings(id, constraintSettingsProxy.settings);
 
-        setData({
+        constraintSettingsProxy.settings = {
             // Guarantee that JSONForms didn't remove fields that are not specified in regular settings (e.g. control settings)
             ...layer.rawSettings,
             // Besides, calling setData() is required to trigger a rerender
-            ...data,
-        });
+            ...constraintSettingsProxy.settings,
+        };
 
         puzzle.renderChange({ type: "draw", layerIds: [id] });
         blurActiveElement();
     };
 
     const handleCancel = () => {
-        setData(layer.rawSettings);
+        constraintSettingsProxy.settings = layer.rawSettings;
         blurActiveElement();
     };
 
@@ -71,9 +72,9 @@ export const LayerConstraintSettings = () => {
         <div {...puzzle.controls.stopPropagation}>
             <form action="#" onSubmit={handleSubmit}>
                 <JsonFormsWrapper
-                    data={data}
+                    data={settingsSnap.settings}
                     setData={(newData: any) => {
-                        setData(newData);
+                        constraintSettingsProxy.settings = newData;
                     }}
                     schema={schema}
                     uischema={uischema}

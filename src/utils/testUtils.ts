@@ -29,6 +29,7 @@ export const getEventEssentials = <LP extends LayerProps = LayerProps>(
         } as any as StorageManager,
         tempStorage,
         settings: {
+            editMode: "question",
             borderPadding: 60,
             cellSize: 60,
             actionWindowMs: 600,

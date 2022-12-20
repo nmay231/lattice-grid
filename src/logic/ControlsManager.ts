@@ -1,8 +1,7 @@
 import { clamp } from "lodash";
-import { blocklyModalIsOpen, setBlocklyModalOpen } from "../components/Blockly/BlocklyModal";
-import { getCanvasSize, setCanvasSize } from "../state/canvasSize";
+import { modalProxy } from "../components/Blockly/BlocklyModal";
+import { canvasSizeProxy } from "../state/canvasSize";
 import { Layers } from "../state/layers";
-import { getSettings } from "../state/settings";
 import {
     CleanedDOMEvent,
     Layer,
@@ -72,7 +71,7 @@ export class ControlsManager {
             width: realWidth,
             height: realHeight,
         } = currentTarget.getBoundingClientRect();
-        const { minX, minY, width, height } = this.puzzle.grid.getCanvasRequirements();
+        const { minX, minY, width, height } = this.puzzle.grid.getCanvasRequirements(this.puzzle);
         // These transformations convert dom coordinates to svg coords
         const x = minX + (clientX - left) * (height / realHeight),
             y = minY + (clientY - top) * (width / realWidth);
@@ -90,12 +89,9 @@ export class ControlsManager {
     }
 
     applyLayerEvent(layer: Layer, event: CleanedDOMEvent) {
-        const { grid, storage } = this.puzzle;
         const layerEvent: LayerEvent<LayerProps> = {
+            ...this.puzzle,
             ...event,
-            grid,
-            storage,
-            settings: getSettings(),
             tempStorage: this.tempStorage || {},
         };
 
@@ -118,7 +114,11 @@ export class ControlsManager {
             this.resetControls();
         }
 
-        storage.addToHistory({ puzzle: this.puzzle, layerId: layer.id, actions: history });
+        this.puzzle.storage.addToHistory({
+            puzzle: this.puzzle,
+            layerId: layer.id,
+            actions: history,
+        });
 
         this.puzzle.renderChange({ type: "draw", layerIds: [layer.id] });
     }
@@ -175,7 +175,7 @@ export class ControlsManager {
         }
 
         window.clearTimeout(this.blurCanvasTimeoutId);
-        const timeoutDelay = getSettings().actionWindowMs;
+        const timeoutDelay = this.puzzle.settings.actionWindowMs;
         this.blurCanvasTimeoutId = window.setTimeout(() => {
             const layer = this.getCurrentLayer();
             if (!layer) return;
@@ -201,11 +201,11 @@ export class ControlsManager {
         // TODO: Remove. It's just a temporary convenience
         if (keypress === "ctrl-p") {
             rawEvent.preventDefault();
-            setBlocklyModalOpen((x) => !x);
+            modalProxy.modal = modalProxy.modal === "blockly" ? null : "blockly";
         }
 
         // TODO: Check for when anything in the sidebar is focused
-        if (blocklyModalIsOpen()) return; // Do not preventDefault when the puzzle is not focused
+        if (modalProxy.modal === "blockly") return; // Do not preventDefault when the puzzle is not focused
 
         if (
             // This should be a very small whitelist for which key-strokes are allowed to be blocked
@@ -277,10 +277,10 @@ export class ControlsManager {
             });
 
         const sign = rawEvent.deltaY / (Math.abs(rawEvent.deltaY) || 1);
-        const { zoom, width, ...theRest } = getCanvasSize();
+        const { zoom, width } = canvasSizeProxy;
         // TODO: Eventually scale by the magnitude of deltaY and the size of the grid
         const newZoom = clamp(zoom - sign * 0.2, 0, 1);
-        setCanvasSize({ ...theRest, width, zoom: newZoom });
+        canvasSizeProxy.zoom = newZoom;
 
         const div = rawEvent.currentTarget as HTMLDivElement;
         const conWidth = div.getBoundingClientRect().width;

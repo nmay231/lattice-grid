@@ -1,8 +1,7 @@
-import { proxy } from "valtio";
-import { getBlitGroups, OVERLAY_LAYER_ID, setBlitGroups } from "../state/blits";
-import { setCanvasSize } from "../state/canvasSize";
+import { proxy, ref } from "valtio";
+import { blitGroupsProxy, OVERLAY_LAYER_ID } from "../state/blits";
+import { canvasSizeProxy } from "../state/canvasSize";
 import { Layers } from "../state/layers";
-import { getSettings } from "../state/settings";
 import {
     EditMode,
     Grid,
@@ -36,6 +35,10 @@ export class PuzzleManager {
     settings = proxy({
         editMode: "question" as EditMode,
         // TODO: pageMode: "setting" | "settingTest?" | "solving" | "competition"
+        borderPadding: 60,
+        cellSize: 60,
+        // The time window allowed between parts of a single action, e.g. typing a two-digit number
+        actionWindowMs: 600,
     });
 
     constructor() {
@@ -45,7 +48,7 @@ export class PuzzleManager {
         this.renderChange({ type: "draw", layerIds: "all" });
     }
 
-    _requiredLayers(): typeof this["layers"] {
+    _requiredLayers(): this["layers"] {
         return {
             OverlayLayer: availableLayers["OverlayLayer"].create(this) as OverlayLayer,
             CellOutlineLayer: availableLayers["CellOutlineLayer"].create(this) as CellOutlineLayer,
@@ -97,45 +100,35 @@ export class PuzzleManager {
     }
 
     resizeCanvas() {
-        const requirements = this.grid.getCanvasRequirements();
-        setCanvasSize({ ...requirements, zoom: 0 });
+        const { minX, minY, width, height } = this.grid.getCanvasRequirements(this);
+        canvasSizeProxy.minX = minX;
+        canvasSizeProxy.minY = minY;
+        canvasSizeProxy.width = width;
+        canvasSizeProxy.height = height;
     }
 
     renderChange(change: RenderChange) {
         const { order, currentLayerId } = Layers.state;
-        const settings = getSettings();
         if (currentLayerId === null) {
             return;
         }
 
         if (change.type === "reorder") {
             // I don't need to do anything because render order is handled by layersAtom
-            // TODO: Remove this change event?
+            // TODO: Remove this change event? It would mainly be useful for future subscribing features.
         } else if (change.type === "delete") {
-            const blitGroups = { ...getBlitGroups() };
-            delete blitGroups[change.layerId];
-            setBlitGroups(blitGroups);
+            delete blitGroupsProxy[change.layerId];
         } else if (change.type === "switchLayer") {
-            const blitGroups = { ...getBlitGroups() };
             const layer = this.layers[currentLayerId];
 
-            blitGroups[`${OVERLAY_LAYER_ID}-question`] =
-                layer.getOverlayBlits?.({
-                    grid: this.grid,
-                    storage: this.storage,
-                    settings,
-                }) || [];
-            setBlitGroups(blitGroups);
+            blitGroupsProxy[`${OVERLAY_LAYER_ID}-question`] = ref(
+                layer.getOverlayBlits?.({ ...this }) || [],
+            );
         } else if (change.type === "draw") {
-            const blitGroups = { ...getBlitGroups() };
-
             // Only render the overlay blits of the current layer
-            blitGroups[`${OVERLAY_LAYER_ID}-question`] =
-                this.layers[currentLayerId].getOverlayBlits?.({
-                    grid: this.grid,
-                    storage: this.storage,
-                    settings,
-                }) || [];
+            blitGroupsProxy[`${OVERLAY_LAYER_ID}-question`] = ref(
+                this.layers[currentLayerId].getOverlayBlits?.({ ...this }) || [],
+            );
 
             // TODO: Allowing layerIds === "all" is mostly used for resizing the grid. How to efficiently redraw layers that depend on the size of the grid. Are there even layers other than grids that need to rerender on resizes? If there are, should they have to explicitly subscribe to these events?
             const layerIds = new Set(change.layerIds === "all" ? order : change.layerIds);
@@ -143,16 +136,14 @@ export class PuzzleManager {
             for (const layerId of layerIds) {
                 for (const editMode of ["question", "answer"] as const) {
                     const layer = this.layers[layerId];
-                    blitGroups[`${layer.id}-${editMode}`] = layer.getBlits({
-                        grid: this.grid,
-                        storage: this.storage,
-                        settings,
-                        editMode,
-                    });
+                    blitGroupsProxy[`${layer.id}-${editMode}`] = ref(
+                        layer.getBlits({
+                            ...this,
+                            settings: { ...this.settings, editMode },
+                        }),
+                    );
                 }
             }
-
-            setBlitGroups(blitGroups);
         } else {
             throw errorNotification({
                 message: `Failed to render to canvas: ${formatAnything(change)}`,
@@ -207,12 +198,7 @@ export class PuzzleManager {
 
     changeLayerSettings(layerId: Layer["id"], newSettings: any) {
         const layer = this.layers[layerId];
-        const { history } = layer.newSettings({
-            newSettings,
-            grid: this.grid,
-            storage: this.storage,
-            settings: getSettings(),
-        });
+        const { history } = layer.newSettings({ ...this, newSettings });
 
         if (history?.length) {
             this.storage.addToHistory({ puzzle: this, layerId: layer.id, actions: history });

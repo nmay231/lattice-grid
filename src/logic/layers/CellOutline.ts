@@ -59,8 +59,8 @@ export class CellOutlineLayer extends BaseLayer<CellOutlineProps> implements ICe
         return {};
     }
 
-    getBlits: ICellOutlineLayer["getBlits"] = ({ storage, grid, editMode }) => {
-        if (editMode === "answer") return [];
+    getBlits: ICellOutlineLayer["getBlits"] = ({ grid, storage, settings }) => {
+        if (settings.editMode === "answer") return [];
 
         const stored = storage.getStored<CellOutlineProps>({
             grid,
@@ -71,6 +71,7 @@ export class CellOutlineLayer extends BaseLayer<CellOutlineProps> implements ICe
         const blacklist = stored.groups.getGroup("question");
         const points = grid.getAllPoints("cells").filter((point) => !blacklist.has(point));
         const { cells, gridEdge } = grid.getPoints({
+            settings,
             points,
             connections: {
                 cells: {
