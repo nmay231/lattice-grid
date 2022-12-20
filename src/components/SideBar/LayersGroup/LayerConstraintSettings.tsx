@@ -1,10 +1,11 @@
 import { isEqual } from "lodash";
 import { useEffect } from "react";
-import { useSnapshot } from "valtio";
+import { ref, useSnapshot } from "valtio";
 import { availableLayers } from "../../../logic/layers";
 import { constraintSettingsProxy } from "../../../state/constraintSettings";
 import { useLayers } from "../../../state/layers";
 import { usePuzzle } from "../../../state/puzzle";
+import { UnknownObject } from "../../../types";
 import { blurActiveElement } from "../../../utils/DOMUtils";
 import { JsonFormsWrapper } from "../../JsonFormsWrapper";
 
@@ -23,7 +24,7 @@ export const LayerConstraintSettings = () => {
 
     useEffect(() => {
         if (layer) {
-            constraintSettingsProxy.settings = layer.rawSettings;
+            constraintSettingsProxy.settings = ref(layer.rawSettings);
         }
     }, [layer]);
 
@@ -51,19 +52,19 @@ export const LayerConstraintSettings = () => {
 
         puzzle.changeLayerSettings(id, constraintSettingsProxy.settings);
 
-        constraintSettingsProxy.settings = {
+        constraintSettingsProxy.settings = ref({
             // Guarantee that JSONForms didn't remove fields that are not specified in regular settings (e.g. control settings)
             ...layer.rawSettings,
             // Besides, calling setData() is required to trigger a rerender
             ...constraintSettingsProxy.settings,
-        };
+        });
 
         puzzle.renderChange({ type: "draw", layerIds: [id] });
         blurActiveElement();
     };
 
     const handleCancel = () => {
-        constraintSettingsProxy.settings = layer.rawSettings;
+        constraintSettingsProxy.settings = ref(layer.rawSettings);
         blurActiveElement();
     };
 
@@ -73,8 +74,8 @@ export const LayerConstraintSettings = () => {
             <form action="#" onSubmit={handleSubmit}>
                 <JsonFormsWrapper
                     data={settingsSnap.settings}
-                    setData={(newData: any) => {
-                        constraintSettingsProxy.settings = newData;
+                    setData={(newData: UnknownObject) => {
+                        constraintSettingsProxy.settings = ref(newData);
                     }}
                     schema={schema}
                     uischema={uischema}

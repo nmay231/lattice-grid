@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useSnapshot } from "valtio";
+import { ref, useSnapshot } from "valtio";
 import { availableLayers } from "../../../logic/layers";
 import { constraintSettingsProxy } from "../../../state/constraintSettings";
 import { useLayers } from "../../../state/layers";
@@ -45,12 +45,12 @@ export const LayerControlSettings = () => {
         <div {...puzzle.controls.stopPropagation}>
             <JsonFormsWrapper
                 data={data}
-                setData={(newData: any) => {
+                setData={(newData: UnknownObject) => {
                     setData(newData);
                     // Constraint settings cannot be left out of date
                     // TODO: PuzzleManager maybe should have a .selectLayer method. If so, this needs to go in that instead of this.
                     // eslint-disable-next-line valtio/state-snapshot-rule
-                    constraintSettingsProxy.settings = newData;
+                    constraintSettingsProxy.settings = ref(newData);
 
                     if (id !== lastId) {
                         setLastId(id);
