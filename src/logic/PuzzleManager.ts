@@ -35,7 +35,7 @@ export class PuzzleManager {
     controls = new ControlsManager(this);
     settings = proxy({
         editMode: "question" as EditMode,
-        // TODO: pageMode: "setting" | "settingTest?" | "solving" | "competition"
+        // TODO: pageMode: "edit" | "play" | "compete"
         borderPadding: 60,
         cellSize: 60,
         // The time window allowed between parts of a single action, e.g. typing a two-digit number
