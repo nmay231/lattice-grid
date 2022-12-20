@@ -1,4 +1,4 @@
-import { proxy, ref } from "valtio";
+import { proxy } from "valtio";
 import { blitGroupsProxy, OVERLAY_LAYER_ID } from "../state/blits";
 import { canvasSizeProxy } from "../state/canvasSize";
 import { Layers } from "../state/layers";
@@ -13,6 +13,7 @@ import {
     UnknownObject,
 } from "../types";
 import { errorNotification } from "../utils/DOMUtils";
+import { valtioRef } from "../utils/imports";
 import { formatAnything } from "../utils/stringUtils";
 import { ControlsManager } from "./ControlsManager";
 import { SquareGrid } from "./grids/SquareGrid";
@@ -121,12 +122,12 @@ export class PuzzleManager {
         } else if (change.type === "switchLayer") {
             const layer = this.layers[currentLayerId];
 
-            blitGroupsProxy[`${OVERLAY_LAYER_ID}-question`] = ref(
+            blitGroupsProxy[`${OVERLAY_LAYER_ID}-question`] = valtioRef(
                 layer.getOverlayBlits?.({ ...this }) || [],
             );
         } else if (change.type === "draw") {
             // Only render the overlay blits of the current layer
-            blitGroupsProxy[`${OVERLAY_LAYER_ID}-question`] = ref(
+            blitGroupsProxy[`${OVERLAY_LAYER_ID}-question`] = valtioRef(
                 this.layers[currentLayerId].getOverlayBlits?.({ ...this }) || [],
             );
 
@@ -136,7 +137,7 @@ export class PuzzleManager {
             for (const layerId of layerIds) {
                 for (const editMode of ["question", "answer"] as const) {
                     const layer = this.layers[layerId];
-                    blitGroupsProxy[`${layer.id}-${editMode}`] = ref(
+                    blitGroupsProxy[`${layer.id}-${editMode}`] = valtioRef(
                         layer.getBlits({
                             ...this,
                             settings: { ...this.settings, editMode },

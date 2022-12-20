@@ -1,12 +1,13 @@
 import { isEqual } from "lodash";
 import { useEffect } from "react";
-import { ref, useSnapshot } from "valtio";
+import { useSnapshot } from "valtio";
 import { availableLayers } from "../../../logic/layers";
 import { constraintSettingsProxy } from "../../../state/constraintSettings";
 import { useLayers } from "../../../state/layers";
 import { usePuzzle } from "../../../state/puzzle";
 import { UnknownObject } from "../../../types";
 import { blurActiveElement } from "../../../utils/DOMUtils";
+import { valtioRef } from "../../../utils/imports";
 import { JsonFormsWrapper } from "../../JsonFormsWrapper";
 
 const noSettingsPreset = <i>No settings for this layer</i>;
@@ -24,7 +25,7 @@ export const LayerConstraintSettings = () => {
 
     useEffect(() => {
         if (layer) {
-            constraintSettingsProxy.settings = ref(layer.rawSettings);
+            constraintSettingsProxy.settings = valtioRef(layer.rawSettings);
         }
     }, [layer]);
 
@@ -52,7 +53,7 @@ export const LayerConstraintSettings = () => {
 
         puzzle.changeLayerSettings(id, constraintSettingsProxy.settings);
 
-        constraintSettingsProxy.settings = ref({
+        constraintSettingsProxy.settings = valtioRef({
             // Guarantee that JSONForms didn't remove fields that are not specified in regular settings (e.g. control settings)
             ...layer.rawSettings,
             // Besides, calling setData() is required to trigger a rerender
@@ -64,7 +65,7 @@ export const LayerConstraintSettings = () => {
     };
 
     const handleCancel = () => {
-        constraintSettingsProxy.settings = ref(layer.rawSettings);
+        constraintSettingsProxy.settings = valtioRef(layer.rawSettings);
         blurActiveElement();
     };
 
@@ -75,7 +76,7 @@ export const LayerConstraintSettings = () => {
                 <JsonFormsWrapper
                     data={settingsSnap.settings}
                     setData={(newData: UnknownObject) => {
-                        constraintSettingsProxy.settings = ref(newData);
+                        constraintSettingsProxy.settings = valtioRef(newData);
                     }}
                     schema={schema}
                     uischema={uischema}

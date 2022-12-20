@@ -6,7 +6,7 @@ import { blocklyToolbox } from "../../logic/userComputation/codeBlocks";
 import { ComputeManager } from "../../logic/userComputation/ComputeManager";
 import { addAliasCategoryToToolbox } from "../../logic/userComputation/utils";
 import { usePuzzle } from "../../state/puzzle";
-import { Blockly } from "../../utils/Blockly";
+import { Blockly } from "../../utils/imports";
 import { codeGen } from "./customCodeGen";
 
 export const modalProxy = proxy({ modal: null as "blockly" | null });

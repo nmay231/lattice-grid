@@ -1,5 +1,5 @@
 import { CompilerErrorDetails, ICodeBlock, NeedsUpdating, VariableCodeBlock } from "../../types";
-import { Blockly } from "../../utils/Blockly";
+import { Blockly } from "../../utils/imports";
 import { PuzzleManager } from "../PuzzleManager";
 import { CodeBlocks, UserCodeJSON } from "./codeBlocks";
 import { CompilerError } from "./utils";

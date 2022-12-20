@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { ref, useSnapshot } from "valtio";
+import { useSnapshot } from "valtio";
 import { availableLayers } from "../../../logic/layers";
 import { constraintSettingsProxy } from "../../../state/constraintSettings";
 import { useLayers } from "../../../state/layers";
 import { usePuzzle } from "../../../state/puzzle";
 import { UnknownObject } from "../../../types";
 import { blurActiveElement } from "../../../utils/DOMUtils";
+import { valtioRef } from "../../../utils/imports";
 import { JsonFormsWrapper } from "../../JsonFormsWrapper";
 
 export const LayerControlSettings = () => {
@@ -50,7 +51,7 @@ export const LayerControlSettings = () => {
                     // Constraint settings cannot be left out of date
                     // TODO: PuzzleManager maybe should have a .selectLayer method. If so, this needs to go in that instead of this.
                     // eslint-disable-next-line valtio/state-snapshot-rule
-                    constraintSettingsProxy.settings = ref(newData);
+                    constraintSettingsProxy.settings = valtioRef(newData);
 
                     if (id !== lastId) {
                         setLastId(id);

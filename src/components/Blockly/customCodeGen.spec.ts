@@ -1,5 +1,5 @@
 import { UserCodeJSON } from "../../logic/userComputation/codeBlocks";
-import { Blockly } from "../../utils/Blockly";
+import { Blockly } from "../../utils/imports";
 import { codeGen } from "./customCodeGen";
 
 describe.only("codeGen", () => {
