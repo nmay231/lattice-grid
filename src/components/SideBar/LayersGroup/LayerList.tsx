@@ -14,7 +14,6 @@ import {
 } from "@dnd-kit/sortable";
 import { IoMdCheckmark, IoMdClose } from "react-icons/io";
 import { useSnapshot } from "valtio";
-import { useLayers } from "../../../state/layers";
 import { usePuzzle } from "../../../state/puzzle";
 import { blurActiveElement } from "../../../utils/DOMUtils";
 import { SortableItem } from "../../SortableItem";
@@ -28,13 +27,11 @@ export const LayerList = () => {
             coordinateGetter: sortableKeyboardCoordinates,
         }),
     );
-    const { Layers } = useLayers();
-    const snap = useSnapshot(Layers.state);
+    const snap = useSnapshot(puzzle.layers);
 
     const handleDragEnd = ({ active, over }: DragEndEvent) => {
         if (over?.id && active.id !== over.id) {
-            Layers.shuffleItemOnto(active as { id: string }, over as { id: string });
-            puzzle.renderChange({ type: "reorder" });
+            puzzle.shuffleLayerOnto(active.id.toString(), over.id.toString());
         }
         blurActiveElement();
     };
@@ -42,8 +39,8 @@ export const LayerList = () => {
     const handleSelect = (id: string) => (event: React.PointerEvent) => {
         event.stopPropagation();
         blurActiveElement();
-        if (id !== Layers.state.currentLayerId) {
-            puzzle.controls.selectLayer({ id });
+        if (id !== puzzle.layers.currentKey) {
+            puzzle.selectLayer({ id });
         }
     };
 
@@ -64,8 +61,8 @@ export const LayerList = () => {
                 strategy={verticalListSortingStrategy}
             >
                 {snap.order.map((id) => {
-                    const current = id === snap.currentLayerId;
-                    const { ethereal, displayName } = snap.layers[id];
+                    const current = id === snap.currentKey;
+                    const { ethereal, displayName } = snap.map[id];
                     return (
                         !ethereal && (
                             <SortableItem key={id} id={id}>

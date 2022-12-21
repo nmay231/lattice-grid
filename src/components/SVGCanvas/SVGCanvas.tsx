@@ -2,7 +2,6 @@ import { useEffect, useRef } from "react";
 import { useSnapshot } from "valtio";
 import { blitGroupsProxy } from "../../state/blits";
 import { canvasSizeProxy } from "../../state/canvasSize";
-import { useLayers } from "../../state/layers";
 import { usePuzzle } from "../../state/puzzle";
 import { BlitGroup, Layer, NeedsUpdating, StorageMode } from "../../types";
 import { errorNotification } from "../../utils/DOMUtils";
@@ -40,10 +39,9 @@ const blitList = ({
 };
 
 export const SVGCanvas = () => {
-    const controls = usePuzzle().controls;
+    const { controls, layers } = usePuzzle();
     const blitGroupsSnap = useSnapshot(blitGroupsProxy);
-    const { Layers } = useLayers();
-    const snap = useSnapshot(Layers.state);
+    const snap = useSnapshot(layers);
     const { minX, minY, width, height, zoom } = useSnapshot(canvasSizeProxy);
 
     const scrollArea = useRef<HTMLDivElement>(null);

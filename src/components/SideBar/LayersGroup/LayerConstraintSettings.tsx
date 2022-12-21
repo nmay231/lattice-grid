@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { useSnapshot } from "valtio";
 import { availableLayers } from "../../../logic/layers";
 import { constraintSettingsProxy } from "../../../state/constraintSettings";
-import { useLayers } from "../../../state/layers";
+
 import { usePuzzle } from "../../../state/puzzle";
 import { UnknownObject } from "../../../types";
 import { blurActiveElement } from "../../../utils/DOMUtils";
@@ -14,12 +14,10 @@ const noSettingsPreset = <i>No settings for this layer</i>;
 
 export const LayerConstraintSettings = () => {
     const puzzle = usePuzzle();
-    const {
-        Layers: { state: layersState },
-    } = useLayers();
-    const layersSnap = useSnapshot(layersState);
-    const id = layersSnap.currentLayerId;
-    const layer = id && puzzle.layers[id];
+    const layers = puzzle.layers;
+    const layersSnap = useSnapshot(layers);
+    const id = layersSnap.currentKey;
+    const layer = id && layers.get(id);
 
     const settingsSnap = useSnapshot(constraintSettingsProxy);
 
@@ -36,7 +34,7 @@ export const LayerConstraintSettings = () => {
         return noSettingsPreset;
     }
 
-    const layerType = layersSnap.layers[id].type;
+    const layerType = layersSnap.map[id].type;
     const layerClass = availableLayers[layerType as keyof typeof availableLayers];
 
     if (!layerClass.constraints) {

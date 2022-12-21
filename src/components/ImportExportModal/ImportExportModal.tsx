@@ -27,7 +27,7 @@ export const importPuzzle = (puzzle: PuzzleManager, text: string) => {
             });
 
         puzzle.storage.histories = {};
-        puzzle._resetLayers();
+        puzzle.resetLayers();
         puzzle._loadPuzzle(puzzleData.params);
         puzzle.resizeCanvas();
         const cloned = cloneDeep(puzzle.storage.objects);

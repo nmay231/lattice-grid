@@ -1,7 +1,6 @@
 import { clamp } from "lodash";
 import { modalProxy } from "../components/Blockly/BlocklyModal";
 import { canvasSizeProxy } from "../state/canvasSize";
-import { Layers } from "../state/layers";
 import {
     CleanedDOMEvent,
     Layer,
@@ -55,9 +54,8 @@ export class ControlsManager {
     }
 
     getCurrentLayer() {
-        const { currentLayerId } = Layers.state;
-
-        return currentLayerId === null ? null : this.puzzle.layers[currentLayerId];
+        const id = this.puzzle.layers.currentKey;
+        return id ? this.puzzle.layers.get(id) : null;
     }
 
     cleanPointerEvent(
@@ -125,15 +123,6 @@ export class ControlsManager {
 
     resetControls() {
         this.tempStorage = null;
-    }
-
-    selectLayer(...arg: Parameters<typeof Layers["selectLayer"]>) {
-        const oldId = Layers.state.currentLayerId;
-        const newId = Layers.selectLayer(...arg);
-        if (oldId !== newId) {
-            // TODO: This will eventually just change out the overlay blits instead of this
-            this.puzzle.renderChange({ type: "switchLayer" });
-        }
     }
 
     onPointerDown(rawEvent: React.PointerEvent) {
@@ -229,7 +218,7 @@ export class ControlsManager {
             this.applyLayerEvent(layer, { type: "delete", keypress });
         } else if (keypress === "Tab" || keypress === "shift-Tab") {
             // TODO: allow layers to have sublayers that you can tab through (e.g. for sudoku). This should be handled by a separate api than .handleEvent() though to prevent serious bugs and to allow UI indicators.
-            this.selectLayer({ tab: keypress === "shift-Tab" ? -1 : 1 });
+            this.puzzle.selectLayer({ tab: keypress === "shift-Tab" ? -1 : 1 });
         } else if (keypress === "ctrl-z" || keypress === "ctrl-y") {
             // TODO: Eventually, I want layers to be able to switch the current layer (specifically SelectionLayer for sudoku ctrl/shift behavior)
             // Perhaps, I can use that mechanism for storage to switch the current layer when undoing/redoing
@@ -241,7 +230,7 @@ export class ControlsManager {
 
             if (appliedActions.length) {
                 const newLayerId = appliedActions[appliedActions.length - 1].layerId;
-                this.selectLayer({ id: newLayerId });
+                this.puzzle.selectLayer({ id: newLayerId });
 
                 layer = this.getCurrentLayer();
                 if (layer)

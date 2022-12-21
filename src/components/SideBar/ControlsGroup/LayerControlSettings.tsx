@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useSnapshot } from "valtio";
 import { availableLayers } from "../../../logic/layers";
 import { constraintSettingsProxy } from "../../../state/constraintSettings";
-import { useLayers } from "../../../state/layers";
+
 import { usePuzzle } from "../../../state/puzzle";
 import { UnknownObject } from "../../../types";
 import { blurActiveElement } from "../../../utils/DOMUtils";
@@ -12,10 +12,9 @@ import { JsonFormsWrapper } from "../../JsonFormsWrapper";
 export const LayerControlSettings = () => {
     const puzzle = usePuzzle();
 
-    const { Layers } = useLayers();
-    const snap = useSnapshot(Layers.state);
-    const id = snap.currentLayerId;
-    const layer = id && puzzle.layers[id];
+    const snap = useSnapshot(puzzle.layers);
+    const id = snap.currentKey;
+    const layer = id && puzzle.layers.get(id);
 
     const [data, setData] = useState<UnknownObject | null>(null);
     const settingsSnap = useSnapshot(constraintSettingsProxy);
@@ -36,7 +35,7 @@ export const LayerControlSettings = () => {
         return <></>;
     }
 
-    const layerType = snap.layers[id].type;
+    const layerType = snap.map[id].type;
     const layerClass = availableLayers[layerType as keyof typeof availableLayers];
 
     const { schema, uischemaElements } = layerClass.controls || {};

@@ -4,6 +4,10 @@ export class OrderedMap<V> {
     map = proxy<Record<string, V>>({});
     order = proxy<string[]>([]);
 
+    clear(): void {
+        this.order.forEach((key) => this.delete(key));
+    }
+
     set(key: string, value: V, nextKey: string | null = null): void {
         if (key in this.map) {
             this.order.splice(this.order.indexOf(key), 1);
@@ -69,6 +73,20 @@ export class IndexedOrderedMap<V> extends OrderedMap<V> {
         }
     }
 
+    getNextSelectableKey(key: string): string | null {
+        let next = key;
+        do next = this.getNextKey(next) || "";
+        while (next && !this.selectable(this.get(next)));
+        return next;
+    }
+
+    getPrevSelectableKey(key: string): string | null {
+        let prev = key;
+        do prev = this.getPrevKey(prev) || "";
+        while (prev && !this.selectable(this.get(prev)));
+        return prev;
+    }
+
     delete(key: string): boolean {
         if (!this.has(key)) {
             return false;
@@ -79,26 +97,15 @@ export class IndexedOrderedMap<V> extends OrderedMap<V> {
         delete this.map[key];
 
         if (this.currentKey === key) {
-            let nextId = null;
-
             // We try to select the next id without wrapping to the other end
-            for (const id of this.order.slice(index)) {
-                if (this.selectable(this.map[id])) {
-                    nextId = id;
-                    break;
-                }
-            }
+            let nextId = this.getNextSelectableKey(this.currentKey);
 
             // If that fails, try selecting the previous id
             if (nextId === null) {
-                for (const id of this.order.slice(0, index).reverse()) {
-                    if (this.selectable(this.map[id])) {
-                        nextId = id;
-                        break;
-                    }
-                }
-                // If THAT fails, then no id is selectable anyways and currentKey should be null
+                nextId = this.getPrevSelectableKey(this.currentKey);
             }
+
+            // If THAT fails, then no id is selectable anyways and currentKey should be null
             this.currentKey = nextId;
         }
         return true;
@@ -107,6 +114,12 @@ export class IndexedOrderedMap<V> extends OrderedMap<V> {
     select(key: string) {
         if (key in this.map && this.selectable(this.map[key])) {
             this.currentKey = key;
+            return true;
         }
+        return false;
+    }
+
+    _toJSON__TESTING() {
+        return { order: this.keys(), currentKey: this.currentKey };
     }
 }
