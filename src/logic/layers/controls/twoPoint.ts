@@ -28,13 +28,15 @@ export const handleEventsCurrentSetting = <LP extends TwoPointProps>(
 ) => {
     if (!pointTypes?.length || !deltas?.length) {
         throw errorNotification({
+            error: null,
             message: "twoPoint currentSetting was not provided required parameters",
             forever: true,
         });
     }
 
-    layer.gatherPoints = ({ grid, tempStorage, cursor }) => {
+    layer.gatherPoints = ({ grid, tempStorage, cursor, settings }) => {
         const newPoints = grid.selectPointsWithCursor({
+            settings,
             cursor,
             pointTypes,
             deltas,

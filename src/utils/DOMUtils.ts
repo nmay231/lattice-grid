@@ -7,9 +7,15 @@ export const blurActiveElement = () => {
 };
 
 export const errorNotification = (
-    props: Partial<Pick<NotificationProps, "message" | "title">> & { forever?: true },
+    props: Partial<Pick<NotificationProps, "message" | "title">> & {
+        forever?: true;
+        error: Error | null;
+    },
 ) => {
-    const { forever, ...rest } = props;
+    const { forever, error, ...rest } = props;
+
+    if (error) console.error(error);
+
     showNotification({
         color: "red",
         title: "Internal Error",
@@ -17,5 +23,6 @@ export const errorNotification = (
         autoClose: !forever && 4000,
         ...rest,
     });
-    return new Error(formatAnything(rest.message));
+
+    return new Error(formatAnything(rest));
 };

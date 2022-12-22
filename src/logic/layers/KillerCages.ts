@@ -22,7 +22,6 @@ interface IKillerCagesLayer extends Layer<KillerCagesProps> {
 
 export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKillerCagesLayer {
     static ethereal = false;
-    static unique = false;
     static type = "KillerCagesLayer" as const;
     static displayName = "Killer Cages";
     static defaultSettings = { selectedState: "blue" };
@@ -77,20 +76,21 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
         return {};
     };
 
-    getBlits: IKillerCagesLayer["getBlits"] = ({ storage, grid, editMode }) => {
+    getBlits: IKillerCagesLayer["getBlits"] = ({ grid, storage, settings }) => {
         const stored = storage.getStored<KillerCagesProps>({
             grid,
             layer: this,
         });
         const renderOrder = stored.objects
             .keys()
-            .filter(bySubset(stored.groups.getGroup(editMode)));
+            .filter(bySubset(stored.groups.getGroup(settings.editMode)));
 
         const cageBlits: PolygonBlits["blits"] = {};
         const numberBlits: TextBlits["blits"] = {};
         for (const id of renderOrder) {
             const object = stored.objects.get(id);
             const { cageOutline, cells, sorted } = grid.getPoints({
+                settings,
                 connections: {
                     cells: {
                         shrinkwrap: {

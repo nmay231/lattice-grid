@@ -1,4 +1,4 @@
-import type { initialSettings } from "./atoms/settings";
+import { ref } from "valtio";
 import type { LineBlits } from "./components/SVGCanvas/Line";
 import type { PolygonBlits } from "./components/SVGCanvas/Polygon";
 import type { TextBlits } from "./components/SVGCanvas/Text";
@@ -78,7 +78,7 @@ export type CleanedDOMEvent =
 export type LayerEventEssentials<LP extends LayerProps> = {
     grid: Pick<Grid, "id" | "getAllPoints" | "getPoints" | "selectPointsWithCursor">;
     storage: StorageManager;
-    settings: typeof initialSettings;
+    settings: PuzzleManager["settings"];
     tempStorage: Partial<LP["TempStorage"]>;
 };
 
@@ -106,6 +106,8 @@ export type PointType = "cells" | "edges" | "corners";
 export type EditMode = "question" | "answer";
 export type StorageMode = "question" | "answer" | "ui";
 export type ObjectId = string;
+
+export type ValtioRef<T extends object> = ReturnType<typeof ref<T>>;
 // #endregion
 
 // #region - Grids
@@ -113,12 +115,14 @@ export type Grid = {
     id: string;
     // TODO: More specific types
     getPoints: (arg: {
+        settings: PuzzleManager["settings"];
         points?: Point[];
         connections: NeedsUpdating;
         includeOutOfBounds?: boolean;
     }) => NeedsUpdating;
     getAllPoints: (type: PointType) => Point[];
     selectPointsWithCursor: (arg: {
+        settings: PuzzleManager["settings"];
         // TODO: Change to [number, number]
         cursor: { x: number; y: number };
         pointTypes: PointType[];
@@ -128,7 +132,7 @@ export type Grid = {
     }) => Point[];
     getParams(): LocalStorageData["grid"];
     setParams(params?: SquareGridParams): void;
-    getCanvasRequirements: () => {
+    getCanvasRequirements: (puzzle: Pick<PuzzleManager, "settings">) => {
         minX: number;
         minY: number;
         width: number;
@@ -160,7 +164,6 @@ export type Layer<LP extends LayerProps = LayerProps> = {
     type: LP["Type"];
     id: string;
     displayName: string;
-    unique: boolean;
     ethereal: boolean;
     rawSettings: LP["RawSettings"];
     controls?: JSONSchema;
@@ -170,9 +173,7 @@ export type Layer<LP extends LayerProps = LayerProps> = {
     ) => LayerHandlerResult<LP>;
     gatherPoints: (layerEvent: PointerMoveOrDown & LayerEventEssentials<LP>) => Point[];
     handleEvent: (layerEvent: LayerEvent<LP>) => LayerHandlerResult<LP>;
-    getBlits: (
-        data: Omit<LayerEventEssentials<LP>, "tempStorage"> & { editMode: EditMode },
-    ) => BlitGroup[];
+    getBlits: (data: Omit<LayerEventEssentials<LP>, "tempStorage">) => BlitGroup[];
     getOverlayBlits?: (data: Omit<LayerEventEssentials<LP>, "tempStorage">) => BlitGroup[];
 };
 
@@ -182,7 +183,6 @@ export type LayerClass<LP extends LayerProps = LayerProps> = {
     type: LP["Type"];
     displayName: string;
     ethereal: boolean;
-    unique: boolean;
     defaultSettings: LP["RawSettings"];
     controls?: JSONSchema;
     constraints?: JSONSchema;

@@ -41,7 +41,7 @@ export class ObjectSelector implements ICodeBlock<IObjectSelector> {
     getValue() {
         const { objects } = this.compute.puzzle.storage.getStored({
             grid: this.grid,
-            layer: this.compute.puzzle.layers[this.json.layerId],
+            layer: this.compute.puzzle.layers.get(this.json.layerId),
         });
         return objects.values();
     }

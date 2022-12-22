@@ -41,7 +41,7 @@ export const Text: React.FC<TextProps> = ({ blits, style }) => {
         } else if (originY === "bottom") {
             result.dominantBaseline = "alphabetic";
         } else {
-            errorNotification({ message: `Text element: Invalid originY=${originY}` });
+            errorNotification({ error: null, message: `Text element: Invalid originY=${originY}` });
         }
 
         if (originX === "left") {
@@ -51,7 +51,7 @@ export const Text: React.FC<TextProps> = ({ blits, style }) => {
         } else if (originX === "right") {
             result.textAnchor = "end";
         } else {
-            errorNotification({ message: `Text element: Invalid originX=${originX}` });
+            errorNotification({ error: null, message: `Text element: Invalid originX=${originX}` });
         }
 
         return result;

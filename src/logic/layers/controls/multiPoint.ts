@@ -42,6 +42,7 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
 ) => {
     if (!pointTypes?.length) {
         throw errorNotification({
+            error: null,
             message: "Multipoint handler was not provided required parameters",
             forever: true,
         });
@@ -58,6 +59,7 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
     layer.gatherPoints = (event) => {
         const { grid, tempStorage } = event;
         const newPoints = grid.selectPointsWithCursor({
+            settings: event.settings,
             cursor: event.cursor,
             pointTypes,
             deltas,
@@ -236,6 +238,7 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
             }
             default: {
                 throw errorNotification({
+                    error: null,
                     message: `Multipoint unknown event.type=${type}`,
                     forever: true,
                 });

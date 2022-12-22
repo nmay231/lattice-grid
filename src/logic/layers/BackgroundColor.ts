@@ -20,7 +20,6 @@ export class BackgroundColorLayer
     implements IBackgroundColorLayer
 {
     static ethereal = false;
-    static unique = false;
     static type = "BackgroundColorLayer" as const;
     static displayName = "Background Color";
     static defaultSettings = { selectedState: "blue" };
@@ -73,12 +72,13 @@ export class BackgroundColorLayer
         return {};
     };
 
-    getBlits: IBackgroundColorLayer["getBlits"] = ({ storage, grid, editMode }) => {
+    getBlits: IBackgroundColorLayer["getBlits"] = ({ grid, storage, settings }) => {
         const stored = storage.getStored<BackgroundColorProps>({ grid, layer: this });
         const renderOrder = stored.objects
             .keys()
-            .filter(bySubset(stored.groups.getGroup(editMode)));
+            .filter(bySubset(stored.groups.getGroup(settings.editMode)));
         const { cells } = grid.getPoints({
+            settings,
             connections: { cells: { svgOutline: true } },
             points: [...renderOrder],
         });

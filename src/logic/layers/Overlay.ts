@@ -1,4 +1,4 @@
-import { OVERLAY_LAYER_ID } from "../../atoms/blits";
+import { OVERLAY_LAYER_ID } from "../../state/blits";
 import { Layer, LayerClass, LayerProps } from "../../types";
 import { BaseLayer, methodNotImplemented } from "./baseLayer";
 
@@ -10,7 +10,6 @@ type IOverlayLayer = Layer<OverlayProps>;
 
 export class OverlayLayer extends BaseLayer<OverlayProps> implements IOverlayLayer {
     static ethereal = true;
-    static unique = true;
     static type = "OverlayLayer" as const;
     static displayName = OVERLAY_LAYER_ID;
 

@@ -52,10 +52,10 @@ export const handleEventsSelection = <LP extends SelectedProps>(
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     arg: any, // TODO
 ) => {
-    layer.gatherPoints = (event) => {
-        const { grid, tempStorage } = event;
+    layer.gatherPoints = ({ grid, settings, cursor, tempStorage }) => {
         let newPoints = grid.selectPointsWithCursor({
-            cursor: event.cursor,
+            settings,
+            cursor,
             previousPoint: tempStorage.previousPoint,
             pointTypes: ["cells"],
             // TODO: Change deltas to Finite State Machine
@@ -217,6 +217,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
             }
             default: {
                 throw errorNotification({
+                    error: null,
                     message: `Unknown event.type in selected layer ${layer.displayName}: ${
                         (event as any).type
                     }`,
@@ -226,7 +227,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
         }
     };
 
-    layer.getOverlayBlits = ({ grid, storage }) => {
+    layer.getOverlayBlits = ({ grid, storage, settings }) => {
         // TODO: Selection can be made by multiple layers, but not all layers support the same cells/corners selection. In the future, I need to filter the points by the type of points selectable by the current layer.
         const stored = storage.getStored<InternalProps>({ grid, layer: { id: layerId } });
         const points = stored.objects.keys().filter((key) => stored.objects.get(key).state);
@@ -236,6 +237,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
         if (points.length) {
             for (const group of new Set(states)) {
                 const { selectionCage } = grid.getPoints({
+                    settings,
                     connections: {
                         cells: {
                             shrinkwrap: {

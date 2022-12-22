@@ -1,6 +1,6 @@
 import { UserCodeJSON } from "../../logic/userComputation/codeBlocks";
 import { NeedsUpdating } from "../../types";
-import { Blockly } from "../../utils/Blockly";
+import { Blockly } from "../../utils/imports";
 import "./blocklyUI";
 
 // TODO: To make indentation easier, I could require the parent element to include the wrapping parenthesis

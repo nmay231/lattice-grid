@@ -30,7 +30,6 @@ export class ToggleCharactersLayer
     implements IToggleCharactersLayer
 {
     static ethereal = false;
-    static unique = false;
     static type = "ToggleCharactersLayer" as const;
     static displayName = "Toggle Characters";
     static defaultSettings = {
@@ -186,7 +185,7 @@ export class ToggleCharactersLayer
         };
     };
 
-    getBlits: IToggleCharactersLayer["getBlits"] = ({ storage, grid, editMode }) => {
+    getBlits: IToggleCharactersLayer["getBlits"] = ({ grid, storage, settings }) => {
         const stored = storage.getStored<ToggleCharactersProps>({
             grid,
             layer: this,
@@ -194,10 +193,11 @@ export class ToggleCharactersLayer
 
         const ids = stored.objects
             .keys()
-            .filter(bySubset(stored.groups.getGroup(editMode)))
+            .filter(bySubset(stored.groups.getGroup(settings.editMode)))
             .filter((id) => stored.objects.get(id).state);
 
         const { cells } = grid.getPoints({
+            settings,
             connections: {
                 cells: {
                     svgPoint: true,
@@ -245,6 +245,7 @@ export class ToggleCharactersLayer
             }
         } else {
             errorNotification({
+                error: null,
                 message: `Unknown displayStyle in ToggleCharacters ${this.settings.displayStyle}`,
                 forever: true,
             });

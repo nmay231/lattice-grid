@@ -1,21 +1,18 @@
 import { Button, Drawer, Grid, Text } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
-import { useAtom, useSetAtom } from "jotai";
 import React, { useEffect, useRef, useState } from "react";
-import { modifiableAtom } from "../../atoms/modifiableAtom";
-import { usePuzzle } from "../../atoms/puzzle";
+import { proxy, useSnapshot } from "valtio";
 import { blocklyToolbox } from "../../logic/userComputation/codeBlocks";
 import { ComputeManager } from "../../logic/userComputation/ComputeManager";
 import { addAliasCategoryToToolbox } from "../../logic/userComputation/utils";
-import { Blockly } from "../../utils/Blockly";
+import { usePuzzle } from "../../state/puzzle";
+import { Blockly } from "../../utils/imports";
 import { codeGen } from "./customCodeGen";
 
-const { atom: modalAtom, getValue, setValue } = modifiableAtom(false);
-export const blocklyModalIsOpen = getValue;
-export const setBlocklyModalOpen = setValue;
+export const modalProxy = proxy({ modal: null as "blockly" | null });
 
 export const BlocklyModal: React.FC = () => {
-    const [opened, setOpened] = useAtom(modalAtom);
+    const modalSnap = useSnapshot(modalProxy);
     const [rendered, setRendered] = useState(false);
     const [blocks, setBlocks] = useLocalStorage<any>({
         key: "blockly",
@@ -25,7 +22,7 @@ export const BlocklyModal: React.FC = () => {
     const puzzle = usePuzzle();
 
     useEffect(() => {
-        if (!opened) {
+        if (!modalProxy.modal) {
             setRendered(false);
             return;
         }
@@ -65,7 +62,7 @@ export const BlocklyModal: React.FC = () => {
             setBlocks(serialized);
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [opened, rendered, blocks]);
+    }, [modalSnap.modal, rendered, blocks]);
 
     // TODO: The raw error handling should be handled internally, but the error messages themselves be shown by this modal (or at least somewhere in client code)
     const compileAndRun = () => {
@@ -95,7 +92,11 @@ export const BlocklyModal: React.FC = () => {
     };
 
     return (
-        <Drawer opened={opened} size="90%" onClose={() => setOpened(false)}>
+        <Drawer
+            opened={modalSnap.modal === "blockly"}
+            size="90%"
+            onClose={() => (modalProxy.modal = null)}
+        >
             <Grid columns={7} style={{ width: "100%", height: "90vh" }}>
                 <Grid.Col span={6}>
                     <div ref={blocklyDiv} style={{ width: "100%", height: "100%" }}></div>
@@ -111,8 +112,6 @@ export const BlocklyModal: React.FC = () => {
     );
 };
 
-export const ToggleBlocklyModal: React.FC<{ children: string }> = ({ children }) => {
-    const setOpened = useSetAtom(modalAtom);
-
-    return <Button onClick={() => setOpened((opened) => !opened)}>{children}</Button>;
+export const OpenBlocklyModal: React.FC<{ children: string }> = ({ children }) => {
+    return <Button onClick={() => (modalProxy.modal = "blockly")}>{children}</Button>;
 };

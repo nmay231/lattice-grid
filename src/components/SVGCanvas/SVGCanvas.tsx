@@ -1,10 +1,8 @@
-import { useAtomValue } from "jotai";
 import { useEffect, useRef } from "react";
 import { useSnapshot } from "valtio";
-import { blitsAtom } from "../../atoms/blits";
-import { canvasSizeAtom } from "../../atoms/canvasSize";
-import { useLayers } from "../../atoms/layers";
-import { usePuzzle } from "../../atoms/puzzle";
+import { blitGroupsProxy } from "../../state/blits";
+import { canvasSizeProxy } from "../../state/canvasSize";
+import { usePuzzle } from "../../state/puzzle";
 import { BlitGroup, Layer, NeedsUpdating, StorageMode } from "../../types";
 import { errorNotification } from "../../utils/DOMUtils";
 import { Line } from "./Line";
@@ -41,17 +39,16 @@ const blitList = ({
 };
 
 export const SVGCanvas = () => {
-    const controls = usePuzzle().controls;
-    const blitGroups = useAtomValue(blitsAtom);
-    const { Layers } = useLayers();
-    const snap = useSnapshot(Layers.state);
-    const { minX, minY, width, height, zoom } = useAtomValue(canvasSizeAtom);
+    const { controls, layers } = usePuzzle();
+    const blitGroupsSnap = useSnapshot(blitGroupsProxy);
+    const snap = useSnapshot(layers);
+    const { minX, minY, width, height, zoom } = useSnapshot(canvasSizeProxy);
 
     const scrollArea = useRef<HTMLDivElement>(null);
     useEffect(() => {
         const current = scrollArea.current;
         if (!current) {
-            throw errorNotification({ message: "Canvas element not found." });
+            throw errorNotification({ error: null, message: "Canvas element not found." });
         }
 
         const onWheel = controls.onWheel.bind(controls);
@@ -79,12 +76,12 @@ export const SVGCanvas = () => {
                         {snap.order.flatMap((id) => {
                             // TODO: Allow question and answer to be reordered. Also fix this monstrosity.
                             const question = blitList({
-                                groups: blitGroups[`${id}-question`] || [],
+                                groups: blitGroupsSnap[`${id}-question`] || [],
                                 layerId: id,
                                 storageMode: "question",
                             });
                             const answer = blitList({
-                                groups: blitGroups[`${id}-answer`] || [],
+                                groups: blitGroupsSnap[`${id}-answer`] || [],
                                 layerId: id,
                                 storageMode: "answer",
                             });

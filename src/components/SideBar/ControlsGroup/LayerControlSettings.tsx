@@ -1,24 +1,23 @@
-import { useAtom } from "jotai";
 import { useEffect, useState } from "react";
 import { useSnapshot } from "valtio";
-import { constraintSettingsAtom } from "../../../atoms/constraintSettings";
-import { useLayers } from "../../../atoms/layers";
-import { usePuzzle } from "../../../atoms/puzzle";
 import { availableLayers } from "../../../logic/layers";
+import { constraintSettingsProxy } from "../../../state/constraintSettings";
+
+import { usePuzzle } from "../../../state/puzzle";
 import { UnknownObject } from "../../../types";
 import { blurActiveElement } from "../../../utils/DOMUtils";
+import { valtioRef } from "../../../utils/imports";
 import { JsonFormsWrapper } from "../../JsonFormsWrapper";
 
 export const LayerControlSettings = () => {
     const puzzle = usePuzzle();
 
-    const { Layers } = useLayers();
-    const snap = useSnapshot(Layers.state);
-    const id = snap.currentLayerId;
-    const layer = puzzle.layers[id || ""];
+    const snap = useSnapshot(puzzle.layers);
+    const id = snap.currentKey;
+    const layer = id && puzzle.layers.get(id);
 
     const [data, setData] = useState<UnknownObject | null>(null);
-    const [constraintSettings, setConstraintSettings] = useAtom(constraintSettingsAtom);
+    const settingsSnap = useSnapshot(constraintSettingsProxy);
 
     // We want to update a layer's settings whenever data changes, but changing id also changes data.
     // So we keep track of the data and only update settings when data changes but id doesn't.
@@ -28,14 +27,15 @@ export const LayerControlSettings = () => {
         if (layer) {
             setData(layer.rawSettings);
         }
-        // Putting constraintSettings as a render dependency is necessary to update this component's `data`
-    }, [layer, setData, constraintSettings]);
+        // Putting settingsSnap.settings as a render dependency is necessary to update this component's `data`
+        // TODO: This doesn't seem necessary
+    }, [layer, settingsSnap.settings]);
 
     if (!data || !layer || !id) {
         return <></>;
     }
 
-    const layerType = snap.layers[id].type;
+    const layerType = snap.map[id].type;
     const layerClass = availableLayers[layerType as keyof typeof availableLayers];
 
     const { schema, uischemaElements } = layerClass.controls || {};
@@ -45,10 +45,12 @@ export const LayerControlSettings = () => {
         <div {...puzzle.controls.stopPropagation}>
             <JsonFormsWrapper
                 data={data}
-                setData={(newData: any) => {
+                setData={(newData: UnknownObject) => {
                     setData(newData);
                     // Constraint settings cannot be left out of date
-                    setConstraintSettings(newData);
+                    // TODO: PuzzleManager maybe should have a .selectLayer method. If so, this needs to go in that instead of this.
+                    // eslint-disable-next-line valtio/state-snapshot-rule
+                    constraintSettingsProxy.settings = valtioRef(newData);
 
                     if (id !== lastId) {
                         setLastId(id);

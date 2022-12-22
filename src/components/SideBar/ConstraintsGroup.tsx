@@ -1,4 +1,4 @@
-import { ToggleBlocklyModal } from "../Blockly/BlocklyModal";
+import { OpenBlocklyModal } from "../Blockly/BlocklyModal";
 import { Group } from "./Group";
 
 export const CodeGroup = () => {
@@ -12,7 +12,7 @@ export const CodeGroup = () => {
                     margin: "10px",
                 }}
             >
-                <ToggleBlocklyModal>Show Constraints</ToggleBlocklyModal>
+                <OpenBlocklyModal>Show Constraints</OpenBlocklyModal>
             </div>
         </Group>
     );

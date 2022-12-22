@@ -1,25 +1,25 @@
 import { Button, Modal, Paper } from "@mantine/core";
-import { atom, useAtom } from "jotai";
 import { useEffect, useMemo } from "react";
 import { IoIosArrowDown, IoIosArrowUp } from "react-icons/io";
-import { canvasSizeAtom } from "../../../atoms/canvasSize";
-import { usePuzzle } from "../../../atoms/puzzle";
+import { proxy, useSnapshot } from "valtio";
+import { canvasSizeProxy } from "../../../state/canvasSize";
+import { usePuzzle } from "../../../state/puzzle";
 import { ReactComponent as SquareGridIcon } from "./SquareGridIcon.svg";
 
-export const resizeModalAtom = atom(false);
+export const modalProxy = proxy({ modal: null as "resize-grid" | null });
 
 export const ResizeModal = () => {
     const puzzle = usePuzzle();
     const buttons = useMemo(() => puzzle.grid.getCanvasResizers(), [puzzle]);
-    const [show, setShow] = useAtom(resizeModalAtom);
-    const [canvasSize, setCanvasSize] = useAtom(canvasSizeAtom);
+    const modalSnap = useSnapshot(modalProxy);
+    const canvasSizeSnap = useSnapshot(canvasSizeProxy);
 
     useEffect(() => {
-        if (show && canvasSize.zoom !== 0) {
-            setCanvasSize({ ...canvasSize, zoom: 0 });
+        if (modalSnap.modal === "resize-grid" && canvasSizeProxy.zoom !== 0) {
+            canvasSizeProxy.zoom = 0;
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [canvasSize, show]);
+    }, [canvasSizeSnap.zoom, modalSnap.modal]);
 
     const resizer = (resize: (a: number) => void, amount: number) => () => {
         resize(amount);
@@ -30,8 +30,10 @@ export const ResizeModal = () => {
     return (
         <Modal
             {...puzzle.controls.stopPropagation}
-            opened={show}
-            onClose={() => setShow(!show)}
+            opened={modalSnap.modal === "resize-grid"}
+            onClose={() => {
+                modalProxy.modal = null;
+            }}
             style={{ position: "absolute" }}
             styles={{ overlay: { position: "absolute !important" as any } }}
             withinPortal={false}

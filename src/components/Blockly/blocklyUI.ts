@@ -1,7 +1,7 @@
-import { Layers } from "../../atoms/layers";
 import { UserCodeJSON } from "../../logic/userComputation/codeBlocks";
 import { DEFAULT_ALIAS_NAME } from "../../logic/userComputation/utils";
-import { Blockly } from "../../utils/Blockly";
+import { puzzleProxy } from "../../state/puzzle";
+import { Blockly } from "../../utils/imports";
 
 // TODO: this.setTooltip("") and other helpful things like colour and such
 
@@ -108,11 +108,9 @@ blocks["ObjectSelector"] = {
     init() {
         this.appendDummyInput().appendField(
             new Blockly.FieldDropdown(() => {
-                // TODO: How to trigger this function if the current layers change...
-                const { order, layers } = Layers.state;
-                return order
-                    .map((id) => layers[id])
-                    .filter(({ ethereal }) => !ethereal)
+                // TODO: subscribe to the layer changes using valtio.subscribe and regenerate this list
+                return puzzleProxy.puzzle.layers
+                    .values()
                     .map(({ id, displayName }) => [displayName, id]);
             }),
             "LAYER_ID",

@@ -1,8 +1,6 @@
 import { clamp } from "lodash";
-import { getCanvasSize, setCanvasSize } from "../atoms/canvasSize";
-import { Layers } from "../atoms/layers";
-import { getSettings } from "../atoms/settings";
-import { blocklyModalIsOpen, setBlocklyModalOpen } from "../components/Blockly/BlocklyModal";
+import { modalProxy } from "../components/Blockly/BlocklyModal";
+import { canvasSizeProxy } from "../state/canvasSize";
 import {
     CleanedDOMEvent,
     Layer,
@@ -56,9 +54,8 @@ export class ControlsManager {
     }
 
     getCurrentLayer() {
-        const { currentLayerId } = Layers.state;
-
-        return currentLayerId === null ? null : this.puzzle.layers[currentLayerId];
+        const id = this.puzzle.layers.currentKey;
+        return id ? this.puzzle.layers.get(id) : null;
     }
 
     cleanPointerEvent(
@@ -72,7 +69,7 @@ export class ControlsManager {
             width: realWidth,
             height: realHeight,
         } = currentTarget.getBoundingClientRect();
-        const { minX, minY, width, height } = this.puzzle.grid.getCanvasRequirements();
+        const { minX, minY, width, height } = this.puzzle.grid.getCanvasRequirements(this.puzzle);
         // These transformations convert dom coordinates to svg coords
         const x = minX + (clientX - left) * (height / realHeight),
             y = minY + (clientY - top) * (width / realWidth);
@@ -90,12 +87,9 @@ export class ControlsManager {
     }
 
     applyLayerEvent(layer: Layer, event: CleanedDOMEvent) {
-        const { grid, storage } = this.puzzle;
         const layerEvent: LayerEvent<LayerProps> = {
+            ...this.puzzle,
             ...event,
-            grid,
-            storage,
-            settings: getSettings(),
             tempStorage: this.tempStorage || {},
         };
 
@@ -118,22 +112,17 @@ export class ControlsManager {
             this.resetControls();
         }
 
-        storage.addToHistory({ puzzle: this.puzzle, layerId: layer.id, actions: history });
+        this.puzzle.storage.addToHistory({
+            puzzle: this.puzzle,
+            layerId: layer.id,
+            actions: history,
+        });
 
         this.puzzle.renderChange({ type: "draw", layerIds: [layer.id] });
     }
 
     resetControls() {
         this.tempStorage = null;
-    }
-
-    selectLayer(...arg: Parameters<typeof Layers["selectLayer"]>) {
-        const oldId = Layers.state.currentLayerId;
-        const newId = Layers.selectLayer(...arg);
-        if (oldId !== newId) {
-            // TODO: This will eventually just change out the overlay blits instead of this
-            this.puzzle.renderChange({ type: "switchLayer" });
-        }
     }
 
     onPointerDown(rawEvent: React.PointerEvent) {
@@ -175,7 +164,7 @@ export class ControlsManager {
         }
 
         window.clearTimeout(this.blurCanvasTimeoutId);
-        const timeoutDelay = getSettings().actionWindowMs;
+        const timeoutDelay = this.puzzle.settings.actionWindowMs;
         this.blurCanvasTimeoutId = window.setTimeout(() => {
             const layer = this.getCurrentLayer();
             if (!layer) return;
@@ -201,11 +190,11 @@ export class ControlsManager {
         // TODO: Remove. It's just a temporary convenience
         if (keypress === "ctrl-p") {
             rawEvent.preventDefault();
-            setBlocklyModalOpen((x) => !x);
+            modalProxy.modal = modalProxy.modal === "blockly" ? null : "blockly";
         }
 
         // TODO: Check for when anything in the sidebar is focused
-        if (blocklyModalIsOpen()) return; // Do not preventDefault when the puzzle is not focused
+        if (modalProxy.modal === "blockly") return; // Do not preventDefault when the puzzle is not focused
 
         if (
             // This should be a very small whitelist for which key-strokes are allowed to be blocked
@@ -229,7 +218,7 @@ export class ControlsManager {
             this.applyLayerEvent(layer, { type: "delete", keypress });
         } else if (keypress === "Tab" || keypress === "shift-Tab") {
             // TODO: allow layers to have sublayers that you can tab through (e.g. for sudoku). This should be handled by a separate api than .handleEvent() though to prevent serious bugs and to allow UI indicators.
-            this.selectLayer({ tab: keypress === "shift-Tab" ? -1 : 1 });
+            this.puzzle.selectLayer({ tab: keypress === "shift-Tab" ? -1 : 1 });
         } else if (keypress === "ctrl-z" || keypress === "ctrl-y") {
             // TODO: Eventually, I want layers to be able to switch the current layer (specifically SelectionLayer for sudoku ctrl/shift behavior)
             // Perhaps, I can use that mechanism for storage to switch the current layer when undoing/redoing
@@ -241,7 +230,7 @@ export class ControlsManager {
 
             if (appliedActions.length) {
                 const newLayerId = appliedActions[appliedActions.length - 1].layerId;
-                this.selectLayer({ id: newLayerId });
+                this.puzzle.selectLayer({ id: newLayerId });
 
                 layer = this.getCurrentLayer();
                 if (layer)
@@ -268,8 +257,8 @@ export class ControlsManager {
         rawEvent.preventDefault();
 
         if (rawEvent.deltaMode !== rawEvent.DOM_DELTA_PIXEL)
-            // TODO: How to show only once?
             errorNotification({
+                error: null,
                 title: "I don't know what WheelEvent.deltaMode means...",
                 message:
                     "FYI, scaling the grid with scrolling might be buggy. Submit a bug report if you get this error.",
@@ -277,10 +266,10 @@ export class ControlsManager {
             });
 
         const sign = rawEvent.deltaY / (Math.abs(rawEvent.deltaY) || 1);
-        const { zoom, width, ...theRest } = getCanvasSize();
+        const { zoom, width } = canvasSizeProxy;
         // TODO: Eventually scale by the magnitude of deltaY and the size of the grid
         const newZoom = clamp(zoom - sign * 0.2, 0, 1);
-        setCanvasSize({ ...theRest, width, zoom: newZoom });
+        canvasSizeProxy.zoom = newZoom;
 
         const div = rawEvent.currentTarget as HTMLDivElement;
         const conWidth = div.getBoundingClientRect().width;
