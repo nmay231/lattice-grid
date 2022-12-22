@@ -21,8 +21,10 @@ export const ResizeModal = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [canvasSizeSnap.zoom, modalSnap.modal]);
 
-    const resizer = (resize: (a: number) => void, amount: number) => () => {
-        resize(amount);
+    // TODO: Give the user feedback that holding shift/ctrl scales by 5. Dependent on global focus management
+    const resizer = (resize: (a: number) => void, amount: number) => (event: React.MouseEvent) => {
+        const scale = event.ctrlKey || event.metaKey || event.shiftKey ? 5 : 1;
+        resize(scale * amount);
         puzzle.resizeCanvas();
         puzzle.renderChange({ type: "draw", layerIds: "all" });
     };
