@@ -12,12 +12,34 @@ import {
     sortableKeyboardCoordinates,
     verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
+import { createStyles } from "@mantine/core";
 import { IoMdCheckmark, IoMdClose } from "react-icons/io";
 import { useSnapshot } from "valtio";
 import { usePuzzle } from "../../../state/puzzle";
 import { blurActiveElement } from "../../../utils/DOMUtils";
 import { SortableItem } from "../../SortableItem";
-import styling from "./LayerList.module.css";
+
+const useStyles = createStyles(() => ({
+    nameContainer: {
+        alignItems: "center",
+        display: "flex",
+        width: "100%",
+        fontSize: "1em",
+        margin: "0px",
+    },
+    name: {
+        cursor: "pointer",
+        textAlign: "center",
+        flexGrow: 1, // Make it larger and easier to click on
+        margin: "0px 7px",
+    },
+    nameSelected: {
+        paddingRight: "1em", // Adjust for the icon to the left of the text
+    },
+    remove: {
+        cursor: "pointer",
+    },
+}));
 
 export const LayerList = () => {
     const puzzle = usePuzzle();
@@ -28,6 +50,8 @@ export const LayerList = () => {
         }),
     );
     const snap = useSnapshot(puzzle.layers);
+
+    const { classes, cx } = useStyles();
 
     const handleDragEnd = ({ active, over }: DragEndEvent) => {
         if (over?.id && active.id !== over.id) {
@@ -66,12 +90,13 @@ export const LayerList = () => {
                     return (
                         !ethereal && (
                             <SortableItem key={id} id={id}>
-                                <div className={styling.nameContainer}>
+                                <div className={classes.nameContainer}>
                                     <span
                                         onPointerDown={handleSelect(id)}
-                                        className={
-                                            current ? styling.nameSelected : styling.nameNotSelected
-                                        }
+                                        className={cx(
+                                            classes.name,
+                                            current && classes.nameSelected,
+                                        )}
                                     >
                                         {current && <IoMdCheckmark />}
                                         <span>{displayName}</span>
@@ -79,7 +104,7 @@ export const LayerList = () => {
 
                                     <span
                                         onPointerDown={handleDelete(id)}
-                                        className={styling.remove}
+                                        className={classes.remove}
                                     >
                                         <IoMdClose />
                                     </span>

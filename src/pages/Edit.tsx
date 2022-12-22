@@ -1,3 +1,4 @@
+import { createStyles } from "@mantine/core";
 import { usePageLeave } from "@mantine/hooks";
 import { useEffect } from "react";
 import { BlocklyModal } from "../components/Blockly/BlocklyModal";
@@ -7,9 +8,39 @@ import { ResizeModal } from "../components/SideBar/MainGroup/ResizeModal";
 import { SVGCanvas } from "../components/SVGCanvas";
 import { usePuzzle } from "../state/puzzle";
 import { NeedsUpdating } from "../types";
-import styles from "./Puzzle.module.css";
+
+const useStyles = createStyles((theme, { canvasWidth }: { canvasWidth: string }) => ({
+    // TODO: handle mobile screens
+    mainContainer: {
+        width: "100vw",
+        height: "100vh",
+        display: "flex",
+    },
+    canvasContainer: {
+        width: canvasWidth,
+        height: "100%",
+        display: "flex",
+        overflow: "hidden",
+        position: "relative",
+    },
+    sideBar: {
+        width: `calc(100% - ${canvasWidth})`,
+        height: "100%",
+        margin: "0px",
+        overflowX: "hidden",
+        overflowY: "scroll",
+        borderRight: "3px solid rgb(54, 50, 50)",
+
+        // TODO: Remove once I switch to Mantine Scrollbar
+        scrollbarWidth: "none",
+        "&::-webkit-scrollbar": {
+            display: "none",
+        },
+    },
+}));
 
 export const EditPage = () => {
+    const { classes } = useStyles({ canvasWidth: "70%" });
     const puzzle = usePuzzle();
     usePageLeave(puzzle.controls.onPageBlur.bind(puzzle.controls));
 
@@ -25,11 +56,11 @@ export const EditPage = () => {
     // TODO: This won't be necessary with mantine.onClickOutside
     const onOutside = puzzle.controls.onPointerUpOutside.bind(puzzle.controls);
     return (
-        <div className={styles.mainContainer}>
-            <div className={styles.sideBar}>
+        <div className={classes.mainContainer}>
+            <div className={classes.sideBar}>
                 <SideBar />
             </div>
-            <div id="canvas-container" className={styles.canvasContainer} onPointerUp={onOutside}>
+            <div id="canvas-container" className={classes.canvasContainer} onPointerUp={onOutside}>
                 <SVGCanvas />
                 <ResizeModal />
             </div>
