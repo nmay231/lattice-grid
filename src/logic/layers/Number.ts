@@ -17,7 +17,6 @@ interface INumberLayer extends Layer<NumberProps>, KeyDownEventHandler<NumberPro
 
 export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer {
     static ethereal = false;
-    static unique = false;
     static type = "NumberLayer" as const;
     static displayName = "Number";
     static defaultSettings = { max: 9, negatives: false };

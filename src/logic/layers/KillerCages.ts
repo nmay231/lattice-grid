@@ -22,7 +22,6 @@ interface IKillerCagesLayer extends Layer<KillerCagesProps> {
 
 export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKillerCagesLayer {
     static ethereal = false;
-    static unique = false;
     static type = "KillerCagesLayer" as const;
     static displayName = "Killer Cages";
     static defaultSettings = { selectedState: "blue" };

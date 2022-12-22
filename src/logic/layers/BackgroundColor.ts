@@ -20,7 +20,6 @@ export class BackgroundColorLayer
     implements IBackgroundColorLayer
 {
     static ethereal = false;
-    static unique = false;
     static type = "BackgroundColorLayer" as const;
     static displayName = "Background Color";
     static defaultSettings = { selectedState: "blue" };

@@ -28,7 +28,6 @@ interface ISimpleLineLayer extends Layer<SimpleLineProps> {
 
 export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimpleLineLayer {
     static ethereal = false;
-    static unique = false;
     static type = "SimpleLineLayer" as const;
     static displayName = "Line";
     static defaultSettings = { fill: "green", connections: "Cell to Cell" as const };

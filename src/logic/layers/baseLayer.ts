@@ -27,7 +27,6 @@ export abstract class BaseLayer<LP extends LayerProps>
     implements Omit<Layer<LP>, "newSettings" | "getBlits">
 {
     static ethereal = true;
-    static unique = false;
     static type = "BASE_LAYER";
     static displayName = "INTERNAL_BASE_LAYER";
     static defaultSettings = {};
@@ -36,15 +35,13 @@ export abstract class BaseLayer<LP extends LayerProps>
     id: Layer["id"];
     ethereal: Layer["ethereal"];
     displayName: Layer["displayName"];
-    unique: Layer["unique"];
     rawSettings: LP["RawSettings"] = {};
     controls?: Layer["controls"];
     constraints?: Layer["constraints"];
 
     constructor(klass: LayerClass<LP>, puzzle: PuzzleManager) {
-        this.id = klass.unique ? klass.type : randomStringId(Object.keys(puzzle.layers));
+        this.id = randomStringId(Object.keys(puzzle.layers));
         this.ethereal = klass.ethereal;
-        this.unique = klass.unique;
         this.type = klass.type;
         this.displayName = klass.displayName;
         this.controls = klass.controls;

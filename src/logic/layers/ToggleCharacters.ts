@@ -30,7 +30,6 @@ export class ToggleCharactersLayer
     implements IToggleCharactersLayer
 {
     static ethereal = false;
-    static unique = false;
     static type = "ToggleCharactersLayer" as const;
     static displayName = "Toggle Characters";
     static defaultSettings = {

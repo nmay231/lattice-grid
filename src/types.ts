@@ -164,7 +164,6 @@ export type Layer<LP extends LayerProps = LayerProps> = {
     type: LP["Type"];
     id: string;
     displayName: string;
-    unique: boolean;
     ethereal: boolean;
     rawSettings: LP["RawSettings"];
     controls?: JSONSchema;
@@ -184,7 +183,6 @@ export type LayerClass<LP extends LayerProps = LayerProps> = {
     type: LP["Type"];
     displayName: string;
     ethereal: boolean;
-    unique: boolean;
     defaultSettings: LP["RawSettings"];
     controls?: JSONSchema;
     constraints?: JSONSchema;

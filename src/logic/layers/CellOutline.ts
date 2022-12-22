@@ -13,7 +13,6 @@ type ICellOutlineLayer = Layer<CellOutlineProps>;
 
 export class CellOutlineLayer extends BaseLayer<CellOutlineProps> implements ICellOutlineLayer {
     static ethereal = true;
-    static unique = true;
     static type = "CellOutlineLayer" as const;
     static displayName = "Cell Outline";
 
