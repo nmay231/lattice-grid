@@ -1,24 +1,31 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { createStyles } from "@mantine/core";
-import { IoMdCheckmark, IoMdClose, IoMdMenu } from "react-icons/io";
+import { IoIosArrowRoundForward, IoMdClose, IoMdMenu } from "react-icons/io";
 
 const useStyles = createStyles(() => ({
     item: {
         display: "flex",
+        borderRadius: "5px",
+        margin: "3px 0px",
+        "& svg": {
+            margin: "0px",
+            width: "1em",
+            height: "1em",
+        },
+    },
+    itemSelected: {
+        backgroundColor: "rgb(175 235 255)",
+        outline: "2px solid rgb(130 225 255)",
     },
     itemHandle: {
         cursor: "move",
-        margin: "0px",
-        marginRight: "3px",
-        width: "1em",
-        height: "1em",
     },
     itemBody: {
         display: "flex",
+        alignItems: "center",
         flexGrow: 1,
         margin: "3px",
-        alignItems: "center",
         fontSize: "1em",
     },
     name: {
@@ -62,30 +69,31 @@ export const LayerItem: React.FC<Props> = ({
     return (
         <div
             ref={setNodeRef}
-            className={classes.item}
+            className={cx(classes.item, selected && classes.itemSelected)}
             style={style}
             {...(editing ? {} : attributes)}
             data-autofocus={selected || undefined}
         >
             <div className={classes.itemBody}>
-                <div {...(editing ? attributes : {})} {...listeners} className={classes.itemHandle}>
-                    <IoMdMenu />
-                </div>
-                <span
+                <IoMdMenu
+                    {...(editing ? attributes : {})}
+                    {...listeners}
+                    className={classes.itemHandle}
+                />
+
+                <div
                     onPointerDown={handleSelect}
                     className={cx(classes.name, selected && classes.nameSelected)}
                 >
-                    {selected && <IoMdCheckmark />}
+                    {selected && <IoIosArrowRoundForward />}
                     <span>{displayName}</span>
-                </span>
+                </div>
 
-                <span
+                <IoMdClose
                     onPointerDown={handleDelete}
                     className={classes.remove}
                     tabIndex={editing ? 1 : undefined}
-                >
-                    <IoMdClose />
-                </span>
+                />
             </div>
         </div>
     );
