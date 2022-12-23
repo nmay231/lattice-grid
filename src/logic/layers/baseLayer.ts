@@ -10,7 +10,6 @@ import {
     PointerMoveOrDown,
 } from "../../types";
 import { errorNotification } from "../../utils/DOMUtils";
-import { randomStringId } from "../../utils/stringUtils";
 import { PuzzleManager } from "../PuzzleManager";
 
 export const methodNotImplemented = ({ name }: { name: string }) => {
@@ -21,6 +20,15 @@ export const methodNotImplemented = ({ name }: { name: string }) => {
             forever: true,
         });
     };
+};
+
+const randomId = (blacklist: Layer["id"][], suggested: Layer["id"]) => {
+    let id: Layer["id"] = suggested;
+    let num = 1;
+    while (blacklist.includes(id)) {
+        id = `${suggested}-${num++}`;
+    }
+    return id;
 };
 
 export abstract class BaseLayer<LP extends LayerProps>
@@ -40,7 +48,7 @@ export abstract class BaseLayer<LP extends LayerProps>
     constraints?: Layer["constraints"];
 
     constructor(klass: LayerClass<LP>, puzzle: PuzzleManager) {
-        this.id = randomStringId(Object.keys(puzzle.layers));
+        this.id = randomId(Object.keys(puzzle.layers), klass.type);
         this.ethereal = klass.ethereal;
         this.type = klass.type;
         this.displayName = klass.displayName;
