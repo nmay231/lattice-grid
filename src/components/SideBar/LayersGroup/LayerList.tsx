@@ -15,8 +15,9 @@ import {
 import { createStyles } from "@mantine/core";
 import { IoMdCheckmark, IoMdClose } from "react-icons/io";
 import { useSnapshot } from "valtio";
+import { useCurrentFocus } from "../../../state/focus";
 import { usePuzzle } from "../../../state/puzzle";
-import { blurActiveElement } from "../../../utils/DOMUtils";
+import { blurActiveElement, useFocusGroup } from "../../../utils/DOMUtils";
 import { SortableItem } from "../../SortableItem";
 
 const useStyles = createStyles(() => ({
@@ -42,16 +43,20 @@ const useStyles = createStyles(() => ({
 }));
 
 export const LayerList = () => {
+    const { classes, cx } = useStyles();
+
     const puzzle = usePuzzle();
+    const snap = useSnapshot(puzzle.layers);
+
+    const [focus] = useCurrentFocus();
+    const { ref } = useFocusGroup(focus === "layerList");
+
     const sensors = useSensors(
         useSensor(PointerSensor),
         useSensor(KeyboardSensor, {
             coordinateGetter: sortableKeyboardCoordinates,
         }),
     );
-    const snap = useSnapshot(puzzle.layers);
-
-    const { classes, cx } = useStyles();
 
     const handleDragEnd = ({ active, over }: DragEndEvent) => {
         if (over?.id && active.id !== over.id) {
@@ -84,35 +89,41 @@ export const LayerList = () => {
                 items={snap.order.map((id) => ({ id }))}
                 strategy={verticalListSortingStrategy}
             >
-                {snap.order.map((id) => {
-                    const current = id === snap.currentKey;
-                    const { ethereal, displayName } = snap.map[id];
-                    return (
-                        !ethereal && (
-                            <SortableItem key={id} id={id}>
-                                <div className={classes.nameContainer}>
-                                    <span
-                                        onPointerDown={handleSelect(id)}
-                                        className={cx(
-                                            classes.name,
-                                            current && classes.nameSelected,
-                                        )}
-                                    >
-                                        {current && <IoMdCheckmark />}
-                                        <span>{displayName}</span>
-                                    </span>
+                <div ref={ref}>
+                    {snap.order.map((id) => {
+                        const current = id === snap.currentKey;
+                        const { ethereal, displayName } = snap.map[id];
+                        return (
+                            !ethereal && (
+                                <SortableItem
+                                    key={id}
+                                    id={id}
+                                    data-autofocus={current || undefined}
+                                >
+                                    <div className={classes.nameContainer}>
+                                        <span
+                                            onPointerDown={handleSelect(id)}
+                                            className={cx(
+                                                classes.name,
+                                                current && classes.nameSelected,
+                                            )}
+                                        >
+                                            {current && <IoMdCheckmark />}
+                                            <span>{displayName}</span>
+                                        </span>
 
-                                    <span
-                                        onPointerDown={handleDelete(id)}
-                                        className={classes.remove}
-                                    >
-                                        <IoMdClose />
-                                    </span>
-                                </div>
-                            </SortableItem>
-                        )
-                    );
-                })}
+                                        <span
+                                            onPointerDown={handleDelete(id)}
+                                            className={classes.remove}
+                                        >
+                                            <IoMdClose />
+                                        </span>
+                                    </div>
+                                </SortableItem>
+                            )
+                        );
+                    })}
+                </div>
             </SortableContext>
         </DndContext>
     );

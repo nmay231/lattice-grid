@@ -29,7 +29,7 @@ type Props = {
     id: string;
 };
 
-export const SortableItem: React.FC<Props> = ({ children, id }) => {
+export const SortableItem: React.FC<Props> = ({ children, id, ...other }) => {
     const { classes } = useStyles();
     const { setNodeRef, transform, attributes, listeners, transition } = useSortable({ id });
 
@@ -38,9 +38,9 @@ export const SortableItem: React.FC<Props> = ({ children, id }) => {
         transition,
     };
     return (
-        <div ref={setNodeRef} className={classes.item} style={style} {...attributes}>
+        <div ref={setNodeRef} className={classes.item} style={style} {...attributes} {...other}>
             <div className={classes.itemBody}>
-                <div {...attributes} {...listeners} className={classes.itemHandle}>
+                <div {...attributes} {...listeners} className={classes.itemHandle} tabIndex={-1}>
                     <IoMdMenu />
                 </div>
                 {children}
