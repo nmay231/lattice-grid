@@ -1,6 +1,6 @@
 import { clamp } from "lodash";
-import { modalProxy } from "../components/Blockly/BlocklyModal";
 import { canvasSizeProxy } from "../state/canvasSize";
+import { focusProxy } from "../state/focus";
 import {
     CleanedDOMEvent,
     Layer,
@@ -185,23 +185,14 @@ export class ControlsManager {
     }
 
     handleKeyDown(rawEvent: React.KeyboardEvent) {
-        const keypress = keypressString(rawEvent);
-
-        // TODO: Remove. It's just a temporary convenience
-        if (keypress === "ctrl-p") {
-            rawEvent.preventDefault();
-            modalProxy.modal = modalProxy.modal === "blockly" ? null : "blockly";
+        if (focusProxy.on !== "layerList") {
+            return; // Layer actions should only be handled when the layer list is focused.
         }
 
-        // TODO: Check for when anything in the sidebar is focused
-        if (modalProxy.modal === "blockly") return; // Do not preventDefault when the puzzle is not focused
+        const keypress = keypressString(rawEvent);
 
-        if (
-            // TODO: Do I preventDefault on tab? I don't even think it's doing anything now...
-            // This should be a very small whitelist for which key-strokes are allowed to be blocked
-            ["tab", "ctrl-a", "ctrl-i"].indexOf(keypress) > -1 ||
-            keypress.length === 1
-        ) {
+        // This should be a very small whitelist for which key-strokes are allowed to be blocked
+        if (["ctrl-a", "ctrl-i"].indexOf(keypress) > -1 || keypress.length === 1) {
             rawEvent.preventDefault();
         }
 
@@ -217,12 +208,7 @@ export class ControlsManager {
             this.applyLayerEvent(layer, { type: "cancelAction" });
         } else if (keypress === "Delete") {
             this.applyLayerEvent(layer, { type: "delete", keypress });
-        } else if (keypress === "Tab" || keypress === "shift-Tab") {
-            // TODO: allow layers to have sublayers that you can tab through (e.g. for sudoku). This should be handled by a separate api than .handleEvent() though to prevent serious bugs and to allow UI indicators.
-            // this.puzzle.selectLayer({ tab: keypress === "shift-Tab" ? -1 : 1 });
         } else if (keypress === "ctrl-z" || keypress === "ctrl-y") {
-            // TODO: Eventually, I want layers to be able to switch the current layer (specifically SelectionLayer for sudoku ctrl/shift behavior)
-            // Perhaps, I can use that mechanism for storage to switch the current layer when undoing/redoing
             const { storage } = this.puzzle;
             const appliedActions =
                 keypress === "ctrl-z"
