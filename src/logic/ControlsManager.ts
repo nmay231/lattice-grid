@@ -197,6 +197,7 @@ export class ControlsManager {
         if (modalProxy.modal === "blockly") return; // Do not preventDefault when the puzzle is not focused
 
         if (
+            // TODO: Do I preventDefault on tab? I don't even think it's doing anything now...
             // This should be a very small whitelist for which key-strokes are allowed to be blocked
             ["tab", "ctrl-a", "ctrl-i"].indexOf(keypress) > -1 ||
             keypress.length === 1
@@ -218,7 +219,7 @@ export class ControlsManager {
             this.applyLayerEvent(layer, { type: "delete", keypress });
         } else if (keypress === "Tab" || keypress === "shift-Tab") {
             // TODO: allow layers to have sublayers that you can tab through (e.g. for sudoku). This should be handled by a separate api than .handleEvent() though to prevent serious bugs and to allow UI indicators.
-            this.puzzle.selectLayer({ tab: keypress === "shift-Tab" ? -1 : 1 });
+            // this.puzzle.selectLayer({ tab: keypress === "shift-Tab" ? -1 : 1 });
         } else if (keypress === "ctrl-z" || keypress === "ctrl-y") {
             // TODO: Eventually, I want layers to be able to switch the current layer (specifically SelectionLayer for sudoku ctrl/shift behavior)
             // Perhaps, I can use that mechanism for storage to switch the current layer when undoing/redoing
@@ -230,7 +231,7 @@ export class ControlsManager {
 
             if (appliedActions.length) {
                 const newLayerId = appliedActions[appliedActions.length - 1].layerId;
-                this.puzzle.selectLayer({ id: newLayerId });
+                this.puzzle.selectLayer(newLayerId);
 
                 layer = this.getCurrentLayer();
                 if (layer)

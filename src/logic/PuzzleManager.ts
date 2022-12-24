@@ -1,6 +1,6 @@
 import { arrayMove } from "@dnd-kit/sortable";
 import { proxy } from "valtio";
-import { blitGroupsProxy, OVERLAY_LAYER_ID } from "../state/blits";
+import { blitGroupsProxy } from "../state/blits";
 import { canvasSizeProxy } from "../state/canvasSize";
 import {
     EditMode,
@@ -22,6 +22,7 @@ import { SquareGrid } from "./grids/SquareGrid";
 import { availableLayers } from "./layers";
 import { CellOutlineLayer } from "./layers/CellOutline";
 import { SELECTION_ID } from "./layers/controls/selection";
+import { NumberLayer } from "./layers/Number";
 import { OverlayLayer } from "./layers/Overlay";
 import { StorageManager } from "./StorageManager";
 
@@ -50,6 +51,7 @@ export class PuzzleManager {
 
     resetLayers() {
         this.layers.clear();
+        // this.storage.clear() // TODO:
         this.storage.addStorage({ grid: this.grid, layer: { id: SELECTION_ID } });
 
         // Guarantee that these layers will be present even if the saved puzzle fails to add them
@@ -82,13 +84,8 @@ export class PuzzleManager {
 
     freshPuzzle() {
         this.resetLayers();
-        this._loadPuzzle({
-            layers: (["CellOutlineLayer", "NumberLayer", "OverlayLayer"] as const).map((id) => ({
-                id,
-                type: id,
-            })),
-            grid: { type: "square", width: 10, height: 10, minX: 0, minY: 0 },
-        });
+        this.addLayer(NumberLayer, null);
+        this.grid.setParams({ type: "square", width: 10, height: 10, minX: 0, minY: 0 });
         this.renderChange({ type: "draw", layerIds: "all" });
     }
 
@@ -121,12 +118,12 @@ export class PuzzleManager {
         } else if (change.type === "switchLayer") {
             const layer = this.layers.get(currentLayerId);
 
-            blitGroupsProxy[`${OVERLAY_LAYER_ID}-question`] = valtioRef(
+            blitGroupsProxy[`${this.UILayer.id}-question`] = valtioRef(
                 layer.getOverlayBlits?.({ ...this }) || [],
             );
         } else if (change.type === "draw") {
             // Only render the overlay blits of the current layer
-            blitGroupsProxy[`${OVERLAY_LAYER_ID}-question`] = valtioRef(
+            blitGroupsProxy[`${this.UILayer.id}-question`] = valtioRef(
                 this.layers.get(currentLayerId).getOverlayBlits?.({ ...this }) || [],
             );
 
@@ -177,7 +174,8 @@ export class PuzzleManager {
         const layer = new layerClass(layerClass, this);
         if (id) layer.id = id;
         // Add the layer to the end, but before the UILayer
-        this.layers.set(layer.id, valtioRef(layer), OVERLAY_LAYER_ID);
+        this.layers.set(layer.id, valtioRef(layer), this.UILayer.id);
+        this.selectLayer(layer.id);
 
         this.storage.addStorage({ grid: this.grid, layer });
         this.changeLayerSettings(layer.id, settings || layerClass.defaultSettings);
@@ -186,6 +184,20 @@ export class PuzzleManager {
     }
 
     removeLayer(id: Layer["id"]) {
+        if (this.layers.currentKey === id) {
+            // We try to select the next layer without wrapping to the other end
+            let nextId = this.layers.getNextSelectableKey(this.layers.currentKey);
+
+            // If that fails, try selecting the previous layer
+            if (nextId === null) {
+                nextId = this.layers.getPrevSelectableKey(this.layers.currentKey);
+            }
+
+            // If THAT fails, then no layer is selectable anyways
+            if (nextId !== null) {
+                this.selectLayer(nextId);
+            }
+        }
         if (this.layers.delete(id)) {
             this.storage.removeStorage({ grid: this.grid, layer: { id } });
             this.renderChange({ type: "delete", layerId: id });
@@ -215,38 +227,36 @@ export class PuzzleManager {
         layers.order.splice(0, layers.order.length, ...arrayMove(layers.order, from, to));
         this.renderChange({ type: "reorder" });
     }
-
-    selectLayer(arg: { id: string } | { tab: -1 | 1 }): void {
-        // TODO: Realize that all of this might be obsolete with focus-based layer selection
-        const layers = this.layers;
-        const layerId = layers.currentKey;
-
-        if ("id" in arg) {
-            if (!layers.select(arg.id)) {
-                throw errorNotification({
-                    error: null,
-                    message: "selectLayer: trying to select a non-existent or ethereal layer",
-                });
-            }
-        } else if ("tab" in arg && layerId !== null) {
-            if (arg.tab === 1) {
-                const first = layers.keys()[0];
-                const success = layers.select(layers.getNextSelectableKey(layerId) || first);
-                // Wrap to the top if needed
-                if (!success) layers.select(layers.getNextSelectableKey(first) || layerId);
-            } else {
-                const last = this.UILayer.id;
-                const success = layers.select(layers.getPrevSelectableKey(layerId) || last);
-                // Wrap to the bottom if needed
-                if (!success) layers.select(layers.getPrevSelectableKey(last) || layerId);
-            }
-        } else {
+    // Trying to force syncronization two ways is too painful, at least inside puzzle manager. I just need to focus the correct element when a new layer is added or when the current layer is deleted. I tried setting it up in a general fashion, but that requires a lot more coordination, especially during initial load, as you can see by the errors. It might be worth looking at the timeline to restore previous versions of these files.
+    _layerSelectTimeout = 0;
+    selectLayer(layerId: Layer["id"]): void {
+        if (!this.layers.selectable(this.layers.get(layerId))) {
             return;
         }
 
-        if (layerId !== layers.currentKey) {
-            // TODO: This will eventually just change out the overlay blits instead of this
+        const oldLayerId = this.layers.currentKey;
+        if (!this.layers.select(layerId)) {
+            throw errorNotification({
+                error: null,
+                message: "selectLayer: trying to select a non-existent layer",
+            });
+        }
+
+        if (oldLayerId !== layerId) {
             this.renderChange({ type: "switchLayer" });
+
+            // TODO: A (maybe) temporary hack to keep the DOM up to date. Must be in a timeout to allow the DOM to be updated.
+            window.clearTimeout(this._layerSelectTimeout);
+            this._layerSelectTimeout = window.setTimeout(() => {
+                const elm = document.querySelector<HTMLElement>(`[data-id="${layerId}"]`);
+                if (!elm) {
+                    throw errorNotification({
+                        error: null,
+                        message: "LayerList: Unable to find the next LayerItem to focus",
+                    });
+                }
+                elm.focus();
+            }, 10);
         }
     }
 }

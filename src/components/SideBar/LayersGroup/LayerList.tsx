@@ -1,3 +1,4 @@
+import { mergeRefs, useEventListener } from "@mantine/hooks";
 import { useSnapshot } from "valtio";
 import { useCurrentFocus } from "../../../state/focus";
 import { usePuzzle } from "../../../state/puzzle";
@@ -10,15 +11,17 @@ export const LayerList = () => {
     const snap = useSnapshot(puzzle.layers);
 
     const [focus] = useCurrentFocus();
-    const { ref } = useFocusGroup(focus === "layerList");
+    const { ref: focusGroupRef } = useFocusGroup(focus === "layerList");
 
-    const handleSelect = (id: string) => (event: React.PointerEvent) => {
-        event.stopPropagation();
-        blurActiveElement();
-        if (id !== puzzle.layers.currentKey) {
-            puzzle.selectLayer({ id });
+    const currentLayerId = snap.currentKey;
+    const focusInRef = useEventListener("focusin", function (event) {
+        const id = (event.target as HTMLElement | null)?.dataset.id || null;
+        if (id && id !== currentLayerId) {
+            puzzle.selectLayer(id);
         }
-    };
+    });
+
+    const ref = mergeRefs(focusGroupRef, focusInRef);
 
     const handleDelete = (id: string) => (event: React.PointerEvent) => {
         event.stopPropagation();
@@ -46,7 +49,6 @@ export const LayerList = () => {
                                 id={id}
                                 displayName={displayName}
                                 selected={id === snap.currentKey}
-                                handleSelect={handleSelect(id)}
                                 handleDelete={handleDelete(id)}
                             />
                         )

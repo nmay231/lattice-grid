@@ -1,6 +1,5 @@
-import { useEventListener, useFocusTrap, useMergedRef } from "@mantine/hooks";
+import { mergeRefs, useEventListener, useFocusTrap } from "@mantine/hooks";
 import { NotificationProps, showNotification } from "@mantine/notifications";
-import { NeedsUpdating } from "../types";
 import { formatAnything } from "./stringUtils";
 
 // TODO: Remove once focus management is complete.
@@ -32,7 +31,7 @@ export const errorNotification = (
 
 export const useFocusGroup = (condition: boolean) => {
     const trapRef = useFocusTrap(condition);
-    const eventRef = useEventListener("focusout", function (event) {
+    const focusOutRef = useEventListener("focusout", function (event) {
         if (condition) {
             if (!event.relatedTarget || !this.contains(event.relatedTarget as Node)) {
                 (event.target as HTMLElement).focus();
@@ -41,9 +40,8 @@ export const useFocusGroup = (condition: boolean) => {
             }
         }
     });
-    const ref = useMergedRef(trapRef, eventRef) as NeedsUpdating as (
-        node: HTMLElement | null,
-    ) => void;
+
+    const ref = mergeRefs(trapRef, focusOutRef);
 
     return { ref };
 };

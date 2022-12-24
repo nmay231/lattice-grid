@@ -1,3 +1,4 @@
+import { proxy } from "valtio";
 import { EditMode, LayerProps, ObjectId, StorageMode } from "../types";
 import { OrderedMap } from "../utils/OrderedMap";
 
@@ -26,7 +27,8 @@ class DisjointSets<Groups extends string = string> {
 }
 
 export class LayerStorage<LP extends LayerProps = LayerProps> {
-    objects = new OrderedMap<LP["ObjectState"]>();
+    // TODO: Should this be where I wrap it in proxy?
+    objects = proxy(new OrderedMap<LP["ObjectState"]>());
     extra: Partial<LP["ExtraLayerStorageProps"]> = {};
     groups = new DisjointSets<StorageMode>();
 

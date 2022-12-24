@@ -1,6 +1,6 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { createStyles } from "@mantine/core";
+import { ActionIcon, createStyles } from "@mantine/core";
 import { IoIosArrowRoundForward, IoMdClose, IoMdMenu } from "react-icons/io";
 
 const useStyles = createStyles(() => ({
@@ -8,8 +8,13 @@ const useStyles = createStyles(() => ({
         display: "flex",
         borderRadius: "5px",
         margin: "3px 0px",
+        "& button": {
+            color: "inherit",
+            "&:hover": {
+                backgroundColor: "transparent",
+            },
+        },
         "& svg": {
-            margin: "0px",
             width: "1em",
             height: "1em",
         },
@@ -18,7 +23,7 @@ const useStyles = createStyles(() => ({
         backgroundColor: "rgb(175 235 255)",
         outline: "2px solid rgb(130 225 255)",
     },
-    itemHandle: {
+    handle: {
         cursor: "move",
     },
     itemBody: {
@@ -46,17 +51,10 @@ type Props = {
     id: string;
     displayName: string;
     selected: boolean;
-    handleSelect: React.PointerEventHandler;
     handleDelete: React.PointerEventHandler;
 };
 
-export const LayerItem: React.FC<Props> = ({
-    id,
-    displayName,
-    selected,
-    handleDelete,
-    handleSelect,
-}) => {
+export const LayerItem: React.FC<Props> = ({ id, displayName, selected, handleDelete }) => {
     // TODO: I eventually want to be able to edit the layers using the keyboard
     const editing = false;
     const { classes, cx } = useStyles();
@@ -73,27 +71,30 @@ export const LayerItem: React.FC<Props> = ({
             style={style}
             {...(editing ? {} : attributes)}
             data-autofocus={selected || undefined}
+            data-id={id}
         >
             <div className={classes.itemBody}>
-                <IoMdMenu
+                <ActionIcon
                     {...(editing ? attributes : {})}
                     {...listeners}
-                    className={classes.itemHandle}
-                />
-
-                <div
-                    onPointerDown={handleSelect}
-                    className={cx(classes.name, selected && classes.nameSelected)}
+                    className={classes.handle}
+                    tabIndex={editing ? 0 : -1}
                 >
+                    <IoMdMenu />
+                </ActionIcon>
+
+                <div className={cx(classes.name, selected && classes.nameSelected)}>
                     {selected && <IoIosArrowRoundForward />}
                     <span>{displayName}</span>
                 </div>
 
-                <IoMdClose
+                <ActionIcon
                     onPointerDown={handleDelete}
                     className={classes.remove}
-                    tabIndex={editing ? 1 : undefined}
-                />
+                    tabIndex={editing ? 0 : -1}
+                >
+                    <IoMdClose />
+                </ActionIcon>
             </div>
         </div>
     );
