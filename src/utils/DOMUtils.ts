@@ -1,12 +1,7 @@
 import { mergeRefs, useEventListener, useFocusTrap } from "@mantine/hooks";
 import { NotificationProps, showNotification } from "@mantine/notifications";
+import { Layer } from "../types";
 import { formatAnything } from "./stringUtils";
-
-// TODO: Remove once focus management is complete.
-export const blurActiveElement = () => {
-    // Sometimes, I hate JS... Why event loop? WHY?
-    // window.setTimeout(() => (document.activeElement as HTMLElement)?.blur(), 0);
-};
 
 export const errorNotification = (
     props: Partial<Pick<NotificationProps, "message" | "title">> & {
@@ -44,4 +39,21 @@ export const useFocusGroup = (condition: boolean) => {
     const ref = mergeRefs(trapRef, focusOutRef);
 
     return { ref };
+};
+
+let _layerSelectTimeout = 0;
+export const focusCurrentLayer = (layerId: Layer["id"], throwError = false) => {
+    // TODO: A (maybe) temporary hack to keep the DOM up to date. Must be in a timeout to allow the DOM to be updated.
+    window.clearTimeout(_layerSelectTimeout);
+    _layerSelectTimeout = window.setTimeout(() => {
+        const elm = document.querySelector<HTMLElement>(`[data-id="${layerId}"]`);
+        if (!elm && throwError) {
+            throw errorNotification({
+                error: null,
+                message: "LayerList: Unable to find the next LayerItem to focus",
+            });
+        } else if (elm) {
+            elm.focus();
+        }
+    }, 10);
 };

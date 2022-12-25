@@ -2,7 +2,6 @@ import { Select } from "@mantine/core";
 import { useState } from "react";
 import { availableLayers } from "../../../logic/layers";
 import { usePuzzle } from "../../../state/puzzle";
-import { blurActiveElement } from "../../../utils/DOMUtils";
 import { smartSort } from "../../../utils/stringUtils";
 
 const DEFAULT_VALUE = "Add New Layer";
@@ -19,7 +18,7 @@ export const AddNewLayerButton = () => {
         puzzle.renderChange({ type: "draw", layerIds: [newId] });
         setLayerType(DEFAULT_VALUE);
         // TODO: Accessibility might be an issue if we add a layer when the dropdown changes. Particularly when using arrow keys to select (not to mention possible issues with mobile)
-        blurActiveElement();
+        // TODO: blurActiveElement
     };
 
     const nonEthereal = Object.values(availableLayers)

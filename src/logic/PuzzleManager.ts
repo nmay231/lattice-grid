@@ -13,7 +13,7 @@ import {
     UnknownObject,
     ValtioRef,
 } from "../types";
-import { errorNotification } from "../utils/DOMUtils";
+import { errorNotification, focusCurrentLayer } from "../utils/DOMUtils";
 import { valtioRef } from "../utils/imports";
 import { IndexedOrderedMap } from "../utils/OrderedMap";
 import { formatAnything } from "../utils/stringUtils";
@@ -227,7 +227,7 @@ export class PuzzleManager {
         layers.order.splice(0, layers.order.length, ...arrayMove(layers.order, from, to));
         this.renderChange({ type: "reorder" });
     }
-    // Trying to force syncronization two ways is too painful, at least inside puzzle manager. I just need to focus the correct element when a new layer is added or when the current layer is deleted. I tried setting it up in a general fashion, but that requires a lot more coordination, especially during initial load, as you can see by the errors. It might be worth looking at the timeline to restore previous versions of these files.
+
     _layerSelectTimeout = 0;
     selectLayer(layerId: Layer["id"]): void {
         if (!this.layers.selectable(this.layers.get(layerId))) {
@@ -244,19 +244,8 @@ export class PuzzleManager {
 
         if (oldLayerId !== layerId) {
             this.renderChange({ type: "switchLayer" });
-
-            // TODO: A (maybe) temporary hack to keep the DOM up to date. Must be in a timeout to allow the DOM to be updated.
-            window.clearTimeout(this._layerSelectTimeout);
-            this._layerSelectTimeout = window.setTimeout(() => {
-                const elm = document.querySelector<HTMLElement>(`[data-id="${layerId}"]`);
-                if (!elm) {
-                    throw errorNotification({
-                        error: null,
-                        message: "LayerList: Unable to find the next LayerItem to focus",
-                    });
-                }
-                elm.focus();
-            }, 10);
+            // The layer should always exist, so it should throw an error if not found.
+            focusCurrentLayer(layerId, true);
         }
     }
 }

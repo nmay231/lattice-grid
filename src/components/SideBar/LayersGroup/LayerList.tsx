@@ -2,7 +2,7 @@ import { mergeRefs, useEventListener } from "@mantine/hooks";
 import { useSnapshot } from "valtio";
 import { useCurrentFocus } from "../../../state/focus";
 import { usePuzzle } from "../../../state/puzzle";
-import { blurActiveElement, useFocusGroup } from "../../../utils/DOMUtils";
+import { focusCurrentLayer, useFocusGroup } from "../../../utils/DOMUtils";
 import { LayerItem } from "./LayerItem";
 import { SortableList } from "./SortableList";
 
@@ -15,7 +15,14 @@ export const LayerList = () => {
 
     const currentLayerId = snap.currentKey;
     const focusInRef = useEventListener("focusin", function (event) {
-        const id = (event.target as HTMLElement | null)?.dataset.id || null;
+        const target = event.target as HTMLElement | null;
+
+        // Unfocus layer sorting handles and other similar buttons
+        if (target?.tabIndex === -1 && currentLayerId) {
+            focusCurrentLayer(currentLayerId);
+            return;
+        }
+        const id = target?.dataset.id || null;
         if (id && id !== currentLayerId) {
             puzzle.selectLayer(id);
         }
@@ -26,7 +33,6 @@ export const LayerList = () => {
     const handleDelete = (id: string) => (event: React.PointerEvent) => {
         event.stopPropagation();
         puzzle.removeLayer(id);
-        blurActiveElement();
     };
 
     return (
@@ -36,7 +42,6 @@ export const LayerList = () => {
                 if (over?.id && active.id !== over.id) {
                     puzzle.shuffleLayerOnto(active.id, over.id);
                 }
-                blurActiveElement();
             }}
         >
             <div ref={ref}>

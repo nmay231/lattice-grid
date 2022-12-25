@@ -1,7 +1,6 @@
 import { Button, Center, Group, Stack } from "@mantine/core";
 import { Link } from "react-router-dom";
 import { usePuzzle } from "../../../state/puzzle";
-import { blurActiveElement } from "../../../utils/DOMUtils";
 import { modalProxy } from "../../ImportExportModal/ImportExportModal";
 import { Group as Collapse } from "../Group";
 import { PuzzleModeToggle } from "./PuzzleModeToggle";
@@ -26,7 +25,7 @@ export const MainGroup = () => {
                             puzzle.freshPuzzle();
                             puzzle.resizeCanvas();
                             puzzle.renderChange({ type: "draw", layerIds: "all" });
-                            blurActiveElement();
+                            // TODO: blurActiveElement
                         }}
                     >
                         Reset Puzzle

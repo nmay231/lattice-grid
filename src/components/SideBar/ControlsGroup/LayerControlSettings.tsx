@@ -5,7 +5,6 @@ import { constraintSettingsProxy } from "../../../state/constraintSettings";
 
 import { usePuzzle } from "../../../state/puzzle";
 import { UnknownObject } from "../../../types";
-import { blurActiveElement } from "../../../utils/DOMUtils";
 import { valtioRef } from "../../../utils/imports";
 import { JsonFormsWrapper } from "../../JsonFormsWrapper";
 
@@ -57,7 +56,7 @@ export const LayerControlSettings = () => {
                     } else {
                         puzzle.changeLayerSettings(id, newData);
                         puzzle.renderChange({ type: "draw", layerIds: [id] });
-                        blurActiveElement();
+                        // TODO: blurActiveElement
                     }
                 }}
                 schema={schema}

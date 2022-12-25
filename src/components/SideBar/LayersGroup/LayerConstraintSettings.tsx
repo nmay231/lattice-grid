@@ -6,7 +6,6 @@ import { constraintSettingsProxy } from "../../../state/constraintSettings";
 
 import { usePuzzle } from "../../../state/puzzle";
 import { UnknownObject } from "../../../types";
-import { blurActiveElement } from "../../../utils/DOMUtils";
 import { valtioRef } from "../../../utils/imports";
 import { JsonFormsWrapper } from "../../JsonFormsWrapper";
 
@@ -59,12 +58,12 @@ export const LayerConstraintSettings = () => {
         });
 
         puzzle.renderChange({ type: "draw", layerIds: [id] });
-        blurActiveElement();
+        // TODO: blurActiveElement
     };
 
     const handleCancel = () => {
         constraintSettingsProxy.settings = valtioRef(layer.rawSettings);
-        blurActiveElement();
+        // TODO: blurActiveElement
     };
 
     // TODO: Handle when no layers are present.
