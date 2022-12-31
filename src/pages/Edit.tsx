@@ -8,6 +8,7 @@ import { ResizeModal } from "../components/SideBar/MainGroup/ResizeModal";
 import { SVGCanvas } from "../components/SVGCanvas";
 import { usePuzzle } from "../state/puzzle";
 import { NeedsUpdating } from "../types";
+import { attachGlobalFocusListeners } from "../utils/focusManagement";
 
 const useStyles = createStyles((theme, { canvasWidth }: { canvasWidth: string }) => ({
     // TODO: handle mobile screens
@@ -53,14 +54,17 @@ export const EditPage = () => {
         };
     }, [puzzle]);
 
-    // TODO: This won't be necessary with mantine.onClickOutside
-    const onOutside = puzzle.controls.onPointerUpOutside.bind(puzzle.controls);
+    useEffect(() => {
+        const { unsubscribe } = attachGlobalFocusListeners();
+        return unsubscribe;
+    }, []);
+
     return (
         <div className={classes.mainContainer}>
             <div className={classes.sideBar}>
                 <SideBar />
             </div>
-            <div id="canvas-container" className={classes.canvasContainer} onPointerUp={onOutside}>
+            <div className={classes.canvasContainer}>
                 <SVGCanvas />
                 <ResizeModal />
             </div>

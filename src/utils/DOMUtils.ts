@@ -1,4 +1,3 @@
-import { mergeRefs, useEventListener, useFocusTrap } from "@mantine/hooks";
 import { NotificationProps, showNotification } from "@mantine/notifications";
 import { Layer } from "../types";
 import { LatestTimeout } from "./LatestTimeout";
@@ -23,23 +22,6 @@ export const errorNotification = (
     });
 
     return new Error(formatAnything(rest));
-};
-
-export const useFocusGroup = (condition: boolean) => {
-    const trapRef = useFocusTrap(condition);
-    const focusOutRef = useEventListener("focusout", function (event) {
-        if (condition) {
-            if (!event.relatedTarget || !this.contains(event.relatedTarget as Node)) {
-                (event.target as HTMLElement).focus();
-            } else if (this.contains(event.relatedTarget as Node)) {
-                (event.relatedTarget as HTMLElement).focus();
-            }
-        }
-    });
-
-    const ref = mergeRefs(trapRef, focusOutRef);
-
-    return { ref };
 };
 
 const _layerSelectTimeout = new LatestTimeout();
