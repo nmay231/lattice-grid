@@ -1,6 +1,7 @@
 import { mergeRefs, useEventListener, useFocusTrap } from "@mantine/hooks";
 import { NotificationProps, showNotification } from "@mantine/notifications";
 import { Layer } from "../types";
+import { LatestTimeout } from "./LatestTimeout";
 import { formatAnything } from "./stringUtils";
 
 export const errorNotification = (
@@ -41,11 +42,10 @@ export const useFocusGroup = (condition: boolean) => {
     return { ref };
 };
 
-let _layerSelectTimeout = 0;
+const _layerSelectTimeout = new LatestTimeout();
 export const focusCurrentLayer = (layerId: Layer["id"], throwError = false) => {
-    // TODO: A (maybe) temporary hack to keep the DOM up to date. Must be in a timeout to allow the DOM to be updated.
-    window.clearTimeout(_layerSelectTimeout);
-    _layerSelectTimeout = window.setTimeout(() => {
+    // Must be in a timeout to allow the DOM to be updated.
+    _layerSelectTimeout.after(10, () => {
         const elm = document.querySelector<HTMLElement>(`[data-id="${layerId}"]`);
         if (!elm && throwError) {
             throw errorNotification({
@@ -55,5 +55,5 @@ export const focusCurrentLayer = (layerId: Layer["id"], throwError = false) => {
         } else if (elm) {
             elm.focus();
         }
-    }, 10);
+    });
 };

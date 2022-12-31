@@ -10,11 +10,12 @@ import {
     UnknownObject,
 } from "../types";
 import { errorNotification } from "../utils/DOMUtils";
+import { LatestTimeout } from "../utils/LatestTimeout";
 import { keypressString } from "../utils/stringUtils";
 import { PuzzleManager } from "./PuzzleManager";
 
 export class ControlsManager {
-    blurCanvasTimeoutId: number | undefined = undefined;
+    blurCanvasTimeout = new LatestTimeout();
     tempStorage: Record<string, UnknownObject> | null = null;
     puzzle: PuzzleManager;
     eventListeners;
@@ -163,13 +164,11 @@ export class ControlsManager {
             return;
         }
 
-        window.clearTimeout(this.blurCanvasTimeoutId);
-        const timeoutDelay = this.puzzle.settings.actionWindowMs;
-        this.blurCanvasTimeoutId = window.setTimeout(() => {
+        this.blurCanvasTimeout.after(this.puzzle.settings.actionWindowMs, () => {
             const layer = this.getCurrentLayer();
             if (!layer) return;
             this.applyLayerEvent(layer, { type: "pointerUp" });
-        }, timeoutDelay) as unknown as number;
+        });
     }
 
     onPointerEnter(event: React.PointerEvent) {
@@ -177,7 +176,7 @@ export class ControlsManager {
             return;
         }
 
-        window.clearTimeout(this.blurCanvasTimeoutId);
+        this.blurCanvasTimeout.clear();
     }
 
     onContextMenu(event: React.MouseEvent) {
@@ -274,13 +273,9 @@ export class ControlsManager {
     }
 
     onPageBlur() {
-        if (!this.tempStorage) {
-            return;
-        }
-
         const layer = this.getCurrentLayer();
-        if (!layer) return;
+        if (!this.tempStorage || !layer) return;
         this.applyLayerEvent(layer, { type: "pointerUp" });
-        window.clearTimeout(this.blurCanvasTimeoutId);
+        this.blurCanvasTimeout.clear();
     }
 }

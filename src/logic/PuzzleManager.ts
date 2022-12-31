@@ -228,7 +228,6 @@ export class PuzzleManager {
         this.renderChange({ type: "reorder" });
     }
 
-    _layerSelectTimeout = 0;
     selectLayer(layerId: Layer["id"]): void {
         if (!this.layers.selectable(this.layers.get(layerId))) {
             return;
