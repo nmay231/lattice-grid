@@ -7,7 +7,7 @@ import { LatestTimeout } from "./LatestTimeout";
 type FocusGroup = "layerList" | "other";
 const lastFocused = { yes: true };
 
-export const attachGlobalFocusListeners = () => {
+export const attachGlobalFocusListeners = ({ pageFocusOut }: { pageFocusOut: () => void }) => {
     const state = {
         blurCanvasTimeout: new LatestTimeout(),
         lastGroupTarget: null as HTMLElement | null,
@@ -23,9 +23,9 @@ export const attachGlobalFocusListeners = () => {
     const focusOut = (event: FocusEvent) => {
         state.lastGroupTarget = (event.target as NeedsUpdating) || state.lastGroupTarget;
         state.blurCanvasTimeout.after(0, () => {
-            state.lastGroupTarget?.focus();
+            if (document.activeElement === document.body) pageFocusOut();
 
-            // TODO: clickOutsideCanvas();
+            state.lastGroupTarget?.focus();
         });
     };
     document.addEventListener("focusin", focusIn);

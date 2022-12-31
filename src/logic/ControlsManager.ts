@@ -26,7 +26,6 @@ export class ControlsManager {
 
         // Note: these are not event listeners attached to the SVGCanvas
         this.handleKeyDown = this.handleKeyDown.bind(this);
-        this.onPointerUpOutside = this.onPointerUpOutside.bind(this);
         this.onPageBlur = this.onPageBlur.bind(this);
 
         this.eventListeners = {
@@ -127,35 +126,28 @@ export class ControlsManager {
     }
 
     onPointerDown(rawEvent: React.PointerEvent) {
-        // TODO: allow for two fingers to zoom
-        if (!rawEvent.isPrimary) {
-            return;
-        }
+        this._drawingOnCanvas = true;
         const layer = this.getCurrentLayer();
-        if (!layer) return;
+        // TODO: allow for two fingers to zoom
+        if (!rawEvent.isPrimary || !layer) return;
+
         this.tempStorage = {};
         const event = this.cleanPointerEvent("pointerDown", rawEvent);
         this.applyLayerEvent(layer, event);
     }
 
     onPointerMove(rawEvent: React.PointerEvent) {
-        if (!rawEvent.isPrimary || !this.tempStorage) {
-            return;
-        }
-
         const layer = this.getCurrentLayer();
-        if (!layer) return;
+        if (!rawEvent.isPrimary || !layer || !this.tempStorage) return;
+
         const event = this.cleanPointerEvent("pointerMove", rawEvent);
         this.applyLayerEvent(layer, event);
     }
 
     onPointerUp(rawEvent: React.PointerEvent) {
-        if (!rawEvent.isPrimary || !this.tempStorage) {
-            return;
-        }
-
         const layer = this.getCurrentLayer();
-        if (!layer) return;
+        if (!rawEvent.isPrimary || !layer || !this.tempStorage) return;
+
         this.applyLayerEvent(layer, { type: "pointerUp" });
     }
 
@@ -230,12 +222,23 @@ export class ControlsManager {
         }
     }
 
-    onPointerUpOutside(rawEvent: React.PointerEvent) {
-        if (rawEvent.isPrimary && (rawEvent.target as any)?.id === "canvas-container") {
-            const layer = this.getCurrentLayer();
-            if (!layer) return;
-            this.applyLayerEvent(layer, { type: "cancelAction" });
+    // This assumes that handlePageFocusOut is called in a timeout and that the timeout runs after onPointerDown does.
+    _drawingOnCanvas = false;
+    handlePageFocusOut() {
+        const layer = this.getCurrentLayer();
+        if (!layer || this._drawingOnCanvas) {
+            this._drawingOnCanvas = false;
+            return;
         }
+        this.applyLayerEvent(layer, { type: "cancelAction" });
+    }
+
+    // TODO: What are the differences between document.body focusout and page blur? Do I need both, or at least for both to cooperate?
+    onPageBlur() {
+        const layer = this.getCurrentLayer();
+        if (!this.tempStorage || !layer) return;
+        this.applyLayerEvent(layer, { type: "pointerUp" });
+        this.blurCanvasTimeout.clear();
     }
 
     onWheel(rawEvent: WheelEvent) {
@@ -270,12 +273,5 @@ export class ControlsManager {
         const left = ratio * (offsetX + scrollLeft) - offsetX;
         const top = ratio * (offsetY + scrollTop) - offsetY;
         div.scroll({ left, top });
-    }
-
-    onPageBlur() {
-        const layer = this.getCurrentLayer();
-        if (!this.tempStorage || !layer) return;
-        this.applyLayerEvent(layer, { type: "pointerUp" });
-        this.blurCanvasTimeout.clear();
     }
 }

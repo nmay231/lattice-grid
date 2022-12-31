@@ -55,9 +55,11 @@ export const EditPage = () => {
     }, [puzzle]);
 
     useEffect(() => {
-        const { unsubscribe } = attachGlobalFocusListeners();
+        const { unsubscribe } = attachGlobalFocusListeners({
+            pageFocusOut: () => puzzle.controls.handlePageFocusOut(),
+        });
         return unsubscribe;
-    }, []);
+    }, [puzzle.controls]);
 
     return (
         <div className={classes.mainContainer}>
