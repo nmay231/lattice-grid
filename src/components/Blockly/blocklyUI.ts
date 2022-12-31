@@ -1,6 +1,5 @@
 import { UserCodeJSON } from "../../logic/userComputation/codeBlocks";
 import { DEFAULT_ALIAS_NAME } from "../../logic/userComputation/utils";
-import { puzzleProxy } from "../../state/puzzle";
 import { Blockly } from "../../utils/imports";
 
 // TODO: this.setTooltip("") and other helpful things like colour and such
@@ -108,10 +107,11 @@ blocks["ObjectSelector"] = {
     init() {
         this.appendDummyInput().appendField(
             new Blockly.FieldDropdown(() => {
-                // TODO: subscribe to the layer changes using valtio.subscribe and regenerate this list
-                return puzzleProxy.puzzle.layers
-                    .values()
-                    .map(({ id, displayName }) => [displayName, id]);
+                return [];
+                // TODO: Generate and update this list outside of this init() method using valtio.subscribe on puzzle.layers
+                // return puzzleProxy.puzzle.layers
+                //     .values()
+                //     .map(({ id, displayName }) => [displayName, id]);
             }),
             "LAYER_ID",
         );

@@ -2,7 +2,7 @@ import { UserCodeJSON } from "../../logic/userComputation/codeBlocks";
 import { Blockly } from "../../utils/imports";
 import { codeGen } from "./customCodeGen";
 
-describe.only("codeGen", () => {
+describe("codeGen", () => {
     const generate = (block: Blockly.Block) => {
         const result = codeGen.blockToCode(block);
         const toParse = typeof result === "string" ? result : result[0];
