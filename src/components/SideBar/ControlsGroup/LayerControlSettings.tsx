@@ -5,6 +5,7 @@ import { constraintSettingsProxy } from "../../../state/constraintSettings";
 
 import { usePuzzle } from "../../../state/puzzle";
 import { UnknownObject } from "../../../types";
+import { useFocusGroup } from "../../../utils/focusManagement";
 import { valtioRef } from "../../../utils/imports";
 import { JsonFormsWrapper } from "../../JsonFormsWrapper";
 
@@ -30,6 +31,8 @@ export const LayerControlSettings = () => {
         // TODO: This doesn't seem necessary
     }, [layer, settingsSnap.settings]);
 
+    const { ref, unfocus } = useFocusGroup({ puzzle, group: "controlSettings" });
+
     if (!data || !layer || !id) {
         return <></>;
     }
@@ -41,7 +44,9 @@ export const LayerControlSettings = () => {
     const uischema = { type: "VerticalLayout", elements: uischemaElements };
 
     return (
-        <div {...puzzle.controls.stopPropagation}>
+        <div ref={ref}>
+            {/* TODO: Hack Mantine's useFocusTrap so it doesn't focus the first element right away */}
+            <div data-autofocus></div>
             <JsonFormsWrapper
                 data={data}
                 setData={(newData: UnknownObject) => {
@@ -56,7 +61,7 @@ export const LayerControlSettings = () => {
                     } else {
                         puzzle.changeLayerSettings(id, newData);
                         puzzle.renderChange({ type: "draw", layerIds: [id] });
-                        // TODO: blurActiveElement
+                        unfocus();
                     }
                 }}
                 schema={schema}

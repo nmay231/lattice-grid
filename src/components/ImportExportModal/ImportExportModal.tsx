@@ -37,9 +37,9 @@ export const importPuzzle = (puzzle: PuzzleManager, text: string) => {
         }
         puzzle.storage.objects = puzzleData.objects;
         puzzle.renderChange({ type: "draw", layerIds: "all" });
-    } catch (error: NeedsUpdating) {
+    } catch (error) {
         throw errorNotification({
-            error,
+            error: error as NeedsUpdating,
             title: "Failed to parse",
             message: "Bad puzzle data or unknown error",
         });
@@ -110,7 +110,7 @@ export const ImportExportModal = () => {
             title="Import / Export Puzzle"
             onClose={() => (modalProxy.modal = null)}
             size="lg"
-            {...puzzle.controls.stopPropagation}
+            // TODO: openModal("import-export")
         >
             <Box p="sm">
                 <Text size="lg" italic weight="bold" align="center" color="yellow">

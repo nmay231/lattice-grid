@@ -11,7 +11,7 @@ import { proxy, useSnapshot } from "valtio";
 import { type PuzzleManager } from "../logic/PuzzleManager";
 import { LatestTimeout } from "./LatestTimeout";
 
-export type FocusGroup = "layerList" | "other";
+export type FocusGroup = "layerList" | "controlSettings" | "constraintSettings" | "debug";
 
 // Export for testing
 export const _focusState = {
@@ -58,7 +58,7 @@ export const useGlobalFocusListeners = ({ pageFocusOut }: { pageFocusOut: () => 
 
 export const useFocusGroup = ({
     puzzle,
-    group: name,
+    group,
 }: {
     puzzle: Pick<PuzzleManager, "focusCurrentLayer">;
     group: FocusGroup;
@@ -71,11 +71,11 @@ export const useFocusGroup = ({
         _focusState.groupIsFocused = true;
         _focusState.lastGroupTarget = event.target as HTMLElement | null;
         // TODO: Must be in a timeout to alow other events to be handled before rerendering react.
-        setTimeout(() => (focusProxy.group = name), 0);
+        setTimeout(() => (focusProxy.group = group), 0);
     });
 
     const keyDownRef = useEventListener("keydown", (event) => {
-        if (name === "layerList") return;
+        if (group === "layerList") return;
 
         if (event.code === "Escape") {
             event.stopPropagation();
@@ -84,10 +84,10 @@ export const useFocusGroup = ({
     });
 
     const snap = useSnapshot(focusProxy);
-    const trapRef = useFocusTrap(snap.group === name);
+    const trapRef = useFocusTrap(snap.group === group);
     const ref = mergeRefs(focusInRef, focusOutRef, keyDownRef, trapRef);
 
-    return { ref };
+    return { ref, unfocus: () => puzzle.focusCurrentLayer() };
 };
 
 const unfocus = () => {

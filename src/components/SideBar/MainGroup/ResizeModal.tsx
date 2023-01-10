@@ -31,7 +31,7 @@ export const ResizeModal = () => {
 
     return (
         <Modal
-            {...puzzle.controls.stopPropagation}
+            // TODO: openModal("resize-grid")
             opened={modalSnap.modal === "resize-grid"}
             onClose={() => {
                 modalProxy.modal = null;

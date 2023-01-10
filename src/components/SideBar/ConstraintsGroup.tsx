@@ -6,7 +6,7 @@ import { Group } from "./Group";
 
 export const CodeGroup = () => {
     const puzzle = usePuzzle();
-    const { ref } = useFocusGroup({ puzzle, group: "other" });
+    const { ref } = useFocusGroup({ puzzle, group: "debug" });
     const { ref: buttonRef, unfocus } = useFocusElementHandler();
     const [state, setState] = useState([..."12345"]);
 

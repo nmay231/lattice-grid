@@ -17,37 +17,18 @@ import { PuzzleManager } from "./PuzzleManager";
 export class ControlsManager {
     blurCanvasTimeout = new LatestTimeout();
     tempStorage: Record<string, UnknownObject> | null = null;
-    puzzle: PuzzleManager;
-    eventListeners;
-    stopPropagation;
 
-    constructor(puzzle: PuzzleManager) {
-        this.puzzle = puzzle;
+    // Canvas event listeners
+    eventListeners = {
+        onPointerDown: this.onPointerDown.bind(this),
+        onPointerMove: this.onPointerMove.bind(this),
+        onPointerUp: this.onPointerUp.bind(this),
+        onPointerLeave: this.onPointerLeave.bind(this),
+        onPointerEnter: this.onPointerEnter.bind(this),
+        onContextMenu: this.onContextMenu.bind(this),
+    };
 
-        this.eventListeners = {
-            onPointerDown: this.onPointerDown.bind(this),
-            onPointerMove: this.onPointerMove.bind(this),
-            onPointerUp: this.onPointerUp.bind(this),
-            onPointerLeave: this.onPointerLeave.bind(this),
-            onPointerEnter: this.onPointerEnter.bind(this),
-            onContextMenu: this.onContextMenu.bind(this),
-        };
-
-        // Attached to elements that don't want to send events to the svgcanvas like forms
-        this.stopPropagation = {
-            onPointerDown: this._stopPropagation.bind(this),
-            onPointerMove: this._stopPropagation.bind(this),
-            onPointerUp: this._stopPropagation.bind(this),
-            onPointerLeave: this._stopPropagation.bind(this),
-            onPointerEnter: this._stopPropagation.bind(this),
-            onKeyDown: this._stopPropagation.bind(this),
-            onContextMenu: this._stopPropagation.bind(this),
-        };
-    }
-
-    _stopPropagation(event: any) {
-        event.stopPropagation();
-    }
+    constructor(public puzzle: PuzzleManager) {}
 
     getCurrentLayer() {
         const id = this.puzzle.layers.currentKey;
