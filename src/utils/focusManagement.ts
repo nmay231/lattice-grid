@@ -20,6 +20,7 @@ export const _focusState = {
     lastGroupTarget: null as HTMLElement | null,
 };
 
+// The current focus group must be kept in a proxy so that components are rerendered, but could the rest of _focusState be merged for simplicity?
 export const focusProxy = proxy({ group: "layerList" as FocusGroup });
 
 export const useGlobalFocusListeners = ({ pageFocusOut }: { pageFocusOut: () => void }) => {
@@ -30,19 +31,19 @@ export const useGlobalFocusListeners = ({ pageFocusOut }: { pageFocusOut: () => 
             if (_focusState.groupIsFocused) {
                 _focusState.focusOutOfGroupTimeout.clear();
             } else if (target?.tabIndex !== 0) {
-                // TODO: Do not refocus if the current focus group is a modal.
+                // TODO: openModal()
                 // Refocus last group element if the element doesn't opt into handling focus itself.
                 _focusState.lastGroupTarget?.focus();
             }
         };
 
         const focusOut = () => {
+            // This timeout only runs if a non-group element was focused or everything was unfocused
             _focusState.focusOutOfGroupTimeout.after(0, () => {
-                // This runs only if a non-group element was focused or everything was unfocused
-
                 if (document.activeElement === document.body) {
                     // The page background was clicked/tapped
                     pageFocusOut();
+                    _focusState.lastGroupTarget?.focus();
                 }
             });
         };

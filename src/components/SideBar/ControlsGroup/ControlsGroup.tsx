@@ -6,10 +6,7 @@ import { LayerControlSettings } from "./LayerControlSettings";
 export const ControlsGroup = () => {
     return (
         <Group name="Controls" expanded>
-            {/* TODO: Simple Layer selector */}
-            {/* TODO: Undo/redo */}
             {/* Layer control settings, aka Object placement/selection */}
-            {/* TODO: How to incorporate the delete when it is treated slightly differently with numbers/text as opposed to non-text objects */}
             <LayerControlSettings />
         </Group>
     );
