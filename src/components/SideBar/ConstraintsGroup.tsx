@@ -1,10 +1,13 @@
 import { useState } from "react";
-import { useFocusGroup } from "../../utils/focusManagement";
+import { usePuzzle } from "../../state/puzzle";
+import { useFocusElementHandler, useFocusGroup } from "../../utils/focusManagement";
 import { OpenBlocklyModal } from "../Blockly/BlocklyModal";
 import { Group } from "./Group";
 
 export const CodeGroup = () => {
-    const { ref } = useFocusGroup("other");
+    const puzzle = usePuzzle();
+    const { ref } = useFocusGroup({ puzzle, group: "other" });
+    const { ref: buttonRef, unfocus } = useFocusElementHandler();
     const [state, setState] = useState([..."12345"]);
 
     return (
@@ -20,9 +23,19 @@ export const CodeGroup = () => {
                 <OpenBlocklyModal>Show Constraints</OpenBlocklyModal>
                 {/*  */}
                 {/* Temporary list of inputs to test global focus management */}
-                <button tabIndex={-1}>tabIndex=-1</button>
-                {/* TODO: allow individual elements to only refocus after their action is complete */}
-                <button tabIndex={0}>tabIndex=0</button>
+                <button tabIndex={-1} onClick={() => console.log(-1)}>
+                    tabIndex=-1
+                </button>
+                <button
+                    ref={buttonRef}
+                    tabIndex={0}
+                    onClick={() => {
+                        unfocus();
+                        console.log(0);
+                    }}
+                >
+                    tabIndex=0
+                </button>
                 Press delete to test removing the currently focused element.
                 <div id="other" ref={ref}>
                     {/* TODO: Hack Mantine's useFocusTrap so it doesn't focus the first element right away */}

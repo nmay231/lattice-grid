@@ -9,7 +9,7 @@ import {
     UnknownObject,
 } from "../types";
 import { errorNotification } from "../utils/DOMUtils";
-import { focusProxy } from "../utils/focusManagement";
+import { focusProxy, _focusState } from "../utils/focusManagement";
 import { LatestTimeout } from "../utils/LatestTimeout";
 import { keypressString } from "../utils/stringUtils";
 import { PuzzleManager } from "./PuzzleManager";
@@ -172,7 +172,8 @@ export class ControlsManager {
     }
 
     handleKeyDown(rawEvent: React.KeyboardEvent) {
-        if (focusProxy.group !== "layerList") {
+        // TODO: Using _focusState.groupIsFocused is reaching into private state. It's needed to allow elements using useFocusElementHandler to accept keyDown events without layers interpreting them.
+        if (focusProxy.group !== "layerList" || !_focusState.groupIsFocused) {
             return; // Layer actions should only be handled when the layer list is focused.
         }
 

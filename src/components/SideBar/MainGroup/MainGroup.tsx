@@ -1,6 +1,7 @@
 import { Button, Center, Group, Stack } from "@mantine/core";
 import { Link } from "react-router-dom";
 import { usePuzzle } from "../../../state/puzzle";
+import { useFocusElementHandler } from "../../../utils/focusManagement";
 import { modalProxy } from "../../ImportExportModal/ImportExportModal";
 import { Group as Collapse } from "../Group";
 import { PuzzleModeToggle } from "./PuzzleModeToggle";
@@ -8,6 +9,7 @@ import { ResizeGridButton } from "./ResizeGridButton";
 
 export const MainGroup = () => {
     const puzzle = usePuzzle();
+    const { ref, unfocus } = useFocusElementHandler();
 
     return (
         <Collapse name="Puzzle" expanded>
@@ -19,13 +21,15 @@ export const MainGroup = () => {
                         Import / Export
                     </Button>
                     <Button
+                        ref={ref}
+                        tabIndex={0}
                         color="red"
                         onClick={() => {
                             // Temporary in it's current form
                             puzzle.freshPuzzle();
                             puzzle.resizeCanvas();
                             puzzle.renderChange({ type: "draw", layerIds: "all" });
-                            // TODO: blurActiveElement
+                            unfocus();
                         }}
                     >
                         Reset Puzzle

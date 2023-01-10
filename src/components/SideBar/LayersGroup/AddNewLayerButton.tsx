@@ -2,6 +2,7 @@ import { Select } from "@mantine/core";
 import { useState } from "react";
 import { availableLayers } from "../../../logic/layers";
 import { usePuzzle } from "../../../state/puzzle";
+import { useFocusElementHandler } from "../../../utils/focusManagement";
 import { smartSort } from "../../../utils/stringUtils";
 
 const DEFAULT_VALUE = "Add New Layer";
@@ -9,6 +10,7 @@ const DEFAULT_VALUE = "Add New Layer";
 export const AddNewLayerButton = () => {
     const puzzle = usePuzzle();
     const [layerType, setLayerType] = useState(DEFAULT_VALUE);
+    const { ref, unfocus } = useFocusElementHandler();
 
     const handleSelectChange = (value: string) => {
         if (value === DEFAULT_VALUE) {
@@ -17,8 +19,7 @@ export const AddNewLayerButton = () => {
         const newId = puzzle.addLayer(availableLayers[value as keyof typeof availableLayers], null);
         puzzle.renderChange({ type: "draw", layerIds: [newId] });
         setLayerType(DEFAULT_VALUE);
-        // TODO: Accessibility might be an issue if we add a layer when the dropdown changes. Particularly when using arrow keys to select (not to mention possible issues with mobile)
-        // TODO: blurActiveElement
+        unfocus();
     };
 
     const nonEthereal = Object.values(availableLayers)
@@ -29,6 +30,8 @@ export const AddNewLayerButton = () => {
 
     return (
         <Select
+            ref={ref}
+            tabIndex={0}
             m="sm"
             withinPortal
             onChange={handleSelectChange}

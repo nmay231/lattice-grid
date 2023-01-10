@@ -9,7 +9,7 @@ export const LayerList = () => {
     const puzzle = usePuzzle();
     const snap = useSnapshot(puzzle.layers);
 
-    const { ref: focusGroupRef } = useFocusGroup("layerList");
+    const { ref: focusGroupRef } = useFocusGroup({ puzzle, group: "layerList" });
 
     const currentLayerId = snap.currentKey;
     const focusInRef = useEventListener("focusin", function (event) {
