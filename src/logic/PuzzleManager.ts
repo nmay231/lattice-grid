@@ -13,8 +13,9 @@ import {
     UnknownObject,
     ValtioRef,
 } from "../types";
-import { errorNotification, focusCurrentLayer } from "../utils/DOMUtils";
+import { errorNotification } from "../utils/DOMUtils";
 import { valtioRef } from "../utils/imports";
+import { LatestTimeout } from "../utils/LatestTimeout";
 import { IndexedOrderedMap } from "../utils/OrderedMap";
 import { formatAnything } from "../utils/stringUtils";
 import { ControlsManager } from "./ControlsManager";
@@ -228,7 +229,25 @@ export class PuzzleManager {
         this.renderChange({ type: "reorder" });
     }
 
+    focusCurrentLayer() {
+        // Must be in a timeout to allow the DOM to be updated.
+        this._layerSelectTimeout.after(10, () => {
+            const elm = document.querySelector<HTMLElement>(
+                `[data-id="${this.layers.currentKey}"]`,
+            );
+            if (!elm) {
+                throw errorNotification({
+                    error: null,
+                    message: "focusCurrentLayer: Unable to find the next LayerItem to focus",
+                });
+            }
+            elm.focus();
+        });
+    }
+
+    _layerSelectTimeout = new LatestTimeout();
     selectLayer(layerId: Layer["id"]): void {
+        // TODO: This check is only necessary because puzzle load blindly calls puzzle.selectLayer on every layer
         if (!this.layers.selectable(this.layers.get(layerId))) {
             return;
         }
@@ -243,8 +262,8 @@ export class PuzzleManager {
 
         if (oldLayerId !== layerId) {
             this.renderChange({ type: "switchLayer" });
-            // The layer should always exist, so it should throw an error if not found.
-            focusCurrentLayer(layerId, true);
+
+            this.focusCurrentLayer();
         }
     }
 }
