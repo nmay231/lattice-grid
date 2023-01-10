@@ -233,7 +233,7 @@ export class PuzzleManager {
         // Must be in a timeout to allow the DOM to be updated.
         this._layerSelectTimeout.after(10, () => {
             const elm = document.querySelector<HTMLElement>(
-                `[data-id="${this.layers.currentKey}"]`,
+                `[data-layerid="${this.layers.currentKey}"]`,
             );
             if (!elm) {
                 throw errorNotification({

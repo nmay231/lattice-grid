@@ -71,7 +71,7 @@ export const LayerItem: React.FC<Props> = ({ id, displayName, selected, handleDe
             style={style}
             {...(editing ? {} : attributes)}
             data-autofocus={selected || undefined}
-            data-id={id}
+            data-layerid={id}
             tabIndex={!editing ? 0 : -1}
         >
             <div className={classes.itemBody}>

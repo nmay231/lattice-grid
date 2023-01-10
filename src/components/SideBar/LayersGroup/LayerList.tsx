@@ -15,7 +15,7 @@ export const LayerList = () => {
     const focusInRef = useEventListener("focusin", function (event) {
         const target = event.target as HTMLElement | null;
 
-        const id = target?.dataset.id || null;
+        const id = target?.dataset.layerid || null;
         if (id && id !== currentLayerId) {
             puzzle.selectLayer(id);
         }
