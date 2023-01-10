@@ -1,14 +1,31 @@
 import { createStyles } from "@mantine/core";
 import { usePageLeave } from "@mantine/hooks";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { BlocklyModal } from "../components/Blockly/BlocklyModal";
 import { ImportExportModal } from "../components/ImportExportModal";
 import { SideBar } from "../components/SideBar";
 import { ResizeModal } from "../components/SideBar/MainGroup/ResizeModal";
 import { SVGCanvas } from "../components/SVGCanvas";
+import { ControlsManager } from "../logic/ControlsManager";
 import { usePuzzle } from "../state/puzzle";
 import { NeedsUpdating } from "../types";
-import { attachGlobalFocusListeners } from "../utils/focusManagement";
+import { useGlobalFocusListeners } from "../utils/focusManagement";
+
+const useGlobalEventListeners = (controls: ControlsManager) => {
+    // Element focus management
+    const pageFocusOut = useCallback(() => controls.handlePageFocusOut(), [controls]);
+    useGlobalFocusListeners({ pageFocusOut });
+
+    // Key binds
+    useEffect(() => {
+        const handleKeyDown = controls.handleKeyDown.bind(controls);
+        document.body.addEventListener("keydown", handleKeyDown as NeedsUpdating);
+
+        return () => {
+            document.body.removeEventListener("keydown", handleKeyDown as NeedsUpdating);
+        };
+    }, [controls]);
+};
 
 const useStyles = createStyles((theme, { canvasWidth }: { canvasWidth: string }) => ({
     // TODO: handle mobile screens
@@ -44,22 +61,7 @@ export const EditPage = () => {
     const { classes } = useStyles({ canvasWidth: "70%" });
     const puzzle = usePuzzle();
     usePageLeave(puzzle.controls.onPageBlur.bind(puzzle.controls));
-
-    useEffect(() => {
-        const handleKeyDown = puzzle.controls.handleKeyDown.bind(puzzle.controls);
-        document.body.addEventListener("keydown", handleKeyDown as NeedsUpdating);
-
-        return () => {
-            document.body.removeEventListener("keydown", handleKeyDown as NeedsUpdating);
-        };
-    }, [puzzle]);
-
-    useEffect(() => {
-        const { unsubscribe } = attachGlobalFocusListeners({
-            pageFocusOut: () => puzzle.controls.handlePageFocusOut(),
-        });
-        return unsubscribe;
-    }, [puzzle.controls]);
+    useGlobalEventListeners(puzzle.controls);
 
     return (
         <div className={classes.mainContainer}>

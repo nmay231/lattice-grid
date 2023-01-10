@@ -1,6 +1,5 @@
 import { clamp } from "lodash";
 import { canvasSizeProxy } from "../state/canvasSize";
-import { focusProxy } from "../state/focus";
 import {
     CleanedDOMEvent,
     Layer,
@@ -10,6 +9,7 @@ import {
     UnknownObject,
 } from "../types";
 import { errorNotification } from "../utils/DOMUtils";
+import { focusProxy } from "../utils/focusManagement";
 import { LatestTimeout } from "../utils/LatestTimeout";
 import { keypressString } from "../utils/stringUtils";
 import { PuzzleManager } from "./PuzzleManager";
@@ -23,10 +23,6 @@ export class ControlsManager {
 
     constructor(puzzle: PuzzleManager) {
         this.puzzle = puzzle;
-
-        // Note: these are not event listeners attached to the SVGCanvas
-        this.handleKeyDown = this.handleKeyDown.bind(this);
-        this.onPageBlur = this.onPageBlur.bind(this);
 
         this.eventListeners = {
             onPointerDown: this.onPointerDown.bind(this),
@@ -176,7 +172,7 @@ export class ControlsManager {
     }
 
     handleKeyDown(rawEvent: React.KeyboardEvent) {
-        if (focusProxy.on !== "layerList") {
+        if (focusProxy.group !== "layerList") {
             return; // Layer actions should only be handled when the layer list is focused.
         }
 
