@@ -11,7 +11,7 @@ import { proxy, useSnapshot } from "valtio";
 import { type PuzzleManager } from "../logic/PuzzleManager";
 import { LatestTimeout } from "./LatestTimeout";
 
-export type FocusGroup = "layerList" | "controlSettings" | "constraintSettings" | "debug";
+export type FocusGroup = "layerList" | "controlSettings" | "constraintSettings" | "none" | "debug";
 
 // Export for testing
 export const _focusState = {
@@ -101,5 +101,29 @@ export const useFocusElementHandler = () => {
         }
     });
 
-    return { ref: keyDownRef, unfocus };
+    const focusInRef = useEventListener("focusin", () => {
+        focusProxy.group = "none";
+    });
+
+    return { ref: mergeRefs(keyDownRef, focusInRef), unfocus };
+};
+
+export type ModalName = "blockly" | "import-export" | "resize-grid";
+
+const modalProxy = proxy({ modal: null as null | ModalName });
+
+export const openModal = (modal: ModalName) => {
+    // The element must be focused before the modal is opened so that focus is returned correctly when it closed.
+    _focusState.lastGroupTarget?.focus();
+    setTimeout(() => (modalProxy.modal = modal));
+};
+
+export const closeModal = () => {
+    modalProxy.modal = null;
+};
+
+export const useModal = (modal: ModalName) => {
+    const modalSnap = useSnapshot(modalProxy);
+
+    return { opened: modal === modalSnap.modal, close: closeModal };
 };

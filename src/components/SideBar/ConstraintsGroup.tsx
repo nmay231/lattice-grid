@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { usePuzzle } from "../../state/puzzle";
 import { useFocusElementHandler, useFocusGroup } from "../../utils/focusManagement";
-import { OpenBlocklyModal } from "../Blockly/BlocklyModal";
+import { BlocklyModalButton } from "../Blockly/BlocklyModal";
 import { Group } from "./Group";
 
 export const CodeGroup = () => {
@@ -20,7 +20,7 @@ export const CodeGroup = () => {
                     margin: "10px",
                 }}
             >
-                <OpenBlocklyModal>Show Constraints</OpenBlocklyModal>
+                <BlocklyModalButton>Show Constraints</BlocklyModalButton>
                 {/*  */}
                 {/* Temporary list of inputs to test global focus management */}
                 <button tabIndex={-1} onClick={() => console.log(-1)}>

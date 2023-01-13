@@ -2,10 +2,10 @@ import { Button, Center, Group, Stack } from "@mantine/core";
 import { Link } from "react-router-dom";
 import { usePuzzle } from "../../../state/puzzle";
 import { useFocusElementHandler } from "../../../utils/focusManagement";
-import { modalProxy } from "../../ImportExportModal/ImportExportModal";
+import { ImportExportButton } from "../../ImportExportModal/ImportExportModal";
 import { Group as Collapse } from "../Group";
 import { PuzzleModeToggle } from "./PuzzleModeToggle";
-import { ResizeGridButton } from "./ResizeGridButton";
+import { ResizeGridButton } from "./ResizeModal";
 
 export const MainGroup = () => {
     const puzzle = usePuzzle();
@@ -17,9 +17,7 @@ export const MainGroup = () => {
                 <Stack>
                     <PuzzleModeToggle />
                     <ResizeGridButton />
-                    <Button onClick={() => (modalProxy.modal = "import-export")}>
-                        Import / Export
-                    </Button>
+                    <ImportExportButton />
                     <Button
                         ref={ref}
                         tabIndex={0}
