@@ -73,6 +73,7 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
             allowOverlap: true, // TODO: Change to false when properly implemented
             overwriteOthers: false,
         });
+        this._numberTyper = numberTyper({ max: -1, negatives: false });
         return {};
     };
 
