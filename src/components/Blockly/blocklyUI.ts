@@ -1,5 +1,5 @@
-import { UserCodeJSON } from "../../logic/userComputation/codeBlocks";
-import { DEFAULT_ALIAS_NAME } from "../../logic/userComputation/utils";
+import { UserCodeJSON } from "../../userComputation/codeBlocks";
+import { DEFAULT_ALIAS_NAME } from "../../userComputation/utils";
 import { Blockly } from "../../utils/imports";
 
 // TODO: this.setTooltip("") and other helpful things like colour and such

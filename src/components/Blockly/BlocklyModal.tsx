@@ -1,10 +1,10 @@
 import { Button, Drawer, Grid, Text } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { blocklyToolbox } from "../../logic/userComputation/codeBlocks";
-import { ComputeManager } from "../../logic/userComputation/ComputeManager";
-import { addAliasCategoryToToolbox } from "../../logic/userComputation/utils";
 import { usePuzzle } from "../../state/puzzle";
+import { blocklyToolbox } from "../../userComputation/codeBlocks";
+import { ComputeManager } from "../../userComputation/ComputeManager";
+import { addAliasCategoryToToolbox } from "../../userComputation/utils";
 import { openModal, useFocusElementHandler, useModal } from "../../utils/focusManagement";
 import { Blockly } from "../../utils/imports";
 import { codeGen } from "./customCodeGen";

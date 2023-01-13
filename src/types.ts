@@ -2,11 +2,11 @@ import { ref } from "valtio";
 import type { LineBlits } from "./components/SVGCanvas/Line";
 import type { PolygonBlits } from "./components/SVGCanvas/Polygon";
 import type { TextBlits } from "./components/SVGCanvas/Text";
-import type { SquareGridParams } from "./logic/grids/SquareGrid";
-import type { availableLayers } from "./logic/layers";
-import type { PuzzleManager } from "./logic/PuzzleManager";
-import type { StorageManager } from "./logic/StorageManager";
-import type { UserCodeJSON } from "./logic/userComputation/codeBlocks";
+import type { SquareGridParams } from "./grids/SquareGrid";
+import type { availableLayers } from "./layers";
+import type { PuzzleManager } from "./PuzzleManager";
+import type { StorageManager } from "./StorageManager";
+import type { UserCodeJSON } from "./userComputation/codeBlocks";
 
 // #region - Compilation
 export type PuzzleError = {

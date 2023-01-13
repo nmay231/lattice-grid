@@ -1,4 +1,4 @@
-import { UserCodeJSON } from "../../logic/userComputation/codeBlocks";
+import { UserCodeJSON } from "../../userComputation/codeBlocks";
 import { Blockly } from "../../utils/imports";
 import { codeGen } from "./customCodeGen";
 

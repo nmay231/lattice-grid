@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSnapshot } from "valtio";
-import { availableLayers } from "../../../logic/layers";
+import { availableLayers } from "../../../layers";
 import { constraintSettingsProxy } from "../../../state/constraintSettings";
 
 import { usePuzzle } from "../../../state/puzzle";

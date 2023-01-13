@@ -6,7 +6,7 @@ import { ImportExportModal } from "../components/ImportExportModal";
 import { SideBar } from "../components/SideBar";
 import { ResizeModal } from "../components/SideBar/MainGroup/ResizeModal";
 import { SVGCanvas } from "../components/SVGCanvas";
-import { ControlsManager } from "../logic/ControlsManager";
+import { ControlsManager } from "../ControlsManager";
 import { usePuzzle } from "../state/puzzle";
 import { NeedsUpdating } from "../types";
 import { useGlobalFocusListeners } from "../utils/focusManagement";

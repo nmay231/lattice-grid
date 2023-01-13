@@ -1,6 +1,6 @@
 import { Select } from "@mantine/core";
 import { useState } from "react";
-import { availableLayers } from "../../../logic/layers";
+import { availableLayers } from "../../../layers";
 import { usePuzzle } from "../../../state/puzzle";
 import { useFocusElementHandler } from "../../../utils/focusManagement";
 import { smartSort } from "../../../utils/stringUtils";

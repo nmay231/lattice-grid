@@ -2,7 +2,7 @@ import { mergeRefs, useEventListener } from "@mantine/hooks";
 import { isEqual } from "lodash";
 import { useEffect } from "react";
 import { useSnapshot } from "valtio";
-import { availableLayers } from "../../../logic/layers";
+import { availableLayers } from "../../../layers";
 import { constraintSettingsProxy } from "../../../state/constraintSettings";
 
 import { usePuzzle } from "../../../state/puzzle";

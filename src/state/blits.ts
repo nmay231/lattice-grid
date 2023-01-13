@@ -1,5 +1,5 @@
 import { proxy } from "valtio";
-import { OverlayLayer } from "../logic/layers/Overlay";
+import { OverlayLayer } from "../layers/Overlay";
 import { BlitGroup, Layer, ValtioRef } from "../types";
 
 export const blitGroupsProxy = proxy({} as Record<Layer["id"], ValtioRef<BlitGroup[]>>);

@@ -8,7 +8,7 @@
 import { mergeRefs, useEventListener, useFocusTrap } from "@mantine/hooks";
 import { useEffect } from "react";
 import { proxy, useSnapshot } from "valtio";
-import { type PuzzleManager } from "../logic/PuzzleManager";
+import { type PuzzleManager } from "../PuzzleManager";
 import { LatestTimeout } from "./LatestTimeout";
 
 export type FocusGroup = "layerList" | "controlSettings" | "constraintSettings" | "none" | "debug";
