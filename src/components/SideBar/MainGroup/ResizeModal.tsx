@@ -1,39 +1,47 @@
 import { Button, Modal, Paper } from "@mantine/core";
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { IoIosArrowDown, IoIosArrowUp } from "react-icons/io";
-import { proxy, useSnapshot } from "valtio";
+import { useSnapshot } from "valtio";
 import { canvasSizeProxy } from "../../../state/canvasSize";
 import { usePuzzle } from "../../../state/puzzle";
+import { openModal, useFocusElementHandler, useModal } from "../../../utils/focusManagement";
 import { ReactComponent as SquareGridIcon } from "./SquareGridIcon.svg";
 
-export const modalProxy = proxy({ modal: null as "resize-grid" | null });
+export const ResizeGridButton = () => {
+    const open = useCallback(() => openModal("resize-grid"), []);
+    const { ref } = useFocusElementHandler();
+
+    return (
+        <Button ref={ref} tabIndex={0} onClick={open}>
+            Resize Grid
+        </Button>
+    );
+};
 
 export const ResizeModal = () => {
     const puzzle = usePuzzle();
     const buttons = useMemo(() => puzzle.grid.getCanvasResizers(), [puzzle]);
-    const modalSnap = useSnapshot(modalProxy);
+    const { opened, close } = useModal("resize-grid");
     const canvasSizeSnap = useSnapshot(canvasSizeProxy);
 
     useEffect(() => {
-        if (modalSnap.modal === "resize-grid" && canvasSizeProxy.zoom !== 0) {
+        if (opened && canvasSizeProxy.zoom !== 0) {
             canvasSizeProxy.zoom = 0;
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [canvasSizeSnap.zoom, modalSnap.modal]);
+    }, [canvasSizeSnap.zoom, opened]);
 
-    const resizer = (resize: (a: number) => void, amount: number) => () => {
-        resize(amount);
+    // TODO: Give the user feedback that holding shift/ctrl scales by 5. Dependent on global focus management
+    const resizer = (resize: (a: number) => void, amount: number) => (event: React.MouseEvent) => {
+        const scale = event.ctrlKey || event.metaKey || event.shiftKey ? 5 : 1;
+        resize(scale * amount);
         puzzle.resizeCanvas();
         puzzle.renderChange({ type: "draw", layerIds: "all" });
     };
 
     return (
         <Modal
-            {...puzzle.controls.stopPropagation}
-            opened={modalSnap.modal === "resize-grid"}
-            onClose={() => {
-                modalProxy.modal = null;
-            }}
+            opened={opened}
+            onClose={close}
             style={{ position: "absolute" }}
             styles={{ overlay: { position: "absolute !important" as any } }}
             withinPortal={false}

@@ -1,3 +1,4 @@
+import { mergeRefs, useEventListener } from "@mantine/hooks";
 import { isEqual } from "lodash";
 import { useEffect } from "react";
 import { useSnapshot } from "valtio";
@@ -6,7 +7,7 @@ import { constraintSettingsProxy } from "../../../state/constraintSettings";
 
 import { usePuzzle } from "../../../state/puzzle";
 import { UnknownObject } from "../../../types";
-import { blurActiveElement } from "../../../utils/DOMUtils";
+import { useFocusGroup } from "../../../utils/focusManagement";
 import { valtioRef } from "../../../utils/imports";
 import { JsonFormsWrapper } from "../../JsonFormsWrapper";
 
@@ -26,6 +27,15 @@ export const LayerConstraintSettings = () => {
             constraintSettingsProxy.settings = valtioRef(layer.rawSettings);
         }
     }, [layer]);
+
+    const { ref: groupRef, unfocus } = useFocusGroup({ puzzle, group: "controlSettings" });
+
+    const focusOutRef = useEventListener("focusout", () => {
+        if (layer) {
+            constraintSettingsProxy.settings = valtioRef(layer.rawSettings);
+        }
+    });
+    const ref = mergeRefs(groupRef, focusOutRef);
 
     if (!layer || !id) {
         return <i>Add a layer to get started</i>;
@@ -59,17 +69,18 @@ export const LayerConstraintSettings = () => {
         });
 
         puzzle.renderChange({ type: "draw", layerIds: [id] });
-        blurActiveElement();
+        unfocus();
     };
 
     const handleCancel = () => {
         constraintSettingsProxy.settings = valtioRef(layer.rawSettings);
-        blurActiveElement();
+        unfocus();
     };
 
-    // TODO: Handle when no layers are present.
     return (
-        <div {...puzzle.controls.stopPropagation}>
+        <div ref={ref}>
+            {/* TODO: Hack Mantine's useFocusTrap so it doesn't focus the first element right away */}
+            <div data-autofocus></div>
             <form action="#" onSubmit={handleSubmit}>
                 <JsonFormsWrapper
                     data={settingsSnap.settings}

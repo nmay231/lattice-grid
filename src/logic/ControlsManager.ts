@@ -1,5 +1,4 @@
 import { clamp } from "lodash";
-import { modalProxy } from "../components/Blockly/BlocklyModal";
 import { canvasSizeProxy } from "../state/canvasSize";
 import {
     CleanedDOMEvent,
@@ -10,48 +9,26 @@ import {
     UnknownObject,
 } from "../types";
 import { errorNotification } from "../utils/DOMUtils";
+import { focusProxy, _focusState } from "../utils/focusManagement";
+import { LatestTimeout } from "../utils/LatestTimeout";
 import { keypressString } from "../utils/stringUtils";
 import { PuzzleManager } from "./PuzzleManager";
 
 export class ControlsManager {
-    blurCanvasTimeoutId: number | undefined = undefined;
+    blurCanvasTimeout = new LatestTimeout();
     tempStorage: Record<string, UnknownObject> | null = null;
-    puzzle: PuzzleManager;
-    eventListeners;
-    stopPropagation;
 
-    constructor(puzzle: PuzzleManager) {
-        this.puzzle = puzzle;
+    // Canvas event listeners
+    eventListeners = {
+        onPointerDown: this.onPointerDown.bind(this),
+        onPointerMove: this.onPointerMove.bind(this),
+        onPointerUp: this.onPointerUp.bind(this),
+        onPointerLeave: this.onPointerLeave.bind(this),
+        onPointerEnter: this.onPointerEnter.bind(this),
+        onContextMenu: this.onContextMenu.bind(this),
+    };
 
-        // Note: these are not event listeners attached to the SVGCanvas
-        this.handleKeyDown = this.handleKeyDown.bind(this);
-        this.onPointerUpOutside = this.onPointerUpOutside.bind(this);
-        this.onPageBlur = this.onPageBlur.bind(this);
-
-        this.eventListeners = {
-            onPointerDown: this.onPointerDown.bind(this),
-            onPointerMove: this.onPointerMove.bind(this),
-            onPointerUp: this.onPointerUp.bind(this),
-            onPointerLeave: this.onPointerLeave.bind(this),
-            onPointerEnter: this.onPointerEnter.bind(this),
-            onContextMenu: this.onContextMenu.bind(this),
-        };
-
-        // Attached to elements that don't want to send events to the svgcanvas like forms
-        this.stopPropagation = {
-            onPointerDown: this._stopPropagation.bind(this),
-            onPointerMove: this._stopPropagation.bind(this),
-            onPointerUp: this._stopPropagation.bind(this),
-            onPointerLeave: this._stopPropagation.bind(this),
-            onPointerEnter: this._stopPropagation.bind(this),
-            onKeyDown: this._stopPropagation.bind(this),
-            onContextMenu: this._stopPropagation.bind(this),
-        };
-    }
-
-    _stopPropagation(event: any) {
-        event.stopPropagation();
-    }
+    constructor(public puzzle: PuzzleManager) {}
 
     getCurrentLayer() {
         const id = this.puzzle.layers.currentKey;
@@ -126,35 +103,28 @@ export class ControlsManager {
     }
 
     onPointerDown(rawEvent: React.PointerEvent) {
-        // TODO: allow for two fingers to zoom
-        if (!rawEvent.isPrimary) {
-            return;
-        }
+        this._drawingOnCanvas = true;
         const layer = this.getCurrentLayer();
-        if (!layer) return;
+        // TODO: allow for two fingers to zoom
+        if (!rawEvent.isPrimary || !layer) return;
+
         this.tempStorage = {};
         const event = this.cleanPointerEvent("pointerDown", rawEvent);
         this.applyLayerEvent(layer, event);
     }
 
     onPointerMove(rawEvent: React.PointerEvent) {
-        if (!rawEvent.isPrimary || !this.tempStorage) {
-            return;
-        }
-
         const layer = this.getCurrentLayer();
-        if (!layer) return;
+        if (!rawEvent.isPrimary || !layer || !this.tempStorage) return;
+
         const event = this.cleanPointerEvent("pointerMove", rawEvent);
         this.applyLayerEvent(layer, event);
     }
 
     onPointerUp(rawEvent: React.PointerEvent) {
-        if (!rawEvent.isPrimary || !this.tempStorage) {
-            return;
-        }
-
         const layer = this.getCurrentLayer();
-        if (!layer) return;
+        if (!rawEvent.isPrimary || !layer || !this.tempStorage) return;
+
         this.applyLayerEvent(layer, { type: "pointerUp" });
     }
 
@@ -163,13 +133,11 @@ export class ControlsManager {
             return;
         }
 
-        window.clearTimeout(this.blurCanvasTimeoutId);
-        const timeoutDelay = this.puzzle.settings.actionWindowMs;
-        this.blurCanvasTimeoutId = window.setTimeout(() => {
+        this.blurCanvasTimeout.after(this.puzzle.settings.actionWindowMs, () => {
             const layer = this.getCurrentLayer();
             if (!layer) return;
             this.applyLayerEvent(layer, { type: "pointerUp" });
-        }, timeoutDelay) as unknown as number;
+        });
     }
 
     onPointerEnter(event: React.PointerEvent) {
@@ -177,7 +145,7 @@ export class ControlsManager {
             return;
         }
 
-        window.clearTimeout(this.blurCanvasTimeoutId);
+        this.blurCanvasTimeout.clear();
     }
 
     onContextMenu(event: React.MouseEvent) {
@@ -185,22 +153,15 @@ export class ControlsManager {
     }
 
     handleKeyDown(rawEvent: React.KeyboardEvent) {
-        const keypress = keypressString(rawEvent);
-
-        // TODO: Remove. It's just a temporary convenience
-        if (keypress === "ctrl-p") {
-            rawEvent.preventDefault();
-            modalProxy.modal = modalProxy.modal === "blockly" ? null : "blockly";
+        // TODO: Using _focusState.groupIsFocused is reaching into private state. It's needed to allow elements using useFocusElementHandler to accept keyDown events without layers interpreting them.
+        if (focusProxy.group !== "layerList" || !_focusState.groupIsFocused) {
+            return; // Layer actions should only be handled when the layer list is focused.
         }
 
-        // TODO: Check for when anything in the sidebar is focused
-        if (modalProxy.modal === "blockly") return; // Do not preventDefault when the puzzle is not focused
+        const keypress = keypressString(rawEvent);
 
-        if (
-            // This should be a very small whitelist for which key-strokes are allowed to be blocked
-            ["tab", "ctrl-a", "ctrl-i"].indexOf(keypress) > -1 ||
-            keypress.length === 1
-        ) {
+        // This should be a very small whitelist for which key-strokes are allowed to be blocked
+        if (["ctrl-a", "ctrl-i"].indexOf(keypress) > -1 || keypress.length === 1) {
             rawEvent.preventDefault();
         }
 
@@ -216,12 +177,7 @@ export class ControlsManager {
             this.applyLayerEvent(layer, { type: "cancelAction" });
         } else if (keypress === "Delete") {
             this.applyLayerEvent(layer, { type: "delete", keypress });
-        } else if (keypress === "Tab" || keypress === "shift-Tab") {
-            // TODO: allow layers to have sublayers that you can tab through (e.g. for sudoku). This should be handled by a separate api than .handleEvent() though to prevent serious bugs and to allow UI indicators.
-            this.puzzle.selectLayer({ tab: keypress === "shift-Tab" ? -1 : 1 });
         } else if (keypress === "ctrl-z" || keypress === "ctrl-y") {
-            // TODO: Eventually, I want layers to be able to switch the current layer (specifically SelectionLayer for sudoku ctrl/shift behavior)
-            // Perhaps, I can use that mechanism for storage to switch the current layer when undoing/redoing
             const { storage } = this.puzzle;
             const appliedActions =
                 keypress === "ctrl-z"
@@ -230,7 +186,7 @@ export class ControlsManager {
 
             if (appliedActions.length) {
                 const newLayerId = appliedActions[appliedActions.length - 1].layerId;
-                this.puzzle.selectLayer({ id: newLayerId });
+                this.puzzle.selectLayer(newLayerId);
 
                 layer = this.getCurrentLayer();
                 if (layer)
@@ -244,12 +200,23 @@ export class ControlsManager {
         }
     }
 
-    onPointerUpOutside(rawEvent: React.PointerEvent) {
-        if (rawEvent.isPrimary && (rawEvent.target as any)?.id === "canvas-container") {
-            const layer = this.getCurrentLayer();
-            if (!layer) return;
-            this.applyLayerEvent(layer, { type: "cancelAction" });
+    // This assumes that handlePageFocusOut is called in a timeout and that the timeout runs after onPointerDown does.
+    _drawingOnCanvas = false;
+    handlePageFocusOut() {
+        const layer = this.getCurrentLayer();
+        if (!layer || this._drawingOnCanvas) {
+            this._drawingOnCanvas = false;
+            return;
         }
+        this.applyLayerEvent(layer, { type: "cancelAction" });
+    }
+
+    // TODO: What are the differences between document.body focusout and page blur? Do I need both, or at least for both to cooperate?
+    onPageBlur() {
+        const layer = this.getCurrentLayer();
+        if (!this.tempStorage || !layer) return;
+        this.applyLayerEvent(layer, { type: "pointerUp" });
+        this.blurCanvasTimeout.clear();
     }
 
     onWheel(rawEvent: WheelEvent) {
@@ -284,16 +251,5 @@ export class ControlsManager {
         const left = ratio * (offsetX + scrollLeft) - offsetX;
         const top = ratio * (offsetY + scrollTop) - offsetY;
         div.scroll({ left, top });
-    }
-
-    onPageBlur() {
-        if (!this.tempStorage) {
-            return;
-        }
-
-        const layer = this.getCurrentLayer();
-        if (!layer) return;
-        this.applyLayerEvent(layer, { type: "pointerUp" });
-        window.clearTimeout(this.blurCanvasTimeoutId);
     }
 }

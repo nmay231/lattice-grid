@@ -1,18 +1,28 @@
 import { Button, Drawer, Grid, Text } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
-import React, { useEffect, useRef, useState } from "react";
-import { proxy, useSnapshot } from "valtio";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { blocklyToolbox } from "../../logic/userComputation/codeBlocks";
 import { ComputeManager } from "../../logic/userComputation/ComputeManager";
 import { addAliasCategoryToToolbox } from "../../logic/userComputation/utils";
 import { usePuzzle } from "../../state/puzzle";
+import { openModal, useFocusElementHandler, useModal } from "../../utils/focusManagement";
 import { Blockly } from "../../utils/imports";
 import { codeGen } from "./customCodeGen";
 
-export const modalProxy = proxy({ modal: null as "blockly" | null });
+export const BlocklyModalButton: React.FC<{ children: string }> = ({ children }) => {
+    const open = useCallback(() => openModal("blockly"), []);
+    const { ref } = useFocusElementHandler();
+
+    // TODO: Technically, openModal handles calling unfocus from useFocusElementHandler. It's a bad habit to omit it in other button elements, but it's also bad to call unfocus and open out of order. I don't like that ambiguity...
+    return (
+        <Button ref={ref} tabIndex={0} onClick={open}>
+            {children}
+        </Button>
+    );
+};
 
 export const BlocklyModal: React.FC = () => {
-    const modalSnap = useSnapshot(modalProxy);
+    const { opened, close } = useModal("blockly");
     const [rendered, setRendered] = useState(false);
     const [blocks, setBlocks] = useLocalStorage<any>({
         key: "blockly",
@@ -22,7 +32,7 @@ export const BlocklyModal: React.FC = () => {
     const puzzle = usePuzzle();
 
     useEffect(() => {
-        if (!modalProxy.modal) {
+        if (!opened) {
             setRendered(false);
             return;
         }
@@ -62,7 +72,7 @@ export const BlocklyModal: React.FC = () => {
             setBlocks(serialized);
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [modalSnap.modal, rendered, blocks]);
+    }, [opened, rendered, blocks]);
 
     // TODO: The raw error handling should be handled internally, but the error messages themselves be shown by this modal (or at least somewhere in client code)
     const compileAndRun = () => {
@@ -92,11 +102,7 @@ export const BlocklyModal: React.FC = () => {
     };
 
     return (
-        <Drawer
-            opened={modalSnap.modal === "blockly"}
-            size="90%"
-            onClose={() => (modalProxy.modal = null)}
-        >
+        <Drawer opened={opened} size="90%" onClose={close}>
             <Grid columns={7} style={{ width: "100%", height: "90vh" }}>
                 <Grid.Col span={6}>
                     <div ref={blocklyDiv} style={{ width: "100%", height: "100%" }}></div>
@@ -110,8 +116,4 @@ export const BlocklyModal: React.FC = () => {
             </Grid>
         </Drawer>
     );
-};
-
-export const OpenBlocklyModal: React.FC<{ children: string }> = ({ children }) => {
-    return <Button onClick={() => (modalProxy.modal = "blockly")}>{children}</Button>;
 };

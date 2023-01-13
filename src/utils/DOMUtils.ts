@@ -1,11 +1,6 @@
 import { NotificationProps, showNotification } from "@mantine/notifications";
 import { formatAnything } from "./stringUtils";
 
-export const blurActiveElement = () => {
-    // Sometimes, I hate JS... Why event loop? WHY?
-    window.setTimeout(() => (document.activeElement as HTMLElement)?.blur(), 0);
-};
-
 export const errorNotification = (
     props: Partial<Pick<NotificationProps, "message" | "title">> & {
         forever?: true;

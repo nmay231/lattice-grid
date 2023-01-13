@@ -1,3 +1,4 @@
+import { createStyles } from "@mantine/core";
 import { useEffect, useRef } from "react";
 import { useSnapshot } from "valtio";
 import { blitGroupsProxy } from "../../state/blits";
@@ -7,7 +8,6 @@ import { BlitGroup, Layer, NeedsUpdating, StorageMode } from "../../types";
 import { errorNotification } from "../../utils/DOMUtils";
 import { Line } from "./Line";
 import { Polygon } from "./Polygon";
-import styling from "./SVGCanvas.module.css";
 import { Text } from "./Text";
 
 const blitters = {
@@ -38,7 +38,34 @@ const blitList = ({
     });
 };
 
+const useStyles = createStyles(() => ({
+    scrollArea: {
+        display: "flex",
+        flexDirection: "column",
+        height: "100vh",
+        width: "70vw", // Temporarily hardcoded
+        overflow: "auto",
+    },
+    outerContainer: {
+        // Remember, if I change box-sizing back to content-box, I will have to update my zoom in/out code.
+        boxSizing: "border-box",
+        margin: "0px auto",
+        padding: "2em",
+    },
+    innerContainer: {
+        border: "1px dotted grey",
+        margin: "0px",
+        padding: "0px",
+        cursor: "pointer",
+
+        "& *": {
+            pointerEvents: "none",
+        },
+    },
+}));
+
 export const SVGCanvas = () => {
+    const { classes } = useStyles();
     const { controls, layers } = usePuzzle();
     const blitGroupsSnap = useSnapshot(blitGroupsProxy);
     const snap = useSnapshot(layers);
@@ -66,12 +93,12 @@ export const SVGCanvas = () => {
     const canvasWidth = `calc(${fullScreen} + ${realSize})`;
 
     return (
-        <div className={styling.scrollArea} ref={scrollArea}>
+        <div className={classes.scrollArea} ref={scrollArea}>
             <div
-                className={styling.outerContainer}
+                className={classes.outerContainer}
                 style={{ width: canvasWidth, maxWidth: `${width}px` }}
             >
-                <div className={styling.innerContainer} {...controls.eventListeners}>
+                <div className={classes.innerContainer} {...controls.eventListeners}>
                     <svg viewBox={`${minX} ${minY} ${width} ${height}`}>
                         {snap.order.flatMap((id) => {
                             // TODO: Allow question and answer to be reordered. Also fix this monstrosity.

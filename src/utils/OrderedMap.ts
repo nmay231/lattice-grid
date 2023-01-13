@@ -1,11 +1,10 @@
-import { proxy } from "valtio";
-
 export class OrderedMap<V> {
-    map = proxy<Record<string, V>>({});
-    order = proxy<string[]>([]);
+    map: Record<string, V> = {};
+    order: string[] = [];
 
     clear(): void {
-        this.order.forEach((key) => this.delete(key));
+        this.order = [];
+        this.map = {};
     }
 
     set(key: string, value: V, nextKey: string | null = null): void {
@@ -62,27 +61,25 @@ export class OrderedMap<V> {
 
 export class IndexedOrderedMap<V> extends OrderedMap<V> {
     currentKey: string | null = null;
+
     constructor(public selectable: (value: V) => boolean = () => true) {
         super();
     }
 
     set(key: string, value: V, nextKey: string | null = null): void {
         super.set(key, value, nextKey);
-        if (this.selectable(value)) {
-            this.currentKey = key;
-        }
     }
 
     getNextSelectableKey(key: string): string | null {
-        let next = key;
-        do next = this.getNextKey(next) || "";
+        let next: string | null = key;
+        do next = this.getNextKey(next) || null;
         while (next && !this.selectable(this.get(next)));
         return next;
     }
 
     getPrevSelectableKey(key: string): string | null {
-        let prev = key;
-        do prev = this.getPrevKey(prev) || "";
+        let prev: string | null = key;
+        do prev = this.getPrevKey(prev) || null;
         while (prev && !this.selectable(this.get(prev)));
         return prev;
     }
@@ -95,19 +92,8 @@ export class IndexedOrderedMap<V> extends OrderedMap<V> {
         const index = this.order.indexOf(key);
         this.order.splice(index, 1);
         delete this.map[key];
+        if (this.currentKey === key) this.currentKey = null;
 
-        if (this.currentKey === key) {
-            // We try to select the next id without wrapping to the other end
-            let nextId = this.getNextSelectableKey(this.currentKey);
-
-            // If that fails, try selecting the previous id
-            if (nextId === null) {
-                nextId = this.getPrevSelectableKey(this.currentKey);
-            }
-
-            // If THAT fails, then no id is selectable anyways and currentKey should be null
-            this.currentKey = nextId;
-        }
         return true;
     }
 
