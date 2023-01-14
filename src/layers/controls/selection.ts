@@ -4,6 +4,7 @@ import {
     LayerEventEssentials,
     LayerHandlerResult,
     LayerProps,
+    NeedsUpdating,
     PartialHistoryAction,
     Point,
 } from "../../types";
@@ -137,7 +138,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                     if (tempStorage.targetState === undefined) {
                         // If targetState is undefined, there can only be one id
                         const id = ids[0];
-                        if (id in internal.objects) {
+                        if (internal.objects.has(id)) {
                             tempStorage.targetState = null;
                             history = [obj({ id, object: null })];
                         } else {
@@ -147,14 +148,14 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                         }
                     } else if (tempStorage.targetState === null) {
                         history = ids
-                            .filter((id) => id in internal.objects)
+                            .filter((id) => internal.objects.has(id))
                             .map((id) => obj({ id, object: null }));
                     } else {
                         const groupsToMerge = new Set(
                             ids.map((id) => internal.objects.get(id)?.state),
                         );
                         const allIds = ids
-                            .filter((id) => !(id in internal.objects))
+                            .filter((id) => !internal.objects.has(id))
                             .concat(
                                 internal.objects
                                     .keys()
@@ -246,7 +247,9 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                             },
                         },
                     },
-                    points: states.filter((state) => state === group).map((_, i) => points[i]),
+                    points: states
+                        .map((state, i) => (state === group ? points[i] : null))
+                        .filter((point) => point !== null) as NeedsUpdating, // Typescript, get some help...
                 });
 
                 for (const key in selectionCage.svgPolygons) {
