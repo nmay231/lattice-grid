@@ -41,6 +41,7 @@ export class PuzzleManager {
         borderPadding: 60,
         cellSize: 60,
         // The time window allowed between parts of a single action, e.g. typing a two-digit number
+        // TODO: This might still be used, but not any time soon and definitely not for the reason above.
         actionWindowMs: 600,
     });
 
@@ -52,7 +53,7 @@ export class PuzzleManager {
 
     resetLayers() {
         this.layers.clear();
-        // this.storage.clear() // TODO:
+        this.storage = new StorageManager();
         this.storage.addStorage({ grid: this.grid, layer: { id: SELECTION_ID } });
 
         // Guarantee that these layers will be present even if the saved puzzle fails to add them
@@ -262,7 +263,6 @@ export class PuzzleManager {
 
         if (oldLayerId !== layerId) {
             this.renderChange({ type: "switchLayer" });
-
             this.focusCurrentLayer();
         }
     }

@@ -12,6 +12,7 @@ import {
 } from "../types";
 import { errorNotification } from "../utils/DOMUtils";
 
+/** I could annotate all attributes that are assigned at runtime with an exclamation to mark them as assigned elsewhere (`attr!: type`), but then I don't have visibility into the cause of certain errors */
 export const methodNotImplemented = ({ name }: { name: string }) => {
     return (): any => {
         throw errorNotification({
