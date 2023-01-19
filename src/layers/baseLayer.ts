@@ -48,8 +48,8 @@ export abstract class BaseLayer<LP extends LayerProps>
     controls?: Layer["controls"];
     constraints?: Layer["constraints"];
 
-    constructor(klass: LayerClass<LP>, puzzle: PuzzleManager) {
-        this.id = randomId(Object.keys(puzzle.layers), klass.type);
+    constructor(klass: LayerClass<LP>, puzzle: Pick<PuzzleManager, "layers">) {
+        this.id = randomId(puzzle.layers.keys(), klass.type);
         this.ethereal = klass.ethereal;
         this.type = klass.type;
         this.displayName = klass.displayName;
