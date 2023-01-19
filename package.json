@@ -53,7 +53,7 @@
         "build": "vite build",
         "checkdeps": "yarn outdated; depcheck --ignores 'pre-commit,@emotion/react,prettier-plugin-organize-imports'",
         "precommit": "yarn typecheck; yarn test:once; yarn lint",
-        "test": "vitest watch",
+        "test": "vitest watch --",
         "test:once": "vitest run --changed",
         "lint": "prettier --ignore-path .gitignore --check . && eslint --ignore-path .gitignore .",
         "lint:fix": "prettier --ignore-path .gitignore --write . && eslint --ignore-path .gitignore --fix .",
