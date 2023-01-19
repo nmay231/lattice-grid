@@ -29,8 +29,8 @@ import { formatAnything } from "./utils/stringUtils";
 
 export class PuzzleManager {
     layers = proxy(new IndexedOrderedMap<ValtioRef<Layer>>((layer) => !layer.ethereal));
-    UILayer = availableLayers["OverlayLayer"].create(this) as OverlayLayer;
-    CellOutlineLayer = availableLayers["CellOutlineLayer"].create(this) as CellOutlineLayer;
+    UILayer = availableLayers["OverlayLayer"].create(this);
+    CellOutlineLayer = availableLayers["CellOutlineLayer"].create(this);
 
     grid: Grid = new SquareGrid();
     storage = new StorageManager();
@@ -135,7 +135,7 @@ export class PuzzleManager {
             );
 
             for (const layerId of layerIds) {
-                for (const editMode of ["question", "answer"] as const) {
+                for (const editMode of ["question", "answer"] satisfies EditMode[]) {
                     const layer = this.layers.get(layerId);
                     blitGroupsProxy[`${layer.id}-${editMode}`] = valtioRef(
                         layer.getBlits({

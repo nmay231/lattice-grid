@@ -17,11 +17,11 @@ export class CellOutlineLayer extends BaseLayer<CellOutlineProps> implements ICe
     static displayName = "Cell Outline";
 
     static uniqueInstance?: CellOutlineLayer;
-    static create: LayerClass<CellOutlineProps>["create"] = (puzzle) => {
+    static create = ((puzzle): CellOutlineLayer => {
         CellOutlineLayer.uniqueInstance =
             CellOutlineLayer.uniqueInstance || new CellOutlineLayer(CellOutlineLayer, puzzle);
         return CellOutlineLayer.uniqueInstance;
-    };
+    }) satisfies LayerClass<CellOutlineProps>["create"];
 
     handleEvent: ICellOutlineLayer["handleEvent"] = methodNotImplemented({
         name: "CellOutline.handleEvent",

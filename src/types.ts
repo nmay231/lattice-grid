@@ -123,10 +123,9 @@ export type Grid = {
     getAllPoints: (type: PointType) => Point[];
     selectPointsWithCursor: (arg: {
         settings: PuzzleManager["settings"];
-        // TODO: Change to [number, number]
+        // TODO: Change to CanvasPoint() once implemented
         cursor: { x: number; y: number };
         pointTypes: PointType[];
-        // TODO: implement deltas as Finite State Machines for more capabilities and better cross-compatibility between grid types
         deltas: Delta[];
         previousPoint?: Point | null;
     }) => Point[];
@@ -179,7 +178,7 @@ export type Layer<LP extends LayerProps = LayerProps> = {
 
 export type LayerClass<LP extends LayerProps = LayerProps> = {
     new (klass: LayerClass<LP>, puzzle: PuzzleManager): Layer<LP>;
-    create: (puzzle: PuzzleManager) => Layer<LP>;
+    create: (puzzle: Pick<PuzzleManager, "layers">) => Layer<LP>;
     type: LP["Type"];
     displayName: string;
     ethereal: boolean;

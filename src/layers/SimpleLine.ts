@@ -32,13 +32,16 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
     static displayName = "Line";
     static defaultSettings = { stroke: "green", connections: "Cell to Cell" as const };
 
-    settings = { pointType: "cells" as PointType, selectedState: { stroke: "green" } };
+    settings: ISimpleLineLayer["settings"] = {
+        pointType: "cells",
+        selectedState: { stroke: "green" },
+    };
     handleEvent = methodNotImplemented({ name: "SimpleLine.handleEvent" });
     gatherPoints = methodNotImplemented({ name: "SimpleLine.gatherPoints" });
 
-    static create: LayerClass<SimpleLineProps>["create"] = (puzzle) => {
+    static create = ((puzzle): SimpleLineLayer => {
         return new SimpleLineLayer(SimpleLineLayer, puzzle);
-    };
+    }) satisfies LayerClass<SimpleLineProps>["create"];
 
     static constraints = {
         schema: {

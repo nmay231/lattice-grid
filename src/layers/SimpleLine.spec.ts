@@ -1,5 +1,5 @@
 import { LayerStorage } from "../LayerStorage";
-import { NeedsUpdating } from "../types";
+import { IndexedOrderedMap } from "../utils/OrderedMap";
 import { getEventEssentials } from "../utils/testUtils";
 import { SimpleLineLayer, SimpleLineProps } from "./SimpleLine";
 
@@ -9,7 +9,7 @@ describe("SimpleLine", () => {
         settings?: SimpleLineProps["RawSettings"];
     };
     const getSimpleLine = ({ stored, settings }: Arg) => {
-        const simpleLine = SimpleLineLayer.create({ layers: {} } as NeedsUpdating);
+        const simpleLine = SimpleLineLayer.create({ layers: new IndexedOrderedMap() });
         simpleLine.newSettings({
             ...getEventEssentials({ stored }),
             newSettings: settings || {

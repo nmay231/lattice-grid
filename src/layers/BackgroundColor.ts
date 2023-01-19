@@ -28,9 +28,9 @@ export class BackgroundColorLayer
     handleEvent = methodNotImplemented({ name: "BackgroundColor.handleEvent" });
     gatherPoints = methodNotImplemented({ name: "BackgroundColor.gatherPoints" });
 
-    static create: LayerClass<BackgroundColorProps>["create"] = (puzzle) => {
+    static create = ((puzzle): BackgroundColorLayer => {
         return new BackgroundColorLayer(BackgroundColorLayer, puzzle);
-    };
+    }) satisfies LayerClass<BackgroundColorProps>["create"];
 
     static controls = {
         schema: {

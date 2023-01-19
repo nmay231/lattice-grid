@@ -33,9 +33,9 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
         name: "KillerCages._numberTyper",
     }) as IKillerCagesLayer["_numberTyper"];
 
-    static create: LayerClass<KillerCagesProps>["create"] = (puzzle) => {
+    static create = ((puzzle): KillerCagesLayer => {
         return new KillerCagesLayer(KillerCagesLayer, puzzle);
-    };
+    }) satisfies LayerClass<KillerCagesProps>["create"];
 
     _handleKeyDown: IKillerCagesLayer["_handleKeyDown"] = ({ type, keypress, grid, storage }) => {
         const stored = storage.getStored<KillerCagesProps>({

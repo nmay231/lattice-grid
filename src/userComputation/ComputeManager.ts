@@ -38,7 +38,8 @@ export class ComputeManager {
     compileBlock = (parent: ICodeBlock | null, json: UserCodeJSON): void => {
         if (typeof json?.id === "string" && json.type in CodeBlocks) {
             try {
-                const codeBlock = new CodeBlocks[json.type](this, json as any);
+                // TODO: Use satisfies here and in every code block
+                const codeBlock = new CodeBlocks[json.type](this, json as NeedsUpdating);
                 this.codeBlocks[json.id] = codeBlock;
                 return;
             } catch (e) {

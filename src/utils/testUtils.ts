@@ -10,7 +10,7 @@ export type GetEventEssentialsArg<LP extends LayerProps> = {
 
 export const getEventEssentials = <LP extends LayerProps = LayerProps>(
     event = {} as GetEventEssentialsArg<LP>,
-): LayerEventEssentials<LP> => {
+) => {
     const { stored, tempStorage = {} } = event;
     const grid: LayerEventEssentials<LP>["grid"] = {
         id: "grid",
@@ -34,5 +34,5 @@ export const getEventEssentials = <LP extends LayerProps = LayerProps>(
             cellSize: 60,
             actionWindowMs: 600,
         },
-    };
+    } satisfies LayerEventEssentials<LP>;
 };

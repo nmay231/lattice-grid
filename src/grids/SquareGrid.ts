@@ -104,7 +104,6 @@ export class SquareGrid implements Grid {
         settings,
         cursor,
         pointTypes,
-        // TODO: implement deltas as Finite State Machines for more capabilities and better cross-compatibility between grid types
         deltas,
         previousPoint = null,
     }) => {
@@ -134,10 +133,7 @@ export class SquareGrid implements Grid {
             return [`${closestCorrectType.x},${closestCorrectType.y}`];
         }
 
-        let previousGridPoint = previousPoint.split(",").map((x) => parseInt(x)) as [
-            number,
-            number,
-        ];
+        let previousGridPoint = previousPoint.split(",").map((x) => parseInt(x)) as Vector;
         const nearby = deltas.map(
             ({ dx, dy }) => `${previousGridPoint[0] + dx},${previousGridPoint[1] + dy}`,
         );
@@ -466,7 +462,7 @@ export class SquareGrid implements Grid {
                     const { shape, size } = connections[nextType];
                     let radius = settings.cellSize / 2;
 
-                    // I'm literally making up these values as I go along...
+                    // TODO: I'm literally making up these values as I go along...
                     const shapeMap: Record<PointType, Record<string, number>> = {
                         cells: { square: 1, circle: 1 },
                         corners: { square: 0.9, circle: 1 },

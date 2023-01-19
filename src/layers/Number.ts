@@ -27,9 +27,9 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
         name: "Number._numberTyper",
     }) as INumberLayer["_numberTyper"];
 
-    static create: LayerClass<NumberProps>["create"] = (puzzle) => {
+    static create = ((puzzle): NumberLayer => {
         return new NumberLayer(NumberLayer, puzzle);
-    };
+    }) satisfies LayerClass<NumberProps>["create"];
 
     handleKeyDown: INumberLayer["handleKeyDown"] = ({
         points: ids,

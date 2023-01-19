@@ -9,6 +9,7 @@ import {
     Point,
 } from "../../types";
 import { errorNotification } from "../../utils/DOMUtils";
+import { formatAnything } from "../../utils/stringUtils";
 
 export interface SelectedProps extends LayerProps {
     TempStorage: {
@@ -76,7 +77,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
         if (!newPoints.length) return [];
         tempStorage.previousPoint = newPoints[newPoints.length - 1];
 
-        const blacklist = tempStorage.blacklist || ([] as Point[]);
+        const blacklist: Point[] = tempStorage.blacklist || [];
         tempStorage.blacklist = blacklist;
         newPoints = newPoints.filter((id) => blacklist.indexOf(id) === -1);
         if (!newPoints.length) return [];
@@ -219,9 +220,9 @@ export const handleEventsSelection = <LP extends SelectedProps>(
             default: {
                 throw errorNotification({
                     error: null,
-                    message: `Unknown event.type in selected layer ${layer.displayName}: ${
-                        (event as any).type
-                    }`,
+                    message: `Unknown event in selected layer ${
+                        layer.displayName
+                    }: ${formatAnything(event)}`,
                     forever: true,
                 });
             }

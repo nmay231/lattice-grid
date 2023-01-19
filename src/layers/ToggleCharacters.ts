@@ -42,9 +42,9 @@ export class ToggleCharactersLayer
     handleEvent = methodNotImplemented({ name: "ToggleCharacters.handleEvent" });
     gatherPoints = methodNotImplemented({ name: "ToggleCharacters.gatherPoints" });
 
-    static create: LayerClass<ToggleCharactersProps>["create"] = (puzzle) => {
+    static create = ((puzzle): ToggleCharactersLayer => {
         return new ToggleCharactersLayer(ToggleCharactersLayer, puzzle);
-    };
+    }) satisfies LayerClass<ToggleCharactersProps>["create"];
 
     static controls = undefined;
     static constraints = {
