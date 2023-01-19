@@ -14,7 +14,7 @@ describe("SimpleLine", () => {
             ...getEventEssentials({ stored }),
             newSettings: settings || {
                 connections: "Cell to Cell",
-                fill: "green",
+                stroke: "green",
             },
         });
 
@@ -24,19 +24,19 @@ describe("SimpleLine", () => {
     it("should delete all objects when changing connection types", () => {
         const stored = LayerStorage.fromObjects<SimpleLineProps>({
             ids: ["something"],
-            objs: [{ id: "something", points: [], state: { fill: "" } }],
+            objs: [{ id: "something", points: [], state: { stroke: "" } }],
         });
 
         const simpleLine = getSimpleLine({
             stored,
-            settings: { connections: "Cell to Cell", fill: "green" },
+            settings: { connections: "Cell to Cell", stroke: "green" },
         });
 
         const result = simpleLine.newSettings({
             ...getEventEssentials({ stored }),
             newSettings: {
                 connections: "Corner to Corner",
-                fill: "green",
+                stroke: "green",
             },
         });
 
@@ -46,19 +46,19 @@ describe("SimpleLine", () => {
     it("should delete all objects when changing anything but connection types", () => {
         const stored = LayerStorage.fromObjects<SimpleLineProps>({
             ids: ["something"],
-            objs: [{ id: "something", points: [], state: { fill: "" } }],
+            objs: [{ id: "something", points: [], state: { stroke: "" } }],
         });
 
         const simpleLine = getSimpleLine({
             stored,
-            settings: { connections: "Cell to Cell", fill: "green" },
+            settings: { connections: "Cell to Cell", stroke: "green" },
         });
 
         const result = simpleLine.newSettings({
             ...getEventEssentials({ stored }),
             newSettings: {
                 connections: "Cell to Cell",
-                fill: "blue",
+                stroke: "blue",
             },
         });
 

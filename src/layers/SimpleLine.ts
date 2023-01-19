@@ -13,26 +13,26 @@ export interface SimpleLineProps extends TwoPointProps {
     Type: "SimpleLineLayer";
     ObjectState: {
         id: ObjectId;
-        state: { fill: string };
+        state: { stroke: string };
         points: Point[];
     };
     RawSettings: {
         connections: keyof typeof pointTypes;
-        fill: string;
+        stroke: string;
     };
 }
 
 interface ISimpleLineLayer extends Layer<SimpleLineProps> {
-    settings: { pointType: PointType; selectedState: { fill: string } };
+    settings: { pointType: PointType; selectedState: { stroke: string } };
 }
 
 export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimpleLineLayer {
     static ethereal = false;
     static type = "SimpleLineLayer" as const;
     static displayName = "Line";
-    static defaultSettings = { fill: "green", connections: "Cell to Cell" as const };
+    static defaultSettings = { stroke: "green", connections: "Cell to Cell" as const };
 
-    settings = { pointType: "cells" as PointType, selectedState: { fill: "green" } };
+    settings = { pointType: "cells" as PointType, selectedState: { stroke: "green" } };
     handleEvent = methodNotImplemented({ name: "SimpleLine.handleEvent" });
     gatherPoints = methodNotImplemented({ name: "SimpleLine.gatherPoints" });
 
@@ -63,7 +63,7 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
         schema: {
             type: "object",
             properties: {
-                fill: {
+                stroke: {
                     type: "string",
                     enum: ["blue", "green", "orange", "pink", "purple", "red", "yellow"],
                 },
@@ -73,7 +73,7 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
             {
                 type: "Control",
                 label: "Color",
-                scope: "#/properties/fill",
+                scope: "#/properties/stroke",
             },
         ],
     };
@@ -91,7 +91,7 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
         this.settings = {
             pointType: pointTypes[newSettings.connections] || "cells",
             selectedState: {
-                fill: newSettings.fill || "green",
+                stroke: newSettings.stroke || "green",
             },
         };
 
@@ -134,7 +134,7 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
         for (const id of renderOrder) {
             const { state, points } = stored.objects.get(id);
             blits[id] = {
-                style: { stroke: state.fill },
+                style: state,
                 x1: pointInfo[points[0]].svgPoint[0],
                 y1: pointInfo[points[0]].svgPoint[1],
                 x2: pointInfo[points[1]].svgPoint[0],
@@ -147,7 +147,6 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
                 id: "lines",
                 blitter: "line",
                 blits,
-                // TODO: styling includes more than just color...
                 style: {
                     strokeWidth: 4,
                     strokeLinecap: "round",
