@@ -1,7 +1,7 @@
 import { PolygonBlits } from "../components/SVGCanvas/Polygon";
 import { Layer, LayerClass } from "../types";
 import { bySubset } from "../utils/structureUtils";
-import { BaseLayer, methodNotImplemented } from "./baseLayer";
+import { BaseLayer, methodNotImplemented } from "./BaseLayer";
 import { handleEventsCurrentSetting, OnePointProps } from "./controls/onePoint";
 
 type Color = string;

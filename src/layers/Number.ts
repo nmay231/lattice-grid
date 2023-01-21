@@ -1,7 +1,7 @@
 import { TextBlits } from "../components/SVGCanvas/Text";
 import { Layer, LayerClass, Point } from "../types";
 import { bySubset } from "../utils/structureUtils";
-import { BaseLayer, methodNotImplemented } from "./baseLayer";
+import { BaseLayer, methodNotImplemented } from "./BaseLayer";
 import { DO_NOTHING, numberTyper } from "./controls/numberTyper";
 import { handleEventsSelection, KeyDownEventHandler, SelectedProps } from "./controls/selection";
 

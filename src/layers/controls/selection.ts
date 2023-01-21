@@ -21,7 +21,7 @@ export interface SelectedProps extends LayerProps {
 }
 
 export interface InternalProps extends LayerProps {
-    ExtraLayerStorageProps: { groupNumber: number };
+    PermStorage: { groupNumber: number };
     ObjectState: { state: number };
 }
 
@@ -132,7 +132,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
             }
             case "pointerDown":
             case "pointerMove": {
-                internal.extra.groupNumber = internal.extra.groupNumber || 1;
+                internal.permStorage.groupNumber = internal.permStorage.groupNumber || 1;
                 const ids = event.points;
 
                 if (event.ctrlKey || event.shiftKey) {
@@ -143,9 +143,11 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                             tempStorage.targetState = null;
                             history = [obj({ id, object: null })];
                         } else {
-                            internal.extra.groupNumber += 1;
-                            tempStorage.targetState = internal.extra.groupNumber;
-                            history = [obj({ id, object: { state: internal.extra.groupNumber } })];
+                            internal.permStorage.groupNumber += 1;
+                            tempStorage.targetState = internal.permStorage.groupNumber;
+                            history = [
+                                obj({ id, object: { state: internal.permStorage.groupNumber } }),
+                            ];
                         }
                     } else if (tempStorage.targetState === null) {
                         history = ids
@@ -169,8 +171,8 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                     }
                 } else {
                     const removeOld = tempStorage.targetState === undefined;
-                    internal.extra.groupNumber = 2;
-                    tempStorage.targetState = internal.extra.groupNumber;
+                    internal.permStorage.groupNumber = 2;
+                    tempStorage.targetState = internal.permStorage.groupNumber;
                     tempStorage.removeSingle = false;
                     history = [];
 
@@ -185,7 +187,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                         }
                     }
 
-                    const state = internal.extra.groupNumber;
+                    const state = internal.permStorage.groupNumber;
                     history.push(...ids.map((id) => obj({ id, object: { state } })));
                 }
 
@@ -209,7 +211,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                     .filter((oldId) => newIds.indexOf(oldId) === -1)
                     .map((oldId) => obj({ id: oldId, object: null }));
 
-                internal.extra.groupNumber = 2;
+                internal.permStorage.groupNumber = 2;
                 // Select the objects being modified in the undo/redo actions
                 history.push(
                     // TODO: This implicitly removes group information (b/c state=2). However, it seems really difficult to resolve unless selections are kept in history, but that opens up a whole can of worms.

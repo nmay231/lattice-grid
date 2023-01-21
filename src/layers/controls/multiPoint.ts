@@ -14,7 +14,7 @@ import { smartSort } from "../../utils/stringUtils";
 
 export interface MultiPointLayerProps extends LayerProps {
     ObjectState: { points: Point[]; state: unknown };
-    ExtraLayerStorageProps: { currentObjectId: ObjectId };
+    PermStorage: { currentObjectId: ObjectId };
     TempStorage: {
         previousPoint: Point;
         batchId: number;
@@ -81,7 +81,7 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
         const { grid, storage, type, tempStorage } = event;
 
         const stored = storage.getStored<LP>({ layer, grid });
-        const currentObjectId = stored.extra.currentObjectId || "";
+        const currentObjectId = stored.permStorage.currentObjectId || "";
         if (!currentObjectId && type !== "pointerDown" && type !== "undoRedo") {
             return {}; // Other events only matter if there is an object selected
         }
@@ -97,14 +97,14 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
                     // Allow the layer to delete its state before deleting the object itself.
                     return result;
                 }
-                stored.extra.currentObjectId = undefined;
+                stored.permStorage.currentObjectId = undefined;
                 return {
                     discontinueInput: true,
                     history: [{ id: currentObjectId, object: null }],
                 };
             }
             case "cancelAction": {
-                stored.extra.currentObjectId = undefined;
+                stored.permStorage.currentObjectId = undefined;
                 return {
                     discontinueInput: true,
                     history: [
@@ -129,7 +129,7 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
                         // Only remove a cell if the object was already selected
                         tempStorage.removeSingle = true;
                     }
-                    stored.extra.currentObjectId = id;
+                    stored.permStorage.currentObjectId = id;
 
                     // Force a rerender without polluting history
                     return {
@@ -139,7 +139,7 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
 
                 // Start drawing a new object
                 tempStorage.removeSingle = false;
-                stored.extra.currentObjectId = startPoint;
+                stored.permStorage.currentObjectId = startPoint;
                 return {
                     history: [
                         {
@@ -213,7 +213,7 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
                     return { discontinueInput: true };
                 }
 
-                stored.extra.currentObjectId = newId;
+                stored.permStorage.currentObjectId = newId;
                 return {
                     discontinueInput: true,
                     history: [
@@ -226,14 +226,14 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
                 // TODO: layer might have sub-layers and action.layerId !== layer.id
                 const last = event.actions[event.actions.length - 1];
                 if (last.object !== null) {
-                    stored.extra.currentObjectId = last.objectId;
+                    stored.permStorage.currentObjectId = last.objectId;
                     return {
                         discontinueInput: true,
                         // TODO: Force render
                         history: [{ ...last, id: last.objectId, batchId: "ignore" }],
                     };
                 }
-                stored.extra.currentObjectId = undefined;
+                stored.permStorage.currentObjectId = undefined;
                 return { discontinueInput: true };
             }
             default: {

@@ -2,7 +2,7 @@ import { PolygonBlits } from "../components/SVGCanvas/Polygon";
 import { TextBlits } from "../components/SVGCanvas/Text";
 import { Layer, LayerClass, NeedsUpdating } from "../types";
 import { bySubset } from "../utils/structureUtils";
-import { BaseLayer, methodNotImplemented } from "./baseLayer";
+import { BaseLayer, methodNotImplemented } from "./BaseLayer";
 import {
     handleEventsUnorderedSets,
     MultiPointKeyDownHandler,
@@ -42,9 +42,9 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
             grid,
         });
 
-        if (!stored.extra.currentObjectId) return {};
+        if (!stored.permStorage.currentObjectId) return {};
 
-        const id = stored.extra.currentObjectId;
+        const id = stored.permStorage.currentObjectId;
         const object = stored.objects.get(id);
 
         if (type === "delete") {
@@ -105,7 +105,8 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
                 points: object.points,
             });
 
-            const style = id === stored.extra.currentObjectId ? { stroke: "#33F" } : undefined;
+            const style =
+                id === stored.permStorage.currentObjectId ? { stroke: "#33F" } : undefined;
             for (const key in cageOutline.svgPolygons) {
                 cageBlits[`${id}-${key}`] = {
                     style,

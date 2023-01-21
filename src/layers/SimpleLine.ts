@@ -1,7 +1,7 @@
 import { LineBlits } from "../components/SVGCanvas/Line";
 import { Layer, LayerClass, ObjectId, Point, PointType } from "../types";
 import { bySubset } from "../utils/structureUtils";
-import { BaseLayer, methodNotImplemented } from "./baseLayer";
+import { BaseLayer, methodNotImplemented } from "./BaseLayer";
 import { handleEventsCurrentSetting, TwoPointProps } from "./controls/twoPoint";
 
 const pointTypes = {

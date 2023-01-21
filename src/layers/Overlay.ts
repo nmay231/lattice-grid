@@ -1,6 +1,6 @@
 import { OVERLAY_LAYER_ID } from "../state/blits";
 import { Layer, LayerClass, LayerProps } from "../types";
-import { BaseLayer, methodNotImplemented } from "./baseLayer";
+import { BaseLayer, methodNotImplemented } from "./BaseLayer";
 
 type OverlayProps = LayerProps;
 

@@ -1,4 +1,4 @@
-import { ref } from "valtio";
+import type { ref } from "valtio";
 import type { LineBlits } from "./components/SVGCanvas/Line";
 import type { PolygonBlits } from "./components/SVGCanvas/Polygon";
 import type { TextBlits } from "./components/SVGCanvas/Text";
@@ -150,7 +150,7 @@ export type LayerProps = {
     // TODO: Try allowing settings and rawSettings to be optional
     RawSettings: UnknownObject;
     ObjectState: UnknownObject;
-    ExtraLayerStorageProps: UnknownObject;
+    PermStorage: UnknownObject;
     TempStorage: UnknownObject;
 };
 

@@ -22,7 +22,7 @@ import {
     ValtioRef,
 } from "./types";
 import { errorNotification } from "./utils/DOMUtils";
-import { valtioRef } from "./utils/imports";
+import { valtioRef } from "./utils/imports/valtio";
 import { LatestTimeout } from "./utils/LatestTimeout";
 import { IndexedOrderedMap } from "./utils/OrderedMap";
 import { formatAnything } from "./utils/stringUtils";

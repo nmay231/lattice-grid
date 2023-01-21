@@ -2,7 +2,7 @@ import { TextBlits } from "../components/SVGCanvas/Text";
 import { Layer, LayerClass, Vector } from "../types";
 import { errorNotification } from "../utils/DOMUtils";
 import { bySubset } from "../utils/structureUtils";
-import { BaseLayer, methodNotImplemented } from "./baseLayer";
+import { BaseLayer, methodNotImplemented } from "./BaseLayer";
 import { handleEventsSelection, KeyDownEventHandler, SelectedProps } from "./controls/selection";
 
 type RawSettings = {

@@ -1,5 +1,5 @@
 import { Layer, LayerClass, ObjectId, Point } from "../types";
-import { BaseLayer, methodNotImplemented } from "./baseLayer";
+import { BaseLayer, methodNotImplemented } from "./BaseLayer";
 import { handleEventsCycleStates, OnePointProps } from "./controls/onePoint";
 
 type ObjectState = true;

@@ -82,7 +82,7 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         essentials.storage.getNewBatchId = getBatchId;
 
         // Select the existing object
-        stored.extra.currentObjectId = "a";
+        stored.permStorage.currentObjectId = "a";
 
         selectPoints.mockReturnValueOnce(["b"]);
         const fakeEvent: LayerEvent<MultiPointLayerProps> = {
@@ -185,7 +185,7 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
             ids: ["a;b"],
             objs: [{ points: ["a", "b"], state: null }],
         });
-        stored.extra = { currentObjectId: "a;b" };
+        stored.permStorage = { currentObjectId: "a;b" };
         const selectPoints = vi.fn();
         const getBatchId = vi.fn();
         const essentials = getEventEssentials({ stored });
@@ -234,7 +234,7 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
             ids: ["a;b"],
             objs: [{ points: ["a", "b"], state: null }],
         });
-        stored.extra = { currentObjectId: "a;b" };
+        stored.permStorage = { currentObjectId: "a;b" };
         const selectPoints = vi.fn();
         const getBatchId = vi.fn();
         const essentials = getEventEssentials<MultiPointLayerProps>({ stored });

@@ -29,7 +29,7 @@ class DisjointSets<Groups extends string = string> {
 export class LayerStorage<LP extends LayerProps = LayerProps> {
     // TODO: Should this be where I wrap it in proxy?
     objects = proxy(new OrderedMap<LP["ObjectState"]>());
-    extra: Partial<LP["ExtraLayerStorageProps"]> = {};
+    permStorage: Partial<LP["PermStorage"]> = {};
     groups = new DisjointSets<StorageMode>();
 
     static fromObjects<LP extends LayerProps>({
