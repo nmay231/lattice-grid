@@ -6,7 +6,6 @@ import { DO_NOTHING, numberTyper } from "./controls/numberTyper";
 import { handleEventsSelection, KeyDownEventHandler, SelectedProps } from "./controls/selection";
 
 export interface NumberProps extends SelectedProps {
-    Type: "NumberLayer";
     ObjectState: { state: string; point: Point };
     RawSettings: { max: number; negatives: boolean };
 }
@@ -17,7 +16,7 @@ interface INumberLayer extends Layer<NumberProps>, KeyDownEventHandler<NumberPro
 
 export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer {
     static ethereal = false;
-    static type = "NumberLayer" as const;
+    static readonly type = "NumberLayer";
     static displayName = "Number";
     static defaultSettings = { max: 9, negatives: false };
 

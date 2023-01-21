@@ -7,7 +7,6 @@ import { handleEventsCurrentSetting, OnePointProps } from "./controls/onePoint";
 type Color = string;
 
 interface BackgroundColorProps extends OnePointProps<Color> {
-    Type: "BackgroundColorLayer";
     RawSettings: { selectedState: Color };
 }
 
@@ -20,7 +19,7 @@ export class BackgroundColorLayer
     implements IBackgroundColorLayer
 {
     static ethereal = false;
-    static type = "BackgroundColorLayer" as const;
+    static readonly type = "BackgroundColorLayer";
     static displayName = "Background Color";
     static defaultSettings = { selectedState: "blue" };
 

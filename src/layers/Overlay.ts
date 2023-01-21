@@ -2,15 +2,13 @@ import { OVERLAY_LAYER_ID } from "../state/blits";
 import { Layer, LayerClass, LayerProps } from "../types";
 import { BaseLayer, methodNotImplemented } from "./baseLayer";
 
-interface OverlayProps extends LayerProps {
-    Type: "OverlayLayer";
-}
+type OverlayProps = LayerProps;
 
 type IOverlayLayer = Layer<OverlayProps>;
 
 export class OverlayLayer extends BaseLayer<OverlayProps> implements IOverlayLayer {
     static ethereal = true;
-    static type = "OverlayLayer" as const;
+    static readonly type = "OverlayLayer";
     static displayName = OVERLAY_LAYER_ID;
 
     id = OVERLAY_LAYER_ID;

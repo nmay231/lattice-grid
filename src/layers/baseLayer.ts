@@ -36,11 +36,10 @@ export abstract class BaseLayer<LP extends LayerProps>
     implements Omit<Layer<LP>, "newSettings" | "getBlits">
 {
     static ethereal = true;
-    static type = "BASE_LAYER";
     static displayName = "INTERNAL_BASE_LAYER";
     static defaultSettings = {};
 
-    type: LP["Type"];
+    readonly type: string;
     id: Layer["id"];
     ethereal: Layer["ethereal"];
     displayName: Layer["displayName"];

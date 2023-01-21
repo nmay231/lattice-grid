@@ -10,7 +10,6 @@ const pointTypes = {
 } as const;
 
 export interface SimpleLineProps extends TwoPointProps {
-    Type: "SimpleLineLayer";
     ObjectState: {
         id: ObjectId;
         state: { stroke: string };
@@ -28,7 +27,7 @@ interface ISimpleLineLayer extends Layer<SimpleLineProps> {
 
 export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimpleLineLayer {
     static ethereal = false;
-    static type = "SimpleLineLayer" as const;
+    static readonly type = "SimpleLineLayer";
     static displayName = "Line";
     static defaultSettings = { stroke: "green", connections: "Cell to Cell" as const };
 

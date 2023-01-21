@@ -5,7 +5,6 @@ import { handleEventsCycleStates, OnePointProps } from "./controls/onePoint";
 type ObjectState = true;
 
 interface CellOutlineProps extends OnePointProps<ObjectState> {
-    Type: "CellOutlineLayer";
     ObjectState: { id: ObjectId; points: Point[]; state: ObjectState };
 }
 
@@ -13,7 +12,7 @@ type ICellOutlineLayer = Layer<CellOutlineProps>;
 
 export class CellOutlineLayer extends BaseLayer<CellOutlineProps> implements ICellOutlineLayer {
     static ethereal = true;
-    static type = "CellOutlineLayer" as const;
+    static readonly type = "CellOutlineLayer";
     static displayName = "Cell Outline";
 
     static uniqueInstance?: CellOutlineLayer;

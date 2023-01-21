@@ -13,7 +13,6 @@ type RawSettings = {
 };
 
 interface ToggleCharactersProps extends SelectedProps {
-    Type: "ToggleCharactersLayer";
     ObjectState: { state: string };
     RawSettings: RawSettings;
 }
@@ -30,7 +29,7 @@ export class ToggleCharactersLayer
     implements IToggleCharactersLayer
 {
     static ethereal = false;
-    static type = "ToggleCharactersLayer" as const;
+    static readonly type = "ToggleCharactersLayer";
     static displayName = "Toggle Characters";
     static defaultSettings = {
         caseSwap: Object.fromEntries([..."0123456789"].entries()),

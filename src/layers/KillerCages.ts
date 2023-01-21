@@ -11,7 +11,6 @@ import {
 import { DO_NOTHING, numberTyper } from "./controls/numberTyper";
 
 interface KillerCagesProps extends MultiPointLayerProps {
-    Type: "KillerCagesLayer";
     ObjectState: MultiPointLayerProps["ObjectState"] & { state: string | null };
 }
 
@@ -22,7 +21,7 @@ interface IKillerCagesLayer extends Layer<KillerCagesProps> {
 
 export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKillerCagesLayer {
     static ethereal = false;
-    static type = "KillerCagesLayer" as const;
+    static readonly type = "KillerCagesLayer";
     static displayName = "Killer Cages";
     static defaultSettings = { selectedState: "blue" };
 

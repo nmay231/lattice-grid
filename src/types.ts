@@ -84,10 +84,6 @@ export type LayerEventEssentials<LP extends LayerProps> = {
 
 export type LayerEvent<LP extends LayerProps> = CleanedDOMEvent & LayerEventEssentials<LP>;
 
-export type NewSettingsEvent<LP extends LayerProps> = LayerEventEssentials<LP> & {
-    newSettings: LP["RawSettings"];
-};
-
 // TODO: Adding OtherState makes sense for IncompleteHistoryAction, but not for LayerHandlerResult. Should this somehow be another property on LayerProps?
 export type LayerHandlerResult<LP extends LayerProps> = {
     discontinueInput?: boolean;
@@ -152,7 +148,6 @@ export type JSONSchema = { schema: NeedsUpdating; uischemaElements: NeedsUpdatin
 
 export type LayerProps = {
     // TODO: Try allowing settings and rawSettings to be optional
-    Type: string;
     RawSettings: UnknownObject;
     ObjectState: UnknownObject;
     ExtraLayerStorageProps: UnknownObject;
@@ -160,16 +155,18 @@ export type LayerProps = {
 };
 
 export type Layer<LP extends LayerProps = LayerProps> = {
-    type: LP["Type"];
+    readonly type: string;
     id: string;
     displayName: string;
     ethereal: boolean;
     rawSettings: LP["RawSettings"];
     controls?: JSONSchema;
     constraints?: JSONSchema;
-    newSettings: (
-        settingsChange: Omit<NewSettingsEvent<LP>, "tempStorage">,
-    ) => LayerHandlerResult<LP>;
+    newSettings(
+        settingsChange: Omit<LayerEventEssentials<LP>, "tempStorage"> & {
+            newSettings: LP["RawSettings"];
+        },
+    ): LayerHandlerResult<LP>;
     gatherPoints: (layerEvent: PointerMoveOrDown & LayerEventEssentials<LP>) => Point[];
     handleEvent: (layerEvent: LayerEvent<LP>) => LayerHandlerResult<LP>;
     getBlits: (data: Omit<LayerEventEssentials<LP>, "tempStorage">) => BlitGroup[];
@@ -179,7 +176,7 @@ export type Layer<LP extends LayerProps = LayerProps> = {
 export type LayerClass<LP extends LayerProps = LayerProps> = {
     new (klass: LayerClass<LP>, puzzle: PuzzleManager): Layer<LP>;
     create: (puzzle: Pick<PuzzleManager, "layers">) => Layer<LP>;
-    type: LP["Type"];
+    readonly type: string;
     displayName: string;
     ethereal: boolean;
     defaultSettings: LP["RawSettings"];
