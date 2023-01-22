@@ -1,15 +1,6 @@
 import { cloneDeep } from "lodash";
 import { PuzzleManager } from "../PuzzleManager";
-import {
-    Layer,
-    LayerClass,
-    LayerEvent,
-    LayerEventEssentials,
-    LayerHandlerResult,
-    LayerProps,
-    Point,
-    PointerMoveOrDown,
-} from "../types";
+import { Layer, LayerClass, LayerProps } from "../types";
 import { errorNotification } from "../utils/DOMUtils";
 
 /** I could annotate all attributes that are assigned at runtime with an exclamation to mark them as assigned elsewhere (`attr!: type`), but then I don't have visibility into the cause of certain errors */
@@ -57,9 +48,7 @@ export abstract class BaseLayer<LP extends LayerProps>
         this.rawSettings = cloneDeep(klass.defaultSettings);
     }
 
-    abstract gatherPoints: (
-        layerEvent: PointerMoveOrDown & LayerEventEssentials<LayerProps>,
-    ) => Point[];
+    abstract gatherPoints: Layer<LP>["gatherPoints"];
 
-    abstract handleEvent: (layerEvent: LayerEvent<LayerProps>) => LayerHandlerResult<LP>;
+    abstract handleEvent: Layer<LP>["handleEvent"];
 }

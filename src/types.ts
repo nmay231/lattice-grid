@@ -92,8 +92,7 @@ export type LayerHandlerResult<LP extends LayerProps> = {
 // #endregion
 
 // #region - Explicit Type Names
-// TODO: Replace all relevant instances of the plain types with these explicit types.
-// It helps with changing all of the types if necessary, and also with being explicit with how composite types are used.
+// It helps with changing all of the types if necessary, and also with being explicit with how composite types are used (at least in the definition).
 export type Point = string;
 export type Vector = [number, number];
 export type Delta = { dx: number; dy: number };
@@ -103,6 +102,7 @@ export type EditMode = "question" | "answer";
 export type StorageMode = "question" | "answer" | "ui";
 export type ObjectId = string;
 
+// TODO: This has become the misc region. Maybe make an explicitly misc one and keep this one clean?
 export type ValtioRef<T extends object> = ReturnType<typeof ref<T>>;
 // #endregion
 
@@ -167,7 +167,9 @@ export type Layer<LP extends LayerProps = LayerProps> = {
             newSettings: LP["RawSettings"];
         },
     ): LayerHandlerResult<LP>;
-    gatherPoints: (layerEvent: PointerMoveOrDown & LayerEventEssentials<LP>) => Point[];
+    gatherPoints: (
+        layerEvent: Omit<PointerMoveOrDown, "points"> & LayerEventEssentials<LP>,
+    ) => Point[];
     handleEvent: (layerEvent: LayerEvent<LP>) => LayerHandlerResult<LP>;
     getBlits: (data: Omit<LayerEventEssentials<LP>, "tempStorage">) => BlitGroup[];
     getOverlayBlits?: (data: Omit<LayerEventEssentials<LP>, "tempStorage">) => BlitGroup[];
