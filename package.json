@@ -16,6 +16,7 @@
         "@mantine/hooks": "^5.9.5",
         "@mantine/notifications": "^5.9.5",
         "blockly": "^8.0.3",
+        "js-base64": "^3.7.4",
         "lodash": "^4.17.21",
         "node-inspect-extracted": "^2.0.0",
         "pako": "^2.0.4",

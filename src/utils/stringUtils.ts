@@ -1,4 +1,7 @@
 import { randomId } from "@mantine/hooks";
+import { Base64 } from "js-base64";
+import { deflate, inflate } from "pako";
+import { UnknownObject } from "../types";
 
 export { format as formatAnything } from "node-inspect-extracted";
 
@@ -30,4 +33,20 @@ export const randomStringId = (blacklist: string[]) => {
         s = randomId();
     } while (blacklist.includes(s));
     return s;
+};
+
+// TODO: A temporary way to encode puzzle data as a string.
+// Consider setting windowBits on deflate and inflate.
+export const compressJSON = (object: UnknownObject) => {
+    const JSONString = JSON.stringify(object);
+    const compressedArray = deflate(JSONString);
+    const URLSafe = Base64.fromUint8Array(compressedArray);
+    return URLSafe;
+};
+
+export const decompressJSON = (URLSafe: string) => {
+    const compressedArray = Base64.toUint8Array(URLSafe);
+    const JSONString = inflate(compressedArray, { to: "string" });
+    const object = JSON.parse(JSONString);
+    return object;
 };

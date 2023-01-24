@@ -1,5 +1,5 @@
 import { proxy } from "valtio";
-import { EditMode, LayerProps, ObjectId, StorageMode } from "./types";
+import { EditMode, Layer, LayerProps, ObjectId, StorageMode, UnknownObject } from "./types";
 import { OrderedMap } from "./utils/OrderedMap";
 
 class DisjointSets<Groups extends string = string> {
@@ -26,12 +26,18 @@ class DisjointSets<Groups extends string = string> {
     }
 }
 
+export type LayerStorageJSON = {
+    objects: { order: Layer["id"][]; map: Record<Layer["id"], UnknownObject> };
+    groups: { byKey: Record<string, StorageMode> };
+};
+
 export class LayerStorage<LP extends LayerProps = LayerProps> {
     // TODO: Should this be where I wrap it in proxy?
     objects = proxy(new OrderedMap<LP["ObjectState"]>());
     permStorage: Partial<LP["PermStorage"]> = {};
     groups = new DisjointSets<StorageMode>();
 
+    /** Mostly used for testing */
     static fromObjects<LP extends LayerProps>({
         ids,
         objs,
@@ -48,6 +54,22 @@ export class LayerStorage<LP extends LayerProps = LayerProps> {
             storage.groups.setKey(id, editMode);
         });
 
+        return storage satisfies LayerStorageJSON;
+    }
+
+    toJSON(): LayerStorageJSON {
+        return {
+            objects: { map: this.objects.map, order: this.objects.order },
+            groups: { byKey: this.groups.byKey },
+        };
+    }
+
+    static fromJSON<LP extends LayerProps = LayerProps>(json: LayerStorageJSON): LayerStorage<LP> {
+        const storage = new LayerStorage<LP>();
+        Object.assign(storage.objects, json.objects);
+        for (const [key, group] of Object.entries(json.groups.byKey)) {
+            storage.groups.setKey(key, group);
+        }
         return storage;
     }
 }
