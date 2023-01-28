@@ -1,11 +1,10 @@
 import { Layer, LayerClass, ObjectId, Point } from "../types";
-import { BaseLayer, methodNotImplemented } from "./baseLayer";
+import { BaseLayer, methodNotImplemented } from "./BaseLayer";
 import { handleEventsCycleStates, OnePointProps } from "./controls/onePoint";
 
 type ObjectState = true;
 
 interface CellOutlineProps extends OnePointProps<ObjectState> {
-    Type: "CellOutlineLayer";
     ObjectState: { id: ObjectId; points: Point[]; state: ObjectState };
 }
 
@@ -13,15 +12,15 @@ type ICellOutlineLayer = Layer<CellOutlineProps>;
 
 export class CellOutlineLayer extends BaseLayer<CellOutlineProps> implements ICellOutlineLayer {
     static ethereal = true;
-    static type = "CellOutlineLayer" as const;
+    static readonly type = "CellOutlineLayer";
     static displayName = "Cell Outline";
 
     static uniqueInstance?: CellOutlineLayer;
-    static create: LayerClass<CellOutlineProps>["create"] = (puzzle) => {
+    static create = ((puzzle): CellOutlineLayer => {
         CellOutlineLayer.uniqueInstance =
             CellOutlineLayer.uniqueInstance || new CellOutlineLayer(CellOutlineLayer, puzzle);
         return CellOutlineLayer.uniqueInstance;
-    };
+    }) satisfies LayerClass<CellOutlineProps>["create"];
 
     handleEvent: ICellOutlineLayer["handleEvent"] = methodNotImplemented({
         name: "CellOutline.handleEvent",
@@ -45,8 +44,9 @@ export class CellOutlineLayer extends BaseLayer<CellOutlineProps> implements ICe
                 { dx: -2, dy: 0 },
             ],
         });
+        const handleEvent = this.handleEvent;
         this.handleEvent = (arg) => {
-            const result = this.handleEvent(arg);
+            const result = handleEvent(arg);
             return {
                 ...result,
                 history: (result.history || []).map((action) => ({

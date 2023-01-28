@@ -2,7 +2,7 @@ import { TextBlits } from "../components/SVGCanvas/Text";
 import { Layer, LayerClass, Vector } from "../types";
 import { errorNotification } from "../utils/DOMUtils";
 import { bySubset } from "../utils/structureUtils";
-import { BaseLayer, methodNotImplemented } from "./baseLayer";
+import { BaseLayer, methodNotImplemented } from "./BaseLayer";
 import { handleEventsSelection, KeyDownEventHandler, SelectedProps } from "./controls/selection";
 
 type RawSettings = {
@@ -13,7 +13,6 @@ type RawSettings = {
 };
 
 interface ToggleCharactersProps extends SelectedProps {
-    Type: "ToggleCharactersLayer";
     ObjectState: { state: string };
     RawSettings: RawSettings;
 }
@@ -30,7 +29,7 @@ export class ToggleCharactersLayer
     implements IToggleCharactersLayer
 {
     static ethereal = false;
-    static type = "ToggleCharactersLayer" as const;
+    static readonly type = "ToggleCharactersLayer";
     static displayName = "Toggle Characters";
     static defaultSettings = {
         caseSwap: Object.fromEntries([..."0123456789"].entries()),
@@ -42,9 +41,9 @@ export class ToggleCharactersLayer
     handleEvent = methodNotImplemented({ name: "ToggleCharacters.handleEvent" });
     gatherPoints = methodNotImplemented({ name: "ToggleCharacters.gatherPoints" });
 
-    static create: LayerClass<ToggleCharactersProps>["create"] = (puzzle) => {
+    static create = ((puzzle): ToggleCharactersLayer => {
         return new ToggleCharactersLayer(ToggleCharactersLayer, puzzle);
-    };
+    }) satisfies LayerClass<ToggleCharactersProps>["create"];
 
     static controls = undefined;
     static constraints = {
@@ -193,8 +192,7 @@ export class ToggleCharactersLayer
 
         const ids = stored.objects
             .keys()
-            .filter(bySubset(stored.groups.getGroup(settings.editMode)))
-            .filter((id) => stored.objects.get(id).state);
+            .filter(bySubset(stored.groups.getGroup(settings.editMode)));
 
         const { cells } = grid.getPoints({
             settings,

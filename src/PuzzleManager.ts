@@ -22,15 +22,15 @@ import {
     ValtioRef,
 } from "./types";
 import { errorNotification } from "./utils/DOMUtils";
-import { valtioRef } from "./utils/imports";
+import { valtioRef } from "./utils/imports/valtio";
 import { LatestTimeout } from "./utils/LatestTimeout";
 import { IndexedOrderedMap } from "./utils/OrderedMap";
 import { formatAnything } from "./utils/stringUtils";
 
 export class PuzzleManager {
     layers = proxy(new IndexedOrderedMap<ValtioRef<Layer>>((layer) => !layer.ethereal));
-    UILayer = availableLayers["OverlayLayer"].create(this) as OverlayLayer;
-    CellOutlineLayer = availableLayers["CellOutlineLayer"].create(this) as CellOutlineLayer;
+    UILayer = availableLayers["OverlayLayer"].create(this);
+    CellOutlineLayer = availableLayers["CellOutlineLayer"].create(this);
 
     grid: Grid = new SquareGrid();
     storage = new StorageManager();
@@ -41,6 +41,7 @@ export class PuzzleManager {
         borderPadding: 60,
         cellSize: 60,
         // The time window allowed between parts of a single action, e.g. typing a two-digit number
+        // TODO: This might still be used, but not any time soon and definitely not for the reason above.
         actionWindowMs: 600,
     });
 
@@ -52,7 +53,7 @@ export class PuzzleManager {
 
     resetLayers() {
         this.layers.clear();
-        // this.storage.clear() // TODO:
+        this.storage = new StorageManager();
         this.storage.addStorage({ grid: this.grid, layer: { id: SELECTION_ID } });
 
         // Guarantee that these layers will be present even if the saved puzzle fails to add them
@@ -134,7 +135,7 @@ export class PuzzleManager {
             );
 
             for (const layerId of layerIds) {
-                for (const editMode of ["question", "answer"] as const) {
+                for (const editMode of ["question", "answer"] satisfies EditMode[]) {
                     const layer = this.layers.get(layerId);
                     blitGroupsProxy[`${layer.id}-${editMode}`] = valtioRef(
                         layer.getBlits({
@@ -262,7 +263,6 @@ export class PuzzleManager {
 
         if (oldLayerId !== layerId) {
             this.renderChange({ type: "switchLayer" });
-
             this.focusCurrentLayer();
         }
     }

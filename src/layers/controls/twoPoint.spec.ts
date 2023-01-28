@@ -1,320 +1,269 @@
 import { vi } from "vitest";
 import { LayerStorage } from "../../LayerStorage";
-import { Layer, LayerEvent, PointerMoveOrDown } from "../../types";
-import { getEventEssentials } from "../../utils/testUtils";
-import { DummyLayer } from "../_DummyLayer";
-import { handleEventsCurrentSetting, MinimalSettings, TwoPointProps } from "./twoPoint";
-
-type TwoPointLayer = Layer<TwoPointProps> & {
-    settings: MinimalSettings;
-};
+import { NeedsUpdating, PartialHistoryAction } from "../../types";
+import { layerEventRunner } from "../../utils/testUtils";
+import {
+    handleEventsCurrentSetting as twoPointCurrentSetting,
+    MinimalSettings,
+    TwoPointProps,
+} from "./twoPoint";
 
 describe("twoPoint.handleEventsCurrentSetting", () => {
-    const getFakeLayer = () => {
-        const layer = Object.create(DummyLayer) as TwoPointLayer;
-        layer.settings = { selectedState: { x: 42 } };
+    type SecondArg = Parameters<typeof twoPointCurrentSetting>[1];
+    const getTwoPointLayer = (
+        { settings, ...arg } = {} as SecondArg & { settings?: MinimalSettings },
+    ) => {
+        const layer = {
+            id: "DummyLayer",
+            settings: settings || { selectedState: { x: 42 } },
+        } as NeedsUpdating;
+        twoPointCurrentSetting(layer, {
+            pointTypes: ["cells"],
+            deltas: [
+                { dx: 0, dy: 2 },
+                { dx: 0, dy: -2 },
+                { dx: 2, dy: 0 },
+                { dx: -2, dy: 0 },
+            ],
+            ...arg,
+        });
         return layer;
     };
 
-    type SecondArg = Parameters<typeof handleEventsCurrentSetting>[1];
-    const applySettings = (layer: TwoPointLayer, arg?: SecondArg) =>
-        handleEventsCurrentSetting(layer, {
-            deltas: [{ dx: 1, dy: 1 }],
-            pointTypes: ["cells"],
-            ...arg,
-        });
+    type HistoryType = PartialHistoryAction<TwoPointProps>[];
 
-    const getPointerEvent = (event: Pick<PointerMoveOrDown, "type">): PointerMoveOrDown => ({
-        ctrlKey: false,
-        shiftKey: false,
-        altKey: false,
-        cursor: { x: 1, y: 1 },
-        points: [],
-        ...event,
+    // TODO: we have to call layer.gatherPoints each time because it's not a pure function. We might not have to if modified appropriately.
+
+    afterEach(() => {
+        vi.resetAllMocks();
     });
 
     it("should only add/change particular properties", () => {
-        const layer = {};
-        applySettings(layer as any);
-        expect(layer).toEqual({
+        const settings = { selectedState: { asdf: "yolo" } };
+        expect(getTwoPointLayer({ settings })).toEqual({
+            // Required
+            id: "DummyLayer",
+            settings,
+            // Added
             gatherPoints: expect.any(Function),
             handleEvent: expect.any(Function),
         });
     });
 
     it("should select one line", () => {
-        const layer = getFakeLayer();
-        applySettings(layer);
+        // Given an empty grid
+        const layer = getTwoPointLayer();
+        const handler = layerEventRunner({ layer });
+        handler.storage.getNewBatchId.mockReturnValueOnce(13);
 
-        const selectPoints = vi.fn();
-        const essentials = getEventEssentials<TwoPointProps>();
-        essentials.grid.selectPointsWithCursor = selectPoints;
+        // When two points are selected
+        const points1 = handler.gatherPoints({ type: "pointerDown", points: ["a"] });
+        expect(points1).toEqual([]);
+        const points2 = handler.gatherPoints({ type: "pointerMove", points: ["b"] });
+        expect(points2).toEqual(["a", "b"]);
 
-        selectPoints.mockReturnValueOnce(["a"]);
-        const fakeEvent: LayerEvent<TwoPointProps> = {
-            ...essentials,
-            ...getPointerEvent({ type: "pointerDown" }),
-        };
+        const pointerMove = handler.events.pointerMove({ points: points2 });
 
-        let points = layer.gatherPoints(fakeEvent);
-        expect(points).toEqual([]);
-
-        selectPoints.mockReturnValueOnce(["b"]);
-        fakeEvent.type = "pointerMove";
-        points = layer.gatherPoints(fakeEvent);
-        expect(points).toEqual(["a", "b"]);
-
-        let result = layer.handleEvent({ ...fakeEvent, points });
-        expect(result.history).toEqual([
-            {
-                batchId: undefined,
-                id: "a;b",
-                object: { points: ["a", "b"], state: { x: 42 } },
-            },
+        // Then one line will be created
+        expect(pointerMove.history).toEqual<HistoryType>([
+            { batchId: 13, id: "a;b", object: { points: ["a", "b"], state: { x: 42 } } },
         ]);
-        expect(result.discontinueInput).toBeFalsy();
+        expect(pointerMove.discontinueInput).toBeFalsy();
 
-        result = layer.handleEvent({ ...fakeEvent, type: "pointerUp" });
-        expect(result.history?.length).toBeFalsy();
-        expect(result.discontinueInput).toBeTruthy();
+        // Ensure clean result
+        const pointerUp = handler.events.pointerUp();
+        expect(pointerUp.history?.length).toBeFalsy();
+        expect(pointerUp.discontinueInput).toBeTruthy();
+        expect(handler.storage.getNewBatchId).toBeCalledTimes(1);
     });
 
     it("should select multiple lines", () => {
-        const layer = getFakeLayer();
-        applySettings(layer);
+        // Given an empty grid
+        const layer = getTwoPointLayer();
+        const handler = layerEventRunner({ layer });
+        handler.storage.getNewBatchId.mockReturnValueOnce(13);
 
-        const selectPoints = vi.fn();
-        const essentials = getEventEssentials<TwoPointProps>();
-        essentials.grid.selectPointsWithCursor = selectPoints;
+        // When three points are selected
+        const points1 = handler.gatherPoints({ type: "pointerDown", points: ["a"] });
+        expect(points1).toEqual([]);
+        const points2 = handler.gatherPoints({ type: "pointerMove", points: ["c", "b"] });
+        expect(points2).toEqual(["a", "c", "b"]);
 
-        selectPoints.mockReturnValueOnce(["a"]);
-        const fakeEvent: LayerEvent<TwoPointProps> = {
-            ...essentials,
-            ...getPointerEvent({ type: "pointerDown" }),
-        };
+        const pointerMove1 = handler.events.pointerMove({ points: points2 });
 
-        let points = layer.gatherPoints(fakeEvent);
-        expect(points).toEqual([]);
-
-        selectPoints.mockReturnValueOnce(["c", "b"]);
-        fakeEvent.type = "pointerMove";
-        points = layer.gatherPoints(fakeEvent);
-        expect(points).toEqual(["a", "c", "b"]);
-
-        let result = layer.handleEvent({ ...fakeEvent, points });
-        expect(result.history).toEqual([
-            {
-                batchId: undefined,
-                id: "a;c",
-                object: { points: ["a", "c"], state: { x: 42 } },
-            },
-            {
-                batchId: undefined,
-                id: "b;c",
-                object: { points: ["b", "c"], state: { x: 42 } },
-            },
+        // Then two lines will be created
+        expect(pointerMove1.history).toEqual<HistoryType>([
+            { batchId: 13, id: "a;c", object: { points: ["a", "c"], state: { x: 42 } } },
+            { batchId: 13, id: "b;c", object: { points: ["b", "c"], state: { x: 42 } } },
         ]);
-        expect(result.discontinueInput).toBeFalsy();
+        expect(pointerMove1.discontinueInput).toBeFalsy();
 
-        selectPoints.mockReturnValueOnce(["d", "e"]);
-        points = layer.gatherPoints(fakeEvent);
-        expect(points).toEqual(["b", "d", "e"]);
+        // When two more points are selected
+        const points3 = handler.gatherPoints({ type: "pointerMove", points: ["d", "e"] });
+        expect(points3).toEqual(["b", "d", "e"]);
 
-        result = layer.handleEvent({ ...fakeEvent, points });
-        expect(result.history).toEqual([
-            {
-                batchId: undefined,
-                id: "b;d",
-                object: { points: ["b", "d"], state: { x: 42 } },
-            },
-            {
-                batchId: undefined,
-                id: "d;e",
-                object: { points: ["d", "e"], state: { x: 42 } },
-            },
+        const pointerMove2 = handler.events.pointerMove({ points: points3 });
+
+        // Then two more lines will be created
+        expect(pointerMove2.history).toEqual<HistoryType>([
+            { batchId: 13, id: "b;d", object: { points: ["b", "d"], state: { x: 42 } } },
+            { batchId: 13, id: "d;e", object: { points: ["d", "e"], state: { x: 42 } } },
         ]);
-        expect(result.discontinueInput).toBeFalsy();
+        expect(pointerMove2.discontinueInput).toBeFalsy();
 
-        result = layer.handleEvent({ ...fakeEvent, type: "pointerUp" });
-        expect(result.history?.length).toBeFalsy();
-        expect(result.discontinueInput).toBeTruthy();
+        // Ensure clean result
+        const pointerUp = handler.events.pointerUp();
+        expect(pointerUp.history?.length).toBeFalsy();
+        expect(pointerUp.discontinueInput).toBeTruthy();
+        expect(handler.storage.getNewBatchId).toBeCalledTimes(1);
     });
 
     it("should erase some lines when drawing over existing ones with the same state", () => {
-        const layer = getFakeLayer();
-        applySettings(layer);
-
+        // Given an existing line
+        const layer = getTwoPointLayer();
         const stored = LayerStorage.fromObjects<TwoPointProps>({
             ids: ["a;b"],
             objs: [{ points: ["a", "b"], state: { x: 42 } }],
         });
-        const essentials = getEventEssentials({ stored });
-        const selectPoints = vi.fn();
-        essentials.grid.selectPointsWithCursor = selectPoints;
+        const handler = layerEventRunner({ layer, stored });
+        handler.storage.getNewBatchId.mockReturnValueOnce(13);
 
-        selectPoints.mockReturnValueOnce(["b"]);
-        const fakeEvent: LayerEvent<TwoPointProps> = {
-            ...essentials,
-            ...getPointerEvent({ type: "pointerDown" }),
-        };
+        // When the existing line is drawn over with the same settings
+        const points1 = handler.gatherPoints({ type: "pointerDown", points: ["b"] });
+        expect(points1).toEqual([]);
+        const points2 = handler.gatherPoints({ type: "pointerMove", points: ["a"] });
+        expect(points2).toEqual(["b", "a"]);
 
-        let points = layer.gatherPoints(fakeEvent);
-        expect(points).toEqual([]);
+        const pointerMove = handler.events.pointerMove({ points: points2 });
 
-        selectPoints.mockReturnValueOnce(["a"]);
-        fakeEvent.type = "pointerMove";
-        points = layer.gatherPoints(fakeEvent);
-        expect(points).toEqual(["b", "a"]);
+        // Then it will be deleted
+        expect(pointerMove.history).toEqual<HistoryType>([
+            { batchId: 13, id: "a;b", object: null },
+        ]);
+        expect(pointerMove.discontinueInput).toBeFalsy();
 
-        let result = layer.handleEvent({ ...fakeEvent, points });
-        expect(result.history).toEqual([{ batchId: undefined, id: "a;b", object: null }]);
-        expect(result.discontinueInput).toBeFalsy();
-
-        result = layer.handleEvent({ ...fakeEvent, type: "pointerUp" });
-        expect(result.history?.length).toBeFalsy();
-        expect(result.discontinueInput).toBeTruthy();
+        // Ensure clean result
+        const pointerUp = handler.events.pointerUp();
+        expect(pointerUp.history?.length).toBeFalsy();
+        expect(pointerUp.discontinueInput).toBeTruthy();
+        expect(handler.storage.getNewBatchId).toBeCalledTimes(1);
     });
 
     it("should override some lines when drawing over existing ones with a different state", () => {
-        const layer = getFakeLayer();
-        applySettings(layer);
-
+        // Given an existing line with a different state
+        const layer = getTwoPointLayer();
         const stored = LayerStorage.fromObjects<TwoPointProps>({
             ids: ["a;b"],
             objs: [{ points: ["a", "b"], state: { different: true } }],
         });
-        const essentials = getEventEssentials({ stored });
-        const selectPoints = vi.fn();
-        essentials.grid.selectPointsWithCursor = selectPoints;
+        const handler = layerEventRunner({ layer, stored });
+        handler.storage.getNewBatchId.mockReturnValueOnce(13);
 
-        selectPoints.mockReturnValueOnce(["b"]);
-        const fakeEvent: LayerEvent<TwoPointProps> = {
-            ...essentials,
-            ...getPointerEvent({ type: "pointerDown" }),
-        };
+        // When the line is drawn over
+        const points1 = handler.gatherPoints({ type: "pointerDown", points: ["b"] });
+        expect(points1).toEqual([]);
+        const points2 = handler.gatherPoints({ type: "pointerMove", points: ["a"] });
+        expect(points2).toEqual(["b", "a"]);
 
-        let points = layer.gatherPoints(fakeEvent);
-        expect(points).toEqual([]);
+        const pointerMove = handler.events.pointerMove({ points: points2 });
 
-        selectPoints.mockReturnValueOnce(["a"]);
-        fakeEvent.type = "pointerMove";
-        points = layer.gatherPoints(fakeEvent);
-        expect(points).toEqual(["b", "a"]);
-
-        let result = layer.handleEvent({ ...fakeEvent, points });
-        expect(result.history).toEqual([
-            {
-                batchId: undefined,
-                id: "a;b",
-                object: { points: ["a", "b"], state: { x: 42 } },
-            },
+        // Then its state will be changed to the current state
+        expect(pointerMove.history).toEqual<HistoryType>([
+            { batchId: 13, id: "a;b", object: { points: ["a", "b"], state: { x: 42 } } },
         ]);
-        expect(result.discontinueInput).toBeFalsy();
+        expect(pointerMove.discontinueInput).toBeFalsy();
 
-        result = layer.handleEvent({ ...fakeEvent, type: "pointerUp" });
-        expect(result.history?.length).toBeFalsy();
-        expect(result.discontinueInput).toBeTruthy();
+        // Ensure clean result
+        const pointerUp = handler.events.pointerUp();
+        expect(pointerUp.history?.length).toBeFalsy();
+        expect(pointerUp.discontinueInput).toBeTruthy();
+        expect(handler.storage.getNewBatchId).toBeCalledTimes(1);
     });
 
-    it("should not erase lines when drawing over lines and adding lines", () => {
-        const layer = getFakeLayer();
-        applySettings(layer);
-
+    it("should not erase lines when drawing over similar lines after drawing at all", () => {
+        // Given an existing line
+        const layer = getTwoPointLayer();
         const stored = LayerStorage.fromObjects<TwoPointProps>({
             ids: ["1;2"],
             objs: [{ points: ["1", "2"], state: { x: 42 } }],
         });
-        const essentials = getEventEssentials({ stored });
-        const selectPoints = vi.fn();
-        essentials.grid.selectPointsWithCursor = selectPoints;
+        const handler = layerEventRunner({ layer, stored });
+        handler.storage.getNewBatchId.mockReturnValueOnce(13);
 
-        selectPoints.mockReturnValueOnce(["3"]);
-        const fakeEvent: LayerEvent<TwoPointProps> = {
-            ...essentials,
-            ...getPointerEvent({ type: "pointerDown" }),
-        };
+        // When drawing a new line
+        const points1 = handler.gatherPoints({ type: "pointerDown", points: ["3"] });
+        expect(points1).toEqual([]);
+        const points2 = handler.gatherPoints({ type: "pointerMove", points: ["2"] });
+        expect(points2).toEqual(["3", "2"]);
 
-        let points = layer.gatherPoints(fakeEvent);
-        expect(points).toEqual([]);
+        const pointerMove1 = handler.events.pointerMove({ points: points2 });
 
-        selectPoints.mockReturnValueOnce(["2"]);
-        fakeEvent.type = "pointerMove";
-        points = layer.gatherPoints(fakeEvent);
-        expect(points).toEqual(["3", "2"]);
-
-        let result = layer.handleEvent({ ...fakeEvent, points });
-        expect(result.history).toEqual([
-            {
-                batchId: undefined,
-                id: "2;3",
-                object: { points: ["2", "3"], state: { x: 42 } },
-            },
+        // Then the new line is created
+        expect(pointerMove1.history).toEqual<HistoryType>([
+            { batchId: 13, id: "2;3", object: { points: ["2", "3"], state: { x: 42 } } },
         ]);
-        expect(result.discontinueInput).toBeFalsy();
+        expect(pointerMove1.discontinueInput).toBeFalsy();
 
-        selectPoints.mockReturnValueOnce(["1"]);
-        points = layer.gatherPoints(fakeEvent);
-        expect(points).toEqual(["2", "1"]);
+        // When the existing line is drawn over
+        const points3 = handler.gatherPoints({ type: "pointerMove", points: ["1"] });
+        expect(points3).toEqual(["2", "1"]);
 
-        result = layer.handleEvent({ ...fakeEvent, points });
-        expect(result.history).toEqual([
+        const pointerMove2 = handler.events.pointerMove({ points: points3 });
+
+        // Then it should be ignored or left unchanged
+        expect(pointerMove2.history).toEqual<HistoryType>([
             // This action is technically unnecessary since the object "1;2" already exists, but the main point is that it doesn't get deleted (or that the state changes)
             // TODO: it should not pollute history by adding lines that already exist
-            {
-                batchId: undefined,
-                id: "1;2",
-                object: { points: ["1", "2"], state: { x: 42 } },
-            },
+            { batchId: 13, id: "1;2", object: { points: ["1", "2"], state: { x: 42 } } },
         ]);
-        expect(result.discontinueInput).toBeFalsy();
+        expect(pointerMove2.discontinueInput).toBeFalsy();
 
-        result = layer.handleEvent({ ...fakeEvent, type: "pointerUp" });
-        expect(result.history?.length).toBeFalsy();
-        expect(result.discontinueInput).toBeTruthy();
+        // Ensure clean result
+        const pointerUp = handler.events.pointerUp();
+        expect(pointerUp.history?.length).toBeFalsy();
+        expect(pointerUp.discontinueInput).toBeTruthy();
+        expect(handler.storage.getNewBatchId).toBeCalledTimes(1);
     });
 
     it("should not add lines when deleting lines and drawing over nothing", () => {
-        const layer = getFakeLayer();
-        applySettings(layer);
-
+        // Given an existing line
+        const layer = getTwoPointLayer();
         const stored = LayerStorage.fromObjects<TwoPointProps>({
             ids: ["1;2"],
             objs: [{ points: ["1", "2"], state: { x: 42 } }],
         });
-        const essentials = getEventEssentials({ stored });
-        const selectPoints = vi.fn();
-        essentials.grid.selectPointsWithCursor = selectPoints;
+        const handler = layerEventRunner({ layer, stored });
+        handler.storage.getNewBatchId.mockReturnValueOnce(13);
 
-        selectPoints.mockReturnValueOnce(["1"]);
-        const fakeEvent: LayerEvent<TwoPointProps> = {
-            ...essentials,
-            ...getPointerEvent({ type: "pointerDown" }),
-        };
+        // When drawing over it
+        const points1 = handler.gatherPoints({ type: "pointerDown", points: ["1"] });
+        expect(points1).toEqual([]);
+        const points2 = handler.gatherPoints({ type: "pointerMove", points: ["2"] });
+        expect(points2).toEqual(["1", "2"]);
 
-        let points = layer.gatherPoints(fakeEvent);
-        expect(points).toEqual([]);
+        const pointerMove1 = handler.events.pointerMove({ points: points2 });
 
-        selectPoints.mockReturnValueOnce(["2"]);
-        fakeEvent.type = "pointerMove";
-        points = layer.gatherPoints(fakeEvent);
-        expect(points).toEqual(["1", "2"]);
+        // Then it should be deleted
+        expect(pointerMove1.history).toEqual<HistoryType>([
+            { batchId: 13, id: "1;2", object: null },
+        ]);
+        expect(pointerMove1.discontinueInput).toBeFalsy();
 
-        let result = layer.handleEvent({ ...fakeEvent, points });
-        expect(result.history).toEqual([{ batchId: undefined, id: "1;2", object: null }]);
-        expect(result.discontinueInput).toBeFalsy();
+        // When selecting more points over untouched area
+        const points3 = handler.gatherPoints({ type: "pointerMove", points: ["3"] });
+        expect(points3).toEqual(["2", "3"]);
 
-        selectPoints.mockReturnValueOnce(["3"]);
-        points = layer.gatherPoints(fakeEvent);
-        expect(points).toEqual(["2", "3"]);
+        const pointerMove2 = handler.events.pointerMove({ points: points3 });
 
-        result = layer.handleEvent({ ...fakeEvent, points });
-        // Unlike the test above, deleting empty lines doesn't pollute history (you are not undoing a no-op)
-        expect(result.history?.length).toBeFalsy();
-        expect(result.discontinueInput).toBeFalsy();
+        // Then they should not draw lines
+        expect(pointerMove2.history?.length).toBeFalsy();
+        expect(pointerMove2.discontinueInput).toBeFalsy();
 
-        result = layer.handleEvent({ ...fakeEvent, type: "pointerUp" });
-        expect(result.history?.length).toBeFalsy();
-        expect(result.discontinueInput).toBeTruthy();
+        // Ensure clean result
+        const pointerUp = handler.events.pointerUp();
+        expect(pointerUp.history?.length).toBeFalsy();
+        expect(pointerUp.discontinueInput).toBeTruthy();
+        expect(handler.storage.getNewBatchId).toBeCalledTimes(1);
     });
 
     // TODO: Not implemented yet

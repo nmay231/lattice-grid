@@ -4,10 +4,12 @@ import {
     LayerEventEssentials,
     LayerHandlerResult,
     LayerProps,
+    NeedsUpdating,
     PartialHistoryAction,
     Point,
 } from "../../types";
 import { errorNotification } from "../../utils/DOMUtils";
+import { formatAnything } from "../../utils/stringUtils";
 
 export interface SelectedProps extends LayerProps {
     TempStorage: {
@@ -19,7 +21,7 @@ export interface SelectedProps extends LayerProps {
 }
 
 export interface InternalProps extends LayerProps {
-    ExtraLayerStorageProps: { groupNumber: number };
+    PermStorage: { groupNumber: number };
     ObjectState: { state: number };
 }
 
@@ -75,7 +77,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
         if (!newPoints.length) return [];
         tempStorage.previousPoint = newPoints[newPoints.length - 1];
 
-        const blacklist = tempStorage.blacklist || ([] as Point[]);
+        const blacklist: Point[] = tempStorage.blacklist || [];
         tempStorage.blacklist = blacklist;
         newPoints = newPoints.filter((id) => blacklist.indexOf(id) === -1);
         if (!newPoints.length) return [];
@@ -130,31 +132,33 @@ export const handleEventsSelection = <LP extends SelectedProps>(
             }
             case "pointerDown":
             case "pointerMove": {
-                internal.extra.groupNumber = internal.extra.groupNumber || 1;
+                internal.permStorage.groupNumber = internal.permStorage.groupNumber || 1;
                 const ids = event.points;
 
                 if (event.ctrlKey || event.shiftKey) {
                     if (tempStorage.targetState === undefined) {
                         // If targetState is undefined, there can only be one id
                         const id = ids[0];
-                        if (id in internal.objects) {
+                        if (internal.objects.has(id)) {
                             tempStorage.targetState = null;
                             history = [obj({ id, object: null })];
                         } else {
-                            internal.extra.groupNumber += 1;
-                            tempStorage.targetState = internal.extra.groupNumber;
-                            history = [obj({ id, object: { state: internal.extra.groupNumber } })];
+                            internal.permStorage.groupNumber += 1;
+                            tempStorage.targetState = internal.permStorage.groupNumber;
+                            history = [
+                                obj({ id, object: { state: internal.permStorage.groupNumber } }),
+                            ];
                         }
                     } else if (tempStorage.targetState === null) {
                         history = ids
-                            .filter((id) => id in internal.objects)
+                            .filter((id) => internal.objects.has(id))
                             .map((id) => obj({ id, object: null }));
                     } else {
                         const groupsToMerge = new Set(
                             ids.map((id) => internal.objects.get(id)?.state),
                         );
                         const allIds = ids
-                            .filter((id) => !(id in internal.objects))
+                            .filter((id) => !internal.objects.has(id))
                             .concat(
                                 internal.objects
                                     .keys()
@@ -167,8 +171,8 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                     }
                 } else {
                     const removeOld = tempStorage.targetState === undefined;
-                    internal.extra.groupNumber = 2;
-                    tempStorage.targetState = internal.extra.groupNumber;
+                    internal.permStorage.groupNumber = 2;
+                    tempStorage.targetState = internal.permStorage.groupNumber;
                     tempStorage.removeSingle = false;
                     history = [];
 
@@ -183,7 +187,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                         }
                     }
 
-                    const state = internal.extra.groupNumber;
+                    const state = internal.permStorage.groupNumber;
                     history.push(...ids.map((id) => obj({ id, object: { state } })));
                 }
 
@@ -207,7 +211,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                     .filter((oldId) => newIds.indexOf(oldId) === -1)
                     .map((oldId) => obj({ id: oldId, object: null }));
 
-                internal.extra.groupNumber = 2;
+                internal.permStorage.groupNumber = 2;
                 // Select the objects being modified in the undo/redo actions
                 history.push(
                     // TODO: This implicitly removes group information (b/c state=2). However, it seems really difficult to resolve unless selections are kept in history, but that opens up a whole can of worms.
@@ -218,9 +222,9 @@ export const handleEventsSelection = <LP extends SelectedProps>(
             default: {
                 throw errorNotification({
                     error: null,
-                    message: `Unknown event.type in selected layer ${layer.displayName}: ${
-                        (event as any).type
-                    }`,
+                    message: `Unknown event in selected layer ${
+                        layer.displayName
+                    }: ${formatAnything(event)}`,
                     forever: true,
                 });
             }
@@ -246,7 +250,9 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                             },
                         },
                     },
-                    points: states.filter((state) => state === group).map((_, i) => points[i]),
+                    points: states
+                        .map((state, i) => (state === group ? points[i] : null))
+                        .filter((point) => point !== null) as NeedsUpdating, // Typescript, get some help...
                 });
 
                 for (const key in selectionCage.svgPolygons) {

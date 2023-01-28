@@ -1,5 +1,6 @@
 import { LayerStorage } from "../LayerStorage";
-import { LayerHandlerResult, NeedsUpdating } from "../types";
+import { LayerHandlerResult } from "../types";
+import { IndexedOrderedMap } from "../utils/OrderedMap";
 import { getEventEssentials, GetEventEssentialsArg } from "../utils/testUtils";
 import { NumberLayer, NumberProps } from "./Number";
 
@@ -9,12 +10,12 @@ describe("Number Layer", () => {
 
     // Layer with numbers 0-9
     const settings9 = { max: 9, negatives: false };
-    const layer9 = NumberLayer.create({ layers: {} } as NeedsUpdating) as NumberLayer;
+    const layer9 = NumberLayer.create({ layers: new IndexedOrderedMap() });
     layer9.newSettings({ ...eventEssentials(), newSettings: settings9 });
 
     // Layer with numbers -64 to 64
     const settings64 = { max: 64, negatives: true };
-    const layer64 = NumberLayer.create({ layers: {} } as NeedsUpdating) as NumberLayer;
+    const layer64 = NumberLayer.create({ layers: new IndexedOrderedMap() });
     layer64.newSettings({ ...eventEssentials(), newSettings: settings64 });
 
     type HistoryType = LayerHandlerResult<NumberProps>["history"];
@@ -98,4 +99,7 @@ describe("Number Layer", () => {
 
         layer64.newSettings({ ...eventEssentials(), newSettings: settings9 });
     });
+
+    // TODO: Not implemented, might never be honestly.
+    it.todo("should not delete objects when the range is infinite (max = -1)");
 });

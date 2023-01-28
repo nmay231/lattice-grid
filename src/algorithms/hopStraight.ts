@@ -54,7 +54,7 @@ export function* hopStraight({
     let newX = startX,
         newY = startY;
 
-    while (euclidean(newX, newY, startX, startY) < cursorDistance) {
+    while (euclidean(newX, newY, startX, startY) <= cursorDistance) {
         const bestDelta = vectors.reduce(([dx1, dy1], [dx2, dy2]) =>
             toMinimize(newX + dx1, newY + dy1) < toMinimize(newX + dx2, newY + dy2)
                 ? [dx1, dy1]

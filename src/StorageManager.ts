@@ -33,9 +33,8 @@ export class StorageManager {
         this.objects[grid.id] = this.objects[grid.id] ?? {};
         this.objects[grid.id][layer.id] = new LayerStorage();
 
-        // TODO: Use typescript `satisfies`
-        // TODO: Actually, I just need to implement that data structure that handles this automatically because editModes might eventually be dynamic
-        (["question", "answer", "ui"] as StorageMode[]).forEach((mode) => {
+        // TODO: I just need to implement that data structure that handles this automatically because StorageModes might eventually be dynamic (think multiple answers)
+        (["question", "answer", "ui"] satisfies StorageMode[]).forEach((mode) => {
             this.histories[`${grid.id}-${mode}`] = this.histories[`${grid.id}-${mode}`] || {
                 actions: [],
                 index: 0,
@@ -44,11 +43,10 @@ export class StorageManager {
     }
 
     removeStorage({ grid, layer }: GridAndLayer) {
-        // TODO: add an entry to history (so you can undo deleting a layer)? It might be a bit clunky then...
         delete this.objects[grid.id][layer.id];
     }
 
-    getStored<LP extends LayerProps = LayerProps>({ grid, layer }: GridAndLayer) {
+    getStored<LP extends LayerProps>({ grid, layer }: GridAndLayer) {
         return this.objects[grid.id][layer.id] as LayerStorage<LP>;
     }
 
@@ -86,28 +84,16 @@ export class StorageManager {
             return;
         }
         const gridId = puzzle.grid.id;
-        const defaultEditMode = puzzle.settings.editMode;
-
-        const defaultHistory = this.histories[`${gridId}-${defaultEditMode}`];
-
-        const historyChanges = actions.filter(
-            ({ batchId, storageMode: editMode }) =>
-                // This is a landmine for future bugs isn't it...
-                batchId !== "ignore" && (!editMode || editMode === defaultEditMode),
-        ).length;
-
-        if (defaultHistory.index < defaultHistory.actions.length && historyChanges) {
-            // Only prune redo actions when actions will be added to history
-            defaultHistory.actions.splice(defaultHistory.index);
-        }
+        const currentEditMode = puzzle.settings.editMode;
 
         for (const partialAction of actions) {
             const layerId = (partialAction as NeedsUpdating).layerId || defaultLayerId;
-            const storageMode = partialAction.storageMode || defaultEditMode;
+            const storageMode = partialAction.storageMode || currentEditMode;
             const { objects, groups } = this.objects[gridId][layerId];
             const history = this.histories[`${gridId}-${storageMode}`];
 
-            const action = this.masterReducer({} as NeedsUpdating, {
+            const puzzle = {} as NeedsUpdating;
+            const action = this.masterReducer(puzzle, {
                 objectId: partialAction.id,
                 layerId,
                 // This relies on NaN !== (anything including NaN)
@@ -121,11 +107,12 @@ export class StorageManager {
 
             const undoAction = this._ApplyHistoryAction({ objects, groups, action, storageMode });
 
-            if (partialAction.batchId === "ignore") {
+            // TODO: I temporarily filter ui actions from history to prevent any unintended bugs.
+            if (partialAction.batchId === "ignore" || storageMode === "ui") {
                 continue; // Do not include in history
             }
 
-            const lastAction = history.actions[history.actions.length - 1];
+            const lastAction = history.actions[history.index - 1];
 
             // Merge two actions if they are batched and affecting the same object
             if (
@@ -138,10 +125,13 @@ export class StorageManager {
 
                 if (action.object === null && lastAction.object === null) {
                     // We can remove the last action since it is a no-op
-                    history.actions.splice(history.actions.length - 1, 1);
+                    history.actions.splice(history.index - 1, 1);
                     history.index--;
                 }
             } else {
+                // Prune redo actions placed after the current index, if there are any.
+                history.actions.splice(history.index);
+
                 history.actions.push(undoAction);
                 history.index++;
             }

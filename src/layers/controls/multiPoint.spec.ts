@@ -1,287 +1,221 @@
 import { vi } from "vitest";
 import { LayerStorage } from "../../LayerStorage";
-import { Layer, LayerEvent, PartialHistoryAction, PointerMoveOrDown } from "../../types";
-import { smartSort } from "../../utils/stringUtils";
-import { getEventEssentials } from "../../utils/testUtils";
-import { DummyLayer } from "../_DummyLayer";
+import { NeedsUpdating, PartialHistoryAction, Point } from "../../types";
+import { layerEventRunner } from "../../utils/testUtils";
 import { handleEventsUnorderedSets, MultiPointLayerProps } from "./multiPoint";
 
 describe("multiPoint.handleEventsUnorderedSets", () => {
-    const getFakeLayer = () => {
-        const layer = Object.create(DummyLayer) as Layer<MultiPointLayerProps>;
+    type SecondArg = Parameters<typeof handleEventsUnorderedSets>[1];
+    const getMultiPointLayer = (arg = {} as SecondArg) => {
+        const layer = { id: "DummyLayer" } as NeedsUpdating;
+        handleEventsUnorderedSets(layer, { pointTypes: ["cells"], ...arg });
         return layer;
     };
 
-    type SecondArg = Parameters<typeof handleEventsUnorderedSets>[1];
-    const applySettings = (layer: Layer<MultiPointLayerProps>, arg?: SecondArg) =>
-        handleEventsUnorderedSets(layer, {
-            pointTypes: ["cells"],
-            ...arg,
-        });
-
-    const getPointerEvent = (event: Pick<PointerMoveOrDown, "type">): PointerMoveOrDown => ({
-        ctrlKey: false,
-        shiftKey: false,
-        altKey: false,
-        cursor: { x: 1, y: 1 },
-        points: [],
-        ...event,
-    });
-
-    // TODO: This and the other controls tests might have to be rewritten to be more clear and more consistent. It's pretty much a hodge-pogge of assertions at the moment, which I guess is better than nothing for now...
-    // For example, we have to call layer.gatherPoints each time because it's not a pure function. It's purposely not pure, but that doesn't have to be if modified appropriately.
-
     type HistoryType = PartialHistoryAction<MultiPointLayerProps>[];
 
+    // TODO: we have to call layer.gatherPoints each time because it's not a pure function. We might not have to if modified appropriately.
+
+    afterEach(() => {
+        vi.resetAllMocks();
+    });
+
     it("should draw a new single-point object when none were selected", () => {
-        const layer = getFakeLayer();
-        applySettings(layer);
+        // Given an empty grid
+        const layer = getMultiPointLayer();
+        const handler = layerEventRunner({ layer });
+        handler.storage.getNewBatchId.mockReturnValueOnce(1);
 
-        const stored = new LayerStorage<MultiPointLayerProps>();
-        const selectPoints = vi.fn();
-        const getBatchId = vi.fn();
-        const essentials = getEventEssentials({ stored });
-        essentials.grid.selectPointsWithCursor = selectPoints;
-        essentials.storage.getNewBatchId = getBatchId;
+        // When a single point is selected
+        const points = handler.gatherPoints({ type: "pointerDown", points: ["a"] });
+        expect(points).toEqual<Point[]>(["a"]);
+        const pointerDown = handler.events.pointerDown({ points });
 
-        selectPoints.mockReturnValueOnce(["a"]);
-        const fakeEvent: LayerEvent<MultiPointLayerProps> = {
-            ...essentials,
-            ...getPointerEvent({ type: "pointerDown" }),
-        };
-
-        const points = layer.gatherPoints(fakeEvent);
-        expect(points).toEqual(["a"]);
-
-        getBatchId.mockReturnValueOnce(1);
-        let result = layer.handleEvent({ ...fakeEvent, points });
-        expect(result.history).toEqual<HistoryType>([
+        // Then it should create an object
+        expect(pointerDown.history).toEqual<HistoryType>([
             { batchId: 1, id: "a", object: { points: ["a"], state: null } },
         ]);
-        expect(result.discontinueInput).toBeFalsy();
+        expect(pointerDown.discontinueInput).toBeFalsy();
 
-        stored.objects.set("a", result.history?.[0].object);
-
-        result = layer.handleEvent({ ...fakeEvent, type: "pointerUp" });
-        expect(result.history?.length).toBeFalsy();
-        expect(result.discontinueInput).toBeTruthy();
+        // Ensure clean result
+        const pointerUp = handler.events.pointerUp();
+        expect(pointerUp.history?.length).toBeFalsy();
+        expect(pointerUp.discontinueInput).toBeTruthy();
     });
 
     it("should draw a new object when a previous one was selected", () => {
-        const layer = getFakeLayer();
-        applySettings(layer);
-
+        // Given a grid with an object selected
+        const layer = getMultiPointLayer();
         const stored = LayerStorage.fromObjects<MultiPointLayerProps>({
             ids: ["a"],
             objs: [{ points: ["a"], state: null }],
         });
-        const selectPoints = vi.fn();
-        const getBatchId = vi.fn();
-        const essentials = getEventEssentials({ stored });
-        essentials.grid.selectPointsWithCursor = selectPoints;
-        essentials.storage.getNewBatchId = getBatchId;
+        stored.permStorage = { currentObjectId: "a" }; // Select the existing object
 
-        // Select the existing object
-        stored.extra.currentObjectId = "a";
+        const handler = layerEventRunner({ layer, stored });
+        handler.storage.getNewBatchId.mockReturnValueOnce(1);
 
-        selectPoints.mockReturnValueOnce(["b"]);
-        const fakeEvent: LayerEvent<MultiPointLayerProps> = {
-            ...essentials,
-            ...getPointerEvent({ type: "pointerDown" }),
-        };
-        const points = layer.gatherPoints(fakeEvent);
+        // When a different point is selected
+        const points = handler.gatherPoints({ type: "pointerDown", points: ["b"] });
         expect(points).toEqual(["b"]);
+        const pointerDown = handler.events.pointerDown({ points });
 
-        getBatchId.mockReturnValueOnce(1);
-        let result = layer.handleEvent({ ...fakeEvent, points });
-        expect(result.history).toEqual<HistoryType>([
+        // Then the old should remain and the new be created
+        expect(pointerDown.history).toEqual<HistoryType>([
             { batchId: 1, id: "b", object: { points: ["b"], state: null } },
         ]);
-        expect(result.discontinueInput).toBeFalsy();
-        stored.objects.set("b", result.history?.[0].object);
+        expect(pointerDown.discontinueInput).toBeFalsy();
 
-        result = layer.handleEvent({ ...fakeEvent, type: "pointerUp" });
-        expect(result.history?.length).toBeFalsy();
-        expect(result.discontinueInput).toBeTruthy();
+        const pointerUp = handler.events.pointerUp();
+        expect(pointerUp.history?.length).toBeFalsy();
+        expect(pointerUp.discontinueInput).toBeTruthy();
     });
 
     it("should expand and shrink an object", () => {
-        const layer = getFakeLayer();
-        applySettings(layer);
+        // Given an empty grid
+        const layer = getMultiPointLayer();
+        const handler = layerEventRunner({ layer });
+        handler.storage.getNewBatchId.mockReturnValueOnce(42);
 
-        const stored = new LayerStorage<MultiPointLayerProps>();
-        const selectPoints = vi.fn();
-        const getBatchId = vi.fn();
-        const essentials = getEventEssentials({ stored });
-        essentials.grid.selectPointsWithCursor = selectPoints;
-        essentials.storage.getNewBatchId = getBatchId;
+        // When we start drawing the object
+        const points1 = handler.gatherPoints({ type: "pointerDown", points: ["y"] });
+        expect(points1).toEqual(["y"]);
+        const pointerDown = handler.events.pointerDown({ points: points1 });
 
-        // Start drawing the object
-        selectPoints.mockReturnValueOnce(["b"]);
-        const fakeEvent: LayerEvent<MultiPointLayerProps> = {
-            ...essentials,
-            ...getPointerEvent({ type: "pointerDown" }),
-        };
-
-        let points = layer.gatherPoints(fakeEvent);
-        expect(points).toEqual(["b"]);
-
-        getBatchId.mockReturnValueOnce(1);
-        let result = layer.handleEvent({ ...fakeEvent, points });
-        expect(result.history).toEqual<HistoryType>([
-            { batchId: 1, id: "b", object: { points: ["b"], state: null } },
+        expect(pointerDown.history).toEqual<HistoryType>([
+            { batchId: 42, id: "y", object: { points: ["y"], state: null } },
         ]);
-        expect(result.discontinueInput).toBeFalsy();
+        expect(pointerDown.discontinueInput).toBeFalsy();
 
-        stored.objects.set("b", result.history?.[0].object);
+        // ... and continuing selecting more points
+        const points2 = handler.gatherPoints({ type: "pointerMove", points: ["z", "x"] });
+        expect(points2).toEqual(["y", "z", "x"]);
+        const pointerMove1 = handler.events.pointerMove({ points: points2 });
 
-        // Expand the object
-        selectPoints.mockReturnValueOnce(["c", "a"]);
-        fakeEvent.type = "pointerMove";
-        points = layer.gatherPoints(fakeEvent);
-        expect(points).toEqual(["b", "c", "a"]);
-
-        result = layer.handleEvent({ ...fakeEvent, points });
-        points = [...points].sort(smartSort);
-        expect(result.history).toEqual<HistoryType>([
-            { batchId: 1, id: "b", object: { points, state: null } },
+        // Then the object should grow
+        expect(pointerMove1.history).toEqual<HistoryType>([
+            { batchId: 42, id: "y", object: { points: ["x", "y", "z"], state: null } },
         ]);
-        expect(result.discontinueInput).toBeFalsy();
+        expect(pointerMove1.discontinueInput).toBeFalsy();
 
-        stored.objects.set("b", result.history?.[0].object);
+        // When we select previous points
+        const points3 = handler.gatherPoints({ type: "pointerMove", points: ["y"] });
+        expect(points3).toEqual(["x", "y"]);
+        const pointerMove2 = handler.events.pointerMove({ points: points3 });
 
-        // Shrink the object
-        selectPoints.mockReturnValueOnce(["b"]);
-        fakeEvent.type = "pointerMove";
-        points = layer.gatherPoints(fakeEvent);
-        expect(points).toEqual(["a", "b"]);
-
-        result = layer.handleEvent({ ...fakeEvent, points });
-        points = ["b", "c"];
-        expect(result.history).toEqual<HistoryType>([
-            { batchId: 1, id: "b", object: { points, state: null } },
+        // Then the object should shrink (while keeping the currently selected point)
+        expect(pointerMove2.history).toEqual<HistoryType>([
+            { batchId: 42, id: "y", object: { points: ["y", "z"], state: null } },
         ]);
-        expect(result.discontinueInput).toBeFalsy();
+        expect(pointerMove2.discontinueInput).toBeFalsy();
 
-        stored.objects.set("b", result.history?.[0].object);
+        // When the user finishes
+        const pointerUp = handler.events.pointerUp();
 
-        result = layer.handleEvent({ ...fakeEvent, type: "pointerUp" });
-        expect(result.history).toEqual<HistoryType>([
-            { batchId: 1, id: "b", object: null },
+        // Then the id should update to contain all the points
+        expect(pointerUp.history).toEqual<HistoryType>([
+            { batchId: 42, id: "y", object: null },
             {
-                batchId: 1,
-                id: "b;c",
-                object: { points, state: null },
+                batchId: 42,
+                id: "y;z",
+                object: { points: ["y", "z"], state: null },
             },
         ]);
-        expect(result.discontinueInput).toBeTruthy();
+        // TODO: The above is only true until ids become more like symbols and are not reliant on the current points at all.
+        // TODO: expect(pointerUp.history?.length).toBeFalsy()
+        expect(pointerUp.discontinueInput).toBeTruthy();
+        expect(handler.storage.getNewBatchId).toBeCalledTimes(1);
     });
 
-    it("should remove a point from an object after a simple click", () => {
-        const layer = getFakeLayer();
-        applySettings(layer);
-
+    it("should remove a point from the current object after a simple click", () => {
+        // Given an object with two points
+        const layer = getMultiPointLayer();
         const stored = LayerStorage.fromObjects<MultiPointLayerProps>({
             ids: ["a;b"],
             objs: [{ points: ["a", "b"], state: null }],
         });
-        stored.extra = { currentObjectId: "a;b" };
-        const selectPoints = vi.fn();
-        const getBatchId = vi.fn();
-        const essentials = getEventEssentials({ stored });
-        essentials.grid.selectPointsWithCursor = selectPoints;
-        essentials.storage.getNewBatchId = getBatchId;
+        stored.permStorage = { currentObjectId: "a;b" };
 
-        selectPoints.mockReturnValueOnce(["b"]);
-        const fakeEvent: LayerEvent<MultiPointLayerProps> = {
-            ...essentials,
-            ...getPointerEvent({ type: "pointerDown" }),
-        };
-        const points = layer.gatherPoints(fakeEvent);
-        expect(points).toEqual(["b"]);
+        const handler = layerEventRunner({ layer, stored });
+        handler.storage.getNewBatchId.mockReturnValueOnce(42);
 
-        getBatchId.mockReturnValueOnce(1);
-        let result = layer.handleEvent({ ...fakeEvent, points });
-        expect(result.history).toEqual<HistoryType>([
-            // TODO: Required to force a rerender
+        // When one point of the object is clicked without being moved
+        const points1 = handler.gatherPoints({ type: "pointerDown", points: ["b"] });
+        expect(points1).toEqual(["b"]);
+        const pointerDown = handler.events.pointerDown({ points: points1 });
+
+        expect(pointerDown.history).toEqual<HistoryType>([
+            // TODO: This is only used to force a rerender
             {
-                batchId: 1,
+                batchId: 42,
                 id: "a;b",
                 object: { points: ["a", "b"], state: null },
             },
         ]);
-        expect(result.discontinueInput).toBeFalsy();
+        expect(pointerDown.discontinueInput).toBeFalsy();
 
-        result = layer.handleEvent({ ...fakeEvent, type: "pointerUp" });
-        expect(result.history).toEqual<HistoryType>([
-            { batchId: 1, id: "a;b", object: null },
+        const pointerUp = handler.events.pointerUp();
+
+        // Then that one point is removed from the object
+        expect(pointerUp.history).toEqual<HistoryType>([
+            { batchId: 42, id: "a;b", object: null },
             {
-                batchId: 1,
+                batchId: 42,
                 id: "a",
                 object: { points: ["a"], state: null },
             },
         ]);
-        expect(result.discontinueInput).toBeTruthy();
+        expect(pointerUp.discontinueInput).toBeTruthy();
+        expect(handler.storage.getNewBatchId).toBeCalledTimes(1);
     });
 
-    it.todo("should not remove a point from an object if it was not the current object");
+    it.todo("should delete a single-point object after a simple click");
+
+    it.todo(
+        "should not remove a point from an object when clicked if it was not the current object",
+    );
 
     it("should not remove the starting point from an object if points were added/deleted", () => {
-        const layer = getFakeLayer();
-        applySettings(layer);
-
+        // Given an object with two points
+        const layer = getMultiPointLayer();
         const stored = LayerStorage.fromObjects<MultiPointLayerProps>({
             ids: ["a;b"],
             objs: [{ points: ["a", "b"], state: null }],
         });
-        stored.extra = { currentObjectId: "a;b" };
-        const selectPoints = vi.fn();
-        const getBatchId = vi.fn();
-        const essentials = getEventEssentials<MultiPointLayerProps>({ stored });
-        essentials.grid.selectPointsWithCursor = selectPoints;
-        essentials.storage.getNewBatchId = getBatchId;
+        stored.permStorage = { currentObjectId: "a;b" };
 
-        // Select the starting point
-        selectPoints.mockReturnValueOnce(["b"]);
-        const fakeEvent: LayerEvent<MultiPointLayerProps> = {
-            ...essentials,
-            ...getPointerEvent({ type: "pointerDown" }),
-        };
-        let points = layer.gatherPoints(fakeEvent);
+        const handler = layerEventRunner({ layer, stored });
+        handler.storage.getNewBatchId.mockReturnValueOnce(42);
 
-        getBatchId.mockReturnValueOnce(1);
-        let result = layer.handleEvent({ ...fakeEvent, points });
+        // When one of its points is selected, call it the starting point
+        const points1 = handler.gatherPoints({ type: "pointerDown", points: ["b"] });
+        expect(points1).toEqual(["b"]);
+        handler.events.pointerDown({ points: points1 });
 
-        // Expand
-        selectPoints.mockReturnValueOnce(["c", "d"]);
-        fakeEvent.type = "pointerMove";
-        points = layer.gatherPoints(fakeEvent);
+        // ... and points are added
+        const points2 = handler.gatherPoints({ type: "pointerMove", points: ["c", "d"] });
+        expect(points2).toEqual(["b", "c", "d"]);
+        handler.events.pointerMove({ points: points2 });
 
-        result = layer.handleEvent({ ...fakeEvent, points });
-        stored.objects.set("a;b", result.history?.[0].object);
+        // ... and points are removed, ending with the starting point selected
+        const points3 = handler.gatherPoints({ type: "pointerMove", points: ["a", "b"] });
+        expect(points3).toEqual(["d", "a", "b"]);
+        const pointerMove = handler.events.pointerMove({ points: points3 });
 
-        // Shrink
-        selectPoints.mockReturnValueOnce(["d", "b"]);
-        points = layer.gatherPoints(fakeEvent);
-
-        result = layer.handleEvent({ ...fakeEvent, points });
-        stored.objects.set("a;b", result.history?.[0].object);
-
-        // End on the starting point
-        result = layer.handleEvent({ ...fakeEvent, type: "pointerUp" });
-        expect(result.history).toEqual<HistoryType>([
-            { batchId: 1, id: "a;b", object: null },
-            {
-                batchId: 1,
-                // Point b should remain even though the event started and ended on it
-                id: "a;b;c",
-                object: { points: ["a", "b", "c"], state: null },
-            },
+        // Then the starting point should remain and not be removed
+        expect(pointerMove.history).toEqual<HistoryType>([
+            { batchId: 42, id: "a;b", object: { points: ["b", "c"], state: null } },
         ]);
-        expect(result.discontinueInput).toBeTruthy();
-    });
+        expect(pointerMove.discontinueInput).toBeFalsy();
 
-    it.todo("should delete a single-point object after a simple click");
+        const pointerUp = handler.events.pointerUp();
+        expect(pointerUp.history).toEqual<HistoryType>([
+            { batchId: 42, id: "a;b", object: null },
+            { batchId: 42, id: "b;c", object: { points: ["b", "c"], state: null } },
+        ]);
+        expect(pointerUp.discontinueInput).toBeTruthy();
+        expect(handler.storage.getNewBatchId).toBeCalledTimes(1);
+    });
 
     it.todo("should delete the layers state then delete the object using the delete key");
 

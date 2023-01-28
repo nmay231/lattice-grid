@@ -1,204 +1,145 @@
 import { Keypress } from "../../types";
-import { DO_NOTHING, numberTyper } from "./numberTyper";
+import { numberTyper } from "./numberTyper";
 
-// TODO: I should eventually look at property based testing
 const event = (keypress: string): Keypress => ({
     keypress,
     type: keypress === "Delete" ? "delete" : "keyDown",
 });
 
-const getTyper = (max: number, negatives: boolean) => numberTyper({ max, negatives });
+type Result = (string | null)[] | "doNothing";
 
-describe("numberTyper, negative=false", () => {
-    it("should type less than the max", () => {
-        expect(getTyper(9, false)("", event("1"))).toEqual("1");
-        expect(getTyper(16, false)("", event("1"))).toEqual("1");
-        expect(getTyper(16, false)("1", event("4"))).toEqual("14");
-        expect(getTyper(100, false)("", event("4"))).toEqual("4");
-        expect(getTyper(100, false)("4", event("2"))).toEqual("42");
+describe("numberTyper", () => {
+    it.each([
+        { negatives: false, max: 9, key: "1", start: [""], result: ["1"] },
+        { negatives: false, max: 16, key: "1", start: [""], result: ["1"] },
+        { negatives: false, max: 16, key: "4", start: ["1"], result: ["14"] },
+        { negatives: false, max: 100, key: "4", start: [""], result: ["4"] },
+        { negatives: false, max: 100, key: "2", start: ["4"], result: ["42"] },
+        { negatives: true, max: 16, key: "2", start: ["1"], result: ["12"] },
+        // TODO: Fix: { negatives: true, max: 16, key: "2", start: ["-1"], result: ["-12"] },
+        { negatives: true, max: 100, key: "1", start: ["3"], result: ["31"] },
+        // TODO: Fix: { negatives: true, max: 100, key: "1", start: ["-3"], result: ["-31"] },
+    ])("should type within the range bounds", ({ max, negatives, start, key, result }) => {
+        expect(numberTyper({ max, negatives })(start, event(key))).toEqual<Result>(result);
     });
 
-    it("should type exactly the max", () => {
-        expect(getTyper(9, false)("", event("9"))).toEqual("9");
-        expect(getTyper(16, false)("1", event("6"))).toEqual("16");
-        expect(getTyper(100, false)("10", event("0"))).toEqual("100");
+    it.each([
+        { negatives: false, max: 9, key: "9", start: [""], result: ["9"] },
+        { negatives: false, max: 16, key: "6", start: ["1"], result: ["16"] },
+        { negatives: false, max: 100, key: "0", start: ["10"], result: ["100"] },
+    ])("should type on the range bounds", ({ max, negatives, start, key, result }) => {
+        expect(numberTyper({ max, negatives })(start, event(key))).toEqual<Result>(result);
     });
 
-    it("should not type more than the max when less than the max", () => {
-        expect(getTyper(9, false)("8", event("1"))).toEqual("1");
-        expect(getTyper(16, false)("15", event("2"))).toEqual("2");
-        expect(getTyper(100, false)("99", event("4"))).toEqual("4");
+    it.each([
+        { negatives: false, max: 9, key: "1", start: ["8"], result: ["1"] },
+        { negatives: false, max: 16, key: "2", start: ["15"], result: ["2"] },
+        { negatives: false, max: 100, key: "4", start: ["99"], result: ["4"] },
+    ])(
+        "should not type more than the max when less than the max",
+        ({ max, negatives, start, key, result }) => {
+            expect(numberTyper({ max, negatives })(start, event(key))).toEqual<Result>(result);
+        },
+    );
+
+    it.each([
+        { negatives: false, max: 9, key: "1", start: ["9"], result: ["1"] },
+        { negatives: false, max: 16, key: "2", start: ["16"], result: ["2"] },
+        { negatives: false, max: 100, key: "3", start: ["100"], result: ["3"] },
+    ])(
+        "should not type more than the max when at the max",
+        ({ max, negatives, start, key, result }) => {
+            expect(numberTyper({ max, negatives })(start, event(key))).toEqual<Result>(result);
+        },
+    );
+
+    it.each([
+        { negatives: false, max: 9, key: "0", start: [""], result: ["0"] },
+        { negatives: false, max: 9, key: "0", start: ["0"], result: ["0"] },
+        { negatives: false, max: 16, key: "0", start: ["0"], result: ["0"] },
+        { negatives: false, max: 100, key: "0", start: ["1"], result: ["10"] },
+        { negatives: false, max: 100, key: "0", start: ["10"], result: ["100"] },
+        { negatives: false, max: 100, key: "0", start: ["100"], result: ["0"] },
+        { negatives: true, max: 9, key: "0", start: ["-1"], result: ["0"] },
+        { negatives: true, max: 100, key: "0", start: ["-1"], result: ["-10"] },
+        { negatives: true, max: 100, key: "0", start: ["-1"], result: ["-10"] },
+        { negatives: true, max: 100, key: "0", start: ["-1"], result: ["-10"] },
+    ])("should type zero", ({ max, negatives, start, key, result }) => {
+        expect(numberTyper({ max, negatives })(start, event(key))).toEqual<Result>(result);
     });
 
-    it("should not type more than the max when at the max", () => {
-        expect(getTyper(9, false)("9", event("1"))).toEqual("1");
-        expect(getTyper(16, false)("16", event("2"))).toEqual("2");
-        expect(getTyper(100, false)("100", event("3"))).toEqual("3");
+    it.each([
+        { negatives: false, max: 9, key: "Backspace", start: [""], result: [null] },
+        { negatives: false, max: 9, key: "Backspace", start: ["5"], result: [null] },
+        { negatives: false, max: 16, key: "Backspace", start: ["16"], result: ["1"] },
+        { negatives: false, max: 100, key: "Backspace", start: ["10"], result: ["1"] },
+        { negatives: false, max: 100, key: "Backspace", start: ["100"], result: ["10"] },
+        // TODO: Fix: { negatives: true, max: 9, key: "Backspace", start: ["-5"], result: [null] },
+    ])("should shorten numbers with backspace", ({ max, negatives, start, key, result }) => {
+        expect(numberTyper({ max, negatives })(start, event(key))).toEqual<Result>(result);
     });
 
-    it("should type zero", () => {
-        expect(getTyper(9, false)("", event("0"))).toEqual("0");
-        expect(getTyper(9, false)("0", event("0"))).toEqual("0");
-        expect(getTyper(16, false)("0", event("0"))).toEqual("0");
-        expect(getTyper(100, false)("1", event("0"))).toEqual("10");
-        expect(getTyper(100, false)("10", event("0"))).toEqual("100");
-        expect(getTyper(100, false)("100", event("0"))).toEqual("0");
+    it.each([
+        { negatives: false, max: 9, key: "Delete", start: [""], result: [null] },
+        { negatives: false, max: 9, key: "Delete", start: ["5"], result: [null] },
+        { negatives: false, max: 16, key: "Delete", start: ["16"], result: [null] },
+        { negatives: false, max: 100, key: "Delete", start: ["10"], result: [null] },
+        { negatives: false, max: 100, key: "Delete", start: ["100"], result: [null] },
+    ])("should delete numbers", ({ max, negatives, start, key, result }) => {
+        expect(numberTyper({ max, negatives })(start, event(key))).toEqual<Result>(result);
     });
 
-    it("should shorten a number with backspace", () => {
-        expect(getTyper(9, false)("", event("Backspace"))).toEqual(null);
-        expect(getTyper(9, false)("5", event("Backspace"))).toEqual(null);
-        expect(getTyper(16, false)("16", event("Backspace"))).toEqual("1");
-        expect(getTyper(100, false)("10", event("Backspace"))).toEqual("1");
-        expect(getTyper(100, false)("100", event("Backspace"))).toEqual("10");
+    it.each([
+        { negatives: false, max: 9, key: "-", start: [""], result: "doNothing" as const },
+        { negatives: false, max: 9, key: "-", start: ["5"], result: "doNothing" as const },
+        { negatives: false, max: 16, key: "-", start: ["16"], result: "doNothing" as const },
+        { negatives: true, max: 16, key: "-", start: [""], result: [null] },
+        { negatives: true, max: 16, key: "0", start: ["0"], result: ["0"] },
+        { negatives: true, max: 100, key: "0", start: ["1"], result: ["10"] },
+        { negatives: true, max: 100, key: "0", start: ["10"], result: ["100"] },
+        { negatives: true, max: 100, key: "0", start: ["100"], result: ["0"] },
+    ])("should negate numbers when appropriate", ({ max, negatives, start, key, result }) => {
+        expect(numberTyper({ max, negatives })(start, event(key))).toEqual<Result>(result);
     });
 
-    it("should delete a number", () => {
-        expect(getTyper(9, false)("", event("Delete"))).toEqual(null);
-        expect(getTyper(9, false)("5", event("Delete"))).toEqual(null);
-        expect(getTyper(16, false)("16", event("Delete"))).toEqual(null);
-        expect(getTyper(100, false)("10", event("Delete"))).toEqual(null);
-        expect(getTyper(100, false)("100", event("Delete"))).toEqual(null);
-    });
+    it.each([
+        { negatives: false, max: 20, key: "a", start: [""], result: ["10"] },
+        { negatives: false, max: 20, key: "B", start: [""], result: ["11"] },
+        { negatives: false, max: 20, key: "C", start: [""], result: ["12"] },
+        { negatives: false, max: 20, key: "d", start: [""], result: ["13"] },
+        { negatives: false, max: 20, key: "g", start: [""], result: "doNothing" as const },
+        { negatives: false, max: 20, key: "z", start: [""], result: "doNothing" as const },
+        // TODO: Fix: { negatives: false, max: 9, key: "a", start: [""], result: [null] },
+    ])(
+        "should type hexadecimal numbers with no starting numbers",
+        ({ max, negatives, start, key, result }) => {
+            expect(numberTyper({ max, negatives })(start, event(key))).toEqual<Result>(result);
+        },
+    );
 
-    it("should do nothing when a hyphen is typed", () => {
-        expect(getTyper(9, false)("", event("-"))).toEqual(DO_NOTHING);
-        expect(getTyper(9, false)("5", event("-"))).toEqual(DO_NOTHING);
-        expect(getTyper(16, false)("16", event("-"))).toEqual(DO_NOTHING);
-    });
+    it.each([
+        { negatives: false, max: 20, key: "a", start: ["20"], result: ["10"] },
+        { negatives: false, max: 20, key: "B", start: ["0"], result: ["11"] },
+        { negatives: false, max: 20, key: "C", start: ["3"], result: ["12"] },
+        { negatives: false, max: 20, key: "g", start: [""], result: "doNothing" as const },
+        { negatives: false, max: 20, key: "z", start: [""], result: "doNothing" as const },
+        // TODO: Basically, I need to have a test for every boundary of negative cross product with (max-1, max, max+1) where max+1 should doNothing.
+        // TODO: Fix: { negatives: false, max: 9, key: "a", start: ["1"], result: [null] },
+        // Negative starting numbers give the same result
+        { negatives: true, max: 16, key: "a", start: ["-2"], result: ["10"] },
+        { negatives: true, max: 20, key: "d", start: ["-4"], result: ["13"] },
+    ])(
+        "should type hexadecimal numbers when there is already starting numbers",
+        ({ max, negatives, start, key, result }) => {
+            expect(numberTyper({ max, negatives })(start, event(key))).toEqual<Result>(result);
+        },
+    );
 
-    it("should do nothing when a plus/equals is typed", () => {
-        expect(getTyper(9, false)("", event("+"))).toEqual(DO_NOTHING);
-        expect(getTyper(9, false)("5", event("+"))).toEqual(DO_NOTHING);
-        expect(getTyper(16, false)("16", event("+"))).toEqual(DO_NOTHING);
-        expect(getTyper(9, false)("", event("="))).toEqual(DO_NOTHING);
-        expect(getTyper(9, false)("5", event("="))).toEqual(DO_NOTHING);
-        expect(getTyper(16, false)("16", event("="))).toEqual(DO_NOTHING);
-    });
+    it.todo("should treat null, undefined, and invalid number strings the same");
 
-    it("should type hexadecimal numbers with no starting number", () => {
-        expect(getTyper(20, false)("", event("a"))).toEqual("10");
-        expect(getTyper(20, false)("", event("B"))).toEqual("11");
-        expect(getTyper(20, false)("", event("C"))).toEqual("12");
-        expect(getTyper(20, false)("", event("d"))).toEqual("13");
-        expect(getTyper(20, false)("", event("g"))).toEqual(DO_NOTHING);
-        expect(getTyper(20, false)("", event("z"))).toEqual(DO_NOTHING);
-        expect(getTyper(9, false)("", event("a"))).toEqual("0"); // TODO: Is this what I want?
-    });
-
-    it("should type hexadecimal numbers when there is already a starting number", () => {
-        expect(getTyper(9, false)("", event("+"))).toEqual(DO_NOTHING);
-        expect(getTyper(9, false)("5", event("+"))).toEqual(DO_NOTHING);
-        expect(getTyper(16, false)("16", event("+"))).toEqual(DO_NOTHING);
-        expect(getTyper(9, false)("", event("="))).toEqual(DO_NOTHING);
-        expect(getTyper(9, false)("5", event("="))).toEqual(DO_NOTHING);
-        expect(getTyper(16, false)("16", event("="))).toEqual(DO_NOTHING);
-    });
-});
-
-describe("numberTyper, negative=true", () => {
-    // it("should type inside the range", () => {
-    //     expect(getTyper(16, true)("1", event("2"))).toEqual("12");
-    //     expect(getTyper(16, true)("-1", event("2"))).toEqual("-12");
-    //     expect(getTyper(100, true)("1", event("3"))).toEqual("13");
-    //     expect(getTyper(100, true)("-1", event("3"))).toEqual("-13");
-    // });
-
-    it.todo("should type the bounds of the range");
-
-    it.todo("should not type outside the range when inside the bounds");
-
-    it.todo("should not type outside the range when on the bounds");
-
-    it("should type zero", () => {
-        expect(getTyper(9, true)("-1", event("0"))).toEqual("0");
-        expect(getTyper(100, true)("-1", event("0"))).toEqual("-10");
-        expect(getTyper(100, true)("-1", event("0"))).toEqual("-10");
-        expect(getTyper(100, true)("-1", event("0"))).toEqual("-10");
-    });
-
-    it.todo("should shorten a number with backspace, negative=false");
-
-    it.todo("should shorten a number with backspace");
-
-    it.todo("should delete a number");
-
-    it.todo("should do nothing when a hyphen is typed, negative=false");
-
-    // it("should negate numbers when a hyphen is typed", () => {
-    //     expect(getTyper(16, true)("", event("-"))).toEqual(DO_NOTHING);
-    //     expect(getTyper(16, true)("0", event("0"))).toEqual("0");
-    //     expect(getTyper(100, true)("1", event("0"))).toEqual("10");
-    //     expect(getTyper(100, true)("10", event("0"))).toEqual("100");
-    //     expect(getTyper(100, true)("100", event("0"))).toEqual("0");
-    // });
-
-    it.todo("should do nothing when a plus/equals is typed");
-
-    it.todo("should turn numbers positive when a plus/equals is typed");
-
-    it.todo("should type hexadecimal numbers with no starting number");
-
-    it.todo("should type hexadecimal numbers when there is already a starting number");
-
-    it.todo("should type negative hexadecimal numbers when there is a negative number");
-});
-
-describe("numberTyper, max=-1", () => {
-    // it("should type inside the range", () => {
-    //     expect(getTyper(16, true)("1", event("2"))).toEqual("12");
-    //     expect(getTyper(16, true)("-1", event("2"))).toEqual("-12");
-    //     expect(getTyper(100, true)("1", event("3"))).toEqual("13");
-    //     expect(getTyper(100, true)("-1", event("3"))).toEqual("-13");
-    // });
-
-    it.todo("should type the bounds of the range");
-
-    it.todo("should not type outside the range when inside the bounds");
-
-    it.todo("should not type outside the range when on the bounds");
-
-    it("should type zero", () => {
-        expect(getTyper(9, true)("-1", event("0"))).toEqual("0");
-        expect(getTyper(100, true)("-1", event("0"))).toEqual("-10");
-        expect(getTyper(100, true)("-1", event("0"))).toEqual("-10");
-        expect(getTyper(100, true)("-1", event("0"))).toEqual("-10");
-    });
-
-    it.todo("should shorten a number with backspace, negative=false");
-
-    it.todo("should shorten a number with backspace");
-
-    it.todo("should delete a number");
-
-    it.todo("should do nothing when a hyphen is typed, negative=false");
-
-    // it("should negate numbers when a hyphen is typed", () => {
-    //     expect(getTyper(16, true)("", event("-"))).toEqual(DO_NOTHING);
-    //     expect(getTyper(16, true)("0", event("0"))).toEqual("0");
-    //     expect(getTyper(100, true)("1", event("0"))).toEqual("10");
-    //     expect(getTyper(100, true)("10", event("0"))).toEqual("100");
-    //     expect(getTyper(100, true)("100", event("0"))).toEqual("0");
-    // });
-
-    it.todo("should do nothing when a plus/equals is typed");
-
-    it.todo("should turn numbers positive when a plus/equals is typed");
-
-    it.todo("should type hexadecimal numbers with no starting number");
-
-    it.todo("should type hexadecimal numbers when there is already a starting number");
-
-    it.todo("should type negative hexadecimal numbers when there is a negative number");
-
-    // Old
-    it.todo("should not delete objects when the number range increases");
-    it.todo("should delete objects when the number range decreases");
-    it.todo("should add a second digit when typed fast enough");
-    it.todo("should not add a second digit when not typed fast enough");
-    it.todo("should not add a second digit when the selection is not the same");
     it.todo("should not add a second digit when the numbers are not the same");
-    it.todo("should understand single-digit hexadecimal");
-    it.todo("should not understand multi-digit hexadecimal");
-    it.todo("should have some tests with negative numbers and such");
+
+    it.todo("should not add a second digit when the numbers are not the same");
+
+    it.todo("should return an array with the same length as it was passed");
 });

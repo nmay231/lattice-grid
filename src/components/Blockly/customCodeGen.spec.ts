@@ -1,5 +1,5 @@
 import { UserCodeJSON } from "../../userComputation/codeBlocks";
-import { Blockly } from "../../utils/imports";
+import { Blockly } from "../../utils/imports/blockly";
 import { codeGen } from "./customCodeGen";
 
 describe("codeGen", () => {

@@ -14,4 +14,4 @@ export const availableLayers = {
     OverlayLayer,
     SimpleLineLayer,
     ToggleCharactersLayer,
-} as const;
+} as const; // TODO: satisfies Record<string, LayerClass>;

@@ -6,7 +6,7 @@ import { blocklyToolbox } from "../../userComputation/codeBlocks";
 import { ComputeManager } from "../../userComputation/ComputeManager";
 import { addAliasCategoryToToolbox } from "../../userComputation/utils";
 import { openModal, useFocusElementHandler, useModal } from "../../utils/focusManagement";
-import { Blockly } from "../../utils/imports";
+import { Blockly } from "../../utils/imports/blockly";
 import { codeGen } from "./customCodeGen";
 
 export const BlocklyModalButton: React.FC<{ children: string }> = ({ children }) => {

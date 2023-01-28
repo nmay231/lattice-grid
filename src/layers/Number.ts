@@ -1,12 +1,12 @@
+import { zip } from "lodash";
 import { TextBlits } from "../components/SVGCanvas/Text";
-import { Layer, LayerClass, Point } from "../types";
+import { Layer, LayerClass, LayerHandlerResult, Point } from "../types";
 import { bySubset } from "../utils/structureUtils";
-import { BaseLayer, methodNotImplemented } from "./baseLayer";
-import { DO_NOTHING, numberTyper } from "./controls/numberTyper";
+import { BaseLayer, methodNotImplemented } from "./BaseLayer";
+import { numberTyper } from "./controls/numberTyper";
 import { handleEventsSelection, KeyDownEventHandler, SelectedProps } from "./controls/selection";
 
 export interface NumberProps extends SelectedProps {
-    Type: "NumberLayer";
     ObjectState: { state: string; point: Point };
     RawSettings: { max: number; negatives: boolean };
 }
@@ -17,7 +17,7 @@ interface INumberLayer extends Layer<NumberProps>, KeyDownEventHandler<NumberPro
 
 export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer {
     static ethereal = false;
-    static type = "NumberLayer" as const;
+    static readonly type = "NumberLayer";
     static displayName = "Number";
     static defaultSettings = { max: 9, negatives: false };
 
@@ -27,9 +27,9 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
         name: "Number._numberTyper",
     }) as INumberLayer["_numberTyper"];
 
-    static create: LayerClass<NumberProps>["create"] = (puzzle) => {
+    static create = ((puzzle): NumberLayer => {
         return new NumberLayer(NumberLayer, puzzle);
-    };
+    }) satisfies LayerClass<NumberProps>["create"];
 
     handleKeyDown: INumberLayer["handleKeyDown"] = ({
         points: ids,
@@ -43,24 +43,24 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
             return {};
         }
 
-        const states = ids.map((id) => stored.objects.get(id)?.state);
-        const theSame = !!(states as Array<string | false>).reduce((prev, next) =>
-            prev === next ? next : false,
-        );
+        const states: Array<string | null> = ids.map((id) => stored.objects.get(id)?.state ?? null);
 
-        const state = theSame ? states[0] : "";
-        const event = { type, keypress };
-        const newState = this._numberTyper(state, event);
+        const newStates = this._numberTyper(states, { type, keypress });
 
-        if (newState === DO_NOTHING) {
-            return {};
-        }
-        return {
-            history: ids.map((id) => ({
-                object: newState === null ? null : { state: newState, point: id },
+        if (newStates === "doNothing") return {};
+
+        const history: LayerHandlerResult<NumberProps>["history"] = [];
+
+        for (const [id, old, new_] of zip(ids, states, newStates)) {
+            if (id === undefined || old === undefined || new_ === undefined) break; // They should be the same length
+            if (old === new_) continue;
+
+            history.push({
                 id,
-            })),
-        };
+                object: new_ === null ? null : { point: id, state: new_ },
+            });
+        }
+        return { history };
     };
 
     static controls = undefined;

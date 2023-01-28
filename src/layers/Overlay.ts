@@ -1,16 +1,14 @@
 import { OVERLAY_LAYER_ID } from "../state/blits";
 import { Layer, LayerClass, LayerProps } from "../types";
-import { BaseLayer, methodNotImplemented } from "./baseLayer";
+import { BaseLayer, methodNotImplemented } from "./BaseLayer";
 
-interface OverlayProps extends LayerProps {
-    Type: "OverlayLayer";
-}
+type OverlayProps = LayerProps;
 
 type IOverlayLayer = Layer<OverlayProps>;
 
 export class OverlayLayer extends BaseLayer<OverlayProps> implements IOverlayLayer {
     static ethereal = true;
-    static type = "OverlayLayer" as const;
+    static readonly type = "OverlayLayer";
     static displayName = OVERLAY_LAYER_ID;
 
     id = OVERLAY_LAYER_ID;
@@ -19,11 +17,11 @@ export class OverlayLayer extends BaseLayer<OverlayProps> implements IOverlayLay
     gatherPoints = methodNotImplemented({ name: "Overlay.gatherPoints" });
 
     static uniqueInstance?: OverlayLayer;
-    static create: LayerClass<OverlayProps>["create"] = (puzzle) => {
+    static create = ((puzzle): OverlayLayer => {
         OverlayLayer.uniqueInstance =
             OverlayLayer.uniqueInstance || new OverlayLayer(OverlayLayer, puzzle);
         return OverlayLayer.uniqueInstance;
-    };
+    }) satisfies LayerClass<OverlayProps>["create"];
 
     static controls = undefined;
     static constraints = undefined;

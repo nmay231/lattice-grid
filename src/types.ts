@@ -1,4 +1,4 @@
-import { ref } from "valtio";
+import type { ref } from "valtio";
 import type { LineBlits } from "./components/SVGCanvas/Line";
 import type { PolygonBlits } from "./components/SVGCanvas/Polygon";
 import type { TextBlits } from "./components/SVGCanvas/Text";
@@ -84,10 +84,6 @@ export type LayerEventEssentials<LP extends LayerProps> = {
 
 export type LayerEvent<LP extends LayerProps> = CleanedDOMEvent & LayerEventEssentials<LP>;
 
-export type NewSettingsEvent<LP extends LayerProps> = LayerEventEssentials<LP> & {
-    newSettings: LP["RawSettings"];
-};
-
 // TODO: Adding OtherState makes sense for IncompleteHistoryAction, but not for LayerHandlerResult. Should this somehow be another property on LayerProps?
 export type LayerHandlerResult<LP extends LayerProps> = {
     discontinueInput?: boolean;
@@ -96,8 +92,7 @@ export type LayerHandlerResult<LP extends LayerProps> = {
 // #endregion
 
 // #region - Explicit Type Names
-// TODO: Replace all relevant instances of the plain types with these explicit types.
-// It helps with changing all of the types if necessary, and also with being explicit with how composite types are used.
+// It helps with changing all of the types if necessary, and also with being explicit with how composite types are used (at least in the definition).
 export type Point = string;
 export type Vector = [number, number];
 export type Delta = { dx: number; dy: number };
@@ -107,6 +102,7 @@ export type EditMode = "question" | "answer";
 export type StorageMode = "question" | "answer" | "ui";
 export type ObjectId = string;
 
+// TODO: This has become the misc region. Maybe make an explicitly misc one and keep this one clean?
 export type ValtioRef<T extends object> = ReturnType<typeof ref<T>>;
 // #endregion
 
@@ -123,10 +119,9 @@ export type Grid = {
     getAllPoints: (type: PointType) => Point[];
     selectPointsWithCursor: (arg: {
         settings: PuzzleManager["settings"];
-        // TODO: Change to [number, number]
+        // TODO: Change to CanvasPoint() once implemented
         cursor: { x: number; y: number };
         pointTypes: PointType[];
-        // TODO: implement deltas as Finite State Machines for more capabilities and better cross-compatibility between grid types
         deltas: Delta[];
         previousPoint?: Point | null;
     }) => Point[];
@@ -153,25 +148,28 @@ export type JSONSchema = { schema: NeedsUpdating; uischemaElements: NeedsUpdatin
 
 export type LayerProps = {
     // TODO: Try allowing settings and rawSettings to be optional
-    Type: string;
     RawSettings: UnknownObject;
     ObjectState: UnknownObject;
-    ExtraLayerStorageProps: UnknownObject;
+    PermStorage: UnknownObject;
     TempStorage: UnknownObject;
 };
 
 export type Layer<LP extends LayerProps = LayerProps> = {
-    type: LP["Type"];
+    readonly type: string;
     id: string;
     displayName: string;
     ethereal: boolean;
     rawSettings: LP["RawSettings"];
     controls?: JSONSchema;
     constraints?: JSONSchema;
-    newSettings: (
-        settingsChange: Omit<NewSettingsEvent<LP>, "tempStorage">,
-    ) => LayerHandlerResult<LP>;
-    gatherPoints: (layerEvent: PointerMoveOrDown & LayerEventEssentials<LP>) => Point[];
+    newSettings(
+        settingsChange: Omit<LayerEventEssentials<LP>, "tempStorage"> & {
+            newSettings: LP["RawSettings"];
+        },
+    ): LayerHandlerResult<LP>;
+    gatherPoints: (
+        layerEvent: Omit<PointerMoveOrDown, "points"> & LayerEventEssentials<LP>,
+    ) => Point[];
     handleEvent: (layerEvent: LayerEvent<LP>) => LayerHandlerResult<LP>;
     getBlits: (data: Omit<LayerEventEssentials<LP>, "tempStorage">) => BlitGroup[];
     getOverlayBlits?: (data: Omit<LayerEventEssentials<LP>, "tempStorage">) => BlitGroup[];
@@ -179,8 +177,8 @@ export type Layer<LP extends LayerProps = LayerProps> = {
 
 export type LayerClass<LP extends LayerProps = LayerProps> = {
     new (klass: LayerClass<LP>, puzzle: PuzzleManager): Layer<LP>;
-    create: (puzzle: PuzzleManager) => Layer<LP>;
-    type: LP["Type"];
+    create: (puzzle: Pick<PuzzleManager, "layers">) => Layer<LP>;
+    readonly type: string;
     displayName: string;
     ethereal: boolean;
     defaultSettings: LP["RawSettings"];

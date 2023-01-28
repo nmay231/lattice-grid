@@ -1,6 +1,6 @@
 import { proxy, useSnapshot } from "valtio";
 import { PuzzleManager } from "../PuzzleManager";
-import { valtioRef } from "../utils/imports";
+import { valtioRef } from "../utils/imports/valtio";
 
 export const puzzleProxy = proxy({ puzzle: valtioRef(new PuzzleManager()) });
 

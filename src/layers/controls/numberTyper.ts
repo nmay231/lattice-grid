@@ -1,50 +1,63 @@
 import { clamp as nClamp } from "lodash";
 import { Keypress } from "../../types";
 
-type TypeNumberArg = { max: number; negatives: boolean };
-
-export const DO_NOTHING = Symbol("typeNumber: Do nothing");
-
-const getClamper = (max: number) => {
-    type Input = number | null | typeof DO_NOTHING;
+//** Clamp the value to less than `max` and stringify it  */
+const getCleaner = (max: number) => {
     if (max === -1) {
-        return (x: Input) => (typeof x === "number" ? x.toString() : x);
+        return (x: number) => x.toString();
     } else {
-        return (next: Input) => {
-            if (typeof next === "number") {
-                if (Math.abs(next) <= max) return nClamp(next, -max, max).toString();
-                return (next % 10).toString();
-            }
-            return next;
+        return (next: number) => {
+            next = Math.abs(next) <= max ? next : next % 10;
+            return nClamp(next, -max, max).toString();
         };
     }
 };
 
-export const numberTyper = ({ max, negatives }: TypeNumberArg) => {
-    const clamp = getClamper(max);
+const toOptionalNumber = (val: string | null): number | null => {
+    const num = val ? parseInt(val) : null;
+    if (Number.isNaN(num)) return null;
+    return num;
+};
 
-    return (numberString: string, event: Keypress): string | null | typeof DO_NOTHING => {
-        const number: number | null = numberString ? parseInt(numberString) : null;
-        if (Number.isNaN(number)) return null;
+type TypeNumberArg = { max: number; negatives: boolean };
+export const numberTyper = ({ max, negatives }: TypeNumberArg) => {
+    const clean = getCleaner(max);
+
+    return (
+        numberStrings: Array<string | null>,
+        event: Keypress,
+    ): Array<string | null> | "doNothing" => {
+        if (!numberStrings.length) return "doNothing";
+
+        let numbers = numberStrings.map(toOptionalNumber);
 
         if (event.keypress === "Backspace") {
-            return clamp(number === null ? null : Math.floor(number / 10) || null);
+            return numbers.map((num) => {
+                if (num === null) return null;
+                num = Math.floor(num / 10);
+                return num ? clean(num) : null;
+            });
         } else if (event.type === "delete") {
-            return null;
+            return numbers.map(() => null);
         } else if (event.keypress === "-") {
             // TODO: Keep the minus sign as part of an inProgress object and remove it when the interaction times out.
-            if (!negatives) return DO_NOTHING;
-            return clamp(number === null ? null : -number);
-        } else if (event.keypress === "+" || event.keypress === "=") {
-            if (!negatives) return DO_NOTHING;
-            return clamp(number === null ? null : Math.abs(number));
-        } else if (/^[0-9]$/.test(event.keypress)) {
-            return clamp(10 * (number || 0) + parseInt(event.keypress));
+            if (!negatives) return "doNothing";
+            return numbers.map((num) => (num === null ? null : clean(-num)));
         } else if (/^[a-fA-F]$/.test(event.keypress)) {
-            // TODO: if (!settings.allowHex && (max === -1 || max > 10)) return DO_NOTHING;
-            const one = number ? Math.sign(number) : 1;
-            return clamp(one * parseInt(event.keypress.toLowerCase(), 36));
+            // TODO: if (!(settings.allowHex && (max === -1 || max > 10))) return "doNothing";
+            // TODO: Should I allow the option to type multiDigit characters in hex?
+            const num = clean(parseInt(event.keypress.toLowerCase(), 36));
+            return numbers.map(() => num);
         }
-        return DO_NOTHING; // Change nothing
+
+        const isSame = numbers.reduce((prev, next) => (prev === next ? next : null));
+        if (isSame === null) {
+            // If not all of the selected numbers are the same, then they should all be considered unset numbers
+            numbers = numbers.map(() => null);
+        }
+        if (/^[0-9]$/.test(event.keypress)) {
+            return numbers.map((num) => clean(10 * (num || 0) + parseInt(event.keypress)));
+        }
+        return "doNothing"; // Change nothing
     };
 };

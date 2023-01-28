@@ -1,5 +1,5 @@
 import { CompilerErrorDetails, VariableCodeBlock } from "../types";
-import { Blockly } from "../utils/imports";
+import { Blockly } from "../utils/imports/blockly";
 
 export const DEFAULT_ALIAS_NAME = "MY ALIAS";
 export const addAliasCategoryToToolbox = (workspace: Blockly.Workspace) => {

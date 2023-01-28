@@ -1,13 +1,12 @@
 import { PolygonBlits } from "../components/SVGCanvas/Polygon";
 import { Layer, LayerClass } from "../types";
 import { bySubset } from "../utils/structureUtils";
-import { BaseLayer, methodNotImplemented } from "./baseLayer";
+import { BaseLayer, methodNotImplemented } from "./BaseLayer";
 import { handleEventsCurrentSetting, OnePointProps } from "./controls/onePoint";
 
 type Color = string;
 
 interface BackgroundColorProps extends OnePointProps<Color> {
-    Type: "BackgroundColorLayer";
     RawSettings: { selectedState: Color };
 }
 
@@ -20,7 +19,7 @@ export class BackgroundColorLayer
     implements IBackgroundColorLayer
 {
     static ethereal = false;
-    static type = "BackgroundColorLayer" as const;
+    static readonly type = "BackgroundColorLayer";
     static displayName = "Background Color";
     static defaultSettings = { selectedState: "blue" };
 
@@ -28,9 +27,9 @@ export class BackgroundColorLayer
     handleEvent = methodNotImplemented({ name: "BackgroundColor.handleEvent" });
     gatherPoints = methodNotImplemented({ name: "BackgroundColor.gatherPoints" });
 
-    static create: LayerClass<BackgroundColorProps>["create"] = (puzzle) => {
+    static create = ((puzzle): BackgroundColorLayer => {
         return new BackgroundColorLayer(BackgroundColorLayer, puzzle);
-    };
+    }) satisfies LayerClass<BackgroundColorProps>["create"];
 
     static controls = {
         schema: {

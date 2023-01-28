@@ -14,7 +14,7 @@ export const PuzzleModeToggle = () => {
                     [
                         { value: "question", label: "Setting" },
                         { value: "answer", label: "Solving" },
-                    ] as Array<{ label: string; value: EditMode }> // TODO: Use typescript's `satisfies`
+                    ] satisfies Array<{ label: string; value: EditMode }>
                 }
                 value={snap.editMode}
                 onChange={(value: EditMode) => {

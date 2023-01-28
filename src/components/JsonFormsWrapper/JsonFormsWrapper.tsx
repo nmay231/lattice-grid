@@ -6,15 +6,13 @@ import { UnknownObject } from "../../types";
 
 type Props = {
     data: UnknownObject;
-    setData: (arg: UnknownObject) => void;
-    schema?: JsonSchema;
-    uischema?: UISchemaElement;
-    autoFocus?: boolean;
-    formId?: string;
+    onChange: (arg: UnknownObject) => void;
+    schema: JsonSchema;
+    uischema: UISchemaElement;
 };
 
 // TODO: Styling
-export const JsonFormsWrapper: React.FC<Props> = ({ data, setData, schema, uischema }) => {
+export const JsonFormsWrapper: React.FC<Props> = ({ data, onChange, schema, uischema }) => {
     // The onChange event is called once on first render. It is annoying.
     const firstRender = useRef(true);
 
@@ -27,7 +25,7 @@ export const JsonFormsWrapper: React.FC<Props> = ({ data, setData, schema, uisch
             renderers={vanillaRenderers}
             onChange={({ data, errors }) => {
                 if (!errors?.length && !firstRender.current) {
-                    setData(data);
+                    onChange(data);
                 }
                 firstRender.current = false;
             }}

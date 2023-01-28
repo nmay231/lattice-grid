@@ -1,17 +1,9 @@
 import { cloneDeep } from "lodash";
 import { PuzzleManager } from "../PuzzleManager";
-import {
-    Layer,
-    LayerClass,
-    LayerEvent,
-    LayerEventEssentials,
-    LayerHandlerResult,
-    LayerProps,
-    Point,
-    PointerMoveOrDown,
-} from "../types";
+import { Layer, LayerClass, LayerProps } from "../types";
 import { errorNotification } from "../utils/DOMUtils";
 
+/** I could annotate all attributes that are assigned at runtime with an exclamation to mark them as assigned elsewhere (`attr!: type`), but then I don't have visibility into the cause of certain errors */
 export const methodNotImplemented = ({ name }: { name: string }) => {
     return (): any => {
         throw errorNotification({
@@ -35,11 +27,10 @@ export abstract class BaseLayer<LP extends LayerProps>
     implements Omit<Layer<LP>, "newSettings" | "getBlits">
 {
     static ethereal = true;
-    static type = "BASE_LAYER";
     static displayName = "INTERNAL_BASE_LAYER";
     static defaultSettings = {};
 
-    type: LP["Type"];
+    readonly type: string;
     id: Layer["id"];
     ethereal: Layer["ethereal"];
     displayName: Layer["displayName"];
@@ -47,8 +38,8 @@ export abstract class BaseLayer<LP extends LayerProps>
     controls?: Layer["controls"];
     constraints?: Layer["constraints"];
 
-    constructor(klass: LayerClass<LP>, puzzle: PuzzleManager) {
-        this.id = randomId(Object.keys(puzzle.layers), klass.type);
+    constructor(klass: LayerClass<LP>, puzzle: Pick<PuzzleManager, "layers">) {
+        this.id = randomId(puzzle.layers.keys(), klass.type);
         this.ethereal = klass.ethereal;
         this.type = klass.type;
         this.displayName = klass.displayName;
@@ -57,9 +48,7 @@ export abstract class BaseLayer<LP extends LayerProps>
         this.rawSettings = cloneDeep(klass.defaultSettings);
     }
 
-    abstract gatherPoints: (
-        layerEvent: PointerMoveOrDown & LayerEventEssentials<LayerProps>,
-    ) => Point[];
+    abstract gatherPoints: Layer<LP>["gatherPoints"];
 
-    abstract handleEvent: (layerEvent: LayerEvent<LayerProps>) => LayerHandlerResult<LP>;
+    abstract handleEvent: Layer<LP>["handleEvent"];
 }
