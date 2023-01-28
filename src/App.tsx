@@ -7,6 +7,7 @@ import { RedirectHome } from "./pages/RedirectHome";
 import { _404Page } from "./pages/_404Page";
 
 const theme: MantineThemeOverride = {
+    cursorType: "pointer", // Add cursors to checkboxes and similar elements.
     components: {
         Switch: {
             styles: { track: { border: "1px solid gray", backgroundColor: "lightgray" } },
