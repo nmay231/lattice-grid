@@ -44,8 +44,9 @@ export class CellOutlineLayer extends BaseLayer<CellOutlineProps> implements ICe
                 { dx: -2, dy: 0 },
             ],
         });
+        const handleEvent = this.handleEvent;
         this.handleEvent = (arg) => {
-            const result = this.handleEvent(arg);
+            const result = handleEvent(arg);
             return {
                 ...result,
                 history: (result.history || []).map((action) => ({
