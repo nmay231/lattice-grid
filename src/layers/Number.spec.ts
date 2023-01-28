@@ -99,4 +99,7 @@ describe("Number Layer", () => {
 
         layer64.newSettings({ ...eventEssentials(), newSettings: settings9 });
     });
+
+    // TODO: Not implemented, might never be honestly.
+    it.todo("should not delete objects when the range is infinite (max = -1)");
 });

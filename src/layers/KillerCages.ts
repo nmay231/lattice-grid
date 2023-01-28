@@ -8,7 +8,7 @@ import {
     MultiPointKeyDownHandler,
     MultiPointLayerProps,
 } from "./controls/multiPoint";
-import { DO_NOTHING, numberTyper } from "./controls/numberTyper";
+import { numberTyper } from "./controls/numberTyper";
 
 interface KillerCagesProps extends MultiPointLayerProps {
     ObjectState: MultiPointLayerProps["ObjectState"] & { state: string | null };
@@ -52,12 +52,13 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
             return { history: [{ id, object: { ...object, state: null } }] };
         }
 
-        const state = this._numberTyper(object.state || "", { type, keypress });
+        const states = this._numberTyper([object.state || null], { type, keypress });
 
-        if (state === object.state || state === DO_NOTHING) {
+        if (states === "doNothing" || states[0] === object.state) {
             return {}; // No change necessary
         }
 
+        const [state] = states;
         return { history: [{ id, object: { ...object, state } }] };
     };
 
