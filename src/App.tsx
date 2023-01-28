@@ -1,6 +1,6 @@
 import { MantineProvider, MantineThemeOverride } from "@mantine/core";
 import { NotificationsProvider } from "@mantine/notifications";
-import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { AboutPage } from "./pages/AboutPage";
 import { EditPage } from "./pages/Edit";
 import { RedirectHome } from "./pages/RedirectHome";
@@ -19,14 +19,14 @@ export const App = () => {
     return (
         <MantineProvider withGlobalStyles withNormalizeCSS theme={theme}>
             <NotificationsProvider>
-                <Router>
-                    <Switch>
-                        <Route component={RedirectHome} exact path="/" />
-                        <Route component={EditPage} exact path="/edit" />
-                        <Route component={AboutPage} exact path="/about" />
-                        <Route component={_404Page} path="*" />
-                    </Switch>
-                </Router>
+                <BrowserRouter>
+                    <Routes>
+                        <Route path="/" element={<RedirectHome />} />
+                        <Route path="edit" element={<EditPage />} />
+                        <Route path="about" element={<AboutPage />} />
+                        <Route path="*" element={<_404Page />} />
+                    </Routes>
+                </BrowserRouter>
             </NotificationsProvider>
         </MantineProvider>
     );
