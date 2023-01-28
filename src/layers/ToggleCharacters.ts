@@ -192,8 +192,7 @@ export class ToggleCharactersLayer
 
         const ids = stored.objects
             .keys()
-            .filter(bySubset(stored.groups.getGroup(settings.editMode)))
-            .filter((id) => stored.objects.get(id).state);
+            .filter(bySubset(stored.groups.getGroup(settings.editMode)));
 
         const { cells } = grid.getPoints({
             settings,
