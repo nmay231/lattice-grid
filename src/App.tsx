@@ -2,7 +2,7 @@ import { MantineProvider, MantineThemeOverride } from "@mantine/core";
 import { NotificationsProvider } from "@mantine/notifications";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { AboutPage } from "./pages/AboutPage";
-import { EditPage } from "./pages/Edit";
+import { PuzzlePage } from "./pages/PuzzlePage";
 import { RedirectHome } from "./pages/RedirectHome";
 import { _404Page } from "./pages/_404Page";
 
@@ -22,7 +22,8 @@ export const App = () => {
                 <BrowserRouter>
                     <Routes>
                         <Route path="/" element={<RedirectHome />} />
-                        <Route path="edit" element={<EditPage />} />
+                        <Route path="edit" element={<PuzzlePage key="edit" pageMode="edit" />} />
+                        <Route path="play" element={<PuzzlePage key="play" pageMode="play" />} />
                         <Route path="about" element={<AboutPage />} />
                         <Route path="*" element={<_404Page />} />
                     </Routes>

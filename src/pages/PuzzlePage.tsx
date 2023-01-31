@@ -8,7 +8,7 @@ import { ResizeModal } from "../components/SideBar/MainGroup/ResizeModal";
 import { SVGCanvas } from "../components/SVGCanvas";
 import { ControlsManager } from "../ControlsManager";
 import { usePuzzle } from "../state/puzzle";
-import { NeedsUpdating } from "../types";
+import { NeedsUpdating, PageMode } from "../types";
 import { useGlobalFocusListeners } from "../utils/focusManagement";
 
 const useGlobalEventListeners = (controls: ControlsManager) => {
@@ -57,11 +57,16 @@ const useStyles = createStyles((theme, { canvasWidth }: { canvasWidth: string })
     },
 }));
 
-export const EditPage = () => {
+export const PuzzlePage = ({ pageMode }: { pageMode: PageMode }) => {
     const { classes } = useStyles({ canvasWidth: "70%" });
     const puzzle = usePuzzle();
+
     usePageLeave(puzzle.controls.onPageBlur.bind(puzzle.controls));
     useGlobalEventListeners(puzzle.controls);
+
+    useEffect(() => {
+        puzzle.settings.pageMode = pageMode;
+    }, [puzzle, pageMode]);
 
     return (
         <div className={classes.mainContainer}>

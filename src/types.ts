@@ -99,7 +99,8 @@ export type Delta = { dx: number; dy: number };
 
 export type PointType = "cells" | "edges" | "corners";
 export type EditMode = "question" | "answer";
-export type StorageMode = "question" | "answer" | "ui";
+export type StorageMode = EditMode | "ui";
+export type PageMode = "edit" | "play";
 export type ObjectId = string;
 
 // TODO: This has become the misc region. Maybe make an explicitly misc one and keep this one clean?
