@@ -153,13 +153,7 @@ export const ImportExportModal = () => {
     };
 
     return (
-        <Modal
-            opened={opened}
-            title="Import / Export Puzzle"
-            onClose={close}
-            size="lg"
-            // TODO: openModal("import-export")
-        >
+        <Modal opened={opened} title="Import / Export Puzzle" onClose={close} size="lg">
             <Box p="sm">
                 <Text size="lg" italic weight="bold" align="center" color="yellow">
                     *Temporary solution for import/export*
@@ -167,16 +161,17 @@ export const ImportExportModal = () => {
                 <Text size="sm" italic weight="bold" align="center" mb="md" color="red">
                     This is a temporary format. URLs are not expected to work indefinitely.
                 </Text>
-                <Text size="sm" italic weight="bold" align="center" mb="md" color="red">
-                    This only exports edit-mode URLs. Solve-mode URLs are in the works.
-                </Text>
 
                 <Textarea autosize readOnly minRows={1} maxRows={6} mb="md" value={puzzleString} />
+                <Text size="sm" italic weight="bold" align="center" mb="md" color="red">
+                    This only exports solving URLs. Feature complete edit-mode URLs are in the
+                    works.
+                </Text>
                 <Checkbox
                     disabled
                     checked={exportPlay}
                     onChange={(event) => setExportPlay(event.currentTarget.checked)}
-                    label="Export solving URL (the only one supported, currently)"
+                    label="Export solving URL"
                 />
                 <Center>
                     <Button
