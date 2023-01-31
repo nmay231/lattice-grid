@@ -1,8 +1,10 @@
 import { createStyles } from "@mantine/core";
 import { usePageLeave } from "@mantine/hooks";
 import { useCallback, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { BlocklyModal } from "../components/Blockly/BlocklyModal";
 import { ImportExportModal } from "../components/ImportExportModal";
+import { importPuzzle } from "../components/ImportExportModal/ImportExportModal";
 import { SideBar } from "../components/SideBar";
 import { ResizeModal } from "../components/SideBar/MainGroup/ResizeModal";
 import { SVGCanvas } from "../components/SVGCanvas";
@@ -60,13 +62,24 @@ const useStyles = createStyles((theme, { canvasWidth }: { canvasWidth: string })
 export const PuzzlePage = ({ pageMode }: { pageMode: PageMode }) => {
     const { classes } = useStyles({ canvasWidth: "70%" });
     const puzzle = usePuzzle();
+    const navigate = useNavigate();
+    const { search: params } = useLocation();
 
     usePageLeave(puzzle.controls.onPageBlur.bind(puzzle.controls));
     useGlobalEventListeners(puzzle.controls);
 
     useEffect(() => {
         puzzle.settings.pageMode = pageMode;
-    }, [puzzle, pageMode]);
+        if (params) {
+            window.setTimeout(() => {
+                puzzle.settings.editMode = "answer";
+                importPuzzle(puzzle, params.slice(1));
+            }, 50);
+        } else {
+            navigate("/edit", { replace: true });
+            puzzle.startUp();
+        }
+    }, [puzzle, pageMode, navigate, params]);
 
     return (
         <div className={classes.mainContainer}>

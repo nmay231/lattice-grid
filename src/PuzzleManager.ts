@@ -46,7 +46,7 @@ export class PuzzleManager {
         actionWindowMs: 600,
     });
 
-    constructor() {
+    startUp() {
         this.loadPuzzle();
         this.resizeCanvas();
         this.renderChange({ type: "draw", layerIds: "all" });
@@ -153,7 +153,9 @@ export class PuzzleManager {
             });
         }
 
-        localStorage.setItem("_currentPuzzle", JSON.stringify(this._getParams()));
+        if (this.settings.pageMode === "edit") {
+            localStorage.setItem("_currentPuzzle", JSON.stringify(this._getParams()));
+        }
     }
 
     _getParams() {

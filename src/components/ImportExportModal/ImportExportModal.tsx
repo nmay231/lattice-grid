@@ -1,6 +1,15 @@
-import { Box, Button, Center, Divider, Group, Modal, Text, Textarea } from "@mantine/core";
+import {
+    Box,
+    Button,
+    Center,
+    Checkbox,
+    Divider,
+    Group,
+    Modal,
+    Text,
+    Textarea,
+} from "@mantine/core";
 import { useClipboard } from "@mantine/hooks";
-import { cloneDeep } from "lodash";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { LayerStorage, LayerStorageJSON } from "../../LayerStorage";
 import { PuzzleManager } from "../../PuzzleManager";
@@ -30,10 +39,6 @@ type PuzzleData = {
 const currentVersion: PuzzleData["version"] = "alpha-1";
 
 export const importPuzzle = (puzzle: PuzzleManager, text: string) => {
-    text = text.trim();
-    if (/^https?:\/\//.test(text)) {
-        text = text.split("?")[1];
-    }
     try {
         const puzzleData: PuzzleData = decompressJSON(text);
         if (!puzzleData?.version || typeof puzzleData.version !== "string")
@@ -58,8 +63,17 @@ export const importPuzzle = (puzzle: PuzzleManager, text: string) => {
         puzzle.resizeCanvas();
         const gridObjects = puzzle.storage.objects[puzzle.grid.id];
         for (const layerId of puzzle.layers.keys()) {
-            if (layerId in puzzleData.objects) {
-                gridObjects[layerId] = LayerStorage.fromJSON(puzzleData.objects[layerId]);
+            if (!(layerId in puzzleData.objects)) continue;
+            const storage = LayerStorage.fromJSON(puzzleData.objects[layerId]);
+            gridObjects[layerId] = storage;
+            const bad = [
+                ...storage.groups.getGroup("answer").values(),
+                ...storage.groups.getGroup("ui").values(),
+            ];
+
+            for (const objectId of bad) {
+                storage.objects.delete(objectId);
+                storage.groups.deleteKey(objectId);
             }
         }
         puzzle.renderChange({ type: "draw", layerIds: "all" });
@@ -76,6 +90,7 @@ export const ImportExportModal = () => {
     const puzzle = usePuzzle();
     const [importAttempted, setImportAttempted] = useState(false);
     const textRef = useRef<HTMLTextAreaElement>(null);
+    const [exportPlay, setExportPlay] = useState(true);
     const { opened, close } = useModal("import-export");
 
     const { copied, copy, error: copyError } = useClipboard({ timeout: 3000 });
@@ -83,12 +98,12 @@ export const ImportExportModal = () => {
     const puzzleString = useMemo(() => {
         if (opened) {
             // Assume only one grid
-            const rawObjects = cloneDeep(puzzle.storage.objects[puzzle.grid.id]);
+            const currentObjects = puzzle.storage.objects[puzzle.grid.id];
             const objects: Record<Layer["id"], LayerStorageJSON> = {};
             for (const layerId of puzzle.layers.keys()) {
                 // Ignore UI Information
                 if (layerId === "OverlayLayer") continue;
-                objects[layerId] = rawObjects[layerId].toJSON();
+                objects[layerId] = currentObjects[layerId].toJSON();
             }
             const params = puzzle._getParams();
             // TODO: Synchronize version numbers from one source.
@@ -97,9 +112,9 @@ export const ImportExportModal = () => {
                 params,
                 version: currentVersion,
             } satisfies PuzzleData);
-            return `${window.location.origin}/?${string}`;
+            return `${window.location.origin}/${exportPlay ? "" : "edit"}?${string}`;
         }
-    }, [puzzle, opened]);
+    }, [puzzle, opened, exportPlay]);
 
     const noRefSet = () => {
         throw errorNotification({ error: null, message: "Ref not set in import/export textarea" });
@@ -107,7 +122,11 @@ export const ImportExportModal = () => {
 
     const handleImport = () => {
         if (!textRef.current) return noRefSet();
-        importPuzzle(puzzle, textRef.current.value);
+        let text = textRef.current.value.trim();
+        if (/^https?:\/\//.test(text)) {
+            text = text.split("?")[1];
+        }
+        importPuzzle(puzzle, text);
         close();
     };
 
@@ -153,6 +172,12 @@ export const ImportExportModal = () => {
                 </Text>
 
                 <Textarea autosize readOnly minRows={1} maxRows={6} mb="md" value={puzzleString} />
+                <Checkbox
+                    disabled
+                    checked={exportPlay}
+                    onChange={(event) => setExportPlay(event.currentTarget.checked)}
+                    label="Export solving URL (the only one supported, currently)"
+                />
                 <Center>
                     <Button
                         onClick={() => {

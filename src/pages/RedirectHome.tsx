@@ -9,11 +9,14 @@ export const RedirectHome = () => {
     const puzzle = usePuzzle();
 
     useEffect(() => {
-        navigate("/edit", { replace: true });
         if (params) {
+            navigate(`/play${params}`, { replace: true });
             window.setTimeout(() => {
-                importPuzzle(puzzle, params);
+                puzzle.settings.editMode = "answer";
+                importPuzzle(puzzle, params.slice(1));
             }, 50);
+        } else {
+            navigate("/edit", { replace: true });
         }
     }, [navigate, params, puzzle]);
 
