@@ -39,6 +39,7 @@ export class PuzzleManager {
     settings = proxy({
         editMode: "question" as EditMode,
         pageMode: "edit" as PageMode,
+        debugging: false,
         borderPadding: 60,
         cellSize: 60,
         // The time window allowed between parts of a single action, e.g. typing a two-digit number

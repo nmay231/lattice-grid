@@ -8,7 +8,7 @@ import { SortableList } from "./SortableList";
 export const LayerList = () => {
     const puzzle = usePuzzle();
     const snap = useSnapshot(puzzle.layers);
-    const { pageMode } = useSettings();
+    const { pageMode, debugging: debug } = useSettings();
 
     const { ref: focusGroupRef } = useFocusGroup({ puzzle, group: "layerList" });
 
@@ -42,7 +42,7 @@ export const LayerList = () => {
                 {snap.order.map((id) => {
                     const { ethereal, displayName } = snap.map[id];
                     return (
-                        !ethereal && (
+                        (debug || !ethereal) && (
                             <LayerItem
                                 key={id}
                                 id={id}
