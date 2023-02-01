@@ -172,6 +172,8 @@ export class PuzzleManager {
         return data;
     }
 
+    // TODO: I might need to not selectLayer in .addLayer() anymore. But let me figure out the issue right now.
+
     addLayer(
         layerClass: LayerClass<any>,
         id: Layer["id"] | null,
@@ -179,12 +181,13 @@ export class PuzzleManager {
     ): Layer["id"] {
         const layer = new layerClass(layerClass, this);
         if (id) layer.id = id;
+
         // Add the layer to the end, but before the UILayer
         this.layers.set(layer.id, valtioRef(layer), this.UILayer.id);
-        this.selectLayer(layer.id);
 
         this.storage.addStorage({ grid: this.grid, layer });
         this.changeLayerSettings(layer.id, settings || layerClass.defaultSettings);
+        this.selectLayer(layer.id);
 
         return layer.id;
     }
@@ -243,7 +246,7 @@ export class PuzzleManager {
             if (!elm) {
                 throw errorNotification({
                     error: null,
-                    message: "focusCurrentLayer: Unable to find the next LayerItem to focus",
+                    message: `focusCurrentLayer: Unable to focus the current LayerItem ${this.layers.currentKey}`,
                 });
             }
             elm.focus();
