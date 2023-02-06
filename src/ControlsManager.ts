@@ -177,6 +177,14 @@ export class ControlsManager {
             this.applyLayerEvent(layer, { type: "cancelAction" });
         } else if (keypress === "Delete") {
             this.applyLayerEvent(layer, { type: "delete", keypress });
+        } else if (keypress === "ctrl-`") {
+            if (this.puzzle.settings.pageMode === "edit") {
+                const nowDebugging = !this.puzzle.settings.debugging;
+                this.puzzle.settings.debugging = nowDebugging;
+                this.puzzle.layers.selectable = nowDebugging
+                    ? () => true
+                    : (layer) => !layer.ethereal;
+            }
         } else if (keypress === "ctrl-z" || keypress === "ctrl-y") {
             const { storage } = this.puzzle;
             const appliedActions =

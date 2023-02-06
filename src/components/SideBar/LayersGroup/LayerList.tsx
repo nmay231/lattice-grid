@@ -1,6 +1,6 @@
 import { mergeRefs, useEventListener } from "@mantine/hooks";
 import { useSnapshot } from "valtio";
-import { usePuzzle } from "../../../state/puzzle";
+import { usePuzzle, useSettings } from "../../../state/puzzle";
 import { useFocusGroup } from "../../../utils/focusManagement";
 import { LayerItem } from "./LayerItem";
 import { SortableList } from "./SortableList";
@@ -8,6 +8,7 @@ import { SortableList } from "./SortableList";
 export const LayerList = () => {
     const puzzle = usePuzzle();
     const snap = useSnapshot(puzzle.layers);
+    const { pageMode, debugging: debug } = useSettings();
 
     const { ref: focusGroupRef } = useFocusGroup({ puzzle, group: "layerList" });
 
@@ -41,12 +42,13 @@ export const LayerList = () => {
                 {snap.order.map((id) => {
                     const { ethereal, displayName } = snap.map[id];
                     return (
-                        !ethereal && (
+                        (debug || !ethereal) && (
                             <LayerItem
                                 key={id}
                                 id={id}
                                 displayName={displayName}
                                 selected={id === snap.currentKey}
+                                editable={pageMode === "edit"}
                                 handleDelete={handleDelete(id)}
                             />
                         )

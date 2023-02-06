@@ -17,6 +17,7 @@ import {
     LayerClass,
     LocalStorageData,
     NeedsUpdating,
+    PageMode,
     RenderChange,
     UnknownObject,
     ValtioRef,
@@ -37,7 +38,8 @@ export class PuzzleManager {
     controls = new ControlsManager(this);
     settings = proxy({
         editMode: "question" as EditMode,
-        // TODO: pageMode: "edit" | "play" | "compete"
+        pageMode: "edit" as PageMode,
+        debugging: false,
         borderPadding: 60,
         cellSize: 60,
         // The time window allowed between parts of a single action, e.g. typing a two-digit number
@@ -45,7 +47,7 @@ export class PuzzleManager {
         actionWindowMs: 600,
     });
 
-    constructor() {
+    startUp() {
         this.loadPuzzle();
         this.resizeCanvas();
         this.renderChange({ type: "draw", layerIds: "all" });
@@ -152,7 +154,9 @@ export class PuzzleManager {
             });
         }
 
-        localStorage.setItem("_currentPuzzle", JSON.stringify(this._getParams()));
+        if (this.settings.pageMode === "edit") {
+            localStorage.setItem("_currentPuzzle", JSON.stringify(this._getParams()));
+        }
     }
 
     _getParams() {
@@ -168,6 +172,8 @@ export class PuzzleManager {
         return data;
     }
 
+    // TODO: I might need to not selectLayer in .addLayer() anymore. But let me figure out the issue right now.
+
     addLayer(
         layerClass: LayerClass<any>,
         id: Layer["id"] | null,
@@ -175,12 +181,13 @@ export class PuzzleManager {
     ): Layer["id"] {
         const layer = new layerClass(layerClass, this);
         if (id) layer.id = id;
+
         // Add the layer to the end, but before the UILayer
         this.layers.set(layer.id, valtioRef(layer), this.UILayer.id);
-        this.selectLayer(layer.id);
 
         this.storage.addStorage({ grid: this.grid, layer });
         this.changeLayerSettings(layer.id, settings || layerClass.defaultSettings);
+        this.selectLayer(layer.id);
 
         return layer.id;
     }
@@ -239,7 +246,7 @@ export class PuzzleManager {
             if (!elm) {
                 throw errorNotification({
                     error: null,
-                    message: "focusCurrentLayer: Unable to find the next LayerItem to focus",
+                    message: `focusCurrentLayer: Unable to focus the current LayerItem ${this.layers.currentKey}`,
                 });
             }
             elm.focus();

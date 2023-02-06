@@ -40,6 +40,8 @@ export const getEventEssentials = <LP extends LayerProps = LayerProps>(
         tempStorage,
         settings: {
             editMode: "question",
+            pageMode: "edit",
+            debugging: false,
             borderPadding: 60,
             cellSize: 60,
             actionWindowMs: 600,
@@ -75,6 +77,8 @@ export const layerEventRunner = <LP extends LayerProps>(arg = {} as LayerEventRu
         tempStorage,
         settings: {
             editMode: "question",
+            pageMode: "edit",
+            debugging: false,
             borderPadding: 60,
             cellSize: 60,
             actionWindowMs: 600,

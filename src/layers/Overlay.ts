@@ -1,6 +1,6 @@
 import { OVERLAY_LAYER_ID } from "../state/blits";
 import { Layer, LayerClass, LayerProps } from "../types";
-import { BaseLayer, methodNotImplemented } from "./BaseLayer";
+import { BaseLayer } from "./BaseLayer";
 
 type OverlayProps = LayerProps;
 
@@ -13,8 +13,8 @@ export class OverlayLayer extends BaseLayer<OverlayProps> implements IOverlayLay
 
     id = OVERLAY_LAYER_ID;
     settings = this.rawSettings;
-    handleEvent = methodNotImplemented({ name: "Overlay.handleEvent" });
-    gatherPoints = methodNotImplemented({ name: "Overlay.gatherPoints" });
+    handleEvent = () => ({});
+    gatherPoints = () => [];
 
     static uniqueInstance?: OverlayLayer;
     static create = ((puzzle): OverlayLayer => {

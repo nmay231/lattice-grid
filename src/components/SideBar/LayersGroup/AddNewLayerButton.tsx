@@ -1,7 +1,7 @@
 import { Select } from "@mantine/core";
 import { useState } from "react";
 import { availableLayers } from "../../../layers";
-import { usePuzzle } from "../../../state/puzzle";
+import { usePuzzle, useSettings } from "../../../state/puzzle";
 import { useFocusElementHandler } from "../../../utils/focusManagement";
 import { smartSort } from "../../../utils/stringUtils";
 
@@ -9,6 +9,7 @@ const DEFAULT_VALUE = "Add New Layer";
 
 export const AddNewLayerButton = () => {
     const puzzle = usePuzzle();
+    const { debugging } = useSettings();
     const [layerType, setLayerType] = useState(DEFAULT_VALUE);
     const { ref, unfocus } = useFocusElementHandler();
 
@@ -23,7 +24,7 @@ export const AddNewLayerButton = () => {
     };
 
     const nonEthereal = Object.values(availableLayers)
-        .filter(({ ethereal }) => !ethereal)
+        .filter(({ ethereal }) => debugging || !ethereal)
         .sort((a, b) => smartSort(a.displayName, b.displayName))
         .map(({ type, displayName }) => ({ label: displayName, value: type as string }));
     nonEthereal.unshift({ value: DEFAULT_VALUE, label: DEFAULT_VALUE });

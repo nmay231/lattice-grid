@@ -51,10 +51,17 @@ type Props = {
     id: string;
     displayName: string;
     selected: boolean;
+    editable: boolean;
     handleDelete: React.PointerEventHandler;
 };
 
-export const LayerItem: React.FC<Props> = ({ id, displayName, selected, handleDelete }) => {
+export const LayerItem: React.FC<Props> = ({
+    id,
+    displayName,
+    selected,
+    editable,
+    handleDelete,
+}) => {
     // TODO: I eventually want to be able to edit the layers using the keyboard
     const editing = false;
     const { classes, cx } = useStyles();
@@ -75,27 +82,31 @@ export const LayerItem: React.FC<Props> = ({ id, displayName, selected, handleDe
             tabIndex={!editing ? 0 : -1}
         >
             <div className={classes.itemBody}>
-                <ActionIcon
-                    {...(editing ? attributes : {})}
-                    {...listeners}
-                    className={classes.handle}
-                    tabIndex={editing ? 0 : -1}
-                >
-                    <IoMdMenu />
-                </ActionIcon>
+                {editable && (
+                    <ActionIcon
+                        {...(editing ? attributes : {})}
+                        {...listeners}
+                        className={classes.handle}
+                        tabIndex={editing ? 0 : -1}
+                    >
+                        <IoMdMenu />
+                    </ActionIcon>
+                )}
 
                 <div className={cx(classes.name, selected && classes.nameSelected)}>
                     {selected && <IoIosArrowRoundForward />}
                     <span>{displayName}</span>
                 </div>
 
-                <ActionIcon
-                    onPointerDown={handleDelete}
-                    className={classes.remove}
-                    tabIndex={editing ? 0 : -1}
-                >
-                    <IoMdClose />
-                </ActionIcon>
+                {editable && (
+                    <ActionIcon
+                        onPointerDown={handleDelete}
+                        className={classes.remove}
+                        tabIndex={editing ? 0 : -1}
+                    >
+                        <IoMdClose />
+                    </ActionIcon>
+                )}
             </div>
         </div>
     );

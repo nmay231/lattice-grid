@@ -1,15 +1,19 @@
+import { useSettings } from "../../../state/puzzle";
 import { Group } from "../Group";
 import { AddNewLayerButton } from "./AddNewLayerButton";
 import { LayerConstraintSettings } from "./LayerConstraintSettings";
 import { LayerList } from "./LayerList";
 
 export const LayersGroup = () => {
+    const { pageMode } = useSettings();
+    const editing = pageMode === "edit";
+
     return (
         <Group name="Layers" expanded>
-            <AddNewLayerButton />
+            {editing && <AddNewLayerButton />}
             <LayerList />
-            <hr />
-            <LayerConstraintSettings />
+            {editing && <hr />}
+            {editing && <LayerConstraintSettings />}
         </Group>
     );
 };

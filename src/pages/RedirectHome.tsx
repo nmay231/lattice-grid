@@ -1,20 +1,24 @@
 import { useEffect } from "react";
-import { RouteProps, useHistory } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { importPuzzle } from "../components/ImportExportModal/ImportExportModal";
 import { usePuzzle } from "../state/puzzle";
 
-export const RedirectHome: React.FC<RouteProps> = ({ location }) => {
-    const history = useHistory();
+export const RedirectHome = () => {
+    const navigate = useNavigate();
+    const { search: params } = useLocation();
     const puzzle = usePuzzle();
 
     useEffect(() => {
-        history.replace("/edit");
-        if (location?.search) {
+        if (params) {
+            navigate(`/play${params}`, { replace: true });
             window.setTimeout(() => {
-                importPuzzle(puzzle, location.search);
+                puzzle.settings.editMode = "answer";
+                importPuzzle(puzzle, params.slice(1));
             }, 50);
+        } else {
+            navigate("/edit", { replace: true });
         }
-    }, [location?.search, history, puzzle]);
+    }, [navigate, params, puzzle]);
 
     return <>Redirecting</>;
 };
