@@ -1,4 +1,4 @@
-import { createStyles } from "@mantine/core";
+import { createStyles, ScrollArea } from "@mantine/core";
 import { useEffect, useRef } from "react";
 import { useSnapshot } from "valtio";
 import { blitGroupsProxy } from "../../state/blits";
@@ -6,6 +6,7 @@ import { canvasSizeProxy } from "../../state/canvasSize";
 import { usePuzzle } from "../../state/puzzle";
 import { BlitGroup, Layer, NeedsUpdating, StorageMode } from "../../types";
 import { errorNotification } from "../../utils/DOMUtils";
+import { sidebarProxy } from "../SideBar/SideBar";
 import { Line } from "./Line";
 import { Polygon } from "./Polygon";
 import { Text } from "./Text";
@@ -29,8 +30,8 @@ const blitList = ({
         const Blitter = blitters[group.blitter];
         return (
             <Blitter
-                blits={group.blits as NeedsUpdating}
                 // I was hoping typescript would be smarter...
+                blits={group.blits as NeedsUpdating}
                 style={group.style as NeedsUpdating}
                 key={`${layerId}-${storageMode}-${group.id}`}
             />
@@ -38,12 +39,13 @@ const blitList = ({
     });
 };
 
-const useStyles = createStyles(() => ({
+const useStyles = createStyles((theme, { sidebarOpened }: { sidebarOpened: boolean }) => ({
     scrollArea: {
         display: "flex",
         flexDirection: "column",
-        height: "100vh",
-        width: "70vw", // Temporarily hardcoded
+        height: "100svh",
+        width: sidebarOpened ? "70svw" : "100svw",
+        transition: "width 0.4s",
         overflow: "auto",
     },
     outerContainer: {
@@ -51,21 +53,23 @@ const useStyles = createStyles(() => ({
         boxSizing: "border-box",
         margin: "0px auto",
         padding: "2em",
+        touchAction: "none",
+        WebkitOverflowScrolling: "touch",
+        overscrollBehaviorY: "none",
     },
     innerContainer: {
         border: "1px dotted grey",
         margin: "0px",
         padding: "0px",
         cursor: "pointer",
-
-        "& *": {
-            pointerEvents: "none",
-        },
+        WebkitTapHighlightColor: "transparent", // Remove image highlight when drawing on mobile Chrome
     },
 }));
 
 export const SVGCanvas = () => {
-    const { classes } = useStyles();
+    const { opened } = useSnapshot(sidebarProxy);
+    const { classes } = useStyles({ sidebarOpened: opened });
+
     const { controls, layers } = usePuzzle();
     const blitGroupsSnap = useSnapshot(blitGroupsProxy);
     const snap = useSnapshot(layers);
@@ -93,7 +97,7 @@ export const SVGCanvas = () => {
     const canvasWidth = `calc(${fullScreen} + ${realSize})`;
 
     return (
-        <div className={classes.scrollArea} ref={scrollArea}>
+        <ScrollArea type="always" className={classes.scrollArea} ref={scrollArea}>
             <div
                 className={classes.outerContainer}
                 style={{ width: canvasWidth, maxWidth: `${width}px` }}
@@ -117,6 +121,6 @@ export const SVGCanvas = () => {
                     </svg>
                 </div>
             </div>
-        </div>
+        </ScrollArea>
     );
 };

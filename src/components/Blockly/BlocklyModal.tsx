@@ -103,7 +103,7 @@ export const BlocklyModal: React.FC = () => {
 
     return (
         <Drawer opened={opened} size="90%" onClose={close}>
-            <Grid columns={7} style={{ width: "100%", height: "90vh" }}>
+            <Grid columns={7} style={{ width: "100%", height: "90svh" }}>
                 <Grid.Col span={6}>
                     <div ref={blocklyDiv} style={{ width: "100%", height: "100%" }}></div>
                 </Grid.Col>

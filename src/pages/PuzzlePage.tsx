@@ -29,38 +29,18 @@ const useGlobalEventListeners = (controls: ControlsManager) => {
     }, [controls]);
 };
 
-const useStyles = createStyles((theme, { canvasWidth }: { canvasWidth: string }) => ({
-    // TODO: handle mobile screens
-    mainContainer: {
-        width: "100vw",
-        height: "100vh",
-        display: "flex",
-    },
-    canvasContainer: {
-        width: canvasWidth,
-        height: "100%",
-        display: "flex",
+const useStyles = createStyles({
+    container: {
+        width: "100svw",
+        height: "100svh",
         overflow: "hidden",
-        position: "relative",
+        display: "flex",
+        flexDirection: "row",
     },
-    sideBar: {
-        width: `calc(100% - ${canvasWidth})`,
-        height: "100%",
-        margin: "0px",
-        overflowX: "hidden",
-        overflowY: "scroll",
-        borderRight: "3px solid rgb(54, 50, 50)",
-
-        // TODO: Remove once I switch to Mantine Scrollbar
-        scrollbarWidth: "none",
-        "&::-webkit-scrollbar": {
-            display: "none",
-        },
-    },
-}));
+});
 
 export const PuzzlePage = ({ pageMode }: { pageMode: PageMode }) => {
-    const { classes } = useStyles({ canvasWidth: "70%" });
+    const { classes } = useStyles();
     const puzzle = usePuzzle();
     const navigate = useNavigate();
     const { search: params } = useLocation();
@@ -82,14 +62,12 @@ export const PuzzlePage = ({ pageMode }: { pageMode: PageMode }) => {
     }, [puzzle, pageMode, navigate, params]);
 
     return (
-        <div className={classes.mainContainer}>
-            <div className={classes.sideBar}>
-                <SideBar />
-            </div>
-            <div className={classes.canvasContainer}>
-                <SVGCanvas />
-                <ResizeModal />
-            </div>
+        <div className={classes.container}>
+            <SideBar />
+            <SVGCanvas />
+
+            {/* TODO: Originally, the resize modal was designed to be inside the area of the svg canvas. Should I fix that, or leave it be and remove the useless code... */}
+            <ResizeModal />
             <BlocklyModal />
             <ImportExportModal />
         </div>
