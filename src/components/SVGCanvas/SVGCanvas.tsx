@@ -55,7 +55,7 @@ const useStyles = createStyles((theme, { smallPageWidth, sidebarOpened }: Arg1) 
     },
     outerContainer: {
         // Remember, if I change box-sizing back to content-box, I will have to update my zoom in/out code.
-        boxSizing: "border-box",
+        // boxSizing: "border-box",
         margin: "0px auto",
         padding: "2em",
         touchAction: "none",
@@ -102,7 +102,7 @@ export const SVGCanvas = () => {
     const canvasWidth = `calc(${fullScreen} + ${realSize})`;
 
     return (
-        <ScrollArea type="always" className={classes.scrollArea} ref={scrollArea}>
+        <ScrollArea type="always" className={classes.scrollArea} viewportRef={scrollArea}>
             <div
                 className={classes.outerContainer}
                 style={{ width: canvasWidth, maxWidth: `${width}px` }}

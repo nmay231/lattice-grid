@@ -219,7 +219,6 @@ export class ControlsManager {
         this.applyLayerEvent(layer, { type: "cancelAction" });
     }
 
-    // TODO: What are the differences between document.body focusout and page blur? Do I need both, or at least for both to cooperate?
     onPageBlur() {
         const layer = this.getCurrentLayer();
         if (!this.tempStorage || !layer) return;
@@ -231,33 +230,42 @@ export class ControlsManager {
         if (!rawEvent.ctrlKey && !rawEvent.metaKey) return;
         rawEvent.preventDefault();
 
-        if (rawEvent.deltaMode !== rawEvent.DOM_DELTA_PIXEL)
-            errorNotification({
+        if (rawEvent.deltaMode !== rawEvent.DOM_DELTA_PIXEL) {
+            throw errorNotification({
                 error: null,
-                title: "I don't know what WheelEvent.deltaMode means...",
-                message:
-                    "FYI, scaling the grid with scrolling might be buggy. Submit a bug report if you get this error.",
+                title: "Submit a bug report if you get this error.",
+                message: `TODO: I need to handle WheelEvent.deltaMode=${rawEvent.deltaMode}`,
                 forever: true,
             });
+        }
 
-        const sign = rawEvent.deltaY / (Math.abs(rawEvent.deltaY) || 1);
+        const scrollArea = rawEvent.currentTarget as HTMLDivElement;
+        const areaWidth = scrollArea.getBoundingClientRect().width;
         const { zoom, width } = canvasSizeProxy;
-        // TODO: Eventually scale by the magnitude of deltaY and the size of the grid
-        const newZoom = clamp(zoom - sign * 0.2, 0, 1);
+
+        // If the grid is large compared to the screen, you want to zoom in/out more than for smaller grids
+        const gridPercentageKinda = clamp(areaWidth / width, 0, 1);
+
+        // TODO: Make this a setting (values range from `(0, Infinity]`, if you ignore the fact that the values are clamped below)
+        const zoomSensitivity = 1;
+        // Faster scroll means quicker zoom
+        const scrollSpeed = clamp((-rawEvent.deltaY * zoomSensitivity) / 200, -5, 5);
+
+        const newZoom = clamp(zoom + gridPercentageKinda * scrollSpeed, 0, 1);
         canvasSizeProxy.zoom = newZoom;
 
-        const div = rawEvent.currentTarget as HTMLDivElement;
-        const conWidth = div.getBoundingClientRect().width;
-
-        const oldWidth = conWidth * (1 - zoom) + zoom * width;
-        const newWidth = conWidth * (1 - newZoom) + newZoom * width;
+        // Now that the scale has changed, we need to scroll so the cursor is still in the same position in the grid as before
+        const oldWidth = areaWidth * (1 - zoom) + zoom * width;
+        const newWidth = areaWidth * (1 - newZoom) + newZoom * width;
         const ratio = newWidth / oldWidth;
 
-        // TODO: Why is the scrolling position so stuttery?
         const { offsetX, offsetY } = rawEvent;
-        const { scrollLeft, scrollTop } = div;
-        const left = ratio * (offsetX + scrollLeft) - offsetX;
-        const top = ratio * (offsetY + scrollTop) - offsetY;
-        div.scroll({ left, top });
+        let { scrollLeft: left, scrollTop: top } = scrollArea;
+        left += -offsetX + ratio * offsetX;
+        top += -offsetY + ratio * offsetY;
+
+        // Wrapping in microtasks twice runs the function after valtio triggers a rerender using a promise (first wrap) and after React finishes rendering (second wrap)
+        // You can wrap this in a timeout instead, but then you render to the DOM before you scroll and that's janky.
+        queueMicrotask(() => queueMicrotask(() => scrollArea.scrollTo({ left, top })));
     }
 }
