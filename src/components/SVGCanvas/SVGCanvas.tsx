@@ -6,7 +6,7 @@ import { canvasSizeProxy } from "../../state/canvasSize";
 import { usePuzzle } from "../../state/puzzle";
 import { BlitGroup, Layer, NeedsUpdating, StorageMode } from "../../types";
 import { errorNotification } from "../../utils/DOMUtils";
-import { sidebarProxy } from "../SideBar/SideBar";
+import { sidebarProxy, smallPageWidth } from "../SideBar/SideBar";
 import { Line } from "./Line";
 import { Polygon } from "./Polygon";
 import { Text } from "./Text";
@@ -39,14 +39,19 @@ const blitList = ({
     });
 };
 
-const useStyles = createStyles((theme, { sidebarOpened }: { sidebarOpened: boolean }) => ({
+type Arg1 = { smallPageWidth: string; sidebarOpened: boolean };
+
+const useStyles = createStyles((theme, { smallPageWidth, sidebarOpened }: Arg1) => ({
     scrollArea: {
         display: "flex",
         flexDirection: "column",
         height: "100svh",
-        width: sidebarOpened ? "70svw" : "100svw",
-        transition: "width 0.4s",
+        width: "100svw",
         overflow: "auto",
+        [`@media (min-width: ${smallPageWidth})`]: {
+            width: sidebarOpened ? "70svw" : "100svw",
+            transition: "width 0.4s",
+        },
     },
     outerContainer: {
         // Remember, if I change box-sizing back to content-box, I will have to update my zoom in/out code.
@@ -68,7 +73,7 @@ const useStyles = createStyles((theme, { sidebarOpened }: { sidebarOpened: boole
 
 export const SVGCanvas = () => {
     const { opened } = useSnapshot(sidebarProxy);
-    const { classes } = useStyles({ sidebarOpened: opened });
+    const { classes } = useStyles({ smallPageWidth, sidebarOpened: opened });
 
     const { controls, layers } = usePuzzle();
     const blitGroupsSnap = useSnapshot(blitGroupsProxy);

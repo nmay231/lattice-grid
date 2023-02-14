@@ -8,19 +8,30 @@ import { LayersGroup } from "./LayersGroup";
 import { MainGroup } from "./MainGroup";
 import { UtilityBar } from "./UtilityBar";
 
-export const sidebarProxy = proxy({ opened: true }); // TODO: Default should be based on screen size
+export const smallPageWidth = "800px";
 
-type Arg1 = { utilityBarHeight: string; opened: boolean };
-const useStyles = createStyles((theme, { utilityBarHeight, opened }: Arg1) => ({
+export const sidebarProxy = proxy({
+    opened: window.matchMedia?.(`(min-width: ${smallPageWidth})`).matches ?? true,
+});
+
+type Arg1 = { smallPageWidth: string; utilityBarHeight: string; opened: boolean };
+const useStyles = createStyles((theme, { smallPageWidth, utilityBarHeight, opened }: Arg1) => ({
     container: {
         height: "100%",
-        width: "30svw",
-
-        marginLeft: opened ? "-0svw" : "-30svw",
+        width: "100svw",
+        marginLeft: opened ? "-0svw" : "-100svw",
         transition: "margin-left 0.4s",
-
         borderRight: "3px solid rgb(54, 50, 50)",
-        marginRight: "-3px",
+        marginRight: opened ? "-100svw" : "-3px",
+        position: "absolute",
+        zIndex: 1,
+        backgroundColor: "white",
+        [`@media (min-width: ${smallPageWidth})`]: {
+            width: "30svw",
+            marginLeft: opened ? "-0svw" : "-30svw",
+            marginRight: "-3px",
+            position: "unset",
+        },
     },
     sidebar: {
         height: `calc(100% - ${utilityBarHeight})`,
@@ -33,7 +44,7 @@ export const SideBar = () => {
 
     const { opened } = useSnapshot(sidebarProxy);
     const utilityBarHeight = "3rem";
-    const { classes } = useStyles({ utilityBarHeight, opened });
+    const { classes } = useStyles({ smallPageWidth, utilityBarHeight, opened });
 
     return (
         <div className={classes.container}>
