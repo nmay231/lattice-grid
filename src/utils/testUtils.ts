@@ -12,7 +12,7 @@ import {
     Point,
     PointerMoveOrDown,
 } from "../types";
-import { formatAnything } from "./stringUtils";
+import { stringifyAnything } from "./stringUtils";
 
 export type GetEventEssentialsArg<LP extends LayerProps> = {
     stored?: LayerStorage<LP>;
@@ -215,7 +215,7 @@ const _defineAllUsedProperties = <T extends object = any>(
     stringified: string | null,
     attributeChain: string,
 ): T => {
-    stringified = stringified || formatAnything(x);
+    stringified = stringified || stringifyAnything(x);
     return new Proxy(x, {
         get(target, p, receiver) {
             if (typeof p !== "string") {

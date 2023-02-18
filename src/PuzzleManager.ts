@@ -26,7 +26,7 @@ import { errorNotification } from "./utils/DOMUtils";
 import { valtioRef } from "./utils/imports/valtio";
 import { LatestTimeout } from "./utils/LatestTimeout";
 import { IndexedOrderedMap } from "./utils/OrderedMap";
-import { formatAnything } from "./utils/stringUtils";
+import { stringifyAnything } from "./utils/stringUtils";
 
 export class PuzzleManager {
     layers = proxy(new IndexedOrderedMap<ValtioRef<Layer>>((layer) => !layer.ethereal));
@@ -150,7 +150,7 @@ export class PuzzleManager {
         } else {
             throw errorNotification({
                 error: null,
-                message: `Failed to render to canvas: ${formatAnything(change)}`,
+                message: `Failed to render to canvas: ${stringifyAnything(change)}`,
             });
         }
 

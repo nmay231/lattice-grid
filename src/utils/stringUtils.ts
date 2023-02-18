@@ -1,9 +1,17 @@
 import { randomId } from "@mantine/hooks";
 import { Base64 } from "js-base64";
+import { inspect } from "node-inspect-extracted";
 import { deflate, inflate } from "pako";
 import { UnknownObject } from "../types";
 
-export { format as formatAnything } from "node-inspect-extracted";
+export const stringifyAnything = (obj: any): string => {
+    try {
+        return inspect(obj, {showProxy: true});
+    } catch (err) {
+        console.error(err);
+        return `[COULD_NOT_STRINGIFY_OBJECT]`;
+    }
+};
 
 export const keypressString = (
     event: Pick<KeyboardEvent, "key" | "ctrlKey" | "shiftKey">,
