@@ -3,6 +3,7 @@ import { usePageLeave } from "@mantine/hooks";
 import { useCallback, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { BlocklyModal } from "../components/Blockly/BlocklyModal";
+import { DebugPointers } from "../components/DebugPointers";
 import { ImportExportModal } from "../components/ImportExportModal";
 import { importPuzzle } from "../components/ImportExportModal/ImportExportModal";
 import { SideBar } from "../components/SideBar";
@@ -65,6 +66,7 @@ export const PuzzlePage = ({ pageMode }: { pageMode: PageMode }) => {
         <div className={classes.container}>
             <SideBar />
             <SVGCanvas />
+            <DebugPointers />
 
             {/* TODO: Originally, the resize modal was designed to be inside the area of the svg canvas. Should I fix that, or leave it be and remove the useless code... */}
             <ResizeModal />

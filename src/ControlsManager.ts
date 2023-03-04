@@ -1,4 +1,5 @@
 import { clamp } from "lodash";
+import { proxy } from "valtio";
 import { euclidean } from "./algorithms/hopStraight";
 import { PuzzleManager } from "./PuzzleManager";
 import { canvasSizeProxy } from "./state/canvasSize";
@@ -209,7 +210,8 @@ export class _PointerState {
 export class ControlsManager {
     blurCanvasTimeout = new LatestTimeout();
     tempStorage: Record<string, UnknownObject> | null = null;
-    state = new _PointerState();
+    // This is a proxy to enable debugging pointer positions
+    state = proxy(new _PointerState());
 
     // Canvas event listeners
     eventListeners = {
