@@ -21,10 +21,15 @@ const _DebugPointers = () => {
     const {
         controls: { state },
     } = usePuzzle();
-    const { firstPointer: first, secondPointer: second } = useProxy(state);
+    const { mode, firstPointer: first, secondPointer: second } = useProxy(state);
 
     return (
         <div>
+            <Affix position={{ left: 0, top: 0 }}>
+                <Box p={3} bg="gray">
+                    pointerMode={mode}
+                </Box>
+            </Affix>
             {first && (
                 <CrossHairs x={first.lastClientXY[0]} y={first.lastClientXY[1]} color="black" />
             )}

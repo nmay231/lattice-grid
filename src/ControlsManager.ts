@@ -15,6 +15,7 @@ import {
 import { errorNotification } from "./utils/DOMUtils";
 import { focusProxy, _focusState } from "./utils/focusManagement";
 import { LatestTimeout } from "./utils/LatestTimeout";
+import { FancyVector } from "./utils/math";
 import { keypressString } from "./utils/stringUtils";
 
 export type PartialPointerEvent = Pick<
@@ -22,8 +23,7 @@ export type PartialPointerEvent = Pick<
     "clientX" | "clientY" | "buttons" | "pointerId"
 >;
 
-// TODO: Maybe this should just be part of the Vector class, if I want to implement that
-const diff = (a: Vector, b: Vector) => [a[0] - b[0], a[1] - b[1]] as Vector;
+type PointerInfo = { pointerId: number; startClientXY: Vector; lastClientXY: Vector };
 
 export class _PointerState {
     nPointers = 0;
@@ -72,13 +72,7 @@ export class _PointerState {
             case "panZoom+first":
             case "panZoom+second":
             case "drawPan+first": {
-                // TODO: Remove once I add tests for this code.
-                throw errorNotification({
-                    error: null,
-                    message: `Logical error in PointerState: mode=${this.mode}, whichPointer=${which}`,
-                });
-                // // These states should never happen.
-                // return ["ignore"] as const;
+                return ["ignore", "!invalid state reached!"] as const;
             }
         }
     }
@@ -86,7 +80,7 @@ export class _PointerState {
     onPointerMove(event: PartialPointerEvent) {
         if (this.mode === "finished" || !this.button) return ["ignore"] as const;
 
-        const [which, pointer] = this._setPointer(event);
+        const [which, pointer, otherPointer] = this._setPointer(event);
 
         // More than two pointers already
         if (which === "ignore") return ["ignore"] as const;
@@ -101,32 +95,43 @@ export class _PointerState {
                     return ["ignore"] as const;
                 }
                 this.mode = "drawPan";
-                return [
-                    "drawPan",
-                    { xy: [event.clientX, event.clientY] as Vector, panBy: [0, 0] as Vector },
-                ] as const;
+                const xy: Vector = [event.clientX, event.clientY];
+                return ["draw", { xy, button: this.button }] as const;
+            }
+            case "drawPan+second": {
+                const pan = new FancyVector(pointer.lastClientXY).minus([
+                    event.clientX,
+                    event.clientY,
+                ]).xy;
+                return ["pan", { pan }] as const;
             }
             case "panZoom+first":
-            case "panZoom+second":
-            case "drawPan+second": {
-                const panBy: Vector =
-                    which === "first"
-                        ? [0, 0]
-                        : diff(pointer.clientXY, [event.clientX, event.clientY]);
-                let scale = 1;
-                if (this.mode === "panZoom") {
-                    scale = 1; // TODO: Calculate by starting clientXY so that floating point error doesn't accumulate
-                }
-                return ["panZoom", { panBy, scale }] as const;
+            case "panZoom+second": {
+                // There is technically no panning, but that is handled by scaling in and out with two different origins
+
+                if (!otherPointer) return ["ignore", "!invalid state reached!"] as const;
+                const origin = otherPointer.lastClientXY;
+                const from = pointer.lastClientXY;
+                const to: Vector = [event.clientX, event.clientY];
+
+                return ["scale", { origin, from, to }] as const;
+                // /* eslint-disable @typescript-eslint/no-non-null-assertion */
+                // const start1 = new FancyVector(this.firstPointer!.startClientXY);
+                // const last1 = new FancyVector(this.firstPointer!.lastClientXY);
+                // const start2 = new FancyVector(this.secondPointer!.startClientXY);
+                // const last2 = new FancyVector(this.secondPointer!.lastClientXY);
+                // /* eslint-enable @typescript-eslint/no-non-null-assertion */
+
+                // const scale = clamp(
+                //     Math.abs(start1.minus(start2).length / last1.minus(last2).length),
+                //     0.1,
+                //     10,
+                // );
+
+                // return ["scale", { origin: pointer.lastClientXY, scale }] as const;
             }
             case "start+second": {
-                // TODO: Remove once I add tests for this code.
-                throw errorNotification({
-                    error: null,
-                    message: `Logical error in PointerInputState: mode=${this.mode}, whichPointer=${which}`,
-                });
-                // // These states should never happen.
-                // return ["ignore"] as const;
+                return ["ignore", "!invalid state reached!"] as const;
             }
         }
     }
@@ -154,45 +159,42 @@ export class _PointerState {
                 finish();
                 return ["up"] as const;
             }
-            case "drawPan+second":
+            case "drawPan+second": {
+                this.secondPointer = null;
+                return ["ignore"] as const;
+            }
             case "panZoom+first":
             case "panZoom+second": {
                 finish();
                 return ["ignore"] as const;
             }
             case "start+second": {
-                // TODO: Remove once I add tests for this code.
-                throw errorNotification({
-                    error: null,
-                    message: `Logical error in PointerInputState: mode=${this.mode}, whichPointer=${which}`,
-                });
-                // // These states should never happen.
-                // return ["ignore"] as const;
+                return ["ignore", "!invalid state reached!"] as const;
             }
         }
     }
 
-    firstPointer: null | { pointerId: number; startClientXY: Vector; clientXY: Vector } = null;
-    secondPointer: null | { pointerId: number; startClientXY: Vector; clientXY: Vector } = null;
+    firstPointer: null | PointerInfo = null;
+    secondPointer: null | PointerInfo = null;
 
     // TODO: split these into get and update so that it's more specific
     _setPointer({ pointerId, clientX, clientY }: PartialPointerEvent) {
         if (pointerId === this.firstPointer?.pointerId) {
             const old = this.firstPointer;
-            this.firstPointer = { ...old, clientXY: [clientX, clientY] };
-            return ["first", old] as const;
+            this.firstPointer = { ...old, lastClientXY: [clientX, clientY] };
+            return ["first", old, this.secondPointer] as const;
         } else if (pointerId === this.secondPointer?.pointerId) {
             const old = this.secondPointer;
-            this.secondPointer = { ...old, clientXY: [clientX, clientY] };
-            return ["second", old] as const;
+            this.secondPointer = { ...old, lastClientXY: [clientX, clientY] };
+            return ["second", old, this.firstPointer] as const;
         } else if (this.firstPointer === null) {
             const clientXY: Vector = [clientX, clientY];
-            this.firstPointer = { pointerId, startClientXY: clientXY, clientXY };
-            return ["first", this.firstPointer] as const;
+            this.firstPointer = { pointerId, startClientXY: clientXY, lastClientXY: clientXY };
+            return ["first", this.firstPointer, this.secondPointer] as const;
         } else if (this.secondPointer === null) {
             const clientXY: Vector = [clientX, clientY];
-            this.secondPointer = { pointerId, startClientXY: clientXY, clientXY };
-            return ["second", this.secondPointer] as const;
+            this.secondPointer = { pointerId, startClientXY: clientXY, lastClientXY: clientXY };
+            return ["second", this.secondPointer, this.firstPointer] as const;
         }
         return ["ignore"] as const;
     }
@@ -304,24 +306,116 @@ export class ControlsManager {
         const [action, details] = this.state.onPointerDown(rawEvent);
         if (!layer || action === "ignore") return;
 
-        this.tempStorage = {};
-        const event = this.cleanPointerEvent("pointerDown", details.xy, rawEvent);
-        this.applyLayerEvent(layer, event);
+        // this.tempStorage = {};
+        // const event = this.cleanPointerEvent("pointerDown", details.xy, rawEvent);
+        // this.applyLayerEvent(layer, event);
+    }
+
+    _dom2svg({
+        dom,
+        canvas,
+        vector,
+    }: {
+        dom: Record<"left" | "top" | "width" | "height", number>;
+        canvas: Record<"minX" | "minY" | "width" | "height", number>;
+        vector: Vector;
+    }) {
+        const { left, top, width: realWidth, height: realHeight } = dom;
+        const { minX, minY, width, height } = canvas;
+        const [clientX, clientY] = vector;
+        // These transformations convert dom coordinates to svg coords
+        const x = minX + (clientX - left) * (height / realHeight);
+        const y = minY + (clientY - top) * (width / realWidth);
+        return [x, y] as Vector;
     }
 
     onPointerMove(rawEvent: React.PointerEvent) {
         const layer = this.getCurrentLayer();
         const [action, details] = this.state.onPointerMove(rawEvent);
-        if (!layer || !this.tempStorage || action === "ignore") return;
+        if (!layer || action === "ignore") return;
 
-        if (action === "panZoom") {
-            // TODO:
-            // canvasSizeProxy.zoom = this._newZoomFromScaleFactor(canvasSizeProxy.zoom,details.scale);
-            this._scrollAfterZoom(() => rawEvent.currentTarget.scrollBy(...details.panBy));
-        } else if (action === "drawPan") {
-            rawEvent.currentTarget.scrollBy(...details.panBy);
-            const event = this.cleanPointerEvent("pointerMove", details.xy, rawEvent);
-            this.applyLayerEvent(layer, event);
+        const scrollArea = rawEvent.currentTarget.parentElement!.parentElement!.parentElement!;
+
+        if (action === "pan") {
+            // TODO: Better way to access scrollArea
+            scrollArea.scrollBy({
+                left: details.pan[0],
+                top: details.pan[1],
+            });
+        } else if (action === "scale") {
+            // TODO: I need to figure out the newZoom value (and scroll offset) based on the old zoom and the scale stuff
+            // I do that by ~~scratch that~~ I might just have some zoom that sorta works even if it doesn't keep the fingers in the same place. (then again, I can't really ask for feedback on it if it doesn't work well).
+
+            const dom = scrollArea.getBoundingClientRect();
+            const canvas = canvasSizeProxy;
+            // const origin = new FancyVector(this._dom2svg({ dom, canvas, vector: details.origin }));
+            // const from = new FancyVector(this._dom2svg({ dom, canvas, vector: details.from }));
+            // const to = new FancyVector(this._dom2svg({ dom, canvas, vector: details.to }));
+            const { origin, from, to } = details;
+            const originVector = new FancyVector(origin);
+            const scale = originVector.minus(to).length / originVector.minus(from).length;
+
+            const realWidth = canvas.width; // zoom=1
+            const fullScreen = dom.width; // zoom=0
+
+            const oldWidth = canvas.zoom * canvas.width + (1 - canvas.zoom) * dom.width;
+            const newWidth = scale * oldWidth;
+
+            // newWidth = newZoom * canvas.width + (1 - newZoom) * dom.width;
+            // newWidth - dom.width = newZoom * canvas.width - newZoom * dom.width
+            // newZoom = (newWidth - dom.width) / (canvas.width - dom.width);
+            // newZoom = (scale * canvas.zoom * canvas.width + scale * dom.width - (scale * canvas.zoom * dom.width) - dom.width) / (canvas.width - dom.width);
+            // newZoom = ((scale * canvas.zoom) * canvas.width + (scale - scale * canvas.zoom - 1) * dom.width) / (canvas.width - dom.width);
+            // newZoom = ((scale * canvas.zoom) * canvas.width + (scale * (1 - canvas.zoom) - 1) * dom.width) / (canvas.width - dom.width);
+
+            const newZoom =
+                // clamp(
+                (scale * canvas.unclampedZoom * canvas.width +
+                    (scale * (1 - canvas.unclampedZoom) - 1) * dom.width) /
+                (canvas.width - dom.width);
+            //     0,
+            //     1,
+            // );
+
+            // TODO: If I keep unclampedZoom, I need to reset it to 0 or 1 so that it's not remembered when zooming later. The best way to do that is to have PointerState return "panZoomFinish" on pointer up (or maybe ["finish", "panZoom"] if there are other similar "finish" states?)
+            canvas.unclampedZoom = newZoom;
+            canvas.zoom = clamp(newZoom, 0, 1);
+
+            // Copied from the onWheel even handler (Is this correct?)
+            // const oldWidth = areaWidth * (1 - zoom) + zoom * width;
+            // const newWidth = areaWidth * (1 - newZoom) + newZoom * width;
+            // const ratio = newWidth / oldWidth;
+
+            // const ratio = scale;
+
+            // const [offsetX, offsetY] = origin;
+            // let { scrollLeft: left, scrollTop: top } = scrollArea;
+            // left += -offsetX + ratio * offsetX;
+            // top += -offsetY + ratio * offsetY;
+
+            const translate = new FancyVector(from).minus(to).scale(0.5);
+            let { scrollLeft: left, scrollTop: top } = scrollArea;
+            left += translate.x;
+            top += translate.y;
+
+            this._scrollAfterZoom(() => scrollArea.scrollTo({ left, top }));
+
+            // const { origin, from, to } = details;
+            // const { width, height, zoom } = canvasSizeProxy;
+            // const {
+            //     left,
+            //     top,
+            //     width: areaWight,
+            //     height: areaHeight,
+            // } = scrollArea.getBoundingClientRect();
+
+            // TODO: Commit to have an excuse to refactor later...
+
+            // Wait... I don't multiple zoom by scale! scale affects the scale of the grid which is in svg coordinates, while
+            // canvasSizeProxy.zoom = clamp(canvasSizeProxy.zoom * details.scale, 0, 1);
+        } else if (action === "draw" && this.tempStorage) {
+            // const event = this.cleanPointerEvent("pointerMove", details.xy, rawEvent);
+            // this.applyLayerEvent(layer, event);
         }
     }
 
@@ -330,7 +424,7 @@ export class ControlsManager {
         const [action] = this.state.onPointerUp(rawEvent);
         if (!layer || !this.tempStorage || action === "ignore") return;
 
-        this.applyLayerEvent(layer, { type: "pointerUp" });
+        // this.applyLayerEvent(layer, { type: "pointerUp" });
     }
 
     onPointerLeave(rawEvent: React.PointerEvent) {
