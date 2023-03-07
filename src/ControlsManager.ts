@@ -14,8 +14,8 @@ import {
 } from "./types";
 import { errorNotification } from "./utils/DOMUtils";
 import { focusProxy, _focusState } from "./utils/focusManagement";
-import { LatestTimeout } from "./utils/LatestTimeout";
 import { FancyVector } from "./utils/math";
+import { DelayedCallback } from "./utils/primitiveWrappers";
 import { keypressString } from "./utils/stringUtils";
 
 export type PartialPointerEvent = Pick<
@@ -115,20 +115,6 @@ export class _PointerState {
                 const to: Vector = [event.clientX, event.clientY];
 
                 return ["scale", { origin, from, to }] as const;
-                // /* eslint-disable @typescript-eslint/no-non-null-assertion */
-                // const start1 = new FancyVector(this.firstPointer!.startClientXY);
-                // const last1 = new FancyVector(this.firstPointer!.lastClientXY);
-                // const start2 = new FancyVector(this.secondPointer!.startClientXY);
-                // const last2 = new FancyVector(this.secondPointer!.lastClientXY);
-                // /* eslint-enable @typescript-eslint/no-non-null-assertion */
-
-                // const scale = clamp(
-                //     Math.abs(start1.minus(start2).length / last1.minus(last2).length),
-                //     0.1,
-                //     10,
-                // );
-
-                // return ["scale", { origin: pointer.lastClientXY, scale }] as const;
             }
             case "start+second": {
                 return ["ignore", "!invalid state reached!"] as const;
@@ -209,23 +195,29 @@ export class _PointerState {
         return ["ignore"] as const;
     }
 }
+
 export class ControlsManager {
-    blurCanvasTimeout = new LatestTimeout();
-    tempStorage: Record<string, UnknownObject> | null = null;
-    // This is a proxy to enable debugging pointer positions
-    state = proxy(new _PointerState());
+    tempStorage: UnknownObject = {};
+    state = proxy(new _PointerState()); // Wrapped in a proxy to enable debugging pointer positions
 
     // Canvas event listeners
     eventListeners = {
         onPointerDown: this.onPointerDown.bind(this),
         onPointerMove: this.onPointerMove.bind(this),
         onPointerUp: this.onPointerUp.bind(this),
-        onPointerLeave: this.onPointerLeave.bind(this),
-        onPointerEnter: this.onPointerEnter.bind(this),
+        // I don't know how to handle leave events since touch interactions always call leave before up.
+        // TODO: I will come back to this so that you don't get weird shenanigans when leaving the canvas when drawing with a mouse (it does still work with touch screens).
+        // onPointerLeave: this.onPointerLeave.bind(this),
+        // onPointerEnter: this.onPointerEnter.bind(this),
         onContextMenu: this.onContextMenu.bind(this),
     };
 
     constructor(public puzzle: PuzzleManager) {}
+
+    // Is a pointer interaction currently occurring?
+    get interactingPointers() {
+        return !!this.state.nPointers; // TODO: Move to PointerState?
+    }
 
     getCurrentLayer() {
         const id = this.puzzle.layers.currentKey;
@@ -237,17 +229,9 @@ export class ControlsManager {
         clientXY: Vector,
         event: React.PointerEvent,
     ): PointerMoveOrDown {
-        const [clientX, clientY] = clientXY;
-        const {
-            left,
-            top,
-            width: realWidth,
-            height: realHeight,
-        } = event.currentTarget.getBoundingClientRect();
-        const { minX, minY, width, height } = this.puzzle.grid.getCanvasRequirements(this.puzzle);
-        // These transformations convert dom coordinates to svg coords
-        const x = minX + (clientX - left) * (height / realHeight);
-        const y = minY + (clientY - top) * (width / realWidth);
+        const dom = event.currentTarget.getBoundingClientRect();
+        const canvas = canvasSizeProxy;
+        const [x, y] = this._dom2svg({ dom, canvas, vector: clientXY });
 
         // TODO: Should I actually remember which meta keys were held down on pointer down?
         const { altKey, ctrlKey, shiftKey } = event;
@@ -265,27 +249,23 @@ export class ControlsManager {
         const layerEvent: LayerEvent<LayerProps> = {
             ...this.puzzle,
             ...event,
-            tempStorage: this.tempStorage || {},
+            tempStorage: this.tempStorage,
         };
 
         if (layerEvent.type === "pointerDown" || layerEvent.type === "pointerMove") {
             const points = layer.gatherPoints(layerEvent);
-            if (!points?.length) {
+            if (!points.length) {
                 return;
             }
             layerEvent.points = points;
         }
 
-        const { discontinueInput, history } = layer.handleEvent(layerEvent) || {};
-
-        if (
-            layerEvent.type === "keyDown" ||
-            discontinueInput === true ||
-            // On pointer up, layer's have to explicitly request to not discontinue input
-            (layerEvent.type === "pointerUp" && discontinueInput !== false)
-        ) {
-            this.resetControls();
+        if (layerEvent.type === "pointerUp") {
+            this.tempStorage = {};
         }
+
+        // TODO: Deprecate discontinueInput
+        const { discontinueInput, history } = layer.handleEvent(layerEvent);
 
         this.puzzle.storage.addToHistory({
             puzzle: this.puzzle,
@@ -296,9 +276,7 @@ export class ControlsManager {
         this.puzzle.renderChange({ type: "draw", layerIds: [layer.id] });
     }
 
-    resetControls() {
-        this.tempStorage = null;
-    }
+    _downCB = new DelayedCallback();
 
     onPointerDown(rawEvent: React.PointerEvent) {
         this._drawingOnCanvas = true;
@@ -306,9 +284,8 @@ export class ControlsManager {
         const [action, details] = this.state.onPointerDown(rawEvent);
         if (!layer || action === "ignore") return;
 
-        // this.tempStorage = {};
-        // const event = this.cleanPointerEvent("pointerDown", details.xy, rawEvent);
-        // this.applyLayerEvent(layer, event);
+        const event = this.cleanPointerEvent("pointerDown", details.xy, rawEvent);
+        this._downCB.set(() => this.applyLayerEvent(layer, event));
     }
 
     _dom2svg({
@@ -329,69 +306,37 @@ export class ControlsManager {
         return [x, y] as Vector;
     }
 
+    // TODO: _moveCB() {}
+    // right now, PointerState filters all pointerMove events, so I can't send a delayed callback if I never reach the drawPan state (aka, I only do a simple tap).
     onPointerMove(rawEvent: React.PointerEvent) {
         const layer = this.getCurrentLayer();
         const [action, details] = this.state.onPointerMove(rawEvent);
         if (!layer || action === "ignore") return;
 
+        // TODO: Better way to access scrollArea (I don't care right now)
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const scrollArea = rawEvent.currentTarget.parentElement!.parentElement!.parentElement!;
 
         if (action === "pan") {
-            // TODO: Better way to access scrollArea
             scrollArea.scrollBy({
                 left: details.pan[0],
                 top: details.pan[1],
             });
         } else if (action === "scale") {
-            // TODO: I need to figure out the newZoom value (and scroll offset) based on the old zoom and the scale stuff
-            // I do that by ~~scratch that~~ I might just have some zoom that sorta works even if it doesn't keep the fingers in the same place. (then again, I can't really ask for feedback on it if it doesn't work well).
-
             const dom = scrollArea.getBoundingClientRect();
             const canvas = canvasSizeProxy;
-            // const origin = new FancyVector(this._dom2svg({ dom, canvas, vector: details.origin }));
-            // const from = new FancyVector(this._dom2svg({ dom, canvas, vector: details.from }));
-            // const to = new FancyVector(this._dom2svg({ dom, canvas, vector: details.to }));
             const { origin, from, to } = details;
+
             const originVector = new FancyVector(origin);
             const scale = originVector.minus(to).length / originVector.minus(from).length;
 
-            const realWidth = canvas.width; // zoom=1
-            const fullScreen = dom.width; // zoom=0
-
-            const oldWidth = canvas.zoom * canvas.width + (1 - canvas.zoom) * dom.width;
-            const newWidth = scale * oldWidth;
-
-            // newWidth = newZoom * canvas.width + (1 - newZoom) * dom.width;
-            // newWidth - dom.width = newZoom * canvas.width - newZoom * dom.width
-            // newZoom = (newWidth - dom.width) / (canvas.width - dom.width);
-            // newZoom = (scale * canvas.zoom * canvas.width + scale * dom.width - (scale * canvas.zoom * dom.width) - dom.width) / (canvas.width - dom.width);
-            // newZoom = ((scale * canvas.zoom) * canvas.width + (scale - scale * canvas.zoom - 1) * dom.width) / (canvas.width - dom.width);
-            // newZoom = ((scale * canvas.zoom) * canvas.width + (scale * (1 - canvas.zoom) - 1) * dom.width) / (canvas.width - dom.width);
-
             const newZoom =
-                // clamp(
                 (scale * canvas.unclampedZoom * canvas.width +
                     (scale * (1 - canvas.unclampedZoom) - 1) * dom.width) /
                 (canvas.width - dom.width);
-            //     0,
-            //     1,
-            // );
 
-            // TODO: If I keep unclampedZoom, I need to reset it to 0 or 1 so that it's not remembered when zooming later. The best way to do that is to have PointerState return "panZoomFinish" on pointer up (or maybe ["finish", "panZoom"] if there are other similar "finish" states?)
             canvas.unclampedZoom = newZoom;
             canvas.zoom = clamp(newZoom, 0, 1);
-
-            // Copied from the onWheel even handler (Is this correct?)
-            // const oldWidth = areaWidth * (1 - zoom) + zoom * width;
-            // const newWidth = areaWidth * (1 - newZoom) + newZoom * width;
-            // const ratio = newWidth / oldWidth;
-
-            // const ratio = scale;
-
-            // const [offsetX, offsetY] = origin;
-            // let { scrollLeft: left, scrollTop: top } = scrollArea;
-            // left += -offsetX + ratio * offsetX;
-            // top += -offsetY + ratio * offsetY;
 
             const translate = new FancyVector(from).minus(to).scale(0.5);
             let { scrollLeft: left, scrollTop: top } = scrollArea;
@@ -399,54 +344,21 @@ export class ControlsManager {
             top += translate.y;
 
             this._scrollAfterZoom(() => scrollArea.scrollTo({ left, top }));
-
-            // const { origin, from, to } = details;
-            // const { width, height, zoom } = canvasSizeProxy;
-            // const {
-            //     left,
-            //     top,
-            //     width: areaWight,
-            //     height: areaHeight,
-            // } = scrollArea.getBoundingClientRect();
-
-            // TODO: Commit to have an excuse to refactor later...
-
-            // Wait... I don't multiple zoom by scale! scale affects the scale of the grid which is in svg coordinates, while
-            // canvasSizeProxy.zoom = clamp(canvasSizeProxy.zoom * details.scale, 0, 1);
-        } else if (action === "draw" && this.tempStorage) {
-            // const event = this.cleanPointerEvent("pointerMove", details.xy, rawEvent);
-            // this.applyLayerEvent(layer, event);
+        } else if (action === "draw") {
+            this._downCB.call();
+            const event = this.cleanPointerEvent("pointerMove", details.xy, rawEvent);
+            this.applyLayerEvent(layer, event);
         }
     }
 
     onPointerUp(rawEvent: React.PointerEvent) {
         const layer = this.getCurrentLayer();
         const [action] = this.state.onPointerUp(rawEvent);
-        if (!layer || !this.tempStorage || action === "ignore") return;
+        if (!layer || action === "ignore") return;
 
-        // this.applyLayerEvent(layer, { type: "pointerUp" });
-    }
-
-    onPointerLeave(rawEvent: React.PointerEvent) {
-        // const [action, details] = this.state.onPointerDown(rawEvent)
-        if (!this.tempStorage) {
-            return;
-        }
-
-        this.blurCanvasTimeout.after(this.puzzle.settings.actionWindowMs, () => {
-            const layer = this.getCurrentLayer();
-            if (!layer) return;
-            this.applyLayerEvent(layer, { type: "pointerUp" });
-        });
-    }
-
-    onPointerEnter(event: React.PointerEvent) {
-        // const [action, details] = this.state.onPointerDown(rawEvent)
-        if (!this.tempStorage) {
-            return;
-        }
-
-        this.blurCanvasTimeout.clear();
+        this._downCB.call();
+        // TODO: this._moveCB.call()
+        this.applyLayerEvent(layer, { type: "pointerUp" });
     }
 
     onContextMenu(event: React.MouseEvent) {
@@ -463,10 +375,11 @@ export class ControlsManager {
 
         // This should be a very small whitelist for which key-strokes are allowed to be blocked
         if (["ctrl-a", "ctrl-i"].indexOf(keypress) > -1 || keypress.length === 1) {
+            // Keyboard shortcuts should still be preventDefault'ed even if we are handling pointer events
             rawEvent.preventDefault();
         }
 
-        if (this.tempStorage) {
+        if (this.interactingPointers) {
             // Ignore keyboard events if already handling pointer events
             return;
         }
@@ -522,14 +435,16 @@ export class ControlsManager {
 
     onPageBlur() {
         const layer = this.getCurrentLayer();
-        if (!this.tempStorage || !layer) return;
+        if (!this.interactingPointers || !layer) return;
         this.applyLayerEvent(layer, { type: "pointerUp" });
-        this.blurCanvasTimeout.clear();
+        // this.blurCanvasTimeout.clear();
     }
 
     onWheel(rawEvent: WheelEvent) {
         if (!rawEvent.ctrlKey && !rawEvent.metaKey) return;
         rawEvent.preventDefault();
+
+        if (this.interactingPointers) return; // Don't draw and zoom at the same time
 
         if (rawEvent.deltaMode !== rawEvent.DOM_DELTA_PIXEL) {
             throw errorNotification({
