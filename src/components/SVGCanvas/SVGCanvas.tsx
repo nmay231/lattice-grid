@@ -63,6 +63,7 @@ const useStyles = createStyles((theme, { smallPageWidth, sidebarOpened }: Arg1) 
         overscrollBehaviorY: "none",
     },
     innerContainer: {
+        "--canvas-zoom": 0.0,
         border: "1px dotted grey",
         margin: "0px",
         padding: "0px",
@@ -71,6 +72,8 @@ const useStyles = createStyles((theme, { smallPageWidth, sidebarOpened }: Arg1) 
     },
 }));
 
+export const CANVAS_CONTAINER_ID = "svgCanvasContainer";
+
 export const SVGCanvas = () => {
     const { opened } = useSnapshot(sidebarProxy);
     const { classes } = useStyles({ smallPageWidth, sidebarOpened: opened });
@@ -78,7 +81,7 @@ export const SVGCanvas = () => {
     const { controls, layers } = usePuzzle();
     const blitGroupsSnap = useSnapshot(blitGroupsProxy);
     const snap = useSnapshot(layers);
-    const { minX, minY, width, height, zoom } = useSnapshot(canvasSizeProxy);
+    const { minX, minY, width, height } = useSnapshot(canvasSizeProxy);
 
     const scrollArea = useRef<HTMLDivElement>(null);
     useEffect(() => {
@@ -96,14 +99,14 @@ export const SVGCanvas = () => {
     }, [controls]);
 
     // TODO: I forgot that width should include the padding of the outerContainer (b/c box-sizing: border-box) and the border of the innerContainer. Right now, it only includes the width of the svg by itself.
-    const fullScreen = `${Math.round(100 * (1 - zoom))}%`;
-    const realSize = `${Math.round(zoom * width)}px`;
-    // Set the canvas width to the interpolation between fullScreen and realSize
-    const canvasWidth = `calc(${fullScreen} + ${realSize})`;
+    const zoom = "var(--canvas-zoom)";
+    // Set the canvas width to the interpolation between the real size and the shrunk to 100%
+    const canvasWidth = `calc(${zoom} * ${width}px + (1 - ${zoom}) * 100%)`;
 
     return (
         <ScrollArea type="always" className={classes.scrollArea} viewportRef={scrollArea}>
             <div
+                id={CANVAS_CONTAINER_ID}
                 className={classes.outerContainer}
                 style={{ width: canvasWidth, maxWidth: `${width}px` }}
             >
