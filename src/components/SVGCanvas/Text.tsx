@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import React, { useMemo } from "react";
 import { errorNotification } from "../../utils/DOMUtils";
 
 export type TextBlits = {
@@ -23,7 +23,7 @@ export type TextBlits = {
 
 type TextProps = Pick<TextBlits, "blits" | "style">;
 
-export const Text: React.FC<TextProps> = ({ blits, style }) => {
+export const Text: React.FC<TextProps> = React.memo(function Text({ blits, style }) {
     const realStyle = useMemo(() => {
         const { originY = "center", originX = "center", size } = style;
 
@@ -76,4 +76,4 @@ export const Text: React.FC<TextProps> = ({ blits, style }) => {
             })}
         </g>
     );
-};
+});

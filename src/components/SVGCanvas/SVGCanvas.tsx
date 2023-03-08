@@ -1,6 +1,7 @@
 import { createStyles, ScrollArea } from "@mantine/core";
-import { useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import { useSnapshot } from "valtio";
+import { PuzzleManager } from "../../PuzzleManager";
 import { blitGroupsProxy } from "../../state/blits";
 import { canvasSizeProxy, CANVAS_CONTAINER_ID } from "../../state/canvasSize";
 import { usePuzzle } from "../../state/puzzle";
@@ -72,14 +73,37 @@ const useStyles = createStyles((theme, { smallPageWidth, sidebarOpened }: Arg1) 
     },
 }));
 
-export const SVGCanvas = () => {
+const Inner = React.memo(function Inner({ layers }: Pick<PuzzleManager, "layers">) {
+    const snap = useSnapshot(layers);
+    const { minX, minY, width, height } = useSnapshot(canvasSizeProxy);
+    const blitGroupsSnap = useSnapshot(blitGroupsProxy);
+
+    return (
+        <svg viewBox={`${minX} ${minY} ${width} ${height}`}>
+            {snap.order.flatMap((id) => {
+                // TODO: Allow question and answer to be reordered. Also fix this monstrosity.
+                const question = blitList({
+                    groups: blitGroupsSnap[`${id}-question`] || [],
+                    layerId: id,
+                    storageMode: "question",
+                });
+                const answer = blitList({
+                    groups: blitGroupsSnap[`${id}-answer`] || [],
+                    layerId: id,
+                    storageMode: "answer",
+                });
+                return question.concat(answer);
+            })}
+        </svg>
+    );
+});
+
+export const SVGCanvas = React.memo(function SVGCanvas() {
     const { opened } = useSnapshot(sidebarProxy);
     const { classes } = useStyles({ smallPageWidth, sidebarOpened: opened });
 
     const { controls, layers } = usePuzzle();
-    const blitGroupsSnap = useSnapshot(blitGroupsProxy);
-    const snap = useSnapshot(layers);
-    const { minX, minY, width, height } = useSnapshot(canvasSizeProxy);
+    const { width } = useSnapshot(canvasSizeProxy);
 
     const scrollArea = useRef<HTMLDivElement>(null);
     useEffect(() => {
@@ -109,24 +133,9 @@ export const SVGCanvas = () => {
                 style={{ width: canvasWidth, maxWidth: `${width}px` }}
             >
                 <div className={classes.innerContainer} {...controls.eventListeners}>
-                    <svg viewBox={`${minX} ${minY} ${width} ${height}`}>
-                        {snap.order.flatMap((id) => {
-                            // TODO: Allow question and answer to be reordered. Also fix this monstrosity.
-                            const question = blitList({
-                                groups: blitGroupsSnap[`${id}-question`] || [],
-                                layerId: id,
-                                storageMode: "question",
-                            });
-                            const answer = blitList({
-                                groups: blitGroupsSnap[`${id}-answer`] || [],
-                                layerId: id,
-                                storageMode: "answer",
-                            });
-                            return question.concat(answer);
-                        })}
-                    </svg>
+                    <Inner layers={layers} />
                 </div>
             </div>
         </ScrollArea>
     );
-};
+});
