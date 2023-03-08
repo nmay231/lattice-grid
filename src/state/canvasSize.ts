@@ -1,6 +1,5 @@
 import { proxy } from "valtio";
 import { subscribeKey } from "valtio/utils";
-import { CANVAS_CONTAINER_ID } from "../components/SVGCanvas/SVGCanvas";
 
 // Do grids really need to be scaled independently?
 // TODO: Make this an object where the keys are the different grids so that grids can have different sizes, be scaled independently, etc.
@@ -16,6 +15,7 @@ export const canvasSizeProxy = proxy({
     unclampedZoom: 0,
 });
 
+export const CANVAS_CONTAINER_ID = "svgCanvasContainer";
 subscribeKey(canvasSizeProxy, "zoom", (zoom) => {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     document.getElementById(CANVAS_CONTAINER_ID)!.style.setProperty("--canvas-zoom", `${zoom}`);

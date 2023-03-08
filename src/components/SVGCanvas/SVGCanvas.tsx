@@ -2,7 +2,7 @@ import { createStyles, ScrollArea } from "@mantine/core";
 import { useEffect, useRef } from "react";
 import { useSnapshot } from "valtio";
 import { blitGroupsProxy } from "../../state/blits";
-import { canvasSizeProxy } from "../../state/canvasSize";
+import { canvasSizeProxy, CANVAS_CONTAINER_ID } from "../../state/canvasSize";
 import { usePuzzle } from "../../state/puzzle";
 import { BlitGroup, Layer, NeedsUpdating, StorageMode } from "../../types";
 import { errorNotification } from "../../utils/DOMUtils";
@@ -71,8 +71,6 @@ const useStyles = createStyles((theme, { smallPageWidth, sidebarOpened }: Arg1) 
         WebkitTapHighlightColor: "transparent", // Remove image highlight when drawing on mobile Chrome
     },
 }));
-
-export const CANVAS_CONTAINER_ID = "svgCanvasContainer";
 
 export const SVGCanvas = () => {
     const { opened } = useSnapshot(sidebarProxy);
