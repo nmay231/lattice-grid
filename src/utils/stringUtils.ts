@@ -6,7 +6,7 @@ import { UnknownObject } from "../types";
 
 export const stringifyAnything = (obj: any): string => {
     try {
-        return inspect(obj, {showProxy: true});
+        return inspect(obj, { showProxy: true });
     } catch (err) {
         console.error(err);
         return `[COULD_NOT_STRINGIFY_OBJECT]`;

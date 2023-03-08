@@ -7,7 +7,7 @@ export class DelayedCallback {
         return this.callback === null;
     }
 
-    set(cb: () => any) {
+    set(cb: null | (() => any)) {
         this.callback = cb;
     }
 

@@ -3,7 +3,7 @@ import { PuzzleManager } from "./PuzzleManager";
 // I think this is completely useless because I will switch to focus-based layer selection
 
 describe.skip("puzzle layers", () => {
-    PuzzleManager;
+    console.log("PuzzleManager" || PuzzleManager);
     // const fullState: LayersProxyState = {
     //     map: {},
     //     order: [],

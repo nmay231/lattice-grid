@@ -66,7 +66,9 @@ export class _PointerState {
             }
             case "start+second":
                 this.mode = "panZoom";
-                return ["ignore"] as const;
+                // We send an "up" event because the layer should not receive a down event (which is still delayed since mode === "start")
+                // The reason it's "up" instead of just "cancelDown" is so that there is always a up event for every down (even if the pair is never sent to the layer).
+                return ["up", "cancelDown"] as const;
             case "drawPan+second":
                 return ["ignore"] as const;
             case "panZoom+first":
@@ -108,7 +110,6 @@ export class _PointerState {
             case "panZoom+first":
             case "panZoom+second": {
                 // There is technically no panning, but that is handled by scaling in and out with two different origins
-
                 if (!otherPointer) return ["ignore", "!invalid state reached!"] as const;
                 const origin = otherPointer.lastClientXY;
                 const from = pointer.lastClientXY;
@@ -129,7 +130,7 @@ export class _PointerState {
             return ["ignore"] as const;
         }
 
-        const [which] = this._getPointer(event);
+        const [which, pointer] = this._getPointer(event);
         // More than two pointers already
         if (which === "ignore") return ["ignore"] as const;
 
@@ -142,7 +143,9 @@ export class _PointerState {
         switch (`${this.mode}+${which}` as const) {
             case "drawPan+first":
             case "start+first": {
+                const mode = this.mode;
                 finish();
+                if (mode === "start") return ["up", { lastDraw: pointer.lastClientXY }] as const;
                 return ["up"] as const;
             }
             case "drawPan+second": {
@@ -284,6 +287,11 @@ export class ControlsManager {
         const [action, details] = this.state.onPointerDown(rawEvent);
         if (!layer || action === "ignore") return;
 
+        if (action === "up" && details === "cancelDown") {
+            // The previous down event was cancelled and changed to panZoom
+            return this._downCB.set(null);
+        }
+
         const event = this.cleanPointerEvent("pointerDown", details.xy, rawEvent);
         this._downCB.set(() => this.applyLayerEvent(layer, event));
     }
@@ -306,8 +314,6 @@ export class ControlsManager {
         return [x, y] as Vector;
     }
 
-    // TODO: _moveCB() {}
-    // right now, PointerState filters all pointerMove events, so I can't send a delayed callback if I never reach the drawPan state (aka, I only do a simple tap).
     onPointerMove(rawEvent: React.PointerEvent) {
         const layer = this.getCurrentLayer();
         const [action, details] = this.state.onPointerMove(rawEvent);
@@ -353,11 +359,15 @@ export class ControlsManager {
 
     onPointerUp(rawEvent: React.PointerEvent) {
         const layer = this.getCurrentLayer();
-        const [action] = this.state.onPointerUp(rawEvent);
+        const [action, details] = this.state.onPointerUp(rawEvent);
         if (!layer || action === "ignore") return;
 
         this._downCB.call();
-        // TODO: this._moveCB.call()
+        if (details) {
+            // TODO: This is technically using the pointerUp event for some of the details, but it should be the same.
+            const event = this.cleanPointerEvent("pointerMove", details.lastDraw, rawEvent);
+            this.applyLayerEvent(layer, event);
+        }
         this.applyLayerEvent(layer, { type: "pointerUp" });
     }
 
