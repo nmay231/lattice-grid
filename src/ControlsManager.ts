@@ -334,7 +334,7 @@ export class ControlsManager {
             const { origin, from, to } = details;
 
             const originVector = new FancyVector(origin);
-            const scale = originVector.minus(to).length / originVector.minus(from).length;
+            const scale = originVector.minus(to).size / originVector.minus(from).size;
 
             const newZoom =
                 (scale * canvas.unclampedZoom * canvas.width +

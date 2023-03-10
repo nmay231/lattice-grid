@@ -11,11 +11,19 @@ export class FancyVector {
         this.y = y;
     }
 
+    static from(vec: FancyVector | Vector) {
+        if (vec instanceof FancyVector) {
+            return vec;
+        }
+
+        return new FancyVector([vec[0], vec[1]]);
+    }
+
     get xy() {
         return [this.x, this.y] as Vector;
     }
 
-    get length() {
+    get size() {
         return euclidean(0, 0, this.x, this.y);
     }
 
@@ -34,5 +42,17 @@ export class FancyVector {
 
     scale(by: number) {
         return new FancyVector([by * this.x, by * this.y]);
+    }
+
+    dotProduct(other: FancyVector | Vector) {
+        other = FancyVector.from(other);
+        return this.x * other.x + this.y * other.y;
+    }
+
+    // TODO: Better name. Projected distance? Idk
+    distanceAlong(other: FancyVector | Vector) {
+        other = FancyVector.from(other);
+        // TODO: Potential division by zero
+        return this.scale(1 / this.size).dotProduct(other);
     }
 }
