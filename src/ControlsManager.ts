@@ -336,18 +336,24 @@ export class ControlsManager {
             const originVector = new FancyVector(origin);
             const scale = originVector.minus(to).size / originVector.minus(from).size;
 
-            const newZoom =
-                (scale * canvas.unclampedZoom * canvas.width +
-                    (scale * (1 - canvas.unclampedZoom) - 1) * dom.width) /
+            const unclampedZoom =
+                (scale * canvas.zoom * canvas.width + (scale * (1 - canvas.zoom) - 1) * dom.width) /
                 (canvas.width - dom.width);
 
-            canvas.unclampedZoom = newZoom;
-            canvas.zoom = clamp(newZoom, 0, 1);
+            // TODO: Reimplement unclamped Zoom so you can "zoom in further than allowed". Requires PointerState acknowledging when panZoom is finished
+            // canvas.unclampedZoom = unclampedZoom;
+            canvas.zoom = clamp(unclampedZoom, 0, 1);
+            // canvas.zoom = 1;
 
             const translate = new FancyVector(from).minus(to).scale(0.5);
             let { scrollLeft: left, scrollTop: top } = scrollArea;
-            left += translate.x;
-            top += translate.y;
+            if (0 < canvas.zoom && canvas.zoom < 1) {
+                left = scale * left + originVector.scale(scale - 1).x + translate.x;
+                top = scale * top + originVector.scale(scale - 1).y + translate.y;
+            } else {
+                left += translate.x;
+                top += translate.y;
+            }
 
             this._scrollAfterZoom(() => scrollArea.scrollTo({ left, top }));
         } else if (action === "draw") {
