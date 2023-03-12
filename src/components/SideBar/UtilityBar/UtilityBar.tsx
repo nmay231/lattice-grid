@@ -1,6 +1,6 @@
 import { ActionIcon, createStyles, Tooltip } from "@mantine/core";
 import { IoMdArrowRoundBack, IoMdArrowRoundForward, IoMdSettings } from "react-icons/io";
-import { useSnapshot } from "valtio";
+import { useProxy } from "valtio/utils";
 import { useFocusElementHandler } from "../../../utils/focusManagement";
 import { sidebarProxy } from "../SideBar";
 
@@ -25,7 +25,7 @@ const useStyles = createStyles((theme, { height }: { height: string }) => ({
 }));
 
 export const UtilityBar = ({ height }: { height: string }) => {
-    const { opened } = useSnapshot(sidebarProxy);
+    const sidebar = useProxy(sidebarProxy);
     const { classes, cx } = useStyles({ height });
     const { ref: openToggleRef } = useFocusElementHandler();
 
@@ -46,13 +46,13 @@ export const UtilityBar = ({ height }: { height: string }) => {
                 <ActionIcon
                     ref={openToggleRef}
                     size="lg"
-                    className={cx(classes.icon, !opened && classes.offsetIcon)}
+                    className={cx(classes.icon, !sidebar.opened && classes.offsetIcon)}
                     variant="filled"
                     color="blue"
                     tabIndex={-1}
-                    onClick={() => (sidebarProxy.opened = !opened)}
+                    onClick={() => (sidebar.opened = !sidebar.opened)}
                 >
-                    {opened ? <IoMdArrowRoundBack /> : <IoMdArrowRoundForward />}
+                    {sidebar.opened ? <IoMdArrowRoundBack /> : <IoMdArrowRoundForward />}
                 </ActionIcon>
             </Tooltip>
         </div>

@@ -1,6 +1,6 @@
 import { createStyles, ScrollArea } from "@mantine/core";
 import React, { useEffect, useRef } from "react";
-import { useSnapshot } from "valtio";
+import { useProxy } from "valtio/utils";
 import { PuzzleManager } from "../../PuzzleManager";
 import { blitGroupsProxy } from "../../state/blits";
 import { canvasSizeProxy, CANVAS_CONTAINER_ID } from "../../state/canvasSize";
@@ -73,22 +73,22 @@ const useStyles = createStyles((theme, { smallPageWidth, sidebarOpened }: Arg1) 
     },
 }));
 
-const Inner = React.memo(function Inner({ layers }: Pick<PuzzleManager, "layers">) {
-    const snap = useSnapshot(layers);
-    const { minX, minY, width, height } = useSnapshot(canvasSizeProxy);
-    const blitGroupsSnap = useSnapshot(blitGroupsProxy);
+const Inner = React.memo(function Inner({ layers: layersProxy }: Pick<PuzzleManager, "layers">) {
+    const layers = useProxy(layersProxy);
+    const { minX, minY, width, height } = useProxy(canvasSizeProxy);
+    const blitGroups = useProxy(blitGroupsProxy);
 
     return (
         <svg viewBox={`${minX} ${minY} ${width} ${height}`}>
-            {snap.order.flatMap((id) => {
+            {layers.order.flatMap((id) => {
                 // TODO: Allow question and answer to be reordered. Also fix this monstrosity.
                 const question = blitList({
-                    groups: blitGroupsSnap[`${id}-question`] || [],
+                    groups: blitGroups[`${id}-question`] || [],
                     layerId: id,
                     storageMode: "question",
                 });
                 const answer = blitList({
-                    groups: blitGroupsSnap[`${id}-answer`] || [],
+                    groups: blitGroups[`${id}-answer`] || [],
                     layerId: id,
                     storageMode: "answer",
                 });
@@ -99,11 +99,11 @@ const Inner = React.memo(function Inner({ layers }: Pick<PuzzleManager, "layers"
 });
 
 export const SVGCanvas = React.memo(function SVGCanvas() {
-    const { opened } = useSnapshot(sidebarProxy);
+    const { opened } = useProxy(sidebarProxy);
     const { classes } = useStyles({ smallPageWidth, sidebarOpened: opened });
 
     const { controls, layers } = usePuzzle();
-    const { width } = useSnapshot(canvasSizeProxy);
+    const { width } = useProxy(canvasSizeProxy);
 
     const scrollArea = useRef<HTMLDivElement>(null);
     useEffect(() => {

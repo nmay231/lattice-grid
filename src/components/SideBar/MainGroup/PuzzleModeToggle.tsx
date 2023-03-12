@@ -1,11 +1,10 @@
 import { SegmentedControl } from "@mantine/core";
-import { useSnapshot } from "valtio";
-import { usePuzzle } from "../../../state/puzzle";
+import { usePuzzle, useSettings } from "../../../state/puzzle";
 import { EditMode } from "../../../types";
 
 export const PuzzleModeToggle = () => {
     const puzzle = usePuzzle();
-    const snap = useSnapshot(puzzle.settings);
+    const { editMode } = useSettings();
 
     return (
         <div>
@@ -16,7 +15,7 @@ export const PuzzleModeToggle = () => {
                         { value: "answer", label: "Solving" },
                     ] satisfies Array<{ label: string; value: EditMode }>
                 }
-                value={snap.editMode}
+                value={editMode}
                 onChange={(value: EditMode) => {
                     puzzle.settings.editMode = value;
                 }}

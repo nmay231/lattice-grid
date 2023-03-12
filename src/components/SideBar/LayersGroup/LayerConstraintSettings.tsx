@@ -1,6 +1,6 @@
 import { isEqual } from "lodash";
 import { useState } from "react";
-import { useSnapshot } from "valtio";
+import { useProxy } from "valtio/utils";
 import { availableLayers } from "../../../layers";
 import { usePuzzle } from "../../../state/puzzle";
 import { JSONSchema, Layer, LayerClass } from "../../../types";
@@ -56,9 +56,9 @@ const _LayerConstraintSettings = ({ layer, constraints }: InnerProps) => {
 };
 
 export const LayerConstraintSettings = () => {
-    const { layers } = usePuzzle();
-    const layersSnap = useSnapshot(layers);
-    const id = layersSnap.currentKey;
+    const { layers: layersProxy } = usePuzzle();
+    const layers = useProxy(layersProxy);
+    const id = layers.currentKey;
     const layer = id && layers.get(id);
 
     if (!layer) {

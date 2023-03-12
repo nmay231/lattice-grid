@@ -1,5 +1,6 @@
 import { createStyles, Divider, ScrollArea } from "@mantine/core";
-import { proxy, useSnapshot } from "valtio";
+import { proxy } from "valtio";
+import { useProxy } from "valtio/utils";
 import { useSettings } from "../../state/puzzle";
 import { CodeGroup } from "./ConstraintsGroup";
 import { ControlsGroup } from "./ControlsGroup";
@@ -42,7 +43,7 @@ const useStyles = createStyles((theme, { smallPageWidth, utilityBarHeight, opene
 export const SideBar = () => {
     const { pageMode, debugging: debug } = useSettings();
 
-    const { opened } = useSnapshot(sidebarProxy);
+    const { opened } = useProxy(sidebarProxy);
     const utilityBarHeight = "3rem";
     const { classes } = useStyles({ smallPageWidth, utilityBarHeight, opened });
 
