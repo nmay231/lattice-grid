@@ -7,7 +7,7 @@ import { canvasSizeProxy, CANVAS_CONTAINER_ID } from "../../state/canvasSize";
 import { usePuzzle } from "../../state/puzzle";
 import { BlitGroup, Layer, NeedsUpdating, StorageMode } from "../../types";
 import { errorNotification } from "../../utils/DOMUtils";
-import { sidebarProxy, smallPageWidth } from "../SideBar/SideBar";
+import { sidebarProxy, smallPageWidth } from "../SideBar/sidebarProxy";
 import { Line } from "./Line";
 import { Polygon } from "./Polygon";
 import { Text } from "./Text";

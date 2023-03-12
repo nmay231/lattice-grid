@@ -2,7 +2,7 @@ import { ActionIcon, createStyles, Tooltip } from "@mantine/core";
 import { IoMdArrowRoundBack, IoMdArrowRoundForward, IoMdSettings } from "react-icons/io";
 import { useProxy } from "valtio/utils";
 import { useFocusElementHandler } from "../../../utils/focusManagement";
-import { sidebarProxy } from "../SideBar";
+import { sidebarProxy } from "../sidebarProxy";
 
 const useStyles = createStyles((theme, { height }: { height: string }) => ({
     container: {

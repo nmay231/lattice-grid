@@ -1,5 +1,4 @@
 import { createStyles, Divider, ScrollArea } from "@mantine/core";
-import { proxy } from "valtio";
 import { useProxy } from "valtio/utils";
 import { useSettings } from "../../state/puzzle";
 import { CodeGroup } from "./ConstraintsGroup";
@@ -7,13 +6,8 @@ import { ControlsGroup } from "./ControlsGroup";
 import { DebugGroup } from "./DebugGroup";
 import { LayersGroup } from "./LayersGroup";
 import { MainGroup } from "./MainGroup";
+import { sidebarProxy, smallPageWidth } from "./sidebarProxy";
 import { UtilityBar } from "./UtilityBar";
-
-export const smallPageWidth = "800px";
-
-export const sidebarProxy = proxy({
-    opened: window.matchMedia?.(`(min-width: ${smallPageWidth})`).matches ?? true,
-});
 
 type Arg1 = { smallPageWidth: string; utilityBarHeight: string; opened: boolean };
 const useStyles = createStyles((theme, { smallPageWidth, utilityBarHeight, opened }: Arg1) => ({

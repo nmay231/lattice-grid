@@ -19,7 +19,7 @@ module.exports = {
         project: ["./tsconfig.json"],
         ecmaFeatures: { jsx: true },
     },
-    plugins: ["react", "testing-library"],
+    plugins: ["react", "testing-library", "react-refresh"],
     settings: {
         react: { version: "detect" },
     },
@@ -38,6 +38,7 @@ module.exports = {
         "no-unreachable": "error",
         "no-use-before-define": "off",
         "prefer-const": "warn",
+        "react-refresh/only-export-components": "error",
         "react/prop-types": "off",
         "react/react-in-jsx-scope": "off",
     },

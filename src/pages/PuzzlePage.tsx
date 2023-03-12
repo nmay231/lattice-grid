@@ -5,7 +5,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { BlocklyModal } from "../components/Blockly/BlocklyModal";
 import { DebugPointers } from "../components/DebugPointers";
 import { ImportExportModal } from "../components/ImportExportModal";
-import { importPuzzle } from "../components/ImportExportModal/ImportExportModal";
+import { importPuzzle } from "../components/ImportExportModal/importPuzzle";
 import { SideBar } from "../components/SideBar";
 import { ResizeModal } from "../components/SideBar/MainGroup/ResizeModal";
 import { SVGCanvas } from "../components/SVGCanvas";
