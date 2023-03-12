@@ -9,7 +9,7 @@ import {
     Point,
 } from "../../types";
 import { errorNotification } from "../../utils/DOMUtils";
-import { formatAnything } from "../../utils/stringUtils";
+import { stringifyAnything } from "../../utils/stringUtils";
 
 export interface SelectedProps extends LayerProps {
     TempStorage: {
@@ -224,7 +224,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                     error: null,
                     message: `Unknown event in selected layer ${
                         layer.displayName
-                    }: ${formatAnything(event)}`,
+                    }: ${stringifyAnything(event)}`,
                     forever: true,
                 });
             }

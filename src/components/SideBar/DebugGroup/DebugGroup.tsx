@@ -27,7 +27,7 @@ export const DebugGroup = () => {
                             navigate(0);
                         }}
                     >
-                        Delete puzzles from localStorage and refresh page
+                        Delete all puzzles and refresh page
                     </Button>
                 </Stack>
             </Center>

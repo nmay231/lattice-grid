@@ -50,10 +50,10 @@ export class OrderedMap<V> {
     }
 
     delete(key: string): boolean {
-        const had = this.has(key);
+        if (!this.has(key)) return false;
         delete this.map[key];
         this.order.splice(this.order.indexOf(key), 1);
-        return had;
+        return true;
     }
 
     // TODO: toJSON()

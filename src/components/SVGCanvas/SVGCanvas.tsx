@@ -1,11 +1,13 @@
-import { createStyles } from "@mantine/core";
-import { useEffect, useRef } from "react";
+import { createStyles, ScrollArea } from "@mantine/core";
+import React, { useEffect, useRef } from "react";
 import { useSnapshot } from "valtio";
+import { PuzzleManager } from "../../PuzzleManager";
 import { blitGroupsProxy } from "../../state/blits";
-import { canvasSizeProxy } from "../../state/canvasSize";
+import { canvasSizeProxy, CANVAS_CONTAINER_ID } from "../../state/canvasSize";
 import { usePuzzle } from "../../state/puzzle";
 import { BlitGroup, Layer, NeedsUpdating, StorageMode } from "../../types";
 import { errorNotification } from "../../utils/DOMUtils";
+import { sidebarProxy, smallPageWidth } from "../SideBar/SideBar";
 import { Line } from "./Line";
 import { Polygon } from "./Polygon";
 import { Text } from "./Text";
@@ -29,8 +31,8 @@ const blitList = ({
         const Blitter = blitters[group.blitter];
         return (
             <Blitter
-                blits={group.blits as NeedsUpdating}
                 // I was hoping typescript would be smarter...
+                blits={group.blits as NeedsUpdating}
                 style={group.style as NeedsUpdating}
                 key={`${layerId}-${storageMode}-${group.id}`}
             />
@@ -38,38 +40,70 @@ const blitList = ({
     });
 };
 
-const useStyles = createStyles(() => ({
+type Arg1 = { smallPageWidth: string; sidebarOpened: boolean };
+
+const useStyles = createStyles((theme, { smallPageWidth, sidebarOpened }: Arg1) => ({
     scrollArea: {
         display: "flex",
         flexDirection: "column",
-        height: "100vh",
-        width: "70vw", // Temporarily hardcoded
+        height: "100svh",
+        width: "100svw",
         overflow: "auto",
+        [`@media (min-width: ${smallPageWidth})`]: {
+            width: sidebarOpened ? "70svw" : "100svw",
+            transition: "width 0.4s",
+        },
     },
     outerContainer: {
         // Remember, if I change box-sizing back to content-box, I will have to update my zoom in/out code.
-        boxSizing: "border-box",
+        // boxSizing: "border-box",
         margin: "0px auto",
         padding: "2em",
+        touchAction: "none",
+        WebkitOverflowScrolling: "touch",
+        overscrollBehaviorY: "none",
     },
     innerContainer: {
+        "--canvas-zoom": 0.0,
         border: "1px dotted grey",
         margin: "0px",
         padding: "0px",
         cursor: "pointer",
-
-        "& *": {
-            pointerEvents: "none",
-        },
+        WebkitTapHighlightColor: "transparent", // Remove image highlight when drawing on mobile Chrome
     },
 }));
 
-export const SVGCanvas = () => {
-    const { classes } = useStyles();
-    const { controls, layers } = usePuzzle();
-    const blitGroupsSnap = useSnapshot(blitGroupsProxy);
+const Inner = React.memo(function Inner({ layers }: Pick<PuzzleManager, "layers">) {
     const snap = useSnapshot(layers);
-    const { minX, minY, width, height, zoom } = useSnapshot(canvasSizeProxy);
+    const { minX, minY, width, height } = useSnapshot(canvasSizeProxy);
+    const blitGroupsSnap = useSnapshot(blitGroupsProxy);
+
+    return (
+        <svg viewBox={`${minX} ${minY} ${width} ${height}`}>
+            {snap.order.flatMap((id) => {
+                // TODO: Allow question and answer to be reordered. Also fix this monstrosity.
+                const question = blitList({
+                    groups: blitGroupsSnap[`${id}-question`] || [],
+                    layerId: id,
+                    storageMode: "question",
+                });
+                const answer = blitList({
+                    groups: blitGroupsSnap[`${id}-answer`] || [],
+                    layerId: id,
+                    storageMode: "answer",
+                });
+                return question.concat(answer);
+            })}
+        </svg>
+    );
+});
+
+export const SVGCanvas = React.memo(function SVGCanvas() {
+    const { opened } = useSnapshot(sidebarProxy);
+    const { classes } = useStyles({ smallPageWidth, sidebarOpened: opened });
+
+    const { controls, layers } = usePuzzle();
+    const { width } = useSnapshot(canvasSizeProxy);
 
     const scrollArea = useRef<HTMLDivElement>(null);
     useEffect(() => {
@@ -87,36 +121,21 @@ export const SVGCanvas = () => {
     }, [controls]);
 
     // TODO: I forgot that width should include the padding of the outerContainer (b/c box-sizing: border-box) and the border of the innerContainer. Right now, it only includes the width of the svg by itself.
-    const fullScreen = `${Math.round(100 * (1 - zoom))}%`;
-    const realSize = `${Math.round(zoom * width)}px`;
-    // Set the canvas width to the interpolation between fullScreen and realSize
-    const canvasWidth = `calc(${fullScreen} + ${realSize})`;
+    const zoom = "var(--canvas-zoom)";
+    // Set the canvas width to the interpolation between the real size and the shrunk to 100%
+    const canvasWidth = `calc(${zoom} * ${width}px + (1 - ${zoom}) * 100%)`;
 
     return (
-        <div className={classes.scrollArea} ref={scrollArea}>
+        <ScrollArea type="always" className={classes.scrollArea} viewportRef={scrollArea}>
             <div
+                id={CANVAS_CONTAINER_ID}
                 className={classes.outerContainer}
                 style={{ width: canvasWidth, maxWidth: `${width}px` }}
             >
                 <div className={classes.innerContainer} {...controls.eventListeners}>
-                    <svg viewBox={`${minX} ${minY} ${width} ${height}`}>
-                        {snap.order.flatMap((id) => {
-                            // TODO: Allow question and answer to be reordered. Also fix this monstrosity.
-                            const question = blitList({
-                                groups: blitGroupsSnap[`${id}-question`] || [],
-                                layerId: id,
-                                storageMode: "question",
-                            });
-                            const answer = blitList({
-                                groups: blitGroupsSnap[`${id}-answer`] || [],
-                                layerId: id,
-                                storageMode: "answer",
-                            });
-                            return question.concat(answer);
-                        })}
-                    </svg>
+                    <Inner layers={layers} />
                 </div>
             </div>
-        </div>
+        </ScrollArea>
     );
-};
+});

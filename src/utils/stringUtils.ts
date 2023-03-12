@@ -1,9 +1,19 @@
 import { randomId } from "@mantine/hooks";
 import { Base64 } from "js-base64";
+// import { inspect } from "node-inspect-extracted";
 import { deflate, inflate } from "pako";
 import { UnknownObject } from "../types";
 
-export { format as formatAnything } from "node-inspect-extracted";
+export const stringifyAnything = (obj: any): string => {
+    try {
+        // TODO: Safari <16.4 doesn't support a regex parser feature for something in `node-inspect-extracted`, so importing inspect will error until most Safari supports it.
+        // return inspect(obj, { showProxy: true });
+        return JSON.stringify(obj);
+    } catch (err) {
+        console.error(err);
+        return `[COULD_NOT_STRINGIFY_OBJECT]`;
+    }
+};
 
 export const keypressString = (
     event: Pick<KeyboardEvent, "key" | "ctrlKey" | "shiftKey">,

@@ -12,7 +12,7 @@ import {
     StorageReducer,
 } from "./types";
 import { errorNotification } from "./utils/DOMUtils";
-import { formatAnything } from "./utils/stringUtils";
+import { stringifyAnything } from "./utils/stringUtils";
 
 type GridAndLayer = { grid: Pick<Grid, "id">; layer: Pick<Layer, "id"> };
 // TODO: Recursive Pick type?
@@ -66,7 +66,7 @@ export class StorageManager {
         } else {
             errorNotification({
                 error: null,
-                message: `Storage: Failed to remove a reducer ${formatAnything(
+                message: `Storage: Failed to remove a reducer ${stringifyAnything(
                     reducer,
                 )}. Reducer was never added or already removed!`,
             });

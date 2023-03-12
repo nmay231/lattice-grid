@@ -1,3 +1,5 @@
+import React from "react";
+
 export type LineBlits = {
     id: string;
     blitter: "line";
@@ -16,7 +18,7 @@ export type LineBlits = {
 
 type LineProps = Pick<LineBlits, "blits" | "style">;
 
-export const Line: React.FC<LineProps> = ({ blits, style }) => {
+export const Line: React.FC<LineProps> = React.memo(function Line({ blits, style }) {
     return (
         <g style={style}>
             {Object.keys(blits).map((key) => {
@@ -25,4 +27,4 @@ export const Line: React.FC<LineProps> = ({ blits, style }) => {
             })}
         </g>
     );
-};
+});

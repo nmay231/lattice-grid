@@ -1,3 +1,4 @@
+import React from "react";
 import { Point } from "../../types";
 
 export type PolygonBlits = {
@@ -12,7 +13,7 @@ export type PolygonBlits = {
 
 type PolygonProps = Pick<PolygonBlits, "blits" | "style">;
 
-export const Polygon: React.FC<PolygonProps> = ({ blits, style }) => {
+export const Polygon: React.FC<PolygonProps> = React.memo(function Polygon({ blits, style }) {
     return (
         <g style={style}>
             {Object.keys(blits).map((key) => {
@@ -21,4 +22,4 @@ export const Polygon: React.FC<PolygonProps> = ({ blits, style }) => {
             })}
         </g>
     );
-};
+});

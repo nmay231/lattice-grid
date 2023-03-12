@@ -1,7 +1,8 @@
-import { euclidean, hopStraight } from "../algorithms/hopStraight";
+import { prioritizeDirection } from "../algorithms/prioritizeDirection";
 import { PuzzleManager } from "../PuzzleManager";
 import { Grid, Point, PointType, Vector } from "../types";
 import { errorNotification } from "../utils/DOMUtils";
+import { FancyVector } from "../utils/math";
 
 export type SquareGridParams = {
     type: "square";
@@ -102,75 +103,39 @@ export class SquareGrid implements Grid {
 
     selectPointsWithCursor: Grid["selectPointsWithCursor"] = ({
         settings,
-        cursor,
+        cursor: { x, y },
         pointTypes,
-        deltas,
+        deltas: dxy,
         previousPoint = null,
     }) => {
         const { cellSize } = settings;
         const halfCell = cellSize / 2;
 
-        cursor.x /= halfCell;
-        cursor.y /= halfCell;
+        const deltas = dxy.map(({ dx, dy }) => new FancyVector([dx, dy]));
+        const cursor = new FancyVector([x / halfCell, y / halfCell]);
 
-        const firstPoint = [Math.floor(cursor.x), Math.floor(cursor.y)] as Vector;
-        const closestPoints = [
+        const firstPoint = new FancyVector([Math.floor(cursor.x), Math.floor(cursor.y)]);
+        const targets = [
             firstPoint,
-            [firstPoint[0] + 1, firstPoint[1]],
-            [firstPoint[0], firstPoint[1] + 1],
-            [firstPoint[0] + 1, firstPoint[1] + 1],
-        ]
-            .map((p) => this._stringToGridPoint(p.toString()))
-            .filter(({ type }) => pointTypes.includes(type));
+            firstPoint.plus([1, 0]),
+            firstPoint.plus([0, 1]),
+            firstPoint.plus([1, 1]),
+        ].filter((p) => pointTypes.includes(this._stringToGridPoint(p.xy.join(",")).type));
 
-        if (previousPoint === null) {
-            const closestCorrectType = closestPoints.reduce((prev, next) =>
-                euclidean(prev.x, prev.y, cursor.x, cursor.y) <
-                euclidean(next.x, next.y, cursor.x, cursor.y)
-                    ? prev
-                    : next,
-            );
-            return [`${closestCorrectType.x},${closestCorrectType.y}`];
+        let start: FancyVector | undefined = undefined;
+        if (previousPoint) {
+            start = new FancyVector(previousPoint.split(",").map((x) => parseInt(x)) as Vector);
         }
 
-        let previousGridPoint = previousPoint.split(",").map((x) => parseInt(x)) as Vector;
-        const nearby = deltas.map(
-            ({ dx, dy }) => `${previousGridPoint[0] + dx},${previousGridPoint[1] + dy}`,
-        );
-        const targetPointsString = closestPoints.map(({ x, y }) => `${x},${y}`);
-        const intersection = targetPointsString.filter(
-            (targetPoint) => nearby.indexOf(targetPoint) > -1,
-        );
-        if (intersection.length) {
-            // TODO: Technically, not the closest, but whatever.
-            return intersection.slice(0, 1);
-        }
-
-        const generator = hopStraight({
-            previousPoint: previousGridPoint,
+        const points = prioritizeDirection({
+            start,
+            cursor,
             deltas,
-            cursor: [cursor.x, cursor.y],
+            toString: (vec) => vec.xy.join(","),
+            targets,
         });
-        const points = [previousGridPoint.toString()];
 
-        let maxIteration = 100; // Prevent infinite loops
-        while (maxIteration > 0) {
-            const next = generator.next(previousGridPoint).value?.map((v) => Math.round(v)) as
-                | [number, number]
-                | null;
-            const string = previousGridPoint.toString();
-            if (!next || points.includes(string)) {
-                return [];
-            }
-            previousGridPoint = next;
-            points.push(string);
-            if (targetPointsString.includes(string)) {
-                // Exclude starting point.
-                return points.slice(1);
-            }
-            maxIteration -= 1;
-        }
-        return [];
+        return points;
     };
 
     getPoints({
