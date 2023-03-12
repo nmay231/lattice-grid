@@ -34,6 +34,7 @@ module.exports = {
         "@typescript-eslint/no-use-before-define": "error",
         "@typescript-eslint/require-array-sort-compare": "error",
         "@typescript-eslint/restrict-template-expressions": "off",
+        "@typescript-eslint/no-empty-interface": ["error", { allowSingleExtends: true }],
         "no-trailing-spaces": "error",
         "no-unreachable": "error",
         "no-use-before-define": "off",

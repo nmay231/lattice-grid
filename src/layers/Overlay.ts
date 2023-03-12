@@ -2,9 +2,9 @@ import { OVERLAY_LAYER_ID } from "../state/blits";
 import { Layer, LayerClass, LayerProps } from "../types";
 import { BaseLayer } from "./BaseLayer";
 
-type OverlayProps = LayerProps;
+interface OverlayProps extends LayerProps {}
 
-type IOverlayLayer = Layer<OverlayProps>;
+interface IOverlayLayer extends Layer<OverlayProps> {}
 
 export class OverlayLayer extends BaseLayer<OverlayProps> implements IOverlayLayer {
     static ethereal = true;

@@ -8,7 +8,7 @@ interface DebugPointerProps extends LayerProps {
     ObjectState: { points: Point[] };
 }
 
-type IDebugPointerLayer = Layer<DebugPointerProps>;
+interface IDebugPointerLayer extends Layer<DebugPointerProps> {}
 
 const OBJECT_ID = "objectId";
 

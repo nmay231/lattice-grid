@@ -8,7 +8,7 @@ interface CellOutlineProps extends OnePointProps<ObjectState> {
     ObjectState: { id: ObjectId; points: Point[]; state: ObjectState };
 }
 
-type ICellOutlineLayer = Layer<CellOutlineProps>;
+interface ICellOutlineLayer extends Layer<CellOutlineProps> {}
 
 export class CellOutlineLayer extends BaseLayer<CellOutlineProps> implements ICellOutlineLayer {
     static ethereal = true;
