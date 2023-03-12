@@ -24,8 +24,8 @@ import {
 } from "./types";
 import { errorNotification } from "./utils/DOMUtils";
 import { valtioRef } from "./utils/imports/valtio";
-import { LatestTimeout } from "./utils/LatestTimeout";
 import { IndexedOrderedMap } from "./utils/OrderedMap";
+import { LatestTimeout } from "./utils/primitiveWrappers";
 import { stringifyAnything } from "./utils/stringUtils";
 
 export class PuzzleManager {
