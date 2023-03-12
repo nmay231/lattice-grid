@@ -75,7 +75,7 @@ export class PuzzleManager {
 
         try {
             const data = JSON.parse(local);
-            this._loadPuzzle(data);
+            this._loadPuzzle(data as NeedsUpdating); // TODO: zod verification?
             this.renderChange({ type: "draw", layerIds: "all" });
         } catch (error: NeedsUpdating) {
             errorNotification({

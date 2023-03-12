@@ -4,7 +4,6 @@ import {
     LayerEventEssentials,
     LayerHandlerResult,
     LayerProps,
-    NeedsUpdating,
     PartialHistoryAction,
     Point,
 } from "../../types";
@@ -238,6 +237,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
         const states = points.map((id) => stored.objects.get(id).state);
 
         const blits: Record<string, any> = {};
+
         if (points.length) {
             for (const group of new Set(states)) {
                 const { selectionCage } = grid.getPoints({
@@ -252,7 +252,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                     },
                     points: states
                         .map((state, i) => (state === group ? points[i] : null))
-                        .filter((point) => point !== null) as NeedsUpdating, // Typescript, get some help...
+                        .filter(Boolean),
                 });
 
                 for (const key in selectionCage.svgPolygons) {

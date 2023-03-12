@@ -24,7 +24,7 @@ export class ComputeManager {
 
     _parseJson(str: string): UserCodeJSON {
         try {
-            return JSON.parse(str);
+            return JSON.parse(str) as NeedsUpdating; // TODO
         } catch {
             this.compilerErrors.push({
                 message: `failed to parse: ${str}`,

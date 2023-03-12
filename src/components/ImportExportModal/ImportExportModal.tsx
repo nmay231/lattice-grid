@@ -40,7 +40,8 @@ const currentVersion: PuzzleData["version"] = "alpha-1";
 
 export const importPuzzle = (puzzle: PuzzleManager, text: string) => {
     try {
-        const puzzleData: PuzzleData = decompressJSON(text);
+        // TODO: zod or similar
+        const puzzleData = decompressJSON(text) as NeedsUpdating as PuzzleData;
         if (!puzzleData?.version || typeof puzzleData.version !== "string")
             return errorNotification({
                 error: null,
