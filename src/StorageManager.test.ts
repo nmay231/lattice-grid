@@ -29,7 +29,7 @@ const gridLayer = (grid: Grid["id"], layer: Layer["id"]) => ({
 });
 
 describe("StorageManager", () => {
-    it("should add a new object correctly", () => {
+    it("adds a new object correctly", () => {
         const storage = getNormalStorage();
         const { objects, groups } = storage.getStored(gridLayer("grid", "layer1"));
         const action: HistoryAction = {
@@ -45,7 +45,7 @@ describe("StorageManager", () => {
         ]);
     });
 
-    it("should delete an object correctly", () => {
+    it("deletes an object correctly", () => {
         const storage = getNormalStorage();
         const { objects, groups } = storage.getStored(gridLayer("grid", "layer1"));
         const action: HistoryAction = {
@@ -91,7 +91,7 @@ describe("StorageManager", () => {
         expect(storage.objects["grid"]["layer1"].objects.entries()).toEqual<HistoryEntries>([]);
     });
 
-    it("should return the same object when inverted twice", () => {
+    it("returns the same object when inverted twice", () => {
         const storage = getNormalStorage();
         const { objects, groups } = storage.getStored(gridLayer("grid", "layer1"));
         const action: HistoryAction = {
@@ -122,7 +122,7 @@ describe("StorageManager", () => {
         expect(sameAction).toEqual<HistoryAction>(action);
     });
 
-    it("should undo/redo a batch of actions", () => {
+    it("batches undo/redo actions with the same batchId", () => {
         const puzzle = fakePuzzle("grid", "question");
         const storage = getNormalStorage();
         storage.addToHistory({
@@ -159,7 +159,7 @@ describe("StorageManager", () => {
         ]);
     });
 
-    it("should merge batched actions affecting the same object", () => {
+    it("merges batched actions affecting the same object", () => {
         const puzzle = fakePuzzle("grid", "question");
         const storage = getNormalStorage();
 
@@ -178,7 +178,7 @@ describe("StorageManager", () => {
         expect(storage.histories["grid-question"].index).toBe(3);
     });
 
-    it("should remove batched actions affecting the same object that are no-ops", () => {
+    it("removes batched actions affecting the same object that are no-ops", () => {
         const puzzle = fakePuzzle("grid", "question");
         const storage = getNormalStorage();
 
@@ -198,7 +198,7 @@ describe("StorageManager", () => {
         expect(storage.histories["grid-question"].index).toBe(2);
     });
 
-    it("should give truthy batchIds", () => {
+    it("gives truthy batchIds", () => {
         const storage = getNormalStorage();
         // Generate three of them, just because
         expect(storage.getNewBatchId()).toBeTruthy();
@@ -206,7 +206,7 @@ describe("StorageManager", () => {
         expect(storage.getNewBatchId()).toBeTruthy();
     });
 
-    it("should not undo or redo with an empty history", () => {
+    it("does not undo or redo with an empty history", () => {
         const puzzle = fakePuzzle("grid", "question");
         const storage = getNormalStorage();
         storage.undoHistory(puzzle);
@@ -223,7 +223,7 @@ describe("StorageManager", () => {
         });
     });
 
-    it("should not undo/redo past the limits of history with a filled history", () => {
+    it("does not undo/redo past the limits of history with a filled history", () => {
         const puzzle = fakePuzzle("grid", "question");
         const storage = getNormalStorage();
 
@@ -282,7 +282,7 @@ describe("StorageManager", () => {
         expect(storage.histories["grid-question"]).toEqual<History>(afterRedo);
     });
 
-    it("should not batch actions if the batchId's are both undefined", () => {
+    it("does not batch actions if the batchId's are both undefined", () => {
         const puzzle = fakePuzzle("grid", "question");
         const storage = getNormalStorage();
         storage.addToHistory({
@@ -303,7 +303,7 @@ describe("StorageManager", () => {
         expect(storage.histories["grid-question"].index).toBe(1);
     });
 
-    it("should not batch actions if one batchId is undefined", () => {
+    it("does not batch actions if one batchId is undefined", () => {
         const puzzle = fakePuzzle("grid", "question");
         const storage = getNormalStorage();
         storage.addToHistory({
@@ -324,7 +324,7 @@ describe("StorageManager", () => {
         expect(storage.histories["grid-question"].index).toBe(1);
     });
 
-    it("should not batch actions if both batchId's are defined but not equal", () => {
+    it("does not batch actions if both batchId's are defined but not equal", () => {
         const puzzle = fakePuzzle("grid", "question");
         const storage = getNormalStorage();
         storage.addToHistory({
@@ -345,7 +345,7 @@ describe("StorageManager", () => {
         expect(storage.histories["grid-question"].index).toBe(1);
     });
 
-    it("should return the actions applied when undoing/redoing", () => {
+    it("returns the actions applied when undoing/redoing", () => {
         const puzzle = fakePuzzle("grid", "question");
         const storage = getNormalStorage();
         storage.addToHistory({
@@ -409,14 +409,12 @@ describe("StorageManager", () => {
     });
 
     it.todo(
-        "should only undo/redo the current editMode (both forwards and backwards and both directions answer to question vice versa",
+        "only undo/redo the current editMode (both forwards and backwards and both directions answer to question vice versa",
     );
 
-    it.todo("should not allow editing the same object from different editModes");
+    it.todo("does not allow editing the same object from different editModes");
 
-    it.todo("should have tests related to storageReducers");
+    it.todo("should add some tests related to storageReducers");
 
-    it.todo(
-        "should only prune redo actions when actions will be added to history (think selection layer, add better description)",
-    );
+    it.todo("does not prune history when actions have batchId=ignore or are ui actions");
 });

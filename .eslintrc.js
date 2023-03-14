@@ -12,6 +12,7 @@ module.exports = {
         "plugin:@typescript-eslint/recommended",
         "plugin:@typescript-eslint/recommended-requiring-type-checking",
         "plugin:valtio/recommended",
+        "plugin:vitest/all",
         "eslint-config-prettier",
     ],
     parser: "@typescript-eslint/parser",
@@ -25,6 +26,7 @@ module.exports = {
     },
     rules: {
         "@typescript-eslint/explicit-module-boundary-types": "off",
+        "@typescript-eslint/no-empty-interface": ["error", { allowSingleExtends: true }],
         "@typescript-eslint/no-explicit-any": "off",
         "@typescript-eslint/no-unsafe-argument": "off",
         "@typescript-eslint/no-unsafe-assignment": "off",
@@ -34,7 +36,6 @@ module.exports = {
         "@typescript-eslint/no-use-before-define": "error",
         "@typescript-eslint/require-array-sort-compare": "error",
         "@typescript-eslint/restrict-template-expressions": "off",
-        "@typescript-eslint/no-empty-interface": ["error", { allowSingleExtends: true }],
         "no-trailing-spaces": "error",
         "no-unreachable": "error",
         "no-use-before-define": "off",
@@ -42,5 +43,11 @@ module.exports = {
         "react-refresh/only-export-components": "error",
         "react/prop-types": "off",
         "react/react-in-jsx-scope": "off",
+        "vitest/max-expects": "off",
+        "vitest/no-alias-methods": "off",
+        "vitest/no-disabled-tests": "off", // Seems to be a duplicate of no-skipped-tests?
+        "vitest/no-hooks": "off",
+        "vitest/prefer-called-with": "off",
+        "vitest/prefer-lowercase-title": ["error", { ignoreTopLevelDescribe: true }],
     },
 };

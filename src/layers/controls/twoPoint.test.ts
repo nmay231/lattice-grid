@@ -38,7 +38,7 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
         vi.resetAllMocks();
     });
 
-    it("should only add/change particular properties", () => {
+    it("only adds/changes particular properties", () => {
         const settings = { selectedState: { asdf: "yolo" } };
         expect(getTwoPointLayer({ settings })).toEqual({
             // Required
@@ -50,7 +50,7 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
         });
     });
 
-    it("should select one line", () => {
+    it("selects one line", () => {
         // Given an empty grid
         const layer = getTwoPointLayer();
         const handler = layerEventRunner({ layer });
@@ -77,7 +77,7 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
         expect(handler.storage.getNewBatchId).toBeCalledTimes(1);
     });
 
-    it("should select multiple lines", () => {
+    it("selects multiple lines", () => {
         // Given an empty grid
         const layer = getTwoPointLayer();
         const handler = layerEventRunner({ layer });
@@ -118,7 +118,7 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
         expect(handler.storage.getNewBatchId).toBeCalledTimes(1);
     });
 
-    it("should erase some lines when drawing over existing ones with the same state", () => {
+    it("erases some lines when drawing over existing ones with the same state", () => {
         // Given an existing line
         const layer = getTwoPointLayer();
         const stored = LayerStorage.fromObjects<TwoPointProps>({
@@ -149,7 +149,7 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
         expect(handler.storage.getNewBatchId).toBeCalledTimes(1);
     });
 
-    it("should override some lines when drawing over existing ones with a different state", () => {
+    it("overrides some lines when drawing over existing ones with a different state", () => {
         // Given an existing line with a different state
         const layer = getTwoPointLayer();
         const stored = LayerStorage.fromObjects<TwoPointProps>({
@@ -180,7 +180,7 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
         expect(handler.storage.getNewBatchId).toBeCalledTimes(1);
     });
 
-    it("should not erase lines when drawing over similar lines after drawing at all", () => {
+    it("does not erase lines when drawing over similar lines after drawing at all", () => {
         // Given an existing line
         const layer = getTwoPointLayer();
         const stored = LayerStorage.fromObjects<TwoPointProps>({
@@ -225,7 +225,7 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
         expect(handler.storage.getNewBatchId).toBeCalledTimes(1);
     });
 
-    it("should not add lines when deleting lines and drawing over nothing", () => {
+    it("does not add lines when deleting lines and drawing over nothing", () => {
         // Given an existing line
         const layer = getTwoPointLayer();
         const stored = LayerStorage.fromObjects<TwoPointProps>({
@@ -267,5 +267,5 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
     });
 
     // TODO: Not implemented yet
-    it.todo("should expand or shrink in the same motion when that setting is active");
+    it.todo("expands/shrinks in the same motion when that setting is active");
 });

@@ -20,7 +20,7 @@ describe("Number Layer", () => {
 
     type HistoryType = LayerHandlerResult<NumberProps>["history"];
 
-    it("should place numbers", () => {
+    it("places numbers", () => {
         const result = layer9.handleKeyDown({
             ...eventEssentials(),
             type: "keyDown",
@@ -34,7 +34,7 @@ describe("Number Layer", () => {
         ]);
     });
 
-    it("should delete some numbers", () => {
+    it("deletes some numbers", () => {
         const stored = LayerStorage.fromObjects<NumberProps>({
             ids: ["toDelete", "keep", "alsoDelete"],
             objs: [
@@ -57,7 +57,7 @@ describe("Number Layer", () => {
         ]);
     });
 
-    it("should not delete objects when the number range increases", () => {
+    it("does not delete objects when the number range increases", () => {
         const stored = LayerStorage.fromObjects<NumberProps>({
             ids: ["1,1", "2,2", "3,3"],
             objs: [
@@ -76,7 +76,7 @@ describe("Number Layer", () => {
         layer9.newSettings({ ...eventEssentials(), newSettings: settings9 });
     });
 
-    it("should delete objects when the number range decreases", () => {
+    it("deletes objects when the number range decreases", () => {
         const stored = LayerStorage.fromObjects<NumberProps>({
             ids: ["1,1", "2,2", "3,3", "4,4"],
             objs: [
@@ -101,5 +101,5 @@ describe("Number Layer", () => {
     });
 
     // TODO: Not implemented, might never be honestly.
-    it.todo("should not delete objects when the range is infinite (max = -1)");
+    it.todo("does not delete objects when the range is infinite (max = -1)");
 });

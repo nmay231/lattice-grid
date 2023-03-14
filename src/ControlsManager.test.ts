@@ -67,7 +67,7 @@ const asynchronousPointers = () => {
 };
 
 describe("asynchronousPointers", () => {
-    test("the asynchronousPointers fast-check arbitrary generates realistic events", () => {
+    it("generates realistic pointer events", () => {
         fc.assert(
             fc.property(asynchronousPointers(), (events) => {
                 const nDown = events.filter(({ type }) => type === "down").length;
@@ -85,7 +85,10 @@ describe("asynchronousPointers", () => {
 
                     expect(down.type).toBe("down");
                     expect(up.type).toBe("up");
+                    // Property based testing is hard without conditionals, imo
+                    // eslint-disable-next-line vitest/no-conditional-tests, vitest/no-conditional-in-test
                     if (moves.length) {
+                        // eslint-disable-next-line vitest/no-conditional-expect
                         expect(new Set(moves.map(({ type }) => type))).toEqual(new Set(["move"]));
                     }
                 }
@@ -379,6 +382,7 @@ describe("PointerState", () => {
         );
     });
 
+    /* eslint-disable vitest/no-conditional-tests, vitest/no-conditional-in-test, vitest/no-conditional-expect */
     it("always sends an up event before the next down", () => {
         fc.assert(
             fc.property(asynchronousPointers(), (events) => {
@@ -458,6 +462,7 @@ describe("PointerState", () => {
             }),
         );
     });
+    /* eslint-enable vitest/no-conditional-tests, vitest/no-conditional-in-test, vitest/no-conditional-expect */
 });
 
 describe("ControlsManager", () => {

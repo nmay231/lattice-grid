@@ -17,7 +17,7 @@ const getFreshSelectedLayer = () => {
 type HistoryType = PartialHistoryAction<SelectedProps, any>[];
 
 describe("selection controls", () => {
-    it("should have a working obj() helper function", () => {
+    it("has a working obj() helper function", () => {
         expect(obj({ id: "asdfasdf", object: null })).toEqual<HistoryType[number]>({
             batchId: "ignore",
             storageMode: "question",
@@ -34,7 +34,7 @@ describe("selection controls", () => {
         });
     });
 
-    it("should select one cell", () => {
+    it("selects one cell", () => {
         // Given an empty grid
         const layer = getFreshSelectedLayer();
         const handler = layerEventRunner({ layer });
@@ -60,7 +60,7 @@ describe("selection controls", () => {
         expect(pointerUp.discontinueInput).toBeTruthy();
     });
 
-    it("should deselect a cell by clicking on it", () => {
+    it("deselects a cell by clicking on it", () => {
         // Given a grid with exactly one cell selected
         const layer = getFreshSelectedLayer();
         const stored = LayerStorage.fromObjects<SelectedProps>({
@@ -86,9 +86,9 @@ describe("selection controls", () => {
         expect(pointerUp.discontinueInput).toBeTruthy();
     });
 
-    it.todo("should not deselect the first cell when selecting multiple");
+    it.todo("does not deselect the first cell when selecting multiple");
 
-    it("should not deselect a clicked cell if there were more than one previously selected", () => {
+    it("does not deselect a clicked cell if there were more than one previously selected", () => {
         // Given a grid with two cells selected
         const layer = getFreshSelectedLayer();
         const stored = LayerStorage.fromObjects<SelectedProps>({
@@ -129,7 +129,7 @@ describe("selection controls", () => {
         expect(pointerUp.discontinueInput).toBeTruthy();
     });
 
-    it("should deselect a cell when clicking another one", () => {
+    it("deselects a cell when clicking another one", () => {
         // Given a grid with one cell selected
         const layer = getFreshSelectedLayer();
         const stored = LayerStorage.fromObjects<SelectedProps>({
@@ -167,7 +167,7 @@ describe("selection controls", () => {
         expect(pointerUp.discontinueInput).toBeTruthy();
     });
 
-    it("should add cells to the selection when holding ctrl", () => {
+    it("adds cells to the selection when holding ctrl", () => {
         // Given a grid with three cells selected in the same motion (states are equal)
         const layer = getFreshSelectedLayer();
         const stored = LayerStorage.fromObjects<SelectedProps>({
@@ -222,7 +222,7 @@ describe("selection controls", () => {
         expect(pointerUp.discontinueInput).toBeTruthy();
     });
 
-    it("should merge disjoint selections when dragging over an existing group", () => {
+    it("merges disjoint selections when dragging over an existing group", () => {
         // Given some selected cells
         const layer = getFreshSelectedLayer();
         const stored = LayerStorage.fromObjects<SelectedProps>({
@@ -274,7 +274,7 @@ describe("selection controls", () => {
         expect(pointerUp.discontinueInput).toBeTruthy();
     });
 
-    it("should batch together storingLayer actions", () => {
+    it("batches together storingLayer actions", () => {
         // Given two selected points
         const layer = getFreshSelectedLayer();
         const stored = LayerStorage.fromObjects<SelectedProps>({
@@ -303,7 +303,7 @@ describe("selection controls", () => {
         expect(keyDown.discontinueInput).toBeTruthy();
     });
 
-    it("should select objects affected by undo/redo", () => {
+    it("selects objects affected by undo/redo", () => {
         // Given two points selected
         const layer = getFreshSelectedLayer();
         const stored = LayerStorage.fromObjects<SelectedProps>({
@@ -362,8 +362,8 @@ describe("selection controls", () => {
 });
 
 describe("SelectionLayer on a square grid", () => {
-    it.todo("should select many cells in a horizontal line");
+    it.todo("selects many cells in a horizontal line");
 
     // TODO: Not possible yet because you can't cut across corners
-    it.todo("should select many cells in a diagonal line");
+    it.todo("selects many cells in a diagonal line");
 });

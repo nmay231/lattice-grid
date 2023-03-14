@@ -20,7 +20,7 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         vi.resetAllMocks();
     });
 
-    it("should draw a new single-point object when none were selected", () => {
+    it("draws a new single-point object when none were selected", () => {
         // Given an empty grid
         const layer = getMultiPointLayer();
         const handler = layerEventRunner({ layer });
@@ -43,7 +43,7 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         expect(pointerUp.discontinueInput).toBeTruthy();
     });
 
-    it("should draw a new object when a previous one was selected", () => {
+    it("draws a new object when a previous one was selected", () => {
         // Given a grid with an object selected
         const layer = getMultiPointLayer();
         const stored = LayerStorage.fromObjects<MultiPointLayerProps>({
@@ -71,7 +71,7 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         expect(pointerUp.discontinueInput).toBeTruthy();
     });
 
-    it("should expand and shrink an object", () => {
+    it("expands and shrinks an object", () => {
         // Given an empty grid
         const layer = getMultiPointLayer();
         const handler = layerEventRunner({ layer });
@@ -127,7 +127,7 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         expect(handler.storage.getNewBatchId).toBeCalledTimes(1);
     });
 
-    it("should remove a point from the current object after a simple click", () => {
+    it("removes a point from the current object after a simple click", () => {
         // Given an object with two points
         const layer = getMultiPointLayer();
         const stored = LayerStorage.fromObjects<MultiPointLayerProps>({
@@ -169,13 +169,11 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         expect(handler.storage.getNewBatchId).toBeCalledTimes(1);
     });
 
-    it.todo("should delete a single-point object after a simple click");
+    it.todo("deletes a single-point object after a simple click");
 
-    it.todo(
-        "should not remove a point from an object when clicked if it was not the current object",
-    );
+    it.todo("does not remove a point from an object when clicked if it was not the current object");
 
-    it("should not remove the starting point from an object if points were added/deleted", () => {
+    it("does not remove the starting point from an object if points were added/deleted", () => {
         // Given an object with two points
         const layer = getMultiPointLayer();
         const stored = LayerStorage.fromObjects<MultiPointLayerProps>({
@@ -217,11 +215,11 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         expect(handler.storage.getNewBatchId).toBeCalledTimes(1);
     });
 
-    it.todo("should delete the layers state then delete the object using the delete key");
+    it.todo("deletes the layers state then deletes the object using the delete key");
 
-    it.todo("should deselect an object when escape is pressed");
+    it.todo("deselects an object when escape is pressed");
 
-    it.todo("should select an object on undo/redo when object exists");
+    it.todo("selects an object on undo/redo when object exists");
 
-    it.todo("should select an object on undo/redo when object does not exist");
+    it.todo("selects an object on undo/redo when object does not exist");
 });

@@ -9,7 +9,7 @@ describe("keypressStringShorthand", () => {
             ...arg,
         });
     };
-    it("should shorten letters and numbers", () => {
+    it("shortens letters and numbers", () => {
         expect(call({ key: "g" })).toBe("g");
         expect(call({ key: "R" })).toBe("R");
         expect(call({ key: "I" })).toBe("I");
@@ -18,7 +18,7 @@ describe("keypressStringShorthand", () => {
         expect(call({ key: "2" })).toBe("2");
     });
 
-    it("should shorten spacebar, control, shift (etc.) key presses", () => {
+    it("shortens spacebar, control, shift (etc.) key presses", () => {
         expect(call({ key: " " })).toBe("Space");
         expect(call({ key: "Shift", shiftKey: true })).toBe("Shift");
         expect(call({ key: "Control", ctrlKey: true })).toBe("Control");
@@ -28,14 +28,14 @@ describe("keypressStringShorthand", () => {
         expect(call({ key: "Tab" })).toBe("Tab");
     });
 
-    it("should shorten special characters", () => {
+    it("shortens special characters", () => {
         expect(call({ key: "+" })).toBe("+");
         expect(call({ key: "=" })).toBe("=");
         expect(call({ key: "-" })).toBe("-");
         expect(call({ key: "?" })).toBe("?");
     });
 
-    it("should shorten letters and numbers with ctrl pressed", () => {
+    it("shortens letters and numbers with ctrl pressed", () => {
         expect(call({ key: "g", ctrlKey: true })).toBe("ctrl-g");
         expect(call({ key: "R", ctrlKey: true })).toBe("ctrl-R");
         expect(call({ key: "I", ctrlKey: true })).toBe("ctrl-I");
@@ -44,17 +44,17 @@ describe("keypressStringShorthand", () => {
         expect(call({ key: "2", ctrlKey: true })).toBe("ctrl-2");
     });
 
-    it.todo("should still understand capslock when numlock is pressed (Windows bug)");
+    it.todo("remembers capslock when numlock is pressed (Windows bug)");
 });
 
 describe("smartSort", () => {
-    it("should sort a number array correctly", () => {
+    it("sorts a number array correctly", () => {
         const arr = [0, 1, 10, 2, 20, 999, -200, -100];
         arr.sort(smartSort);
         expect(arr).toEqual([-200, -100, 0, 1, 2, 10, 20, 999]);
     });
 
-    it("should sort a string array correctly", () => {
+    it("sorts a string array correctly", () => {
         const arr = ["asdf1", "1", "10", "2", "asdf", "z", "Z"];
         arr.sort(smartSort);
         expect(arr).toEqual(["1", "10", "2", "Z", "asdf", "asdf1", "z"]);

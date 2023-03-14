@@ -21,7 +21,7 @@ describe("SimpleLine", () => {
         return simpleLine;
     };
 
-    it("should delete all objects when changing connection types", () => {
+    it("deletes all objects when changing connection types", () => {
         const stored = LayerStorage.fromObjects<SimpleLineProps>({
             ids: ["something"],
             objs: [{ id: "something", points: [], state: { stroke: "" } }],
@@ -43,7 +43,7 @@ describe("SimpleLine", () => {
         expect(result?.history).toEqual([{ id: "something", object: null }]);
     });
 
-    it("should not delete any objects when changing anything but connection types", () => {
+    it("does not delete any objects when changing anything but connection types", () => {
         const stored = LayerStorage.fromObjects<SimpleLineProps>({
             ids: ["something"],
             objs: [{ id: "something", points: [], state: { stroke: "" } }],

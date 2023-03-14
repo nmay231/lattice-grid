@@ -19,7 +19,7 @@ describe("numberTyper", () => {
         // TODO: Fix: { negatives: true, max: 16, key: "2", start: ["-1"], result: ["-12"] },
         { negatives: true, max: 100, key: "1", start: ["3"], result: ["31"] },
         // TODO: Fix: { negatives: true, max: 100, key: "1", start: ["-3"], result: ["-31"] },
-    ])("should type within the range bounds", ({ max, negatives, start, key, result }) => {
+    ])("types within the range bounds", ({ max, negatives, start, key, result }) => {
         expect(numberTyper({ max, negatives })(start, event(key))).toEqual<Result>(result);
     });
 
@@ -27,7 +27,7 @@ describe("numberTyper", () => {
         { negatives: false, max: 9, key: "9", start: [""], result: ["9"] },
         { negatives: false, max: 16, key: "6", start: ["1"], result: ["16"] },
         { negatives: false, max: 100, key: "0", start: ["10"], result: ["100"] },
-    ])("should type on the range bounds", ({ max, negatives, start, key, result }) => {
+    ])("types on the range bounds", ({ max, negatives, start, key, result }) => {
         expect(numberTyper({ max, negatives })(start, event(key))).toEqual<Result>(result);
     });
 
@@ -36,7 +36,7 @@ describe("numberTyper", () => {
         { negatives: false, max: 16, key: "2", start: ["15"], result: ["2"] },
         { negatives: false, max: 100, key: "4", start: ["99"], result: ["4"] },
     ])(
-        "should not type more than the max when less than the max",
+        "does not type more than the max when less than the max",
         ({ max, negatives, start, key, result }) => {
             expect(numberTyper({ max, negatives })(start, event(key))).toEqual<Result>(result);
         },
@@ -47,7 +47,7 @@ describe("numberTyper", () => {
         { negatives: false, max: 16, key: "2", start: ["16"], result: ["2"] },
         { negatives: false, max: 100, key: "3", start: ["100"], result: ["3"] },
     ])(
-        "should not type more than the max when at the max",
+        "does not type more than the max when at the max",
         ({ max, negatives, start, key, result }) => {
             expect(numberTyper({ max, negatives })(start, event(key))).toEqual<Result>(result);
         },
@@ -64,7 +64,7 @@ describe("numberTyper", () => {
         { negatives: true, max: 100, key: "0", start: ["-1"], result: ["-10"] },
         { negatives: true, max: 100, key: "0", start: ["-1"], result: ["-10"] },
         { negatives: true, max: 100, key: "0", start: ["-1"], result: ["-10"] },
-    ])("should type zero", ({ max, negatives, start, key, result }) => {
+    ])("types zero", ({ max, negatives, start, key, result }) => {
         expect(numberTyper({ max, negatives })(start, event(key))).toEqual<Result>(result);
     });
 
@@ -75,7 +75,7 @@ describe("numberTyper", () => {
         { negatives: false, max: 100, key: "Backspace", start: ["10"], result: ["1"] },
         { negatives: false, max: 100, key: "Backspace", start: ["100"], result: ["10"] },
         // TODO: Fix: { negatives: true, max: 9, key: "Backspace", start: ["-5"], result: [null] },
-    ])("should shorten numbers with backspace", ({ max, negatives, start, key, result }) => {
+    ])("shortens numbers with backspace", ({ max, negatives, start, key, result }) => {
         expect(numberTyper({ max, negatives })(start, event(key))).toEqual<Result>(result);
     });
 
@@ -85,7 +85,7 @@ describe("numberTyper", () => {
         { negatives: false, max: 16, key: "Delete", start: ["16"], result: [null] },
         { negatives: false, max: 100, key: "Delete", start: ["10"], result: [null] },
         { negatives: false, max: 100, key: "Delete", start: ["100"], result: [null] },
-    ])("should delete numbers", ({ max, negatives, start, key, result }) => {
+    ])("deletes numbers", ({ max, negatives, start, key, result }) => {
         expect(numberTyper({ max, negatives })(start, event(key))).toEqual<Result>(result);
     });
 
@@ -98,7 +98,7 @@ describe("numberTyper", () => {
         { negatives: true, max: 100, key: "0", start: ["1"], result: ["10"] },
         { negatives: true, max: 100, key: "0", start: ["10"], result: ["100"] },
         { negatives: true, max: 100, key: "0", start: ["100"], result: ["0"] },
-    ])("should negate numbers when appropriate", ({ max, negatives, start, key, result }) => {
+    ])("negates numbers when appropriate", ({ max, negatives, start, key, result }) => {
         expect(numberTyper({ max, negatives })(start, event(key))).toEqual<Result>(result);
     });
 
@@ -111,7 +111,7 @@ describe("numberTyper", () => {
         { negatives: false, max: 20, key: "z", start: [""], result: "doNothing" as const },
         // TODO: Fix: { negatives: false, max: 9, key: "a", start: [""], result: [null] },
     ])(
-        "should type hexadecimal numbers with no starting numbers",
+        "types hexadecimal numbers with no starting numbers",
         ({ max, negatives, start, key, result }) => {
             expect(numberTyper({ max, negatives })(start, event(key))).toEqual<Result>(result);
         },
@@ -129,17 +129,17 @@ describe("numberTyper", () => {
         { negatives: true, max: 16, key: "a", start: ["-2"], result: ["10"] },
         { negatives: true, max: 20, key: "d", start: ["-4"], result: ["13"] },
     ])(
-        "should type hexadecimal numbers when there is already starting numbers",
+        "types hexadecimal numbers when there is already starting numbers",
         ({ max, negatives, start, key, result }) => {
             expect(numberTyper({ max, negatives })(start, event(key))).toEqual<Result>(result);
         },
     );
 
-    it.todo("should treat null, undefined, and invalid number strings the same");
+    it.todo("treats null, undefined, and invalid number strings the same");
 
-    it.todo("should not add a second digit when the numbers are not the same");
+    it.todo("does not add a second digit when the numbers are not the same");
 
-    it.todo("should not add a second digit when the numbers are not the same");
+    it.todo("does not add a second digit when the numbers are not the same");
 
-    it.todo("should return an array with the same length as it was passed");
+    it.todo("returns an array with the same length as it was passed");
 });

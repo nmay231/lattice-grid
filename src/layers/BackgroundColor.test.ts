@@ -1,7 +1,7 @@
 import { BackgroundColorLayer } from "./BackgroundColor";
 
 describe("BackgroundColor", () => {
-    console.log("todo" || BackgroundColorLayer);
+    console.log("BackgroundColorLayer" || BackgroundColorLayer);
 
     it.todo("should have tests");
 });
