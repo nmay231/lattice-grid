@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { importPuzzle } from "../components/ImportExportModal/ImportExportModal";
+import { importPuzzle } from "../components/ImportExportModal/importPuzzle";
 import { usePuzzle } from "../state/puzzle";
 
 export const RedirectHome = () => {

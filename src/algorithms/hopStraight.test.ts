@@ -3,8 +3,6 @@ import { Delta, Vector } from "../types";
 import { hopStraight } from "./hopStraight";
 
 describe("hopStraight", () => {
-    console.log("todo" || hopStraight);
-
     type Arg = Parameters<typeof hopStraight>[0] & {
         targetPoints: string[];
         round?: (n: number) => number;
@@ -75,7 +73,7 @@ describe("hopStraight", () => {
         { dx: -4, dy: -2 },
     ];
 
-    it("should find the optimal path with simple deltas", () => {
+    it("finds the optimal path with simple deltas", () => {
         fc.assert(
             fc.property(
                 fc.oneof(
@@ -127,28 +125,21 @@ describe("hopStraight", () => {
         { dx: -1, dy: -5 },
         { dx: 1, dy: -5 },
     ];
-    it.todo("should never generate vectors more than 45 degrees from the start-end vector");
+    it.todo("never generates vectors more than 45 degrees from the start-end vector");
 
     // TODO: Remember that in square grids, there is no difference between cells and corners except that they are offset one (1, 1).
     // TODO: Add relevant tests for non-square grids.
-    it.skip("should select a straight line of cells in a square grid", () => {
-        // expect(
-        //     helper({
-        //         cursor: [],
-        //         deltas,
-        //     }),
-        // );
-    });
+    it.todo("selects a straight line of cells in a square grid");
 
-    it.todo("should select a straight line of edges in a square grid");
+    it.todo("selects a straight line of edges in a square grid");
 
-    it.todo("should select a slightly diagonal line of cells in a square grid");
+    it.todo("selects a slightly diagonal line of cells in a square grid");
 
-    it.todo("should select a slightly diagonal line of edges in a square grid");
+    it.todo("selects a slightly diagonal line of edges in a square grid");
 
-    it.todo("should select a perfectly diagonal line of cells (and cut corners) in a square grid");
+    it.todo("selects a perfectly diagonal line of cells (and cut corners) in a square grid");
 
     it.todo(
-        "Check that the standard orthogonal move set allows you to cut corners (and then remove that test stub from selection, since that's useless)",
+        "check that the standard orthogonal move set allows you to cut corners (and then remove that test stub from selection, since that's useless)",
     );
 });

@@ -17,7 +17,7 @@ describe("codeGen", () => {
     const getWorkspace = () => new Blockly.Workspace();
     const newVar = Blockly.Variables.getOrCreateVariablePackage;
 
-    it("should generate DefineAlias empty", () => {
+    it("generates DefineAlias empty", () => {
         const workspace = getWorkspace();
         const defineAlias = workspace.newBlock("DefineAlias", "id1");
         const variable = newVar(workspace, "varId", "varName", "");
@@ -31,7 +31,7 @@ describe("codeGen", () => {
         });
     });
 
-    it("should generate DefineAlias filled", () => {
+    it("generates DefineAlias filled", () => {
         const workspace = getWorkspace();
 
         const defineAlias = workspace.newBlock("DefineAlias", "id1");
@@ -54,7 +54,7 @@ describe("codeGen", () => {
         });
     });
 
-    it("should generate ReadAlias", () => {
+    it("generates ReadAlias", () => {
         const workspace = getWorkspace();
         const readAlias = workspace.newBlock("ReadAlias", "id1");
         const variable = newVar(workspace, "varId", "varName", "");
@@ -67,7 +67,7 @@ describe("codeGen", () => {
         });
     });
 
-    it("should generate Integer", () => {
+    it("generates Integer", () => {
         const workspace = getWorkspace();
         const integer = workspace.newBlock("Integer", "id1");
         integer.getField("VALUE")?.setValue(42);
@@ -79,7 +79,7 @@ describe("codeGen", () => {
         });
     });
 
-    it("should generate IfElse empty", () => {
+    it("generates IfElse empty", () => {
         const workspace = getWorkspace();
         const IfElse = workspace.newBlock("IfElse", "id1");
 
@@ -92,7 +92,7 @@ describe("codeGen", () => {
         });
     });
 
-    it("should generate IfElse filled", () => {
+    it("generates IfElse filled", () => {
         const workspace = getWorkspace();
         const ifElse = workspace.newBlock("IfElse", "id1");
         const readAlias = workspace.newBlock("ReadAlias", "id2");

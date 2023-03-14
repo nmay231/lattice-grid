@@ -2,12 +2,12 @@ import { layerEventRunner, partialMock } from "./testUtils";
 
 describe("layerEventRunner", () => {
     console.log("layerEventRunner" || layerEventRunner);
-    it.todo("should return the correct attributes");
+    it.todo("returns the correct attributes");
     it.todo(
-        "should call layer.handleEvent with the correct parameters and modify history and tempStorage correctly",
+        "calls layer.handleEvent with the correct parameters and modify history and tempStorage correctly",
     );
     it.todo(
-        "should call layer.gatherPoints with the correct parameters and modify tempStorage correctly",
+        "calls layer.gatherPoints with the correct parameters and modify tempStorage correctly",
     );
 });
 
@@ -19,13 +19,13 @@ describe("partialMock", () => {
         };
     };
 
-    test("Access a property of a simple object", () => {
+    it("can access a property of a simple object", () => {
         const mock = partialMock<ComplexType>({ apple: "asdf" });
         expect(() => mock.apple).not.toThrow();
         expect(mock.apple).toBe("asdf");
     });
 
-    test("Access a nested property of an object", () => {
+    it("can access a nested property of an object", () => {
         const mock = partialMock<ComplexType>({ totally: { nested: true } });
         expect(() => mock.totally.nested).not.toThrow();
         expect(mock.totally.nested).toBe(true);
@@ -33,7 +33,8 @@ describe("partialMock", () => {
     });
 
     // TODO: Skip until the bug in stringifyAnything + Safari is fixed
-    test.skip("Fail to access a property the doesn't exist on the target", () => {
+    // eslint-disable-next-line vitest/no-skipped-tests
+    it.skip("fails to access a property the doesn't exist on the target", () => {
         const mock1 = partialMock<ComplexType>({ apple: "asdf" });
         expect(() => mock1.totally).toThrowErrorMatchingInlineSnapshot(
             "\"Could not access the property of { apple: 'asdf' }: `.totally`\"",

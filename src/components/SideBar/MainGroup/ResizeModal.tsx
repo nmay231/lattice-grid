@@ -1,7 +1,7 @@
 import { Button, Modal, Paper } from "@mantine/core";
 import { useCallback, useEffect, useMemo } from "react";
 import { IoIosArrowDown, IoIosArrowUp } from "react-icons/io";
-import { useSnapshot } from "valtio";
+import { useProxy } from "valtio/utils";
 import { canvasSizeProxy } from "../../../state/canvasSize";
 import { usePuzzle } from "../../../state/puzzle";
 import { openModal, useFocusElementHandler, useModal } from "../../../utils/focusManagement";
@@ -22,13 +22,14 @@ export const ResizeModal = () => {
     const puzzle = usePuzzle();
     const buttons = useMemo(() => puzzle.grid.getCanvasResizers(), [puzzle]);
     const { opened, close } = useModal("resize-grid");
-    const canvasSizeSnap = useSnapshot(canvasSizeProxy);
+    const canvasSize = useProxy(canvasSizeProxy);
 
     useEffect(() => {
-        if (opened && canvasSizeProxy.zoom !== 0) {
-            canvasSizeProxy.zoom = 0;
+        if (opened && canvasSize.zoom !== 0) {
+            canvasSize.zoom = 0;
         }
-    }, [canvasSizeSnap.zoom, opened]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [canvasSize.zoom, opened]);
 
     // TODO: Give the user feedback that holding shift/ctrl scales by 5. Dependent on global focus management
     const resizer = (resize: (a: number) => void, amount: number) => (event: React.MouseEvent) => {

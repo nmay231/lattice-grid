@@ -1,6 +1,6 @@
 import { BackgroundColorLayer } from "./BackgroundColor";
 import { CellOutlineLayer } from "./CellOutline";
-import { DebugPointerLayer } from "./DebugPointer";
+import { DebugSelectPointsLayer } from "./DebugSelectPoints";
 import { KillerCagesLayer } from "./KillerCages";
 import { NumberLayer } from "./Number";
 import { OverlayLayer } from "./Overlay";
@@ -10,7 +10,7 @@ import { ToggleCharactersLayer } from "./ToggleCharacters";
 export const availableLayers = {
     BackgroundColorLayer,
     CellOutlineLayer,
-    DebugPointerLayer,
+    DebugSelectPointsLayer,
     KillerCagesLayer,
     NumberLayer,
     OverlayLayer,

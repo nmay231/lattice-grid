@@ -12,6 +12,7 @@ module.exports = {
         "plugin:@typescript-eslint/recommended",
         "plugin:@typescript-eslint/recommended-requiring-type-checking",
         "plugin:valtio/recommended",
+        "plugin:vitest/all",
         "eslint-config-prettier",
     ],
     parser: "@typescript-eslint/parser",
@@ -19,12 +20,13 @@ module.exports = {
         project: ["./tsconfig.json"],
         ecmaFeatures: { jsx: true },
     },
-    plugins: ["react", "testing-library"],
+    plugins: ["react", "testing-library", "react-refresh"],
     settings: {
         react: { version: "detect" },
     },
     rules: {
         "@typescript-eslint/explicit-module-boundary-types": "off",
+        "@typescript-eslint/no-empty-interface": ["error", { allowSingleExtends: true }],
         "@typescript-eslint/no-explicit-any": "off",
         "@typescript-eslint/no-unsafe-argument": "off",
         "@typescript-eslint/no-unsafe-assignment": "off",
@@ -38,7 +40,14 @@ module.exports = {
         "no-unreachable": "error",
         "no-use-before-define": "off",
         "prefer-const": "warn",
+        "react-refresh/only-export-components": "error",
         "react/prop-types": "off",
         "react/react-in-jsx-scope": "off",
+        "vitest/max-expects": "off",
+        "vitest/no-alias-methods": "off",
+        "vitest/no-disabled-tests": "off", // Seems to be a duplicate of no-skipped-tests?
+        "vitest/no-hooks": "off",
+        "vitest/prefer-called-with": "off",
+        "vitest/prefer-lowercase-title": ["error", { ignoreTopLevelDescribe: true }],
     },
 };

@@ -1,4 +1,4 @@
-import { useSnapshot } from "valtio";
+import { useProxy } from "valtio/utils";
 import { availableLayers } from "../../../layers";
 import { usePuzzle } from "../../../state/puzzle";
 import { JSONSchema, Layer, LayerClass, UnknownObject } from "../../../types";
@@ -33,9 +33,9 @@ const _LayerControlSettings = ({ layer, controls }: InnerProps) => {
 };
 
 export const LayerControlSettings = () => {
-    const { layers } = usePuzzle();
-    const layersSnap = useSnapshot(layers);
-    const id = layersSnap.currentKey;
+    const { layers: layersProxy } = usePuzzle();
+    const layers = useProxy(layersProxy);
+    const id = layers.currentKey;
     const layer = id && layers.get(id);
 
     if (!layer) {
