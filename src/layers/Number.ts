@@ -1,7 +1,6 @@
 import { zip } from "lodash";
 import { TextBlits } from "../components/SVGCanvas/Text";
 import { Layer, LayerClass, LayerHandlerResult, Point } from "../types";
-import { bySubset } from "../utils/structureUtils";
 import { BaseLayer, methodNotImplemented } from "./BaseLayer";
 import { numberTyper } from "./controls/numberTyper";
 import { handleEventsSelection, KeyDownEventHandler, SelectedProps } from "./controls/selection";
@@ -111,9 +110,8 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
 
     getBlits: INumberLayer["getBlits"] = ({ grid, storage, settings }) => {
         const stored = storage.getStored<NumberProps>({ grid, layer: this });
-        const points = stored.objects
-            .keys()
-            .filter(bySubset(stored.groups.getGroup(settings.editMode)));
+        const group = stored.groups.getGroup(settings.editMode);
+        const points = stored.objects.keys().filter((id) => group.has(id));
         const { cells } = grid.getPoints({
             settings,
             connections: {

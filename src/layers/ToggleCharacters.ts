@@ -1,7 +1,6 @@
 import { TextBlits } from "../components/SVGCanvas/Text";
 import { Layer, LayerClass, Vector } from "../types";
 import { errorNotification } from "../utils/DOMUtils";
-import { bySubset } from "../utils/structureUtils";
 import { BaseLayer, methodNotImplemented } from "./BaseLayer";
 import { handleEventsSelection, KeyDownEventHandler, SelectedProps } from "./controls/selection";
 
@@ -189,10 +188,8 @@ export class ToggleCharactersLayer
             grid,
             layer: this,
         });
-
-        const ids = stored.objects
-            .keys()
-            .filter(bySubset(stored.groups.getGroup(settings.editMode)));
+        const group = stored.groups.getGroup(settings.editMode);
+        const ids = stored.objects.keys().filter((id) => group.has(id));
 
         const { cells } = grid.getPoints({
             settings,

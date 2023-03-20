@@ -1,6 +1,5 @@
 import { PolygonBlits } from "../components/SVGCanvas/Polygon";
 import { Layer, LayerClass } from "../types";
-import { bySubset } from "../utils/structureUtils";
 import { BaseLayer, methodNotImplemented } from "./BaseLayer";
 import { handleEventsCurrentSetting, OnePointProps } from "./controls/onePoint";
 
@@ -73,9 +72,8 @@ export class BackgroundColorLayer
 
     getBlits: IBackgroundColorLayer["getBlits"] = ({ grid, storage, settings }) => {
         const stored = storage.getStored<BackgroundColorProps>({ grid, layer: this });
-        const renderOrder = stored.objects
-            .keys()
-            .filter(bySubset(stored.groups.getGroup(settings.editMode)));
+        const group = stored.groups.getGroup(settings.editMode);
+        const renderOrder = stored.objects.keys().filter((id) => group.has(id));
         const { cells } = grid.getPoints({
             settings,
             connections: { cells: { svgOutline: true } },

@@ -1,6 +1,5 @@
 import { LineBlits } from "../components/SVGCanvas/Line";
 import { Layer, LayerClass, ObjectId, Point, PointType } from "../types";
-import { bySubset } from "../utils/structureUtils";
 import { BaseLayer, methodNotImplemented } from "./BaseLayer";
 import { handleEventsCurrentSetting, TwoPointProps } from "./controls/twoPoint";
 
@@ -119,10 +118,8 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
             grid,
             layer: this,
         });
-
-        const renderOrder = stored.objects
-            .keys()
-            .filter(bySubset(stored.groups.getGroup(settings.editMode)));
+        const group = stored.groups.getGroup(settings.editMode);
+        const renderOrder = stored.objects.keys().filter((id) => group.has(id));
 
         let allPoints = renderOrder.map((id) => stored.objects.get(id).points).flat();
         allPoints = allPoints.filter((point, index) => index === allPoints.indexOf(point));

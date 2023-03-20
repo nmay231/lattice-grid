@@ -1,6 +1,7 @@
 import { prioritizeDirection } from "../algorithms/prioritizeDirection";
 import { PuzzleManager } from "../PuzzleManager";
 import { Grid, Point, PointType, Vector } from "../types";
+import { parseIntBase } from "../utils/data";
 import { errorNotification } from "../utils/DOMUtils";
 import { FancyVector } from "../utils/math";
 
@@ -124,7 +125,7 @@ export class SquareGrid implements Grid {
 
         let start: FancyVector | undefined = undefined;
         if (previousPoint) {
-            start = new FancyVector(previousPoint.split(",").map((x) => parseInt(x)) as Vector);
+            start = new FancyVector(previousPoint.split(",").map(parseIntBase(10)) as Vector);
         }
 
         const points = prioritizeDirection({
@@ -490,7 +491,7 @@ export class SquareGrid implements Grid {
             maxIteration--;
 
             const edgeKey = Object.keys(edgesLeft)[0];
-            const firstEdge = edgeKey.split(",").map((i) => parseInt(i));
+            const firstEdge = edgeKey.split(",").map(parseIntBase(10));
 
             let next: [number, number];
             let current = edgesLeft[edgeKey];
