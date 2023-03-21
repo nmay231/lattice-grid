@@ -1,6 +1,6 @@
 import fc from "fast-check";
-import { range } from "lodash";
-import { maxReducer, parseIntBase } from "./data";
+import { range, zip as lodashZip } from "lodash";
+import { maxReducer, parseIntBase, zip as ourZip } from "./data";
 
 describe("maxReducer", () => {
     it("gives the same value as the last value after sorting the array", () => {
@@ -34,5 +34,23 @@ describe("parseIntBase", () => {
         expect(base36.map(parseIntBase(36))).toEqual(range(0, 36).concat(40623982667366));
 
         expect(parseIntBase(2)("110100100")).toBe(420);
+    });
+});
+
+describe("zip with better types", () => {
+    it("does exactly what the lodash zip does for arrays with equal length", () => {
+        fc.assert(
+            fc.property(
+                fc.integer({ min: 0, max: 1000 }).chain((length) => {
+                    return fc.array(
+                        fc.array(fc.integer(), { minLength: length, maxLength: length }),
+                        { minLength: 2, maxLength: 5 },
+                    );
+                }),
+                (arrays) => {
+                    expect(Array.from(ourZip(...arrays))).toEqual(lodashZip(...arrays));
+                },
+            ),
+        );
     });
 });

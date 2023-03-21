@@ -1,7 +1,8 @@
 import fc from "fast-check";
-import { random, range, shuffle, zip } from "lodash";
+import { random, range, shuffle } from "lodash";
 import { PartialPointerEvent, _PointerState as PointerState } from "./ControlsManager";
 import { Vector } from "./types";
+import { zip } from "./utils/data";
 import { partialMock } from "./utils/testUtils";
 
 // TODO: Move this definition and the corresponding test to a new file if used in other tests
@@ -47,8 +48,6 @@ const asynchronousPointers = () => {
                 randomIndexes,
                 definition,
             )) {
-                if (index === undefined || !generated) break; // Should never happen
-
                 const { button, move: xy } = generated;
                 if (!pointerInfo[index].button) {
                     pointerInfo[index].button = button;

@@ -1,6 +1,6 @@
-import { zip } from "lodash";
 import { TextBlits } from "../components/SVGCanvas/Text";
 import { Layer, LayerClass, LayerHandlerResult, Point } from "../types";
+import { zip } from "../utils/data";
 import { BaseLayer, methodNotImplemented } from "./BaseLayer";
 import { numberTyper } from "./controls/numberTyper";
 import { handleEventsSelection, KeyDownEventHandler, SelectedProps } from "./controls/selection";
@@ -51,7 +51,6 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
         const history: LayerHandlerResult<NumberProps>["history"] = [];
 
         for (const [id, old, new_] of zip(ids, states, newStates)) {
-            if (id === undefined || old === undefined || new_ === undefined) break; // They should be the same length
             if (old === new_) continue;
 
             history.push({
