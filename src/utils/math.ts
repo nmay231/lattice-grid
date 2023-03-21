@@ -1,8 +1,6 @@
 import { euclidean } from "../algorithms/hopStraight";
 import { Vector } from "../types";
 
-// TODO: Tests
-// Rename to Vector and replace the simple `type Vector=[number, number]`
 export class FancyVector {
     public x: number;
     public y: number;
@@ -49,10 +47,33 @@ export class FancyVector {
         return this.x * other.x + this.y * other.y;
     }
 
-    // TODO: Better name. Projected distance? Idk
-    distanceAlong(other: FancyVector | Vector) {
+    scalarProjectionOnto(other: FancyVector | Vector) {
         other = FancyVector.from(other);
         // TODO: Potential division by zero
-        return this.scale(1 / this.size).dotProduct(other);
+        return this.dotProduct(other) / other.size;
+    }
+
+    /** Since 90 degree rotations are calculable by simply swapping x, y and multiplying by negatives, this is separate than rotate(deg) */
+    rotate90(clockwiseQuarterTurns: number) {
+        // I wish modulus always returned positive like it does in python...
+        const qt = ((clockwiseQuarterTurns % 4) + 4) % 4;
+        switch (qt) {
+            case 0:
+                return this;
+            case 1:
+                return new FancyVector([this.y, -this.x]);
+            case 2:
+                return new FancyVector([-this.x, -this.y]);
+            case 3:
+                return new FancyVector([-this.y, this.x]);
+            default:
+                throw Error(`must be an integer number of quarter-turns: ${clockwiseQuarterTurns}`);
+        }
+    }
+
+    equals(other: FancyVector | Vector) {
+        other = FancyVector.from(other);
+
+        return this.x === other.x && this.y === other.y;
     }
 }

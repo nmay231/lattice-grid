@@ -30,7 +30,9 @@ export const prioritizeDirection = ({ start, targets, cursor, deltas, toString }
 
     while (direction.dotProduct(cursor.minus(start)) > 0 && --maxIterations > 0) {
         const bestDelta = deltas.reduce((prev, next) =>
-            prev.distanceAlong(direction) >= next.distanceAlong(direction) ? prev : next,
+            prev.scalarProjectionOnto(direction) >= next.scalarProjectionOnto(direction)
+                ? prev
+                : next,
         );
         current = current.plus(bestDelta);
         direction = cursor.minus(current);

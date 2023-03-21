@@ -1,3 +1,4 @@
+import fc from "fast-check";
 import { Mock, vi } from "vitest";
 import { LayerStorage } from "../LayerStorage";
 import { StorageManager } from "../StorageManager";
@@ -256,4 +257,10 @@ const _defineAllUsedProperties = <T extends object = any>(
 
 export const partialMock = <T>(x: RecursivePartial<T>) => {
     return _defineAllUsedProperties(x, null, "") as T;
+};
+
+export const FCNormalFloats = ({ upper = 1e10, lower = 1e-10 } = {}) => {
+    return fc
+        .float({ noNaN: true, noDefaultInfinity: true, max: upper, min: -upper })
+        .filter((n) => Math.abs(n) > lower);
 };
