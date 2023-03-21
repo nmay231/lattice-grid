@@ -2,7 +2,7 @@ import type { ref } from "valtio";
 import type { LineBlits } from "./components/SVGCanvas/Line";
 import type { PolygonBlits } from "./components/SVGCanvas/Polygon";
 import type { TextBlits } from "./components/SVGCanvas/Text";
-import type { SquareGridParams } from "./grids/SquareGrid";
+import type { SquareGridParams, _SquareGridTransformer } from "./grids/SquareGrid";
 import type { availableLayers } from "./layers";
 import type { PuzzleManager } from "./PuzzleManager";
 import type { StorageManager } from "./StorageManager";
@@ -76,7 +76,7 @@ export type CleanedDOMEvent =
     | PointerMoveOrDown;
 
 export type LayerEventEssentials<LP extends LayerProps> = {
-    grid: Pick<Grid, "id" | "getAllPoints" | "getPoints" | "selectPointsWithCursor">;
+    grid: Pick<Grid, "id" | "getAllPoints" | "selectPointsWithCursor" | "getPointTransformer">;
     storage: StorageManager;
     settings: PuzzleManager["settings"];
     tempStorage: Partial<LP["TempStorage"]>;
@@ -120,13 +120,9 @@ export type ValtioRef<T extends object> = ReturnType<typeof ref<T>>;
 // #region - Grids
 export type Grid = {
     id: string;
-    // TODO: More specific types
-    getPoints: (arg: {
-        settings: PuzzleManager["settings"];
-        points?: Point[];
-        connections: NeedsUpdating;
-        includeOutOfBounds?: boolean;
-    }) => NeedsUpdating;
+    getPointTransformer: (
+        settings: Pick<PuzzleManager["settings"], "cellSize">,
+    ) => _SquareGridTransformer;
     getAllPoints: (type: PointType) => Point[];
     selectPointsWithCursor: (arg: {
         settings: PuzzleManager["settings"];

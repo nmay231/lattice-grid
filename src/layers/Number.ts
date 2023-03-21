@@ -111,23 +111,20 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
         const stored = storage.getStored<NumberProps>({ grid, layer: this });
         const group = stored.groups.getGroup(settings.editMode);
         const points = stored.objects.keys().filter((id) => group.has(id));
-        const { cells } = grid.getPoints({
-            settings,
-            connections: {
-                cells: {
-                    svgPoint: true,
-                    maxRadius: { shape: "square", size: "large" },
-                },
-            },
-            points,
-        });
+
+        const pt = grid.getPointTransformer(settings);
+        const [cellMap, cells] = pt.fromPoints("cells", points);
+        const toSVG = cells.toSVGPoints();
+        const maxRadius = pt.maxRadius({ type: "cells", shape: "square", size: "lg" });
 
         const blits: TextBlits["blits"] = {};
-        for (const id of points) {
+        for (const [id, cell] of cellMap.entries()) {
+            const point = toSVG.get(cell);
+            if (!point) continue; // TODO?
             blits[id] = {
                 text: stored.objects.get(id).state,
-                point: cells[id].svgPoint,
-                size: cells[id].maxRadius * 1.6,
+                point,
+                size: maxRadius * 1.6,
             };
         }
 

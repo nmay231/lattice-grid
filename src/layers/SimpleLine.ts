@@ -123,22 +123,20 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
 
         let allPoints = renderOrder.map((id) => stored.objects.get(id).points).flat();
         allPoints = allPoints.filter((point, index) => index === allPoints.indexOf(point));
-        const { [this.settings.pointType]: pointInfo } = grid.getPoints({
-            settings,
-            connections: { [this.settings.pointType]: { svgPoint: true } },
-            points: allPoints,
-        });
+
+        const pt = grid.getPointTransformer(settings);
+        const [pointMap, gridPoints] = pt.fromPoints(this.settings.pointType, allPoints);
+        const toSVG = gridPoints.toSVGPoints();
 
         const blits: LineBlits["blits"] = {};
         for (const id of renderOrder) {
             const { state, points } = stored.objects.get(id);
-            blits[id] = {
-                style: state,
-                x1: pointInfo[points[0]].svgPoint[0],
-                y1: pointInfo[points[0]].svgPoint[1],
-                x2: pointInfo[points[1]].svgPoint[0],
-                y2: pointInfo[points[1]].svgPoint[1],
-            };
+            const first = toSVG.get(pointMap.get(points[0]));
+            const second = toSVG.get(pointMap.get(points[1]));
+            if (!first || !second) continue; // TODO?
+            const [x1, y1] = first;
+            const [x2, y2] = second;
+            blits[id] = { style: state, x1, y1, x2, y2 };
         }
 
         return [

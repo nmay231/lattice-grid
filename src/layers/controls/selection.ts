@@ -235,30 +235,20 @@ export const handleEventsSelection = <LP extends SelectedProps>(
         const stored = storage.getStored<InternalProps>({ grid, layer: { id: layerId } });
         const points = stored.objects.keys().filter((key) => stored.objects.get(key).state);
         const states = points.map((id) => stored.objects.get(id).state);
+        const pt = grid.getPointTransformer(settings);
 
         const blits: Record<string, any> = {};
 
         if (points.length) {
             for (const group of new Set(states)) {
-                const { selectionCage } = grid.getPoints({
-                    settings,
-                    connections: {
-                        cells: {
-                            shrinkwrap: {
-                                key: "selectionCage",
-                                svgPolygons: { inset: 3 },
-                            },
-                        },
-                    },
-                    points: states
-                        .map((state, i) => (state === group ? points[i] : null))
-                        .filter(Boolean),
-                });
+                const [, cells] = pt.fromPoints(
+                    "cells",
+                    states.map((state, i) => (state === group ? points[i] : null)).filter(Boolean),
+                );
+                const shrinkwrap = pt.shrinkwrap(cells, { inset: 3 });
 
-                for (const key in selectionCage.svgPolygons) {
-                    blits[`${group}-${key}`] = {
-                        points: selectionCage.svgPolygons[key],
-                    };
+                for (const [key, points] of Object.entries(shrinkwrap)) {
+                    blits[`${group}-${key}`] = { points };
                 }
             }
         }

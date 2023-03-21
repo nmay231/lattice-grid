@@ -1,6 +1,8 @@
 import { PolygonBlits } from "../components/SVGCanvas/Polygon";
 import { TextBlits } from "../components/SVGCanvas/Text";
 import { Layer, LayerClass, NeedsUpdating } from "../types";
+import { maxReducer } from "../utils/data";
+import { FancyVector } from "../utils/math";
 import { BaseLayer, methodNotImplemented } from "./BaseLayer";
 import {
     handleEventsUnorderedSets,
@@ -83,46 +85,36 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
         });
         const group = stored.groups.getGroup(settings.editMode);
         const renderOrder = stored.objects.keys().filter((id) => group.has(id));
+        const pt = grid.getPointTransformer(settings);
 
         const cageBlits: PolygonBlits["blits"] = {};
         const numberBlits: TextBlits["blits"] = {};
+
         for (const id of renderOrder) {
             const object = stored.objects.get(id);
-            const { cageOutline, cells, sorted } = grid.getPoints({
-                settings,
-                connections: {
-                    cells: {
-                        shrinkwrap: {
-                            key: "cageOutline",
-                            svgPolygons: { inset: 5 },
-                        },
-                        sorted: { key: "sorted", direction: "NW" },
-                        svgPoint: true,
-                        maxRadius: { shape: "square", size: "large" },
-                    },
-                },
-                points: object.points,
-            });
+            const [, cells] = pt.fromPoints("cells", object.points);
+            const shrinkwrap = pt.shrinkwrap(cells, { inset: 5 });
 
             const style =
                 id === stored.permStorage.currentObjectId ? { stroke: "#33F" } : undefined;
-            for (const key in cageOutline.svgPolygons) {
+            for (const [key, wrap] of Object.entries(shrinkwrap)) {
                 cageBlits[`${id}-${key}`] = {
                     style,
-                    points: cageOutline.svgPolygons[key],
+                    points: wrap,
                 };
             }
 
             if (object.state !== null) {
-                const point = sorted[0];
-                const { svgPoint, maxRadius } = cells[point];
-                const corner = [svgPoint[0] - 0.85 * maxRadius, svgPoint[1] - 0.85 * maxRadius] as [
-                    number,
-                    number,
-                ];
-                numberBlits[point] = {
+                const topLeft = pt.sorter({ direction: "NW" });
+                const corner = cells.points.reduce(maxReducer(topLeft));
+
+                const maxRadius = pt.maxRadius({ type: "cells", shape: "square", size: "lg" });
+
+                numberBlits[corner.xy.join(",")] = {
                     text: object.state,
-                    point: corner,
+                    point: corner
+                        .scale(settings.cellSize / 2)
+                        .plus(new FancyVector([1, 1]).scale(-0.85 * maxRadius)).xy,
                     size: 12,
                 };
             }

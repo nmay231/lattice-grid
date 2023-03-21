@@ -74,17 +74,20 @@ export class BackgroundColorLayer
         const stored = storage.getStored<BackgroundColorProps>({ grid, layer: this });
         const group = stored.groups.getGroup(settings.editMode);
         const renderOrder = stored.objects.keys().filter((id) => group.has(id));
-        const { cells } = grid.getPoints({
-            settings,
-            connections: { cells: { svgOutline: true } },
-            points: [...renderOrder],
-        });
+
+        const pt = grid.getPointTransformer(settings);
+        const [cellMap, cells] = pt.fromPoints("cells", renderOrder);
+        const [outlineMap] = pt.svgOutline(cells);
 
         const objectsByColor: Record<Color, PolygonBlits["blits"]> = {};
         for (const id of renderOrder) {
             const { state } = stored.objects.get(id);
+            const outline = outlineMap.get(cellMap.get(id));
+            if (!outline) continue; // TODO?
             objectsByColor[state] = objectsByColor[state] ?? {};
-            objectsByColor[state][id] = { points: cells[id].svgOutline };
+            objectsByColor[state][id] = {
+                points: outline.map((vec) => vec.xy.join(",")),
+            };
         }
 
         return Object.keys(objectsByColor).map((color) => ({

@@ -1,5 +1,5 @@
 import { TextBlits } from "../components/SVGCanvas/Text";
-import { Layer, LayerClass, Vector } from "../types";
+import { Layer, LayerClass } from "../types";
 import { errorNotification } from "../utils/DOMUtils";
 import { BaseLayer, methodNotImplemented } from "./BaseLayer";
 import { handleEventsSelection, KeyDownEventHandler, SelectedProps } from "./controls/selection";
@@ -191,50 +191,43 @@ export class ToggleCharactersLayer
         const group = stored.groups.getGroup(settings.editMode);
         const ids = stored.objects.keys().filter((id) => group.has(id));
 
-        const { cells } = grid.getPoints({
-            settings,
-            connections: {
-                cells: {
-                    svgPoint: true,
-                    maxRadius: { shape: "square", size: "large" },
-                },
-            },
-            points: ids,
-        });
+        const pt = grid.getPointTransformer(settings);
+        const [cellMap, cells] = pt.fromPoints("cells", ids);
+        const toSVG = cells.toSVGPoints();
+        const maxRadius = pt.maxRadius({ type: "cells", shape: "square", size: "lg" });
 
         const blits: TextBlits["blits"] = {};
         let style: TextBlits["style"];
         if (this.settings.displayStyle === "center") {
             style = { originX: "center", originY: "center" };
             for (const [id, { state }] of stored.objects.entries()) {
+                const point = toSVG.get(cellMap.get(id));
+                if (!point) continue; // TODO?
                 blits[id] = {
                     text: state,
-                    point: cells[id].svgPoint,
-                    size: Math.min(
-                        cells[id].maxRadius / 1.5,
-                        (cells[id].maxRadius * 4) / (state.length + 1),
-                    ),
+                    point,
+                    size: Math.min(maxRadius / 1.5, (maxRadius * 4) / (state.length + 1)),
                 };
             }
         } else if (this.settings.displayStyle === "topBottom") {
             style = { originX: "left", originY: "center" };
             for (const [id, { state: text }] of stored.objects.entries()) {
                 const split = Math.max(2, Math.ceil(text.length / 2));
-                const radius = cells[id].maxRadius as number;
-                const point = cells[id].svgPoint as Vector;
+                const point = toSVG.get(cellMap.get(id));
+                if (!point) continue; // TODO?
 
                 blits[`${id}-top`] = {
                     text: text.slice(0, split),
-                    point: [point[0] - radius / 1.2, point[1] - radius / 1.5],
-                    size: radius / 2,
-                    textLength: 1.8 * radius,
+                    point: [point[0] - maxRadius / 1.2, point[1] - maxRadius / 1.5],
+                    size: maxRadius / 2,
+                    textLength: 1.8 * maxRadius,
                     lengthAdjust: "spacing",
                 };
                 blits[`${id}-bottom`] = {
                     text: text.slice(split),
-                    point: [point[0] - radius / 1.2, point[1] + radius / 1.5],
-                    size: radius / 2,
-                    textLength: 1.8 * radius,
+                    point: [point[0] - maxRadius / 1.2, point[1] + maxRadius / 1.5],
+                    size: maxRadius / 2,
+                    textLength: 1.8 * maxRadius,
                     lengthAdjust: "spacing",
                 };
             }
