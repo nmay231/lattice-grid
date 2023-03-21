@@ -1,5 +1,6 @@
 module.exports = {
     root: true,
+    reportUnusedDisableDirectives: true,
     env: { browser: true, node: true },
     extends: [
         "eslint:recommended",
@@ -33,7 +34,11 @@ module.exports = {
         "@typescript-eslint/no-unsafe-call": "off",
         "@typescript-eslint/no-unsafe-member-access": "off",
         "@typescript-eslint/no-unsafe-return": "off",
-        "@typescript-eslint/no-use-before-define": "error",
+        "@typescript-eslint/no-use-before-define": [
+            "error",
+            // Setting these to false allow functions of a module or closure to use values that are defined later in the file.
+            { variables: false, functions: false, classes: false },
+        ],
         "@typescript-eslint/require-array-sort-compare": "error",
         "@typescript-eslint/restrict-template-expressions": "off",
         "no-trailing-spaces": "error",
@@ -45,6 +50,9 @@ module.exports = {
         "react/react-in-jsx-scope": "off",
         "vitest/max-expects": "off",
         "vitest/no-alias-methods": "off",
+        "vitest/no-conditional-in-test": "off", // They should be allowed in property-based testing, otherwise, probably not
+        "vitest/no-conditional-tests": "off", // ditto
+        "vitest/no-conditional-expect": "off", // ditto
         "vitest/no-disabled-tests": "off", // Seems to be a duplicate of no-skipped-tests?
         "vitest/no-hooks": "off",
         "vitest/prefer-called-with": "off",
