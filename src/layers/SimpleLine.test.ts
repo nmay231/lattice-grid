@@ -1,6 +1,6 @@
 import { LayerStorage } from "../LayerStorage";
 import { IndexedOrderedMap } from "../utils/OrderedMap";
-import { getEventEssentials } from "../utils/testUtils";
+import { layerEventEssentials } from "../utils/testing/layerEventEssentials";
 import { SimpleLineLayer, SimpleLineProps } from "./SimpleLine";
 
 describe("SimpleLine", () => {
@@ -11,7 +11,7 @@ describe("SimpleLine", () => {
     const getSimpleLine = ({ stored, settings }: Arg) => {
         const simpleLine = SimpleLineLayer.create({ layers: new IndexedOrderedMap() });
         simpleLine.newSettings({
-            ...getEventEssentials({ stored }),
+            ...layerEventEssentials({ stored }),
             newSettings: settings || {
                 connections: "Cell to Cell",
                 stroke: "green",
@@ -33,7 +33,7 @@ describe("SimpleLine", () => {
         });
 
         const result = simpleLine.newSettings({
-            ...getEventEssentials({ stored }),
+            ...layerEventEssentials({ stored }),
             newSettings: {
                 connections: "Corner to Corner",
                 stroke: "green",
@@ -55,7 +55,7 @@ describe("SimpleLine", () => {
         });
 
         const result = simpleLine.newSettings({
-            ...getEventEssentials({ stored }),
+            ...layerEventEssentials({ stored }),
             newSettings: {
                 connections: "Cell to Cell",
                 stroke: "blue",

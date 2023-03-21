@@ -93,17 +93,27 @@ export type LayerHandlerResult<LP extends LayerProps> = {
 
 // #region - Explicit Type Names
 // It helps with changing all of the types if necessary, and also with being explicit with how composite types are used (at least in the definition).
+export type ObjectId = string;
 export type Point = string;
-export type Vector = [number, number];
-export type Delta = { dx: number; dy: number };
-
 export type PointType = "cells" | "edges" | "corners";
 export type EditMode = "question" | "answer";
 export type StorageMode = EditMode | "ui";
 export type PageMode = "edit" | "play";
-export type ObjectId = string;
+// #endregion
 
-// TODO: This has become the misc region. Maybe make an explicitly misc one and keep this one clean?
+// #region - Misc
+export type Vector = [number, number]; // TODO: Rename to ArrayVector
+export type Delta = { dx: number; dy: number };
+
+export type RecursivePartial<T> = {
+    [P in keyof T]?: T[P] extends (infer U)[]
+        ? RecursivePartial<U>[]
+        : T[P] extends object
+        ? RecursivePartial<T[P]>
+        : T[P];
+};
+
+// Rename valtio refs to not confuse them with React refs
 export type ValtioRef<T extends object> = ReturnType<typeof ref<T>>;
 // #endregion
 

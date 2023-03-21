@@ -1,6 +1,6 @@
 import { LayerStorage } from "../../LayerStorage";
 import { NeedsUpdating, PartialHistoryAction } from "../../types";
-import { layerEventRunner } from "../../utils/testUtils";
+import { layerEventRunner } from "../../utils/testing/layerEventRunner";
 import {
     handleEventsSelection,
     SelectedProps,

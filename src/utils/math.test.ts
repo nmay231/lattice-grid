@@ -1,6 +1,6 @@
 import fc from "fast-check";
 import { FancyVector } from "./math";
-import { FCNormalFloats } from "./testUtils";
+import { FCNormalFloats } from "./testing/fcArbitraries";
 
 describe("Vector", () => {
     it("has .xy and .size props", () => {

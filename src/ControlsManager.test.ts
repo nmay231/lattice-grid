@@ -3,7 +3,7 @@ import { random, range, shuffle } from "lodash";
 import { PartialPointerEvent, _PointerState as PointerState } from "./ControlsManager";
 import { Vector } from "./types";
 import { zip } from "./utils/data";
-import { partialMock } from "./utils/testUtils";
+import { partialMock } from "./utils/testing/partialMock";
 
 // TODO: Move this definition and the corresponding test to a new file if used in other tests
 // TODO: This assumes pointerId's are always incremented and never reused within a short timeframe. This might be true, but it is still an assumption

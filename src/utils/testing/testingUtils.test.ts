@@ -1,4 +1,5 @@
-import { layerEventRunner, partialMock } from "./testUtils";
+import { layerEventRunner } from "./layerEventRunner";
+import { partialMock } from "./partialMock";
 
 describe("layerEventRunner", () => {
     console.log("layerEventRunner" || layerEventRunner);
