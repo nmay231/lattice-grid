@@ -76,7 +76,10 @@ export type CleanedDOMEvent =
     | PointerMoveOrDown;
 
 export type LayerEventEssentials<LP extends LayerProps> = {
-    grid: Pick<Grid, "id" | "getAllPoints" | "selectPointsWithCursor" | "getPointTransformer">;
+    grid: Pick<
+        Grid,
+        "id" | "getAllPoints" | "selectPointsWithCursor" | "getPointTransformer" | "_getBlits"
+    >;
     storage: StorageManager;
     settings: PuzzleManager["settings"];
     tempStorage: Partial<LP["TempStorage"]>;
@@ -147,6 +150,13 @@ export type Grid = {
         rotate: number;
         resize: (amount: number) => void;
     }[];
+    _getBlits({
+        blacklist,
+        settings,
+    }: {
+        blacklist: Set<string>;
+        settings: Pick<PuzzleManager["settings"], "cellSize">;
+    }): BlitGroup[];
 };
 // #endregion
 

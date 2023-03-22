@@ -1,4 +1,5 @@
 import { prioritizeDirection } from "../algorithms/prioritizeDirection";
+import { LineBlits } from "../components/SVGCanvas/Line";
 import { Grid, Point, PointType, Vector } from "../types";
 import { parseIntBase } from "../utils/data";
 import { errorNotification } from "../utils/DOMUtils";
@@ -479,4 +480,109 @@ export class SquareGrid implements Grid {
     getAllPoints(type: PointType) {
         return this._getAllGridPoints(type).map(({ x, y }) => `${x},${y}`);
     }
+
+    _getBlits: Grid["_getBlits"] = ({ blacklist, settings }) => {
+        const pt = this.getPointTransformer(settings);
+        const minX = 2 * this.x0 - 1;
+        const minY = 2 * this.y0 - 1;
+        const maxX = 2 * (this.x0 + this.width) + 1;
+        const maxY = 2 * (this.y0 + this.height) + 1;
+
+        // TODO: CellOutline should be filtering out of bound points from being selected in the first place, but this solves any duplication issues for now.
+        const outside = new Set([...blacklist]);
+        for (let x = minX; x <= maxX; x += 2) {
+            outside.add(`${x},${minY}`);
+            outside.add(`${x},${maxY}`);
+        }
+        for (let y = minY; y <= maxY; y += 2) {
+            outside.add(`${minX},${y}`);
+            outside.add(`${maxX},${y}`);
+        }
+        const [, cells] = pt.fromPoints("cells", [...outside]);
+
+        const inset = 4;
+        const shrinkwrap = pt.shrinkwrap(cells, { inset });
+        const cs = settings.cellSize;
+        let outlierCorner: string | null = `${cs * minX + inset},${cs * minY + inset}`;
+
+        for (const [index, group] of Object.entries(shrinkwrap)) {
+            if (group.includes(outlierCorner)) {
+                shrinkwrap.splice(parseInt(index), 1);
+                outlierCorner = null;
+                break;
+            }
+        }
+        if (outlierCorner) {
+            errorNotification({ error: null, message: "Could not remove extra grid border" });
+        }
+        const outline: Record<string, any> = {};
+        for (const [key, points] of Object.entries(shrinkwrap)) {
+            outline[key] = { points };
+        }
+
+        const edgeBlacklist = new Set<Point>();
+        for (const point of cells.points) {
+            edgeBlacklist.add(point.plus([-1, 0]).xy.join(","));
+            edgeBlacklist.add(point.plus([1, 0]).xy.join(","));
+            edgeBlacklist.add(point.plus([0, -1]).xy.join(","));
+            edgeBlacklist.add(point.plus([0, 1]).xy.join(","));
+        }
+
+        const edges: LineBlits["blits"] = {};
+        const edgePoints = this.getAllPoints("edges").filter((edge) => !edgeBlacklist.has(edge));
+        const [edgeMap] = pt.fromPoints("edges", edgePoints);
+
+        const halfCell = settings.cellSize / 2;
+        for (const [key, edge] of edgeMap.entries()) {
+            const cornerOffset: Vector = edge.x & 1 ? [1, 0] : [0, 1];
+            const a = edge.minus(cornerOffset).scale(halfCell);
+            const b = edge.plus(cornerOffset).scale(halfCell);
+            edges[key] = { x1: a.x, y1: a.y, x2: b.x, y2: b.y };
+        }
+
+        return [
+            {
+                id: "grid",
+                blitter: "line",
+                blits: edges,
+                style: {
+                    stroke: "black",
+                    strokeWidth: 2,
+                    strokeLinecap: "square",
+                },
+            },
+            {
+                id: "outline",
+                blitter: "polygon",
+                blits: outline,
+                style: {
+                    stroke: "black",
+                    strokeWidth: 10,
+                    strokeLinejoin: "miter",
+                    fill: "none",
+                },
+            },
+        ];
+
+        // Potentially better, but not simple method of getting the edge blits
+        // Blacklist the corners
+        // const filterX = new DefaultMap<number, Set<number>>(() => new Set());
+        // const filterY = new DefaultMap<number, Set<number>>(() => new Set());
+        // for (const { x, y } of cells.points) {
+        //     filterX.get(x - 1).add(y - 1, y + 1);
+        //     filterX.get(x + 1).add(y - 1, y + 1);
+        //     filterY.get(y - 1).add(x - 1, x + 1);
+        //     filterY.get(y + 1).add(x - 1, x + 1);
+        // }
+
+        // ,const edges: LineBlits["blits"] = {};
+        // for (let x = minX; x <= maxX; x += 2) {
+        //     outside.add(`${x},${minY}`);
+        //     outside.add(`${x},${maxY}`);
+        // }
+        // for (let y = minY; y <= maxY; y += 2) {
+        //     outside.add(`${minX},${y}`);
+        //     outside.add(`${maxX},${y}`);
+        // }
+    };
 }

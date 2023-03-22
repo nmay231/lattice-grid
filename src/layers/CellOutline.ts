@@ -51,6 +51,7 @@ export class CellOutlineLayer extends BaseLayer<CellOutlineProps> implements ICe
                 ...result,
                 history: (result.history || []).map((action) => ({
                     ...action,
+                    // TODO: Would I eventually support modifying the grid in the answer editMode? Does that even make sense?
                     editMode: "question",
                 })),
             };
@@ -58,8 +59,14 @@ export class CellOutlineLayer extends BaseLayer<CellOutlineProps> implements ICe
         return {};
     }
 
-    getBlits: ICellOutlineLayer["getBlits"] = ({ settings }) => {
+    getBlits: ICellOutlineLayer["getBlits"] = ({ settings, storage, grid }) => {
+        const stored = storage.getStored<CellOutlineProps>({
+            grid,
+            layer: this,
+        });
+
+        const blacklist = stored.groups.getGroup("question");
         if (settings.editMode === "answer") return [];
-        return []; // TODO: Add Grid["_getBlits"]
+        return grid._getBlits({ blacklist, settings });
     };
 }
