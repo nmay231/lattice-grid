@@ -38,6 +38,11 @@ export class FancyVector {
         return this.scale(-1).plus(other).scale(-1); // TODO: Too lazy right now...
     }
 
+    unit() {
+        const size = this.size;
+        return new FancyVector([this.x / size, this.y / size]); // TODO: division by zero
+    }
+
     scale(by: number) {
         return new FancyVector([by * this.x, by * this.y]);
     }

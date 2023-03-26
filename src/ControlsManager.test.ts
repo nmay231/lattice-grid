@@ -3,6 +3,7 @@ import { random, range, shuffle } from "lodash";
 import { PartialPointerEvent, _PointerState as PointerState } from "./ControlsManager";
 import { Vector } from "./types";
 import { zip } from "./utils/data";
+import { FCTupleVectorInt } from "./utils/testing/fcArbitraries";
 import { partialMock } from "./utils/testing/partialMock";
 
 // TODO: Move this definition and the corresponding test to a new file if used in other tests
@@ -13,7 +14,7 @@ const asynchronousPointers = () => {
         .array(
             fc.record({
                 button: fc.constantFrom<1 | 2 | 4>(1, 2, 4),
-                move: fc.tuple(fc.integer(), fc.integer()),
+                move: FCTupleVectorInt(),
             }),
             { minLength: 2 },
         )

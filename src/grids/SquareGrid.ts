@@ -173,7 +173,7 @@ export class _SquareGridTransformer {
         return [map] as const;
     }
 
-    shrinkwrap(gp: _SquareGridPoints<"cells">, { inset = 0 }) {
+    shrinkwrap(gp: _SquareGridPoints<"cells">, { inset = 0 } = {}) {
         return Array.from(this._shrinkwrap({ inset, gp, halfCell: this.settings.cellSize / 2 }));
     }
 

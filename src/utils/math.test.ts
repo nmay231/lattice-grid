@@ -2,6 +2,7 @@ import fc from "fast-check";
 import { FancyVector } from "./math";
 import { FCNormalFloats } from "./testing/fcArbitraries";
 
+// Most of the simple tests are not really to test correctness as much as they are to check there are no unexpected errors
 describe("Vector", () => {
     it("has .xy and .size props", () => {
         const vec = new FancyVector([3, 4]);
@@ -37,6 +38,26 @@ describe("Vector", () => {
 
         // a remains unchanged
         expect(a.xy).toEqual([1, 2]);
+    });
+
+    it("gets its unit vector", () => {
+        const { x, y } = new FancyVector([8, 8]).unit();
+        expect(x).toBeCloseTo(Math.SQRT1_2);
+        expect(y).toBeCloseTo(Math.SQRT1_2);
+
+        fc.assert(
+            fc.property(fc.tuple(FCNormalFloats(), FCNormalFloats()), (xy) => {
+                fc.pre((xy[0] && xy[1]) > 0); // Ignore division by zero
+                const [x, y] = xy;
+
+                const vec = new FancyVector([x, y]);
+                const denominator = Math.sqrt(x ** 2 + y ** 2);
+                expect(vec.unit().xy).toEqual([x / denominator, y / denominator]);
+
+                // vec remains unchanged
+                expect(vec.xy).toEqual(xy);
+            }),
+        );
     });
 
     it("checks equality", () => {
