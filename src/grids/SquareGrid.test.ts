@@ -325,7 +325,7 @@ describe("SquareGridTransformer.shrinkwrap", () => {
                     vec.join(","),
                 );
 
-                expect(shrinkwrap.length).toBe(1);
+                expect(shrinkwrap).toHaveLength(1);
                 expect(putMaxAtStart(shrinkwrap[0])).toEqual(putMaxAtStart(expected));
             }),
         );
@@ -344,7 +344,7 @@ describe("SquareGridTransformer.shrinkwrap", () => {
                         }
                     }
 
-                    expect(points.length).toBe(width * height);
+                    expect(points).toHaveLength(width * height);
 
                     const pt = pointTransformer();
                     const [, cells] = pt.fromPoints("cells", points);
@@ -357,7 +357,7 @@ describe("SquareGridTransformer.shrinkwrap", () => {
                         start.plus([-1, 2 * height - 1]).xy,
                     ].map((vec) => vec.join(","));
 
-                    expect(shrinkwrap.length).toBe(1);
+                    expect(shrinkwrap).toHaveLength(1);
                     expect(putMaxAtStart(shrinkwrap[0])).toEqual(putMaxAtStart(expected));
                 },
             ),
@@ -413,7 +413,7 @@ describe("SquareGridTransformer.shrinkwrap", () => {
                         ].map((vec) => vec.join(","));
                     }
 
-                    expect(shrinkwrap.length).toBe(1);
+                    expect(shrinkwrap).toHaveLength(1);
                     expect(putMaxAtStart(shrinkwrap[0])).toEqual(putMaxAtStart(expected));
                 },
             ),
@@ -463,7 +463,7 @@ describe("SquareGridTransformer.shrinkwrap", () => {
                         center.plus([-1, -1]),
                     ].map((vec) => vec.xy.join(","));
 
-                    expect(shrinkwrap.length).toBe(1);
+                    expect(shrinkwrap).toHaveLength(1);
                     expect(putMaxAtStart(shrinkwrap[0])).toEqual(putMaxAtStart(expected));
                 },
             ),
@@ -492,7 +492,7 @@ describe("SquareGridTransformer.shrinkwrap", () => {
                     const [, cells] = pt.fromPoints("cells", [...points]);
                     const shrinkwrap = pt.shrinkwrap(cells);
 
-                    expect(shrinkwrap.length).toBe(2);
+                    expect(shrinkwrap).toHaveLength(2);
 
                     const outer = [
                         cornerNW.plus([-1, -1]),
@@ -561,7 +561,7 @@ describe("SquareGridTransformer.shrinkwrap", () => {
                     const [, cells] = pt.fromPoints("cells", [...points]);
                     const shrinkwrap = pt.shrinkwrap(cells, { inset: 1 });
 
-                    expect(shrinkwrap.length).toBe(1);
+                    expect(shrinkwrap).toHaveLength(1);
 
                     const zero = new FancyVector([0, 0]);
                     const NW = zero.minus(downUnit).minus(rightUnit);
@@ -626,7 +626,7 @@ describe("SquareGridTransformer.shrinkwrap", () => {
                     const [, cells] = pt.fromPoints("cells", [...points]);
                     const shrinkwrap = pt.shrinkwrap(cells, { inset: -1 });
 
-                    expect(shrinkwrap.length).toBe(2);
+                    expect(shrinkwrap).toHaveLength(2);
 
                     const zero = new FancyVector([0, 0]);
                     const NW = zero.minus(downUnit).minus(rightUnit);

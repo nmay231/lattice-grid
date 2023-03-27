@@ -34,7 +34,7 @@ describe("partialMock", () => {
     });
 
     // TODO: Skip until the bug in stringifyAnything + Safari is fixed
-    // eslint-disable-next-line vitest/no-skipped-tests
+    // eslint-disable-next-line vitest/no-disabled-tests
     it.skip("fails to access a property the doesn't exist on the target", () => {
         const mock1 = partialMock<ComplexType>({ apple: "asdf" });
         expect(() => mock1.totally).toThrowErrorMatchingInlineSnapshot(
