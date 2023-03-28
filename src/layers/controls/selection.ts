@@ -8,7 +8,7 @@ import {
     Point,
 } from "../../types";
 import { errorNotification } from "../../utils/DOMUtils";
-import { stringifyAnything } from "../../utils/stringUtils";
+import { stringifyAnything } from "../../utils/string";
 
 export interface SelectedProps extends LayerProps {
     TempStorage: {

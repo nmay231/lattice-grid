@@ -16,7 +16,7 @@ import { errorNotification } from "./utils/DOMUtils";
 import { focusProxy, _focusState } from "./utils/focusManagement";
 import { FancyVector } from "./utils/math";
 import { DelayedCallback } from "./utils/primitiveWrappers";
-import { keypressString } from "./utils/stringUtils";
+import { keypressString } from "./utils/string";
 
 export type PartialPointerEvent = Pick<
     React.PointerEvent,

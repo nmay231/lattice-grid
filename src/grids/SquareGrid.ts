@@ -4,7 +4,7 @@ import { Grid, Point, PointType, Vector } from "../types";
 import { parseIntBase } from "../utils/data";
 import { errorNotification } from "../utils/DOMUtils";
 import { FancyVector } from "../utils/math";
-import { randomStringId } from "../utils/stringUtils";
+import { randomStringId } from "../utils/string";
 
 export type SquareGridParams = {
     type: "square";

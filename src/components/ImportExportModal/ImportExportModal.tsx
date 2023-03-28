@@ -16,7 +16,7 @@ import { usePuzzle } from "../../state/puzzle";
 import { Layer } from "../../types";
 import { errorNotification } from "../../utils/DOMUtils";
 import { openModal, useFocusElementHandler, useModal } from "../../utils/focusManagement";
-import { compressJSON } from "../../utils/stringUtils";
+import { compressJSON } from "../../utils/string";
 import { currentEncodingVersion, importPuzzle, PuzzleData } from "./importPuzzle";
 
 export const ImportExportButton = () => {

@@ -3,7 +3,7 @@ import { shuffle } from "lodash";
 import { Vector } from "../types";
 import { maxReducer } from "../utils/data";
 import { FancyVector, tupleToVector } from "../utils/math";
-import { smartSort } from "../utils/stringUtils";
+import { smartSort } from "../utils/string";
 import { FCRepeat, given } from "../utils/testing/fcArbitraries";
 import { SquareGrid, _SquareGridTransformer } from "./SquareGrid";
 

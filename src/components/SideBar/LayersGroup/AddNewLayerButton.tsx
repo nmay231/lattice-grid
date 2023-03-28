@@ -3,7 +3,7 @@ import { useState } from "react";
 import { availableLayers } from "../../../layers";
 import { usePuzzle, useSettings } from "../../../state/puzzle";
 import { useFocusElementHandler } from "../../../utils/focusManagement";
-import { smartSort } from "../../../utils/stringUtils";
+import { smartSort } from "../../../utils/string";
 
 const DEFAULT_VALUE = "Add New Layer";
 

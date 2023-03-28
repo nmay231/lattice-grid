@@ -10,7 +10,7 @@ import {
     PointType,
 } from "../../types";
 import { errorNotification } from "../../utils/DOMUtils";
-import { smartSort } from "../../utils/stringUtils";
+import { smartSort } from "../../utils/string";
 
 export interface MultiPointLayerProps extends LayerProps {
     ObjectState: { points: Point[]; state: unknown };

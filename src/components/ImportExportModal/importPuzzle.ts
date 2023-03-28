@@ -3,7 +3,7 @@ import { PuzzleManager } from "../../PuzzleManager";
 import { StorageManager } from "../../StorageManager";
 import { Layer, LocalStorageData, NeedsUpdating } from "../../types";
 import { errorNotification } from "../../utils/DOMUtils";
-import { decompressJSON } from "../../utils/stringUtils";
+import { decompressJSON } from "../../utils/string";
 
 export type PuzzleData = {
     version: `alpha-${0 | 1}`;
