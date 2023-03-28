@@ -13,12 +13,7 @@ describe("layerEventRunner", () => {
 });
 
 describe("partialMock", () => {
-    type ComplexType = {
-        apple: string;
-        totally: {
-            nested: boolean;
-        };
-    };
+    type ComplexType = { apple: string; totally: { nested: boolean } };
 
     it("can access a property of a simple object", () => {
         const mock = partialMock<ComplexType>({ apple: "asdf" });
@@ -33,9 +28,7 @@ describe("partialMock", () => {
         expect({ nested: true }).toEqual(mock.totally);
     });
 
-    // TODO: Skip until the bug in stringifyAnything + Safari is fixed
-    // eslint-disable-next-line vitest/no-disabled-tests
-    it.skip("fails to access a property the doesn't exist on the target", () => {
+    it("fails to access a property the doesn't exist on the target", () => {
         const mock1 = partialMock<ComplexType>({ apple: "asdf" });
         expect(() => mock1.totally).toThrowErrorMatchingInlineSnapshot(
             "\"Could not access the property of { apple: 'asdf' }: `.totally`\"",

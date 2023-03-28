@@ -1,18 +1,18 @@
+import { Proxy as InspectableProxy } from "node-inspect-extracted";
 import { RecursivePartial } from "../../types";
 import { stringifyAnything } from "../stringUtils";
 
 export const partialMock = <T>(x: RecursivePartial<T>) => {
-    return _defineAllUsedProperties(x, null, "") as T;
+    return _defineAllUsedProperties(x, stringifyAnything(x), "") as T;
 };
 
 type PartialMockError = Error & { attributeChain: string };
 const _defineAllUsedProperties = <T extends object = any>(
     x: T,
-    stringified: string | null,
+    stringified: string,
     attributeChain: string,
 ): T => {
-    stringified = stringified || stringifyAnything(x);
-    return new Proxy(x, {
+    return new InspectableProxy(x, {
         get(target, p, receiver) {
             if (typeof p !== "string") {
                 return Reflect.get(target, p, receiver);
