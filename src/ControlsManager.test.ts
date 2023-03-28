@@ -3,7 +3,7 @@ import { random, range, shuffle } from "lodash";
 import { PartialPointerEvent, _PointerState as PointerState } from "./ControlsManager";
 import { Vector } from "./types";
 import { zip } from "./utils/data";
-import { FCTupleVectorInt } from "./utils/testing/fcArbitraries";
+import { FCTupleVectorInt, given } from "./utils/testing/fcArbitraries";
 import { partialMock } from "./utils/testing/partialMock";
 
 // TODO: Move this definition and the corresponding test to a new file if used in other tests
@@ -68,29 +68,27 @@ const asynchronousPointers = () => {
 
 describe("asynchronousPointers", () => {
     it("generates realistic pointer events", () => {
-        fc.assert(
-            fc.property(asynchronousPointers(), (events) => {
-                const nDown = events.filter(({ type }) => type === "down").length;
-                const nUp = events.filter(({ type }) => type === "up").length;
-                expect(nDown).toBe(nUp);
+        given([asynchronousPointers()]).assertProperty((events) => {
+            const nDown = events.filter(({ type }) => type === "down").length;
+            const nUp = events.filter(({ type }) => type === "up").length;
+            expect(nDown).toBe(nUp);
 
-                const unique = new Set(events.map(({ pointerId }) => pointerId));
-                for (const pointerId of unique) {
-                    const eventsForPointer = events.filter(({ pointerId: id }) => id === pointerId);
-                    expect(eventsForPointer.length).toBeGreaterThanOrEqual(2);
+            const unique = new Set(events.map(({ pointerId }) => pointerId));
+            for (const pointerId of unique) {
+                const eventsForPointer = events.filter(({ pointerId: id }) => id === pointerId);
+                expect(eventsForPointer.length).toBeGreaterThanOrEqual(2);
 
-                    const [down, ..._tmp] = eventsForPointer;
-                    const [up, ...moves] = [..._tmp].reverse();
-                    moves.reverse();
+                const [down, ..._tmp] = eventsForPointer;
+                const [up, ...moves] = [..._tmp].reverse();
+                moves.reverse();
 
-                    expect(down.type).toBe("down");
-                    expect(up.type).toBe("up");
-                    if (moves.length) {
-                        expect(new Set(moves.map(({ type }) => type))).toEqual(new Set(["move"]));
-                    }
+                expect(down.type).toBe("down");
+                expect(up.type).toBe("up");
+                if (moves.length) {
+                    expect(new Set(moves.map(({ type }) => type))).toEqual(new Set(["move"]));
                 }
-            }),
-        );
+            }
+        });
     });
 });
 
@@ -366,97 +364,95 @@ describe("PointerState", () => {
     // TODO: Layers will eventually be able to opt in to move events when the pointer is not down
     it("ignores any pointer move events when the pointer is not down", () => {
         const { state } = getState();
-        fc.assert(
-            fc.property(
-                fc.integer({ min: 1, max: 1000 }),
-                fc.constantFrom<1 | 2 | 4>(1, 2, 4), // Can't wait for typescript 5.0 const generics
-                fc.tuple(fc.float(), fc.float()),
-                (id, button, xy) => {
-                    state.onPointerMove(event({ id, button, xy }));
-                    expect(stateOf(state)).toBe(STARTING_STATE);
-                },
-            ),
-        );
+        given([
+            fc.integer({ min: 1, max: 1000 }),
+            fc.constantFrom<1 | 2 | 4>(1, 2, 4), // Can't wait for typescript 5.0 const generics
+            fc.tuple(fc.float(), fc.float()),
+        ]).assertProperty((id, button, xy) => {
+            state.onPointerMove(event({ id, button, xy }));
+            expect(stateOf(state)).toBe(STARTING_STATE);
+        });
     });
 
     it("always sends an up event before the next down", () => {
-        fc.assert(
-            fc.property(asynchronousPointers(), (events) => {
-                const { state } = getState();
-                const actions: string[] = [];
+        given([asynchronousPointers()]).assertProperty((events) => {
+            const { state } = getState();
+            const actions: string[] = [];
 
-                for (const { button, pointerId, type, xy } of events) {
-                    const event: PartialPointerEvent = {
-                        buttons: button,
-                        clientX: xy[0],
-                        clientY: xy[1],
-                        pointerId,
-                    };
-                    let result: readonly [string, unknown] | readonly [string];
-                    if (type === "down") {
-                        result = state.onPointerDown(event);
-                    } else if (type === "up") {
-                        result = state.onPointerUp(event);
-                    } else {
-                        result = state.onPointerMove(event);
-                    }
-                    actions.push(result[0]);
-
-                    if (result[0] === "ignore") {
-                        // The second slot is reserved for internal errors, so if it is empty, there are no (obvious) errors
-                        expect(result).toEqual(["ignore"]);
-                    }
+            for (const { button, pointerId, type, xy } of events) {
+                const event: PartialPointerEvent = {
+                    buttons: button,
+                    clientX: xy[0],
+                    clientY: xy[1],
+                    pointerId,
+                };
+                let result: readonly [string, unknown] | readonly [string];
+                if (type === "down") {
+                    result = state.onPointerDown(event);
+                } else if (type === "up") {
+                    result = state.onPointerUp(event);
+                } else {
+                    result = state.onPointerMove(event);
                 }
+                actions.push(result[0]);
 
-                const downUp = actions.filter((action) => action === "down" || action === "up");
-                expect(downUp.length % 2).toBe(0); // Should be even
-
-                if (downUp.length) {
-                    // If the first pair is [down, up]
-                    expect(downUp.slice(0, 2)).toEqual(["down", "up"]);
-                    // and every pair is equal to the next pair, then we alternate between down and up as expected
-                    expect(downUp.slice(2)).toEqual(downUp.slice(0, downUp.length - 2));
+                if (result[0] === "ignore") {
+                    // The second slot is reserved for internal errors, so if it is empty, there are no (obvious) errors
+                    expect(result).toEqual(["ignore"]);
                 }
+            }
 
-                expect(stateOf(state)).toBe(STARTING_STATE);
-            }),
-        );
+            const downUp = actions.filter((action) => action === "down" || action === "up");
+            expect(downUp.length % 2).toBe(0); // Should be even
+
+            if (downUp.length) {
+                // If the first pair is [down, up]
+                expect(downUp.slice(0, 2)).toEqual(["down", "up"]);
+                // and every pair is equal to the next pair, then we alternate between down and up as expected
+                expect(downUp.slice(2)).toEqual(downUp.slice(0, downUp.length - 2));
+            }
+
+            expect(stateOf(state)).toBe(STARTING_STATE);
+        });
     });
 
     it("only transitions to start mode when going from finished state", () => {
-        fc.assert(
-            fc.property(asynchronousPointers(), (events) => {
-                const { state } = getState();
+        given([
+            asynchronousPointers(),
+            asynchronousPointers(),
+            asynchronousPointers(),
+            asynchronousPointers(),
+        ]).assertProperty((events) => {
+            const { state } = getState();
 
-                let finished = false;
-                for (const { button, pointerId, type, xy } of events) {
-                    const event: PartialPointerEvent = {
-                        buttons: button,
-                        clientX: xy[0],
-                        clientY: xy[1],
-                        pointerId,
-                    };
-                    if (type === "down") {
-                        state.onPointerDown(event);
-                    } else if (type === "up") {
-                        state.onPointerUp(event);
-                    } else {
-                        state.onPointerMove(event);
-                    }
-
-                    if (state.mode === "finished") {
-                        finished = true;
-                        expect(finishedStateOf(state)).toMatchObject({ finished: true });
-                    } else if (finished) {
-                        // Should only transition to start if from finished
-                        expect(stateOf(state)).toBe(STARTING_STATE);
-                        finished = false;
-                    }
+            let finished = false;
+            for (const { button, pointerId, type, xy } of events) {
+                const event: PartialPointerEvent = {
+                    buttons: button,
+                    clientX: xy[0],
+                    clientY: xy[1],
+                    pointerId,
+                };
+                if (type === "down") {
+                    state.onPointerDown(event);
+                } else if (type === "up") {
+                    state.onPointerUp(event);
+                } else {
+                    state.onPointerMove(event);
                 }
 
-                expect(stateOf(state)).toBe(STARTING_STATE);
-            }),
-        );
+                if (state.mode === "finished") {
+                    finished = true;
+                    expect(finishedStateOf(state)).toMatchObject({ finished: true });
+                } else if (finished) {
+                    // Should only transition to start if from finished
+                    expect(stateOf(state)).toBe(STARTING_STATE);
+                    finished = false;
+                }
+            }
+
+            expect(stateOf(state)).toBe(STARTING_STATE);
+        });
     });
 });
 

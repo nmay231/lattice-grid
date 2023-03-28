@@ -4,7 +4,7 @@ import { Vector } from "../types";
 import { maxReducer } from "../utils/data";
 import { FancyVector } from "../utils/math";
 import { smartSort } from "../utils/stringUtils";
-import { FCTupleVectorInt } from "../utils/testing/fcArbitraries";
+import { FCTupleVectorInt, given } from "../utils/testing/fcArbitraries";
 import { SquareGrid, _SquareGridTransformer } from "./SquareGrid";
 
 describe("SquareGrid", () => {
@@ -212,28 +212,25 @@ describe("SquareGridTransformer", () => {
 
     it("sorter is idempotent and consistent", () => {
         const CARDINAL = "NESW";
-        fc.assert(
-            fc.property(
-                // Even though it doesn't really matter (yet at least), make the coords odd so they are cell points.
-                fc.array(FCTupleVectorInt().map(([x, y]) => [x * 2 + 1, y * 2 + 1].join(","))),
-                // Pick two orthogonal directions. Don't generate something like "NS" or "EE".
-                fc
-                    .tuple(fc.integer({ min: 0, max: 3 }), fc.constantFrom(1, 3))
-                    .map(([a, b]) => CARDINAL[a] + CARDINAL[(a + b) % 4]),
-                (points, direction) => {
-                    const pt = pointTransformer();
-                    const sorter = pt.sorter({ direction });
-                    const [, cells] = pt.fromPoints("cells", points);
-                    const sorted = [...cells.points].sort(sorter);
+        given([
+            // Even though it doesn't really matter (yet at least), make the coords odd so they are cell points.
+            fc.array(FCTupleVectorInt().map(([x, y]) => [x * 2 + 1, y * 2 + 1].join(","))),
+            // Pick two orthogonal directions. Don't generate something like "NS" or "EE".
+            fc
+                .tuple(fc.integer({ min: 0, max: 3 }), fc.constantFrom(1, 3))
+                .map(([a, b]) => CARDINAL[a] + CARDINAL[(a + b) % 4]),
+        ]).assertProperty((points, direction) => {
+            const pt = pointTransformer();
+            const sorter = pt.sorter({ direction });
+            const [, cells] = pt.fromPoints("cells", points);
+            const sorted = [...cells.points].sort(sorter);
 
-                    // Sorting should be idempotent
-                    expect([...sorted].map(toPoint)).toEqual(sorted.map(toPoint));
+            // Sorting should be idempotent
+            expect([...sorted].map(toPoint)).toEqual(sorted.map(toPoint));
 
-                    // Sorting order should be consistent, i.e. sorting order does not depend on starting order
-                    expect(shuffle(sorted).sort(sorter).map(toPoint)).toEqual(sorted.map(toPoint));
-                },
-            ),
-        );
+            // Sorting order should be consistent, i.e. sorting order does not depend on starting order
+            expect(shuffle(sorted).sort(sorter).map(toPoint)).toEqual(sorted.map(toPoint));
+        });
     });
 
     it("svgOutline works on cells", () => {
@@ -313,207 +310,190 @@ describe("SquareGridTransformer.shrinkwrap", () => {
     };
 
     it("shrinkwraps a simple line", () => {
-        fc.assert(
-            fc.property(FCCellVector(), FCStraightVector(), (start, vec) => {
-                const points = pointsFromLine(start, vec);
+        given([FCCellVector(), FCStraightVector()]).assertProperty((start, vec) => {
+            const points = pointsFromLine(start, vec);
+            const pt = pointTransformer();
+            const [, cells] = pt.fromPoints("cells", points);
+            const shrinkwrap = pt.shrinkwrap(cells);
+
+            const corners = boundingCorners(start, vec);
+            const expected = [corners.NW, corners.NE, corners.SE, corners.SW].map((vec) =>
+                vec.join(","),
+            );
+
+            expect(shrinkwrap).toHaveLength(1);
+            expect(putMaxAtStart(shrinkwrap[0])).toEqual(putMaxAtStart(expected));
+        });
+    });
+
+    it("shrinkwraps a rectangle", () => {
+        given([FCCellVector(), FCTupleVectorInt({ min: 1, max: 30 })]).assertProperty(
+            (start, [width, height]) => {
+                const points: string[] = [];
+                for (let x = 0; x < 2 * width; x += 2) {
+                    for (let y = 0; y < 2 * height; y += 2) {
+                        points.push(`${start.x + x},${start.y + y}`);
+                    }
+                }
+
+                expect(points).toHaveLength(width * height);
+
                 const pt = pointTransformer();
                 const [, cells] = pt.fromPoints("cells", points);
                 const shrinkwrap = pt.shrinkwrap(cells);
 
-                const corners = boundingCorners(start, vec);
-                const expected = [corners.NW, corners.NE, corners.SE, corners.SW].map((vec) =>
-                    vec.join(","),
-                );
+                const expected = [
+                    start.plus([-1, -1]).xy,
+                    start.plus([2 * width - 1, -1]).xy,
+                    start.plus([2 * width - 1, 2 * height - 1]).xy,
+                    start.plus([-1, 2 * height - 1]).xy,
+                ].map((vec) => vec.join(","));
 
                 expect(shrinkwrap).toHaveLength(1);
                 expect(putMaxAtStart(shrinkwrap[0])).toEqual(putMaxAtStart(expected));
-            }),
-        );
-    });
-
-    it("shrinkwraps a rectangle", () => {
-        fc.assert(
-            fc.property(
-                FCCellVector(),
-                FCTupleVectorInt({ min: 1, max: 30 }),
-                (start, [width, height]) => {
-                    const points: string[] = [];
-                    for (let x = 0; x < 2 * width; x += 2) {
-                        for (let y = 0; y < 2 * height; y += 2) {
-                            points.push(`${start.x + x},${start.y + y}`);
-                        }
-                    }
-
-                    expect(points).toHaveLength(width * height);
-
-                    const pt = pointTransformer();
-                    const [, cells] = pt.fromPoints("cells", points);
-                    const shrinkwrap = pt.shrinkwrap(cells);
-
-                    const expected = [
-                        start.plus([-1, -1]).xy,
-                        start.plus([2 * width - 1, -1]).xy,
-                        start.plus([2 * width - 1, 2 * height - 1]).xy,
-                        start.plus([-1, 2 * height - 1]).xy,
-                    ].map((vec) => vec.join(","));
-
-                    expect(shrinkwrap).toHaveLength(1);
-                    expect(putMaxAtStart(shrinkwrap[0])).toEqual(putMaxAtStart(expected));
-                },
-            ),
+            },
         );
     });
 
     it("shrinkwraps an L", () => {
-        fc.assert(
-            fc.property(
-                fc
-                    .boolean()
-                    .chain((vert) =>
-                        fc.tuple(
-                            FCCellVector(),
-                            FCStraightVector({ vertical: vert }),
-                            FCStraightVector({ vertical: !vert }),
-                        ),
+        given([
+            fc
+                .boolean()
+                .chain((vert) =>
+                    fc.tuple(
+                        FCCellVector(),
+                        FCStraightVector({ vertical: vert }),
+                        FCStraightVector({ vertical: !vert }),
                     ),
-                ([start, vec1, vec2]) => {
-                    const end = start.plus(vec1);
-                    const points1 = pointsFromLine(start, vec1);
-                    const points2 = pointsFromLine(end, vec2);
+                ),
+        ]).assertProperty(([start, vec1, vec2]) => {
+            const end = start.plus(vec1);
+            const points1 = pointsFromLine(start, vec1);
+            const points2 = pointsFromLine(end, vec2);
 
-                    const pt = pointTransformer();
-                    const [, cells] = pt.fromPoints("cells", [
-                        ...new Set([...points1, ...points2]),
-                    ]);
-                    const shrinkwrap = pt.shrinkwrap(cells);
+            const pt = pointTransformer();
+            const [, cells] = pt.fromPoints("cells", [...new Set([...points1, ...points2])]);
+            const shrinkwrap = pt.shrinkwrap(cells);
 
-                    const corners1 = boundingCorners(start, vec1);
-                    const corners2 = boundingCorners(end, vec2);
-                    let expected: string[];
+            const corners1 = boundingCorners(start, vec1);
+            const corners2 = boundingCorners(end, vec2);
+            let expected: string[];
 
-                    if (vec1.y) {
-                        // L corner is pointing down-left
-                        expected = [
-                            corners1.NW,
-                            corners1.NE,
-                            end.plus([1, -1]).xy,
-                            corners2.NE,
-                            corners2.SE,
-                            corners2.SW,
-                        ].map((vec) => vec.join(","));
-                    } else {
-                        // L corner is pointing up-right
-                        expected = [
-                            corners1.SW,
-                            corners1.NW,
-                            corners1.NE,
-                            corners2.SE,
-                            corners2.SW,
-                            end.plus([-1, 1]).xy,
-                        ].map((vec) => vec.join(","));
-                    }
+            if (vec1.y) {
+                // L corner is pointing down-left
+                expected = [
+                    corners1.NW,
+                    corners1.NE,
+                    end.plus([1, -1]).xy,
+                    corners2.NE,
+                    corners2.SE,
+                    corners2.SW,
+                ].map((vec) => vec.join(","));
+            } else {
+                // L corner is pointing up-right
+                expected = [
+                    corners1.SW,
+                    corners1.NW,
+                    corners1.NE,
+                    corners2.SE,
+                    corners2.SW,
+                    end.plus([-1, 1]).xy,
+                ].map((vec) => vec.join(","));
+            }
 
-                    expect(shrinkwrap).toHaveLength(1);
-                    expect(putMaxAtStart(shrinkwrap[0])).toEqual(putMaxAtStart(expected));
-                },
-            ),
-        );
+            expect(shrinkwrap).toHaveLength(1);
+            expect(putMaxAtStart(shrinkwrap[0])).toEqual(putMaxAtStart(expected));
+        });
     });
 
     it("shrinkwraps a plus", () => {
-        fc.assert(
-            fc.property(
-                FCCellVector(),
-                FCStraightVector({ minLength: 2, vertical: true }),
-                FCStraightVector({ minLength: 2, vertical: false }),
-                FCStraightVector({ minLength: 2, vertical: true }),
-                FCStraightVector({ minLength: 2, vertical: false }),
-                (center, up, right, down, left) => {
-                    up = up.scale(-1);
-                    left = left.scale(-1);
+        given([
+            FCCellVector(),
+            FCStraightVector({ minLength: 2, vertical: true }),
+            FCStraightVector({ minLength: 2, vertical: false }),
+            FCStraightVector({ minLength: 2, vertical: true }),
+            FCStraightVector({ minLength: 2, vertical: false }),
+        ]).assertProperty((center, up, right, down, left) => {
+            up = up.scale(-1);
+            left = left.scale(-1);
 
-                    const points = new Set([
-                        ...pointsFromLine(center, up),
-                        ...pointsFromLine(center, right),
-                        ...pointsFromLine(center, down),
-                        ...pointsFromLine(center, left),
-                    ]);
+            const points = new Set([
+                ...pointsFromLine(center, up),
+                ...pointsFromLine(center, right),
+                ...pointsFromLine(center, down),
+                ...pointsFromLine(center, left),
+            ]);
 
-                    const pt = pointTransformer();
-                    const [, cells] = pt.fromPoints("cells", [...points]);
-                    const shrinkwrap = pt.shrinkwrap(cells);
+            const pt = pointTransformer();
+            const [, cells] = pt.fromPoints("cells", [...points]);
+            const shrinkwrap = pt.shrinkwrap(cells);
 
-                    const vecUp = center.plus(up);
-                    const vecRight = center.plus(right);
-                    const vecDown = center.plus(down);
-                    const vecLeft = center.plus(left);
+            const vecUp = center.plus(up);
+            const vecRight = center.plus(right);
+            const vecDown = center.plus(down);
+            const vecLeft = center.plus(left);
 
-                    const expected = [
-                        vecUp.plus([-1, -1]),
-                        vecUp.plus([1, -1]),
-                        center.plus([1, -1]),
-                        vecRight.plus([1, -1]),
-                        vecRight.plus([1, 1]),
-                        center.plus([1, 1]),
-                        vecDown.plus([1, 1]),
-                        vecDown.plus([-1, 1]),
-                        center.plus([-1, 1]),
-                        vecLeft.plus([-1, 1]),
-                        vecLeft.plus([-1, -1]),
-                        center.plus([-1, -1]),
-                    ].map((vec) => vec.xy.join(","));
+            const expected = [
+                vecUp.plus([-1, -1]),
+                vecUp.plus([1, -1]),
+                center.plus([1, -1]),
+                vecRight.plus([1, -1]),
+                vecRight.plus([1, 1]),
+                center.plus([1, 1]),
+                vecDown.plus([1, 1]),
+                vecDown.plus([-1, 1]),
+                center.plus([-1, 1]),
+                vecLeft.plus([-1, 1]),
+                vecLeft.plus([-1, -1]),
+                center.plus([-1, -1]),
+            ].map((vec) => vec.xy.join(","));
 
-                    expect(shrinkwrap).toHaveLength(1);
-                    expect(putMaxAtStart(shrinkwrap[0])).toEqual(putMaxAtStart(expected));
-                },
-            ),
-        );
+            expect(shrinkwrap).toHaveLength(1);
+            expect(putMaxAtStart(shrinkwrap[0])).toEqual(putMaxAtStart(expected));
+        });
     });
 
     it("shrinkwraps a rectangular loop", () => {
-        fc.assert(
-            fc.property(
-                FCCellVector(),
-                FCStraightVector({ minLength: 2, vertical: false }),
-                FCStraightVector({ minLength: 2, vertical: true }),
-                (cornerNW, right, down) => {
-                    const cornerNE = cornerNW.plus(right);
-                    const cornerSW = cornerNW.plus(down);
-                    const cornerSE = cornerSW.plus(right);
+        given([
+            FCCellVector(),
+            FCStraightVector({ minLength: 2, vertical: false }),
+            FCStraightVector({ minLength: 2, vertical: true }),
+        ]).assertProperty((cornerNW, right, down) => {
+            const cornerNE = cornerNW.plus(right);
+            const cornerSW = cornerNW.plus(down);
+            const cornerSE = cornerSW.plus(right);
 
-                    const points = new Set([
-                        ...pointsFromLine(cornerNW, down),
-                        ...pointsFromLine(cornerNW, right),
-                        ...pointsFromLine(cornerNE, down),
-                        ...pointsFromLine(cornerSW, right),
-                    ]);
+            const points = new Set([
+                ...pointsFromLine(cornerNW, down),
+                ...pointsFromLine(cornerNW, right),
+                ...pointsFromLine(cornerNE, down),
+                ...pointsFromLine(cornerSW, right),
+            ]);
 
-                    const pt = pointTransformer();
-                    const [, cells] = pt.fromPoints("cells", [...points]);
-                    const shrinkwrap = pt.shrinkwrap(cells);
+            const pt = pointTransformer();
+            const [, cells] = pt.fromPoints("cells", [...points]);
+            const shrinkwrap = pt.shrinkwrap(cells);
 
-                    expect(shrinkwrap).toHaveLength(2);
+            expect(shrinkwrap).toHaveLength(2);
 
-                    const outer = [
-                        cornerNW.plus([-1, -1]),
-                        cornerNE.plus([1, -1]),
-                        cornerSE.plus([1, 1]),
-                        cornerSW.plus([-1, 1]),
-                    ].map((vec) => vec.xy.join(","));
-                    const inner = [
-                        // inner goes counter-clockwise because the 'normals' point inwards instead of outwards
-                        cornerNW.minus([-1, -1]),
-                        cornerSW.minus([-1, 1]),
-                        cornerSE.minus([1, 1]),
-                        cornerNE.minus([1, -1]),
-                    ].map((vec) => vec.xy.join(","));
+            const outer = [
+                cornerNW.plus([-1, -1]),
+                cornerNE.plus([1, -1]),
+                cornerSE.plus([1, 1]),
+                cornerSW.plus([-1, 1]),
+            ].map((vec) => vec.xy.join(","));
+            const inner = [
+                // inner goes counter-clockwise because the 'normals' point inwards instead of outwards
+                cornerNW.minus([-1, -1]),
+                cornerSW.minus([-1, 1]),
+                cornerSE.minus([1, 1]),
+                cornerNE.minus([1, -1]),
+            ].map((vec) => vec.xy.join(","));
 
-                    expect(new Set(shrinkwrap.map(putMaxAtStart))).toEqual(
-                        new Set([putMaxAtStart(inner), putMaxAtStart(outer)]),
-                    );
-                },
-            ),
-        );
+            expect(new Set(shrinkwrap.map(putMaxAtStart))).toEqual(
+                new Set([putMaxAtStart(inner), putMaxAtStart(outer)]),
+            );
+        });
     });
 
     /**
@@ -526,137 +506,127 @@ describe("SquareGridTransformer.shrinkwrap", () => {
      * +--+
      */
     it("shrinkwraps something with touching corners, inset >= 0", () => {
-        fc.assert(
-            fc.property(
-                FCCellVector(),
-                FCStraightVector({ minLength: 2, vertical: false }),
-                FCStraightVector({ minLength: 2, vertical: true }),
-                fc.integer({ min: 0, max: 3 }),
-                (cornerNW, right, down, rotation) => {
-                    // Note: Because of the rotation, all the cardinal NESW directions are only true if rotation = 0
-                    // Using NESW just makes it easier to reason about things
-                    right = right.rotate90(rotation);
-                    down = down.rotate90(rotation);
-                    const rightUnit = right.unit();
-                    const downUnit = down.unit();
+        given([
+            FCCellVector(),
+            FCStraightVector({ minLength: 2, vertical: false }),
+            FCStraightVector({ minLength: 2, vertical: true }),
+            fc.integer({ min: 0, max: 3 }),
+        ]).assertProperty((cornerNW, right, down, rotation) => {
+            // Note: Because of the rotation, all the cardinal NESW directions are only true if rotation = 0
+            // Using NESW just makes it easier to reason about things
+            right = right.rotate90(rotation);
+            down = down.rotate90(rotation);
+            const rightUnit = right.unit();
+            const downUnit = down.unit();
 
-                    const cornerNE = cornerNW.plus(right);
-                    const cornerSW = cornerNW.plus(down);
-                    const corner2Right = cornerSW.plus(right).minus(rightUnit.scale(2));
-                    const corner2Bottom = cornerNE.plus(down).minus(downUnit.scale(2));
+            const cornerNE = cornerNW.plus(right);
+            const cornerSW = cornerNW.plus(down);
+            const corner2Right = cornerSW.plus(right).minus(rightUnit.scale(2));
+            const corner2Bottom = cornerNE.plus(down).minus(downUnit.scale(2));
 
-                    const points = new Set([
-                        ...pointsFromLine(cornerNW, down),
-                        ...pointsFromLine(cornerNW, right),
-                        ...pointsFromLine(cornerNE, down),
-                        ...pointsFromLine(cornerSW, right),
-                    ]);
+            const points = new Set([
+                ...pointsFromLine(cornerNW, down),
+                ...pointsFromLine(cornerNW, right),
+                ...pointsFromLine(cornerNE, down),
+                ...pointsFromLine(cornerSW, right),
+            ]);
 
-                    const deleted = points.delete(
-                        corner2Right.plus(rightUnit.scale(2)).xy.join(","),
-                    );
-                    expect(deleted).toBe(true);
+            const deleted = points.delete(corner2Right.plus(rightUnit.scale(2)).xy.join(","));
+            expect(deleted).toBe(true);
 
-                    const pt = pointTransformer({ cellSize: 20 });
-                    const [, cells] = pt.fromPoints("cells", [...points]);
-                    const shrinkwrap = pt.shrinkwrap(cells, { inset: 1 });
+            const pt = pointTransformer({ cellSize: 20 });
+            const [, cells] = pt.fromPoints("cells", [...points]);
+            const shrinkwrap = pt.shrinkwrap(cells, { inset: 1 });
 
-                    expect(shrinkwrap).toHaveLength(1);
+            expect(shrinkwrap).toHaveLength(1);
 
-                    const zero = new FancyVector([0, 0]);
-                    const NW = zero.minus(downUnit).minus(rightUnit);
-                    const NE = zero.minus(downUnit).plus(rightUnit);
-                    const SE = zero.plus(downUnit).plus(rightUnit);
-                    const SW = zero.plus(downUnit).minus(rightUnit);
+            const zero = new FancyVector([0, 0]);
+            const NW = zero.minus(downUnit).minus(rightUnit);
+            const NE = zero.minus(downUnit).plus(rightUnit);
+            const SE = zero.plus(downUnit).plus(rightUnit);
+            const SW = zero.plus(downUnit).minus(rightUnit);
 
-                    // cell.plus(offsetToShrinkwrapCorner).scale(toSVGCoordinates).minus(inset = 1)
-                    const halfCell = 10;
-                    const expected = [
-                        cornerNW.plus(NW).scale(halfCell).minus(NW),
-                        cornerNE.plus(NE).scale(halfCell).minus(NE),
-                        corner2Bottom.plus(SE).scale(halfCell).minus(SE),
-                        corner2Bottom.plus(SW).scale(halfCell).minus(SW),
-                        cornerNE.plus(SW).scale(halfCell).minus(SW),
-                        cornerNW.plus(SE).scale(halfCell).minus(SE),
-                        cornerSW.plus(NE).scale(halfCell).minus(NE),
-                        corner2Right.plus(NE).scale(halfCell).minus(NE),
-                        corner2Right.plus(SE).scale(halfCell).minus(SE),
-                        cornerSW.plus(SW).scale(halfCell).minus(SW),
-                    ].map((vec) => vec.xy.join(","));
+            // cell.plus(offsetToShrinkwrapCorner).scale(toSVGCoordinates).minus(inset = 1)
+            const halfCell = 10;
+            const expected = [
+                cornerNW.plus(NW).scale(halfCell).minus(NW),
+                cornerNE.plus(NE).scale(halfCell).minus(NE),
+                corner2Bottom.plus(SE).scale(halfCell).minus(SE),
+                corner2Bottom.plus(SW).scale(halfCell).minus(SW),
+                cornerNE.plus(SW).scale(halfCell).minus(SW),
+                cornerNW.plus(SE).scale(halfCell).minus(SE),
+                cornerSW.plus(NE).scale(halfCell).minus(NE),
+                corner2Right.plus(NE).scale(halfCell).minus(NE),
+                corner2Right.plus(SE).scale(halfCell).minus(SE),
+                cornerSW.plus(SW).scale(halfCell).minus(SW),
+            ].map((vec) => vec.xy.join(","));
 
-                    expect(putMaxAtStart(shrinkwrap[0])).toEqual(putMaxAtStart(expected));
-                },
-            ),
-        );
+            expect(putMaxAtStart(shrinkwrap[0])).toEqual(putMaxAtStart(expected));
+        });
     });
 
     it("shrinkwraps something with touching corners, inset < 0", () => {
-        fc.assert(
-            fc.property(
-                FCCellVector(),
-                FCStraightVector({ minLength: 2, vertical: false }),
-                FCStraightVector({ minLength: 2, vertical: true }),
-                fc.integer({ min: 0, max: 3 }),
-                (cornerNW, right, down, rotation) => {
-                    // Note: Because of the rotation, all the cardinal NESW directions are only true if rotation = 0
-                    // Using NESW just makes it easier to reason about things
-                    right = right.rotate90(rotation);
-                    down = down.rotate90(rotation);
-                    const rightUnit = right.unit();
-                    const downUnit = down.unit();
+        given([
+            FCCellVector(),
+            FCStraightVector({ minLength: 2, vertical: false }),
+            FCStraightVector({ minLength: 2, vertical: true }),
+            fc.integer({ min: 0, max: 3 }),
+        ]).assertProperty((cornerNW, right, down, rotation) => {
+            // Note: Because of the rotation, all the cardinal NESW directions are only true if rotation = 0
+            // Using NESW just makes it easier to reason about things
+            right = right.rotate90(rotation);
+            down = down.rotate90(rotation);
+            const rightUnit = right.unit();
+            const downUnit = down.unit();
 
-                    const cornerNE = cornerNW.plus(right);
-                    const cornerSW = cornerNW.plus(down);
-                    const cornerOnRight = cornerSW.plus(right).minus(rightUnit.scale(2));
-                    const cornerOnBottom = cornerNE.plus(down).minus(downUnit.scale(2));
+            const cornerNE = cornerNW.plus(right);
+            const cornerSW = cornerNW.plus(down);
+            const cornerOnRight = cornerSW.plus(right).minus(rightUnit.scale(2));
+            const cornerOnBottom = cornerNE.plus(down).minus(downUnit.scale(2));
 
-                    const points = new Set([
-                        ...pointsFromLine(cornerNW, down),
-                        ...pointsFromLine(cornerNW, right),
-                        ...pointsFromLine(cornerNE, down),
-                        ...pointsFromLine(cornerSW, right),
-                    ]);
+            const points = new Set([
+                ...pointsFromLine(cornerNW, down),
+                ...pointsFromLine(cornerNW, right),
+                ...pointsFromLine(cornerNE, down),
+                ...pointsFromLine(cornerSW, right),
+            ]);
 
-                    const deleted = points.delete(
-                        cornerOnRight.plus(rightUnit.scale(2)).xy.join(","),
-                    );
-                    expect(deleted).toBe(true);
+            const deleted = points.delete(cornerOnRight.plus(rightUnit.scale(2)).xy.join(","));
+            expect(deleted).toBe(true);
 
-                    const pt = pointTransformer({ cellSize: 20 });
-                    const [, cells] = pt.fromPoints("cells", [...points]);
-                    const shrinkwrap = pt.shrinkwrap(cells, { inset: -1 });
+            const pt = pointTransformer({ cellSize: 20 });
+            const [, cells] = pt.fromPoints("cells", [...points]);
+            const shrinkwrap = pt.shrinkwrap(cells, { inset: -1 });
 
-                    expect(shrinkwrap).toHaveLength(2);
+            expect(shrinkwrap).toHaveLength(2);
 
-                    const zero = new FancyVector([0, 0]);
-                    const NW = zero.minus(downUnit).minus(rightUnit);
-                    const NE = zero.minus(downUnit).plus(rightUnit);
-                    const SE = zero.plus(downUnit).plus(rightUnit);
-                    const SW = zero.plus(downUnit).minus(rightUnit);
+            const zero = new FancyVector([0, 0]);
+            const NW = zero.minus(downUnit).minus(rightUnit);
+            const NE = zero.minus(downUnit).plus(rightUnit);
+            const SE = zero.plus(downUnit).plus(rightUnit);
+            const SW = zero.plus(downUnit).minus(rightUnit);
 
-                    // cell.plus(offsetToShrinkwrapCorner).scale(toSVGCoordinates).plus(inset = -1)
-                    const halfCell = 10;
-                    const outer = [
-                        cornerNW.plus(NW).scale(halfCell).plus(NW),
-                        cornerNE.plus(NE).scale(halfCell).plus(NE),
-                        cornerOnBottom.plus(SE).scale(halfCell).plus(SE),
-                        cornerOnBottom.plus(SW).scale(halfCell).plus(SE), // Bottom-right inset corner
-                        cornerOnRight.plus(SE).scale(halfCell).plus(SE),
-                        cornerSW.plus(SW).scale(halfCell).plus(SW),
-                    ].map((vec) => vec.xy.join(","));
-                    const inner = [
-                        // inner goes counter-clockwise because the 'normals' point inwards instead of outwards
-                        cornerNW.plus(SE).scale(halfCell).plus(SE),
-                        cornerSW.plus(NE).scale(halfCell).plus(NE),
-                        cornerNW.plus(right).plus(down).plus(NW).scale(halfCell).plus(NW),
-                        cornerNE.plus(SW).scale(halfCell).plus(SW),
-                    ].map((vec) => vec.xy.join(","));
+            // cell.plus(offsetToShrinkwrapCorner).scale(toSVGCoordinates).plus(inset = -1)
+            const halfCell = 10;
+            const outer = [
+                cornerNW.plus(NW).scale(halfCell).plus(NW),
+                cornerNE.plus(NE).scale(halfCell).plus(NE),
+                cornerOnBottom.plus(SE).scale(halfCell).plus(SE),
+                cornerOnBottom.plus(SW).scale(halfCell).plus(SE), // Bottom-right inset corner
+                cornerOnRight.plus(SE).scale(halfCell).plus(SE),
+                cornerSW.plus(SW).scale(halfCell).plus(SW),
+            ].map((vec) => vec.xy.join(","));
+            const inner = [
+                // inner goes counter-clockwise because the 'normals' point inwards instead of outwards
+                cornerNW.plus(SE).scale(halfCell).plus(SE),
+                cornerSW.plus(NE).scale(halfCell).plus(NE),
+                cornerNW.plus(right).plus(down).plus(NW).scale(halfCell).plus(NW),
+                cornerNE.plus(SW).scale(halfCell).plus(SW),
+            ].map((vec) => vec.xy.join(","));
 
-                    expect(new Set(shrinkwrap.map(putMaxAtStart))).toEqual(
-                        new Set([putMaxAtStart(inner), putMaxAtStart(outer)]),
-                    );
-                },
-            ),
-        );
+            expect(new Set(shrinkwrap.map(putMaxAtStart))).toEqual(
+                new Set([putMaxAtStart(inner), putMaxAtStart(outer)]),
+            );
+        });
     });
 });

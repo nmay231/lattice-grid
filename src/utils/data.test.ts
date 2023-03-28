@@ -1,21 +1,17 @@
 import fc from "fast-check";
 import { range, zip as lodashZip } from "lodash";
 import { maxReducer, parseIntBase, zip as ourZip } from "./data";
+import { given } from "./testing/fcArbitraries";
 
 describe("maxReducer", () => {
     it("gives the same value as the last value after sorting the array", () => {
-        fc.assert(
-            fc.property(
-                fc.array(fc.float({ noNaN: true, noDefaultInfinity: true }), { minLength: 1 }),
-                fc.compareFunc(),
-                (array, sorter) => {
-                    const sorted = [...array].sort(sorter);
-                    expect(array.reduce(maxReducer<number>(sorter))).toBeCloseTo(
-                        sorted[sorted.length - 1],
-                    );
-                },
-            ),
-        );
+        given([
+            fc.array(fc.float({ noNaN: true, noDefaultInfinity: true }), { minLength: 1 }),
+            fc.compareFunc(),
+        ]).assertProperty((array, sorter) => {
+            const sorted = [...array].sort(sorter);
+            expect(array.reduce(maxReducer<number>(sorter))).toBeCloseTo(sorted[sorted.length - 1]);
+        });
     });
 });
 
@@ -39,18 +35,16 @@ describe("parseIntBase", () => {
 
 describe("zip with better types", () => {
     it("does exactly what the lodash zip does for arrays with equal length", () => {
-        fc.assert(
-            fc.property(
-                fc.integer({ min: 0, max: 1000 }).chain((length) => {
-                    return fc.array(
-                        fc.array(fc.integer(), { minLength: length, maxLength: length }),
-                        { minLength: 2, maxLength: 5 },
-                    );
-                }),
-                (arrays) => {
-                    expect(Array.from(ourZip(...arrays))).toEqual(lodashZip(...arrays));
-                },
-            ),
-        );
+        given([
+            fc.integer({ min: 0, max: 1000 }).chain((length) => {
+                // TODO: Convert the inner fc.array to use FCRepeat()
+                return fc.array(fc.array(fc.integer(), { minLength: length, maxLength: length }), {
+                    minLength: 2,
+                    maxLength: 5,
+                });
+            }),
+        ]).assertProperty((arrays) => {
+            expect(Array.from(ourZip(...arrays))).toEqual(lodashZip(...arrays));
+        });
     });
 });

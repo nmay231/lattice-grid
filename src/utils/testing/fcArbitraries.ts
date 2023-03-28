@@ -1,4 +1,4 @@
-import fc, { Arbitrary } from "fast-check";
+import fc from "fast-check";
 import { FancyVector } from "../math";
 
 /**
@@ -13,7 +13,7 @@ export const FCNormalFloats = ({ upper = 1e10, lower = 1e-10 } = {}) => {
 
 // TODO: I don't know if this is causes issues with the internal state of Arbitraries and whether it ruins shrinking and all that.
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const TupleLength = <T = any>(n: number, arb: Arbitrary<T>) => {
+const TupleLength = <T = any>(n: number, arb: fc.Arbitrary<T>) => {
     return [...new Array(n)].map(() => arb);
 };
 
@@ -28,3 +28,16 @@ export const FCTupleVectorInt = (arg?: Parameters<typeof fc.integer>[0]) => {
 export const FCVector = (arg?: Parameters<typeof fc.integer>[0]) => {
     return fc.tuple(fc.integer(arg), fc.integer(arg)).map((vec) => new FancyVector(vec));
 };
+
+type GivenReturnType<Ts extends any[]> = {
+    assertProperty: (predicate: (...args: Ts) => boolean | void) => any;
+};
+
+export function given<Ts extends [unknown, ...unknown[]]>(
+    arbitraries: { [K in keyof Ts]: fc.Arbitrary<Ts[K]> },
+    params?: fc.Parameters<Ts>,
+): GivenReturnType<Ts> {
+    return {
+        assertProperty: (predicate) => fc.assert(fc.property(...arbitraries, predicate), params),
+    };
+}

@@ -1,6 +1,6 @@
 import fc from "fast-check";
 import { FancyVector } from "./math";
-import { FCNormalFloats } from "./testing/fcArbitraries";
+import { FCNormalFloats, given } from "./testing/fcArbitraries";
 
 // Most of the simple tests are not really to test correctness as much as they are to check there are no unexpected errors
 describe("Vector", () => {
@@ -45,40 +45,35 @@ describe("Vector", () => {
         expect(x).toBeCloseTo(Math.SQRT1_2);
         expect(y).toBeCloseTo(Math.SQRT1_2);
 
-        fc.assert(
-            fc.property(fc.tuple(FCNormalFloats(), FCNormalFloats()), (xy) => {
-                fc.pre((xy[0] && xy[1]) > 0); // Ignore division by zero
-                const [x, y] = xy;
+        given([fc.tuple(FCNormalFloats(), FCNormalFloats())]).assertProperty((xy) => {
+            fc.pre((xy[0] && xy[1]) > 0); // Ignore division by zero
+            const [x, y] = xy;
 
-                const vec = new FancyVector([x, y]);
-                const denominator = Math.sqrt(x ** 2 + y ** 2);
-                expect(vec.unit().xy).toEqual([x / denominator, y / denominator]);
+            const vec = new FancyVector([x, y]);
+            const denominator = Math.sqrt(x ** 2 + y ** 2);
+            expect(vec.unit().xy).toEqual([x / denominator, y / denominator]);
 
-                // vec remains unchanged
-                expect(vec.xy).toEqual(xy);
-            }),
-        );
+            // vec remains unchanged
+            expect(vec.xy).toEqual(xy);
+        });
     });
 
     it("checks equality", () => {
-        fc.assert(
-            fc.property(
-                fc.tuple(FCNormalFloats(), FCNormalFloats()),
-                fc.integer().filter((n) => !!n), // Offset has to be non-zero
-                (xy, offset) => {
-                    const [x, y] = xy;
-                    const vec = new FancyVector([x, y]);
-                    expect(vec.equals([x, y])).toBe(true);
-                    expect(vec.equals(new FancyVector([x, y]))).toBe(true);
+        given([
+            fc.tuple(FCNormalFloats(), FCNormalFloats()),
+            fc.integer().filter((n) => !!n), // Offset has to be non-zero
+        ]).assertProperty((xy, offset) => {
+            const [x, y] = xy;
+            const vec = new FancyVector([x, y]);
+            expect(vec.equals([x, y])).toBe(true);
+            expect(vec.equals(new FancyVector([x, y]))).toBe(true);
 
-                    expect(vec.equals([x, y + offset])).toBe(false);
-                    expect(vec.equals([x + offset, y])).toBe(false);
+            expect(vec.equals([x, y + offset])).toBe(false);
+            expect(vec.equals([x + offset, y])).toBe(false);
 
-                    // vec remains unchanged
-                    expect(vec.xy).toEqual(xy);
-                },
-            ),
-        );
+            // vec remains unchanged
+            expect(vec.xy).toEqual(xy);
+        });
     });
 
     it("calculates the dotProduct", () => {
@@ -95,46 +90,41 @@ describe("Vector", () => {
     });
 
     it("calculates scalar projection", () => {
-        fc.assert(
-            fc.property(fc.tuple(FCNormalFloats(), FCNormalFloats()), (xy) => {
-                const [x, y] = xy;
-                const vec = new FancyVector([x, y]);
+        given([fc.tuple(FCNormalFloats(), FCNormalFloats())]).assertProperty((xy) => {
+            const [x, y] = xy;
+            const vec = new FancyVector([x, y]);
 
-                expect(vec.scalarProjectionOnto([0, 1])).toBeCloseTo(y);
-                expect(vec.scalarProjectionOnto([0, 100])).toBeCloseTo(y);
-                expect(vec.scalarProjectionOnto([42, 0])).toBeCloseTo(x); // TODO: Just check using the cosine method
-                expect(vec.scalarProjectionOnto(vec)).toBeCloseTo(vec.size);
+            expect(vec.scalarProjectionOnto([0, 1])).toBeCloseTo(y);
+            expect(vec.scalarProjectionOnto([0, 100])).toBeCloseTo(y);
+            expect(vec.scalarProjectionOnto([42, 0])).toBeCloseTo(x); // TODO: Just check using the cosine method
+            expect(vec.scalarProjectionOnto(vec)).toBeCloseTo(vec.size);
 
-                // vec remains unchanged
-                expect(vec.xy).toEqual(xy);
-            }),
-        );
+            // vec remains unchanged
+            expect(vec.xy).toEqual(xy);
+        });
     });
 
     it("rotates by quarter turns", () => {
-        fc.assert(
-            fc.property(
-                fc.tuple(FCNormalFloats(), FCNormalFloats()),
-                fc.integer({ min: 1000, max: 1000 }), // cos() and sin() become too inaccurate with large angles
-                (xy, n) => {
-                    const [x, y] = xy;
-                    const vec = new FancyVector([x, y]);
-                    const rotated = vec.rotate90(n);
+        given([
+            fc.tuple(FCNormalFloats(), FCNormalFloats()),
+            fc.integer({ min: 1000, max: 1000 }), // cos() and sin() become too inaccurate with large angles
+        ]).assertProperty((xy, n) => {
+            const [x, y] = xy;
+            const vec = new FancyVector([x, y]);
+            const rotated = vec.rotate90(n);
 
-                    const newAngle = Math.atan2(y, x) + (n * Math.PI) / 2;
-                    const newVec = {
-                        x: Math.cos(newAngle) * vec.size,
-                        y: Math.sin(newAngle) * vec.size,
-                    };
+            const newAngle = Math.atan2(y, x) + (n * Math.PI) / 2;
+            const newVec = {
+                x: Math.cos(newAngle) * vec.size,
+                y: Math.sin(newAngle) * vec.size,
+            };
 
-                    expect(rotated.x).toBeCloseTo(newVec.x);
-                    expect(rotated.y).toBeCloseTo(newVec.y);
+            expect(rotated.x).toBeCloseTo(newVec.x);
+            expect(rotated.y).toBeCloseTo(newVec.y);
 
-                    // vec remains unchanged
-                    expect(vec.xy).toEqual(xy);
-                },
-            ),
-        );
+            // vec remains unchanged
+            expect(vec.xy).toEqual(xy);
+        });
     });
 });
 

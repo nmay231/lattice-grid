@@ -1,5 +1,6 @@
 import fc from "fast-check";
 import { Delta, Vector } from "../types";
+import { given } from "../utils/testing/fcArbitraries";
 import { hopStraight } from "./hopStraight";
 
 describe("hopStraight", () => {
@@ -74,48 +75,45 @@ describe("hopStraight", () => {
     ];
 
     it("finds the optimal path with simple deltas", () => {
-        fc.assert(
-            fc.property(
-                fc.oneof(
+        given(
+            [
+                fc.constantFrom(orthogonal, eightAdjacent).chain((moveSet) =>
                     fc.tuple(
-                        fc.constant(orthogonal),
-                        fc.array(fc.integer({ min: 0, max: 3 }), { maxLength: 99 }),
-                    ),
-                    fc.tuple(
-                        fc.constant(eightAdjacent),
-                        fc.array(fc.integer({ min: 0, max: 7 }), { maxLength: 99 }),
+                        fc.constant(moveSet),
+                        fc.array(fc.integer({ min: 0, max: moveSet.length - 1 }), {
+                            maxLength: 99,
+                        }),
                     ),
                 ),
-                ([moveSet, indexes]) => {
-                    const moves = indexes.map((i) => moveSet[i]);
-
-                    const vector = [0, 0] as Vector;
-                    for (const { dx, dy } of moves) {
-                        vector[0] += dx;
-                        vector[1] += dy;
-                    }
-
-                    const [vectors, result] = helper({
-                        previousPoint: [0, 0],
-                        deltas: moveSet,
-                        cursor: vector,
-                        targetPoints: [vector.toString()],
-                    });
-
-                    expect(result).toBe<Result>("REACHED_TARGET");
-
-                    // the path taken to get to a vector cannot be longer
-                    expect(vectors.length).toBeLessThanOrEqual(moves.length);
-
-                    // TODO: The sum of the vectors make the original vector. This doesn't work currently
-                    // expect(
-                    //     vectors.reduce(([x1, y1], [x2, y2]) => [x1 + x2, y1 + y2], [0, 0]),
-                    // ).toEqual(vector);
-                },
-            ),
+            ],
             // TODO: Make this an option in vitest config or something instead of in the test itself.
             { verbose: true },
-        );
+        ).assertProperty(([moveSet, indexes]) => {
+            const moves = indexes.map((i) => moveSet[i]);
+
+            const vector = [0, 0] as Vector;
+            for (const { dx, dy } of moves) {
+                vector[0] += dx;
+                vector[1] += dy;
+            }
+
+            const [vectors, result] = helper({
+                previousPoint: [0, 0],
+                deltas: moveSet,
+                cursor: vector,
+                targetPoints: [vector.toString()],
+            });
+
+            expect(result).toBe<Result>("REACHED_TARGET");
+
+            // the path taken to get to a vector cannot be longer
+            expect(vectors.length).toBeLessThanOrEqual(moves.length);
+
+            // TODO: The sum of the vectors make the original vector. This doesn't work currently
+            // expect(
+            //     vectors.reduce(([x1, y1], [x2, y2]) => [x1 + x2, y1 + y2], [0, 0]),
+            // ).toEqual(vector);
+        });
     });
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
