@@ -1,9 +1,9 @@
 import { prioritizeDirection } from "../algorithms/prioritizeDirection";
 import { LineBlits } from "../components/SVGCanvas/Line";
-import { Grid, Point, PointType, Vector } from "../types";
+import { Grid, Point, PointType, TupleVector } from "../types";
 import { parseIntBase } from "../utils/data";
 import { errorNotification } from "../utils/DOMUtils";
-import { FancyVector } from "../utils/math";
+import { Vec } from "../utils/math";
 import { randomStringId } from "../utils/string";
 
 export type SquareGridParams = {
@@ -28,7 +28,7 @@ type Settings = Parameters<Grid["getPointTransformer"]>[0];
 class _SquareGridPoints<PT extends PointType = PointType> {
     constructor(public type: PT, public settings: Settings) {}
 
-    points: FancyVector[] = [];
+    points: Vec[] = [];
 
     adjacent(type: PointType) {
         const t2t = `${this.type}->${type}` as `${PointType}->${PointType}`;
@@ -40,14 +40,14 @@ class _SquareGridPoints<PT extends PointType = PointType> {
             });
         }
 
-        const map = new Map<FancyVector, FancyVector[]>();
+        const map = new Map<Vec, Vec[]>();
 
         if (t2t === "edges->cells" || t2t === "edges->corners") {
-            const upDown: Vector[] = [
+            const upDown: TupleVector[] = [
                 [0, -1],
                 [0, 1],
             ];
-            const leftRight: Vector[] = [
+            const leftRight: TupleVector[] = [
                 [-1, 0],
                 [1, 0],
             ];
@@ -62,7 +62,7 @@ class _SquareGridPoints<PT extends PointType = PointType> {
             return [map] as const;
         }
 
-        let deltas: Vector[];
+        let deltas: TupleVector[];
         if (t2t === "corners->cells" || t2t === "cells->corners") {
             deltas = [
                 [1, 1],
@@ -89,7 +89,7 @@ class _SquareGridPoints<PT extends PointType = PointType> {
         const { cellSize } = this.settings;
         const halfCell = cellSize / 2;
         // TODO: Map.fromEntries()
-        const map = new Map<FancyVector, Vector>();
+        const map = new Map<Vec, TupleVector>();
         for (const point of this.points) {
             map.set(point, point.scale(halfCell).xy);
         }
@@ -104,9 +104,9 @@ export class _SquareGridTransformer {
 
     fromPoints<PT extends PointType = PointType>(type: PT, points: Point[]) {
         const gp = new _SquareGridPoints<PT>(type, this.settings);
-        const map = new Map<string, FancyVector>();
+        const map = new Map<string, Vec>();
         for (const point of points) {
-            const vec = new FancyVector(point.split(",").map(parseIntBase(10)) as Vector);
+            const vec = Vec.from(point.split(",").map(parseIntBase(10)) as TupleVector);
             // TODO: Verify that `point` has PointType = `type`. How to deal with values that are not? Treat them as nulls or just filter?
             gp.points.push(vec);
             map.set(point, vec);
@@ -140,7 +140,7 @@ export class _SquareGridTransformer {
     }
 
     sorter({ direction = "NW" } = { direction: "NW" }) {
-        type Sorter = (a: FancyVector, b: FancyVector) => number;
+        type Sorter = (a: Vec, b: Vec) => number;
         const sorters: Record<string, Sorter> = {
             N: (a, b) => a.y - b.y,
             S: (a, b) => b.y - a.y,
@@ -161,7 +161,7 @@ export class _SquareGridTransformer {
     }
 
     svgOutline(gp: _SquareGridPoints<"cells">) {
-        const map = new Map<FancyVector, FancyVector[]>();
+        const map = new Map<Vec, Vec[]>();
         for (const point of gp.points) {
             map.set(point, [
                 point.plus([1, 1]).scale(this.settings.cellSize / 2),
@@ -211,7 +211,7 @@ export class _SquareGridTransformer {
         // Because we don't, we must resort to string conversion when checking for equality.
         type Sadness = string;
         /** edgeString => [edge, cell] */
-        const edgeShell = new Map<Sadness, [FancyVector, FancyVector]>();
+        const edgeShell = new Map<Sadness, [Vec, Vec]>();
 
         for (const [cell, edges] of edgeMap.entries()) {
             for (const edge of edges) {
@@ -233,7 +233,7 @@ export class _SquareGridTransformer {
         let [edge, cell] = start;
 
         /** Array<[Corner, Normal]> */
-        let cornersNormals: Array<[FancyVector, FancyVector]> = [];
+        let cornersNormals: Array<[Vec, Vec]> = [];
 
         const nextEdgeDirection = inset >= 0 ? [1, 0, -1] : [-1, 0, 1];
         let maxIteration = 1000;
@@ -254,7 +254,7 @@ export class _SquareGridTransformer {
 
             if (!edgeShell.delete(edge.xy.join(","))) {
                 // We closed the loop and must yield this section of loop, after applying inset
-                const corners: FancyVector[] = [];
+                const corners: Vec[] = [];
 
                 cornersNormals.pop(); // The starting corner is added twice
 
@@ -389,10 +389,10 @@ export class SquareGrid implements Grid {
         const { cellSize } = settings;
         const halfCell = cellSize / 2;
 
-        const deltas = dxy.map(({ dx, dy }) => new FancyVector([dx, dy]));
-        const cursor = new FancyVector([x / halfCell, y / halfCell]);
+        const deltas = dxy.map(({ dx, dy }) => new Vec(dx, dy));
+        const cursor = new Vec(x / halfCell, y / halfCell);
 
-        const firstPoint = new FancyVector([Math.floor(cursor.x), Math.floor(cursor.y)]);
+        const firstPoint = new Vec(Math.floor(cursor.x), Math.floor(cursor.y));
         const targets = [
             firstPoint,
             firstPoint.plus([1, 0]),
@@ -400,9 +400,9 @@ export class SquareGrid implements Grid {
             firstPoint.plus([1, 1]),
         ].filter((p) => pointTypes.includes(this._stringToGridPoint(p.xy.join(",")).type));
 
-        let start: FancyVector | undefined = undefined;
+        let start: Vec | undefined = undefined;
         if (previousPoint) {
-            start = new FancyVector(previousPoint.split(",").map(parseIntBase(10)) as Vector);
+            start = Vec.from(previousPoint.split(",").map(parseIntBase(10)) as TupleVector);
         }
 
         const points = prioritizeDirection({
@@ -534,7 +534,7 @@ export class SquareGrid implements Grid {
 
         const halfCell = settings.cellSize / 2;
         for (const [key, edge] of edgeMap.entries()) {
-            const cornerOffset: Vector = edge.x & 1 ? [1, 0] : [0, 1];
+            const cornerOffset: TupleVector = edge.x & 1 ? [1, 0] : [0, 1];
             const a = edge.minus(cornerOffset).scale(halfCell);
             const b = edge.plus(cornerOffset).scale(halfCell);
             edges[key] = { x1: a.x, y1: a.y, x2: b.x, y2: b.y };

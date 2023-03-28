@@ -1,18 +1,18 @@
 import fc from "fast-check";
-import { FancyVector } from "./math";
+import { Vec } from "./math";
 import { FCNormalFloat, FCRepeat, given } from "./testing/fcArbitraries";
 
 // Most of the simple tests are not really to test correctness as much as they are to check there are no unexpected errors
 describe("Vector", () => {
     it("has .xy and .size props", () => {
-        const vec = new FancyVector([3, 4]);
+        const vec = new Vec(3, 4);
         expect(vec.xy).toEqual([3, 4]);
         expect(vec.size).toEqual(5);
     });
 
     it("can add", () => {
-        const a = new FancyVector([1, 2]);
-        const b = new FancyVector([-3, 8]);
+        const a = new Vec(1, 2);
+        const b = new Vec(-3, 8);
         expect(a.plus(b).xy).toEqual([-2, 10]);
         expect(b.plus([6, 10]).xy).toEqual([3, 18]);
 
@@ -22,8 +22,8 @@ describe("Vector", () => {
     });
 
     it("can subtract", () => {
-        const a = new FancyVector([1, 2]);
-        const b = new FancyVector([-3, 8]);
+        const a = new Vec(1, 2);
+        const b = new Vec(-3, 8);
         expect(a.minus(b).xy).toEqual([4, -6]);
         expect(a.minus([2, 1]).xy).toEqual([-1, 1]);
 
@@ -33,7 +33,7 @@ describe("Vector", () => {
     });
 
     it("can be scaled", () => {
-        const a = new FancyVector([1, 2]);
+        const a = new Vec(1, 2);
         expect(a.scale(5).xy).toEqual([5, 10]);
 
         // a remains unchanged
@@ -41,14 +41,14 @@ describe("Vector", () => {
     });
 
     it("gets its unit vector", () => {
-        const { x, y } = new FancyVector([8, 8]).unit();
+        const { x, y } = new Vec(8, 8).unit();
         expect(x).toBeCloseTo(Math.SQRT1_2);
         expect(y).toBeCloseTo(Math.SQRT1_2);
         given([FCRepeat(2, FCNormalFloat())]).assertProperty((xy) => {
             fc.pre((xy[0] && xy[1]) > 0); // Ignore division by zero
             const [x, y] = xy;
 
-            const vec = new FancyVector([x, y]);
+            const vec = new Vec(x, y);
             const denominator = Math.sqrt(x ** 2 + y ** 2);
             expect(vec.unit().xy).toEqual([x / denominator, y / denominator]);
 
@@ -63,9 +63,9 @@ describe("Vector", () => {
             fc.integer().filter((n) => !!n), // Offset has to be non-zero
         ]).assertProperty((xy, offset) => {
             const [x, y] = xy;
-            const vec = new FancyVector([x, y]);
+            const vec = new Vec(x, y);
             expect(vec.equals([x, y])).toBe(true);
-            expect(vec.equals(new FancyVector([x, y]))).toBe(true);
+            expect(vec.equals(new Vec(x, y))).toBe(true);
 
             expect(vec.equals([x, y + offset])).toBe(false);
             expect(vec.equals([x + offset, y])).toBe(false);
@@ -76,8 +76,8 @@ describe("Vector", () => {
     });
 
     it("calculates the dotProduct", () => {
-        const a = new FancyVector([2, 1]);
-        const b = new FancyVector([8, -9]);
+        const a = new Vec(2, 1);
+        const b = new Vec(8, -9);
         expect(a.dotProduct(b)).toBe(7);
         expect(a.dotProduct(a)).toBeCloseTo(a.size ** 2);
         expect(a.dotProduct([-1, 2])).toBe(0);
@@ -91,7 +91,7 @@ describe("Vector", () => {
     it("calculates scalar projection", () => {
         given([FCRepeat(2, FCNormalFloat())]).assertProperty((xy) => {
             const [x, y] = xy;
-            const vec = new FancyVector([x, y]);
+            const vec = new Vec(x, y);
 
             expect(vec.scalarProjectionOnto([0, 1])).toBeCloseTo(y);
             expect(vec.scalarProjectionOnto([0, 100])).toBeCloseTo(y);
@@ -109,7 +109,7 @@ describe("Vector", () => {
             fc.integer({ min: 1000, max: 1000 }), // cos() and sin() become too inaccurate with large angles
         ]).assertProperty((xy, n) => {
             const [x, y] = xy;
-            const vec = new FancyVector([x, y]);
+            const vec = new Vec(x, y);
             const rotated = vec.rotate90(n);
 
             const newAngle = Math.atan2(y, x) + (n * Math.PI) / 2;

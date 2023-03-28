@@ -1,11 +1,11 @@
-import { FancyVector } from "../utils/math";
+import { Vec } from "../utils/math";
 
 type Arg = {
-    start?: FancyVector;
-    targets: FancyVector[];
-    cursor: FancyVector;
-    deltas: FancyVector[];
-    toString: (vec: FancyVector) => string;
+    start?: Vec;
+    targets: Vec[];
+    cursor: Vec;
+    deltas: Vec[];
+    toString: (vec: Vec) => string;
 };
 
 /**

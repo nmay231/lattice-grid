@@ -1,8 +1,8 @@
 import fc from "fast-check";
 import { shuffle } from "lodash";
-import { Vector } from "../types";
+import { TupleVector } from "../types";
 import { maxReducer } from "../utils/data";
-import { FancyVector, tupleToVector } from "../utils/math";
+import { Vec } from "../utils/math";
 import { smartSort } from "../utils/string";
 import { FCRepeat, given } from "../utils/testing/fcArbitraries";
 import { SquareGrid, _SquareGridTransformer } from "./SquareGrid";
@@ -141,7 +141,7 @@ describe("SquareGrid", () => {
 describe("SquareGridTransformer", () => {
     // cellSize defaults to 2 so that the grid space matches the svg space
     const pointTransformer = ({ cellSize = 2 } = {}) => new _SquareGridTransformer({ cellSize });
-    const toPoint = (vec: FancyVector) => vec.xy.join(",");
+    const toPoint = (vec: Vec) => vec.xy.join(",");
 
     it("parses points", () => {
         const pt = pointTransformer();
@@ -264,7 +264,7 @@ describe("SquareGridTransformer.shrinkwrap", () => {
     const pointTransformer = ({ cellSize = 2 } = {}) => new _SquareGridTransformer({ cellSize });
 
     const FCCellVector = () => {
-        return FCRepeat(2, fc.integer()).map((vec) => tupleToVector(vec).scale(2).plus([1, 1]));
+        return FCRepeat(2, fc.integer()).map((vec) => Vec.from(vec).scale(2).plus([1, 1]));
     };
 
     const FCStraightVector = ({
@@ -276,12 +276,12 @@ describe("SquareGridTransformer.shrinkwrap", () => {
             .tuple(fc.integer({ min: minLength > 0 ? minLength : undefined, max }), fc.boolean())
             .map(([n, vert]) => {
                 n = 2 * n;
-                return tupleToVector(vertical ?? vert ? [0, n] : [n, 0]);
+                return Vec.from(vertical ?? vert ? [0, n] : [n, 0]);
             });
     };
 
     // Points are not included in the FC arbitrary because it keeps the test output smaller
-    const pointsFromLine = (start: FancyVector, vec: FancyVector) => {
+    const pointsFromLine = (start: Vec, vec: Vec) => {
         const unit = vec.unit();
         const points: string[] = [];
 
@@ -292,14 +292,14 @@ describe("SquareGridTransformer.shrinkwrap", () => {
         return points;
     };
 
-    const boundingCorners = (start: FancyVector, vec: FancyVector) => {
+    const boundingCorners = (start: Vec, vec: Vec) => {
         const end = start.plus(vec);
         return {
             NW: [start.x - 1, start.y - 1],
             NE: [end.x + 1, start.y - 1],
             SE: [end.x + 1, end.y + 1],
             SW: [start.x - 1, end.y + 1],
-        } satisfies Record<string, Vector>;
+        } satisfies Record<string, TupleVector>;
     };
 
     // The shrinkwrap is only guaranteed to give the outline in a clockwise direction; we don't know which corner will be given first. This function "rotates" the array to a consistent start (with the max at the start)
@@ -540,7 +540,7 @@ describe("SquareGridTransformer.shrinkwrap", () => {
 
             expect(shrinkwrap).toHaveLength(1);
 
-            const zero = new FancyVector([0, 0]);
+            const zero = new Vec(0, 0);
             const NW = zero.minus(downUnit).minus(rightUnit);
             const NE = zero.minus(downUnit).plus(rightUnit);
             const SE = zero.plus(downUnit).plus(rightUnit);
@@ -600,7 +600,7 @@ describe("SquareGridTransformer.shrinkwrap", () => {
 
             expect(shrinkwrap).toHaveLength(2);
 
-            const zero = new FancyVector([0, 0]);
+            const zero = new Vec(0, 0);
             const NW = zero.minus(downUnit).minus(rightUnit);
             const NE = zero.minus(downUnit).plus(rightUnit);
             const SE = zero.plus(downUnit).plus(rightUnit);

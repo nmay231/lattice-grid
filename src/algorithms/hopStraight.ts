@@ -1,4 +1,4 @@
-import { Delta, Vector } from "../types";
+import { Delta, TupleVector } from "../types";
 
 const atan = (x: number, y: number) => (x < 0 ? -1 : 1) * Math.atan(y / x);
 // TODO: Move to separate file and test more.
@@ -65,7 +65,7 @@ export function* hopStraight({
         newY += bestDelta[1];
 
         // Doing this will (hopefully) help with floating point errors for non-square grids.
-        [newX, newY] = yield [newX, newY] as Vector;
+        [newX, newY] = yield [newX, newY] as TupleVector;
     }
     yield null;
 }

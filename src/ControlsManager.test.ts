@@ -1,7 +1,7 @@
 import fc from "fast-check";
 import { random, range, shuffle } from "lodash";
 import { PartialPointerEvent, _PointerState as PointerState } from "./ControlsManager";
-import { Vector } from "./types";
+import { TupleVector } from "./types";
 import { zip } from "./utils/data";
 import { FCRepeat, given } from "./utils/testing/fcArbitraries";
 import { partialMock } from "./utils/testing/partialMock";
@@ -38,7 +38,7 @@ const asynchronousPointers = () => {
                 button: 0 as 1,
             }));
             const events: Array<{
-                xy: Vector;
+                xy: TupleVector;
                 type: "up" | "down" | "move";
                 button: 1 | 2 | 4;
                 pointerId: number;
@@ -98,7 +98,7 @@ describe("PointerState", () => {
         return { state };
     };
 
-    type Arg1 = { id: number; button?: 1 | 2 | 4; xy?: Vector };
+    type Arg1 = { id: number; button?: 1 | 2 | 4; xy?: TupleVector };
     const event = ({ id, button = 1, xy = [0, 0] }: Arg1) => {
         return partialMock<PartialPointerEvent>({
             buttons: button,

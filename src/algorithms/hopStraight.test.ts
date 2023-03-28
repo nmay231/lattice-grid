@@ -1,5 +1,5 @@
 import fc from "fast-check";
-import { Delta, Vector } from "../types";
+import { Delta, TupleVector } from "../types";
 import { given } from "../utils/testing/fcArbitraries";
 import { hopStraight } from "./hopStraight";
 
@@ -18,7 +18,7 @@ describe("hopStraight", () => {
         cursor,
         targetPoints,
         round = simpleRound,
-    }: Arg): [Vector[], Result] => {
+    }: Arg): [TupleVector[], Result] => {
         if (targetPoints.includes(previousPoint.toString())) {
             return [[], "REACHED_TARGET"];
         }
@@ -28,12 +28,13 @@ describe("hopStraight", () => {
             cursor,
         });
         const points: string[] = [previousPoint.toString()];
-        const path: Array<Vector> = [];
+        const path: Array<TupleVector> = [];
 
         let maxIteration = 100; // Prevent infinite loops
         while (maxIteration > 0) {
             maxIteration -= 1;
-            const next = (generator.next(previousPoint).value?.map(round) || null) as Vector | null;
+            const next = (generator.next(previousPoint).value?.map(round) ||
+                null) as TupleVector | null;
             if (!next) return [path, "OVERSHOT_POINT"];
 
             const string = next?.join(",");
@@ -91,7 +92,7 @@ describe("hopStraight", () => {
         ).assertProperty(([moveSet, indexes]) => {
             const moves = indexes.map((i) => moveSet[i]);
 
-            const vector = [0, 0] as Vector;
+            const vector = [0, 0] as TupleVector;
             for (const { dx, dy } of moves) {
                 vector[0] += dx;
                 vector[1] += dy;

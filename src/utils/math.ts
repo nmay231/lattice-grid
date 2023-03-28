@@ -1,55 +1,49 @@
 import { euclidean } from "../algorithms/hopStraight";
-import { Vector } from "../types";
+import { TupleVector } from "../types";
 
-export class FancyVector {
-    public x: number;
-    public y: number;
-    constructor([x, y]: Vector) {
-        this.x = x;
-        this.y = y;
-    }
+export class Vec {
+    constructor(public x: number, public y: number) {}
 
-    static from(vec: FancyVector | Vector) {
-        return vec instanceof FancyVector ? vec : tupleToVector(vec);
+    static from(vec: Vec | TupleVector) {
+        return vec instanceof Vec ? vec : new Vec(vec[0], vec[1]);
     }
 
     get xy() {
-        return [this.x, this.y] as Vector;
+        return [this.x, this.y] as TupleVector;
     }
 
     get size() {
         return euclidean(0, 0, this.x, this.y);
     }
 
-    // TODO: Rename add/subtract
-    plus(other: FancyVector | Vector) {
-        if (other instanceof FancyVector) {
+    plus(other: Vec | TupleVector) {
+        if (other instanceof Vec) {
             other = other.xy;
         }
 
-        return new FancyVector([this.x + other[0], this.y + other[1]]);
+        return new Vec(this.x + other[0], this.y + other[1]);
     }
 
-    minus(other: FancyVector | Vector) {
+    minus(other: Vec | TupleVector) {
         return this.scale(-1).plus(other).scale(-1); // TODO: Too lazy right now...
     }
 
     unit() {
         const size = this.size;
-        return new FancyVector([this.x / size, this.y / size]); // TODO: division by zero
+        return new Vec(this.x / size, this.y / size); // TODO: division by zero
     }
 
     scale(by: number) {
-        return new FancyVector([by * this.x, by * this.y]);
+        return new Vec(by * this.x, by * this.y);
     }
 
-    dotProduct(other: FancyVector | Vector) {
-        other = FancyVector.from(other);
+    dotProduct(other: Vec | TupleVector) {
+        other = Vec.from(other);
         return this.x * other.x + this.y * other.y;
     }
 
-    scalarProjectionOnto(other: FancyVector | Vector) {
-        other = FancyVector.from(other);
+    scalarProjectionOnto(other: Vec | TupleVector) {
+        other = Vec.from(other);
         // TODO: Potential division by zero
         return this.dotProduct(other) / other.size;
     }
@@ -62,21 +56,19 @@ export class FancyVector {
             case 0:
                 return this;
             case 1:
-                return new FancyVector([this.y, -this.x]);
+                return new Vec(this.y, -this.x);
             case 2:
-                return new FancyVector([-this.x, -this.y]);
+                return new Vec(-this.x, -this.y);
             case 3:
-                return new FancyVector([-this.y, this.x]);
+                return new Vec(-this.y, this.x);
             default:
                 throw Error(`must be an integer number of quarter-turns: ${clockwiseQuarterTurns}`);
         }
     }
 
-    equals(other: FancyVector | Vector) {
-        other = FancyVector.from(other);
+    equals(other: Vec | TupleVector) {
+        other = Vec.from(other);
 
         return this.x === other.x && this.y === other.y;
     }
 }
-
-export const tupleToVector = (vec: Vector) => new FancyVector(vec);

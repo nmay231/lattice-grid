@@ -9,12 +9,12 @@ import {
     LayerEvent,
     LayerProps,
     PointerMoveOrDown,
+    TupleVector,
     UnknownObject,
-    Vector,
 } from "./types";
 import { errorNotification } from "./utils/DOMUtils";
 import { focusProxy, _focusState } from "./utils/focusManagement";
-import { FancyVector } from "./utils/math";
+import { Vec } from "./utils/math";
 import { DelayedCallback } from "./utils/primitiveWrappers";
 import { keypressString } from "./utils/string";
 
@@ -23,7 +23,7 @@ export type PartialPointerEvent = Pick<
     "clientX" | "clientY" | "buttons" | "pointerId"
 >;
 
-type PointerInfo = { pointerId: number; startClientXY: Vector; lastClientXY: Vector };
+type PointerInfo = { pointerId: number; startClientXY: TupleVector; lastClientXY: TupleVector };
 
 export class _PointerState {
     nPointers = 0;
@@ -61,7 +61,7 @@ export class _PointerState {
 
                 return [
                     "down",
-                    { button: this.button, xy: [event.clientX, event.clientY] as Vector },
+                    { button: this.button, xy: [event.clientX, event.clientY] as TupleVector },
                 ] as const;
             }
             case "start+second":
@@ -97,14 +97,11 @@ export class _PointerState {
                     return ["ignore"] as const;
                 }
                 this.mode = "drawPan";
-                const xy: Vector = [event.clientX, event.clientY];
+                const xy: TupleVector = [event.clientX, event.clientY];
                 return ["draw", { xy, button: this.button }] as const;
             }
             case "drawPan+second": {
-                const pan = new FancyVector(pointer.lastClientXY).minus([
-                    event.clientX,
-                    event.clientY,
-                ]).xy;
+                const pan = Vec.from(pointer.lastClientXY).minus([event.clientX, event.clientY]).xy;
                 return ["pan", { pan }] as const;
             }
             case "panZoom+first":
@@ -113,7 +110,7 @@ export class _PointerState {
                 if (!otherPointer) return ["ignore", "!invalid state reached!"] as const;
                 const origin = otherPointer.lastClientXY;
                 const from = pointer.lastClientXY;
-                const to: Vector = [event.clientX, event.clientY];
+                const to: TupleVector = [event.clientX, event.clientY];
 
                 return ["scale", { origin, from, to }] as const;
             }
@@ -177,11 +174,11 @@ export class _PointerState {
             this.secondPointer = { ...old, lastClientXY: [clientX, clientY] };
             return ["second", old, this.firstPointer] as const;
         } else if (this.firstPointer === null) {
-            const clientXY: Vector = [clientX, clientY];
+            const clientXY: TupleVector = [clientX, clientY];
             this.firstPointer = { pointerId, startClientXY: clientXY, lastClientXY: clientXY };
             return ["first", this.firstPointer, this.secondPointer] as const;
         } else if (this.secondPointer === null) {
-            const clientXY: Vector = [clientX, clientY];
+            const clientXY: TupleVector = [clientX, clientY];
             this.secondPointer = { pointerId, startClientXY: clientXY, lastClientXY: clientXY };
             return ["second", this.secondPointer, this.firstPointer] as const;
         }
@@ -229,7 +226,7 @@ export class ControlsManager {
 
     cleanPointerEvent(
         type: "pointerDown" | "pointerMove",
-        clientXY: Vector,
+        clientXY: TupleVector,
         event: React.PointerEvent,
     ): PointerMoveOrDown {
         const dom = event.currentTarget.getBoundingClientRect();
@@ -303,7 +300,7 @@ export class ControlsManager {
     }: {
         dom: Record<"left" | "top" | "width" | "height", number>;
         canvas: Record<"minX" | "minY" | "width" | "height", number>;
-        vector: Vector;
+        vector: TupleVector;
     }) {
         const { left, top, width: realWidth, height: realHeight } = dom;
         const { minX, minY, width, height } = canvas;
@@ -311,7 +308,7 @@ export class ControlsManager {
         // These transformations convert dom coordinates to svg coords
         const x = minX + (clientX - left) * (height / realHeight);
         const y = minY + (clientY - top) * (width / realWidth);
-        return [x, y] as Vector;
+        return [x, y] as TupleVector;
     }
 
     onPointerMove(rawEvent: React.PointerEvent) {
@@ -333,7 +330,7 @@ export class ControlsManager {
             const canvas = canvasSizeProxy;
             const { origin, from, to } = details;
 
-            const originVector = new FancyVector(origin);
+            const originVector = Vec.from(origin);
             const scale = originVector.minus(to).size / originVector.minus(from).size;
 
             const unclampedZoom =
@@ -345,7 +342,7 @@ export class ControlsManager {
             canvas.zoom = clamp(unclampedZoom, 0, 1);
             // canvas.zoom = 1;
 
-            const translate = new FancyVector(from).minus(to).scale(0.5);
+            const translate = Vec.from(from).minus(to).scale(0.5);
             let { scrollLeft: left, scrollTop: top } = scrollArea;
             if (0 < canvas.zoom && canvas.zoom < 1) {
                 left = scale * left + originVector.scale(scale - 1).x + translate.x;

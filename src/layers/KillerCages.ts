@@ -2,7 +2,7 @@ import { PolygonBlits } from "../components/SVGCanvas/Polygon";
 import { TextBlits } from "../components/SVGCanvas/Text";
 import { Layer, LayerClass, NeedsUpdating } from "../types";
 import { maxReducer } from "../utils/data";
-import { FancyVector } from "../utils/math";
+import { Vec } from "../utils/math";
 import { BaseLayer, methodNotImplemented } from "./BaseLayer";
 import {
     handleEventsUnorderedSets,
@@ -114,7 +114,7 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
                     text: object.state,
                     point: corner
                         .scale(settings.cellSize / 2)
-                        .plus(new FancyVector([1, 1]).scale(-0.85 * maxRadius)).xy,
+                        .plus(new Vec(1, 1).scale(-0.85 * maxRadius)).xy,
                     size: 12,
                 };
             }

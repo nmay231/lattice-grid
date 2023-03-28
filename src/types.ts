@@ -105,7 +105,7 @@ export type PageMode = "edit" | "play";
 // #endregion
 
 // #region - Misc
-export type Vector = [number, number]; // TODO: Rename to ArrayVector
+export type TupleVector = [number, number];
 export type Delta = { dx: number; dy: number };
 
 export type RecursivePartial<T> = {
