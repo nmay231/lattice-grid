@@ -1,6 +1,6 @@
 import fc from "fast-check";
 import { FancyVector } from "./math";
-import { FCNormalFloats, given } from "./testing/fcArbitraries";
+import { FCNormalFloat, FCRepeat, given } from "./testing/fcArbitraries";
 
 // Most of the simple tests are not really to test correctness as much as they are to check there are no unexpected errors
 describe("Vector", () => {
@@ -44,8 +44,7 @@ describe("Vector", () => {
         const { x, y } = new FancyVector([8, 8]).unit();
         expect(x).toBeCloseTo(Math.SQRT1_2);
         expect(y).toBeCloseTo(Math.SQRT1_2);
-
-        given([fc.tuple(FCNormalFloats(), FCNormalFloats())]).assertProperty((xy) => {
+        given([FCRepeat(2, FCNormalFloat())]).assertProperty((xy) => {
             fc.pre((xy[0] && xy[1]) > 0); // Ignore division by zero
             const [x, y] = xy;
 
@@ -60,7 +59,7 @@ describe("Vector", () => {
 
     it("checks equality", () => {
         given([
-            fc.tuple(FCNormalFloats(), FCNormalFloats()),
+            FCRepeat(2, FCNormalFloat()),
             fc.integer().filter((n) => !!n), // Offset has to be non-zero
         ]).assertProperty((xy, offset) => {
             const [x, y] = xy;
@@ -90,7 +89,7 @@ describe("Vector", () => {
     });
 
     it("calculates scalar projection", () => {
-        given([fc.tuple(FCNormalFloats(), FCNormalFloats())]).assertProperty((xy) => {
+        given([FCRepeat(2, FCNormalFloat())]).assertProperty((xy) => {
             const [x, y] = xy;
             const vec = new FancyVector([x, y]);
 
@@ -106,7 +105,7 @@ describe("Vector", () => {
 
     it("rotates by quarter turns", () => {
         given([
-            fc.tuple(FCNormalFloats(), FCNormalFloats()),
+            FCRepeat(2, FCNormalFloat()),
             fc.integer({ min: 1000, max: 1000 }), // cos() and sin() become too inaccurate with large angles
         ]).assertProperty((xy, n) => {
             const [x, y] = xy;

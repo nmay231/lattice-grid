@@ -2,9 +2,9 @@ import fc from "fast-check";
 import { shuffle } from "lodash";
 import { Vector } from "../types";
 import { maxReducer } from "../utils/data";
-import { FancyVector } from "../utils/math";
+import { FancyVector, tupleToVector } from "../utils/math";
 import { smartSort } from "../utils/stringUtils";
-import { FCTupleVectorInt, given } from "../utils/testing/fcArbitraries";
+import { FCRepeat, given } from "../utils/testing/fcArbitraries";
 import { SquareGrid, _SquareGridTransformer } from "./SquareGrid";
 
 describe("SquareGrid", () => {
@@ -214,7 +214,7 @@ describe("SquareGridTransformer", () => {
         const CARDINAL = "NESW";
         given([
             // Even though it doesn't really matter (yet at least), make the coords odd so they are cell points.
-            fc.array(FCTupleVectorInt().map(([x, y]) => [x * 2 + 1, y * 2 + 1].join(","))),
+            fc.array(FCRepeat(2, fc.integer()).map(([x, y]) => [x * 2 + 1, y * 2 + 1].join(","))),
             // Pick two orthogonal directions. Don't generate something like "NS" or "EE".
             fc
                 .tuple(fc.integer({ min: 0, max: 3 }), fc.constantFrom(1, 3))
@@ -264,7 +264,7 @@ describe("SquareGridTransformer.shrinkwrap", () => {
     const pointTransformer = ({ cellSize = 2 } = {}) => new _SquareGridTransformer({ cellSize });
 
     const FCCellVector = () => {
-        return FCTupleVectorInt().map((vec) => FancyVector.from(vec).scale(2).plus([1, 1]));
+        return FCRepeat(2, fc.integer()).map((vec) => tupleToVector(vec).scale(2).plus([1, 1]));
     };
 
     const FCStraightVector = ({
@@ -276,7 +276,7 @@ describe("SquareGridTransformer.shrinkwrap", () => {
             .tuple(fc.integer({ min: minLength > 0 ? minLength : undefined, max }), fc.boolean())
             .map(([n, vert]) => {
                 n = 2 * n;
-                return FancyVector.from(vertical ?? vert ? [0, n] : [n, 0]);
+                return tupleToVector(vertical ?? vert ? [0, n] : [n, 0]);
             });
     };
 
@@ -327,7 +327,7 @@ describe("SquareGridTransformer.shrinkwrap", () => {
     });
 
     it("shrinkwraps a rectangle", () => {
-        given([FCCellVector(), FCTupleVectorInt({ min: 1, max: 30 })]).assertProperty(
+        given([FCCellVector(), FCRepeat(2, fc.integer({ min: 1, max: 30 }))]).assertProperty(
             (start, [width, height]) => {
                 const points: string[] = [];
                 for (let x = 0; x < 2 * width; x += 2) {

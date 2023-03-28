@@ -3,7 +3,7 @@ import { random, range, shuffle } from "lodash";
 import { PartialPointerEvent, _PointerState as PointerState } from "./ControlsManager";
 import { Vector } from "./types";
 import { zip } from "./utils/data";
-import { FCTupleVectorInt, given } from "./utils/testing/fcArbitraries";
+import { FCRepeat, given } from "./utils/testing/fcArbitraries";
 import { partialMock } from "./utils/testing/partialMock";
 
 // TODO: Move this definition and the corresponding test to a new file if used in other tests
@@ -14,7 +14,7 @@ const asynchronousPointers = () => {
         .array(
             fc.record({
                 button: fc.constantFrom<1 | 2 | 4>(1, 2, 4),
-                move: FCTupleVectorInt(),
+                move: FCRepeat(2, fc.integer()),
             }),
             { minLength: 2 },
         )
@@ -367,7 +367,7 @@ describe("PointerState", () => {
         given([
             fc.integer({ min: 1, max: 1000 }),
             fc.constantFrom<1 | 2 | 4>(1, 2, 4), // Can't wait for typescript 5.0 const generics
-            fc.tuple(fc.float(), fc.float()),
+            FCRepeat(2, fc.float()),
         ]).assertProperty((id, button, xy) => {
             state.onPointerMove(event({ id, button, xy }));
             expect(stateOf(state)).toBe(STARTING_STATE);

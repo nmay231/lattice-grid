@@ -10,11 +10,7 @@ export class FancyVector {
     }
 
     static from(vec: FancyVector | Vector) {
-        if (vec instanceof FancyVector) {
-            return vec;
-        }
-
-        return new FancyVector([vec[0], vec[1]]);
+        return vec instanceof FancyVector ? vec : tupleToVector(vec);
     }
 
     get xy() {
@@ -82,3 +78,5 @@ export class FancyVector {
         return this.x === other.x && this.y === other.y;
     }
 }
+
+export const tupleToVector = (vec: Vector) => new FancyVector(vec);
