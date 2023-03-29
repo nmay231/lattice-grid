@@ -1,4 +1,3 @@
-import { euclidean } from "../algorithms/hopStraight";
 import { TupleVector } from "../types";
 
 export class Vec {
@@ -71,4 +70,18 @@ export class Vec {
 
         return this.x === other.x && this.y === other.y;
     }
+
+    originAngle() {
+        return Math.atan2(this.y, this.x);
+    }
+
+    positiveAngleTo(vec: Vec | TupleVector) {
+        vec = Vec.from(vec);
+        const angle = Math.abs(this.originAngle() - vec.originAngle());
+        return angle <= Math.PI ? angle : 2 * Math.PI - angle;
+    }
 }
+
+export const euclidean = (x1: number, y1: number, x2: number, y2: number) => {
+    return ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5;
+};

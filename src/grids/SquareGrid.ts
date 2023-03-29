@@ -1,4 +1,4 @@
-import { prioritizeDirection } from "../algorithms/prioritizeDirection";
+import { hopStraight } from "../algorithms/hopStraight";
 import { LineBlits } from "../components/SVGCanvas/Line";
 import { Grid, Point, PointType, TupleVector } from "../types";
 import { parseIntBase } from "../utils/data";
@@ -389,7 +389,7 @@ export class SquareGrid implements Grid {
         const { cellSize } = settings;
         const halfCell = cellSize / 2;
 
-        const deltas = dxy.map(({ dx, dy }) => new Vec(dx, dy));
+        let deltas = dxy.map(({ dx, dy }) => new Vec(dx, dy));
         const cursor = new Vec(x / halfCell, y / halfCell);
 
         const firstPoint = new Vec(Math.floor(cursor.x), Math.floor(cursor.y));
@@ -403,9 +403,13 @@ export class SquareGrid implements Grid {
         let start: Vec | undefined = undefined;
         if (previousPoint) {
             start = Vec.from(previousPoint.split(",").map(parseIntBase(10)) as TupleVector);
+
+            // Filter any deltas that would backtrack
+            const direction = cursor.minus(start);
+            deltas = deltas.filter((vec) => vec.positiveAngleTo(direction) < Math.PI / 2);
         }
 
-        const points = prioritizeDirection({
+        const points = hopStraight({
             start,
             cursor,
             deltas,

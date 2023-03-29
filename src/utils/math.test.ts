@@ -1,4 +1,5 @@
 import fc from "fast-check";
+import { TupleVector } from "../types";
 import { Vec } from "./math";
 import { FCNormalFloat, FCRepeat, given } from "./testing/fcArbitraries";
 
@@ -125,6 +126,80 @@ describe("Vector", () => {
             expect(vec.xy).toEqual(xy);
         });
     });
-});
 
-describe.todo("euclidean (Move from hopStraight.ts)");
+    const SQRT_3 = Math.sqrt(3);
+
+    it.each([
+        { xy: [1, 0], degrees: 0 },
+        { xy: [2, 0], degrees: 0 },
+        { xy: [-2, 0], degrees: 180 },
+        { xy: [0, 1], degrees: 90 },
+        { xy: [0, -1], degrees: -90 },
+        { xy: [Math.SQRT1_2, Math.SQRT1_2], degrees: 45 },
+        { xy: [-Math.SQRT1_2, Math.SQRT1_2], degrees: 90 + 45 },
+        { xy: [Math.SQRT1_2, -Math.SQRT1_2], degrees: -45 },
+        { xy: [-Math.SQRT1_2, -Math.SQRT1_2], degrees: -(90 + 45) },
+        { xy: [SQRT_3, 1], degrees: 30 },
+        { xy: [1, SQRT_3], degrees: 60 },
+    ] satisfies Array<{ xy: TupleVector; degrees: number }>)(
+        "gives the angle to the origin",
+        ({ xy, degrees }) => {
+            const vec = Vec.from(xy);
+            const angle = (degrees * Math.PI) / 180;
+            expect(vec.originAngle()).toBeCloseTo(angle);
+            expect(vec.scale(42).originAngle()).toBeCloseTo(angle);
+
+            expect(vec.xy).toEqual(xy);
+        },
+    );
+
+    it.each([
+        { a: [0.001, 0], b: [1000, 0], degrees: 0 },
+        { a: [42, 42], b: [420, 420], degrees: 0 },
+        { a: [0.001, 0], b: [0, 1000], degrees: 90 },
+        { a: [0, 1000], b: [0.001, 0], degrees: 90 },
+        { a: [SQRT_3, 1], b: [1, 0], degrees: 30 },
+        { a: [1, SQRT_3], b: [1, 0], degrees: 60 },
+        { a: [-1, 0], b: [1, 0], degrees: 180 },
+        { a: [-2 * SQRT_3, 2], b: [-2, 0], degrees: 30 },
+    ] satisfies Array<{ a: TupleVector; b: TupleVector; degrees: number }>)(
+        "calculates the correct angle to another vector",
+        ({ a, b, degrees }) => {
+            const vec1 = Vec.from([...a]);
+            const vec2 = Vec.from([...b]);
+            const angle = (degrees * Math.PI) / 180;
+
+            expect(vec1.positiveAngleTo(vec2)).toBeCloseTo(angle);
+            expect(vec2.positiveAngleTo(vec1)).toBeCloseTo(angle);
+
+            // vec1 and vec2 remain unchanged
+            expect(vec1.xy).toEqual(a);
+            expect(vec2.xy).toEqual(b);
+        },
+    );
+
+    it("positiveAngleTo is commutative", () => {
+        given([
+            FCRepeat(2, FCNormalFloat({ lower: 0.01, upper: 1000 })),
+            FCRepeat(2, FCNormalFloat({ lower: 0.01, upper: 1000 })),
+        ]).assertProperty((a, b) => {
+            const vec1 = Vec.from([...a]);
+            const vec2 = Vec.from([...b]);
+
+            // The angles are commutative
+            const angle1 = vec1.positiveAngleTo(vec2);
+            expect(angle1).toBeCloseTo(vec2.positiveAngleTo(vec1));
+
+            // They range in [0, 2 * Pi]
+            expect(angle1).toBeGreaterThanOrEqual(0);
+            expect(angle1).toBeLessThanOrEqual(2 * Math.PI);
+
+            // The angle is the same as the origin angle when the other vector points along the origin
+            expect(vec1.positiveAngleTo([1, 0])).toBeCloseTo(Math.abs(vec1.originAngle()));
+
+            // vec1 and vec2 remain unchanged
+            expect(vec1.xy).toEqual(a);
+            expect(vec2.xy).toEqual(b);
+        });
+    });
+});

@@ -1,6 +1,5 @@
 import { clamp } from "lodash";
 import { proxy } from "valtio";
-import { euclidean } from "./algorithms/hopStraight";
 import { PuzzleManager } from "./PuzzleManager";
 import { canvasSizeProxy } from "./state/canvasSize";
 import {
@@ -14,7 +13,7 @@ import {
 } from "./types";
 import { errorNotification } from "./utils/DOMUtils";
 import { focusProxy, _focusState } from "./utils/focusManagement";
-import { Vec } from "./utils/math";
+import { euclidean, Vec } from "./utils/math";
 import { DelayedCallback } from "./utils/primitiveWrappers";
 import { keypressString } from "./utils/string";
 
