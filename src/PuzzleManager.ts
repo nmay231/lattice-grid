@@ -26,7 +26,7 @@ import { errorNotification } from "./utils/DOMUtils";
 import { valtioRef } from "./utils/imports/valtio";
 import { IndexedOrderedMap } from "./utils/OrderedMap";
 import { LatestTimeout } from "./utils/primitiveWrappers";
-import { stringifyAnything } from "./utils/stringUtils";
+import { stringifyAnything } from "./utils/string";
 
 export class PuzzleManager {
     layers = proxy(new IndexedOrderedMap<ValtioRef<Layer>>((layer) => !layer.ethereal));

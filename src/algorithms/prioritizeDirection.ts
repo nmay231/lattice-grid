@@ -1,11 +1,11 @@
-import { FancyVector } from "../utils/math";
+import { Vec } from "../utils/math";
 
 type Arg = {
-    start?: FancyVector;
-    targets: FancyVector[];
-    cursor: FancyVector;
-    deltas: FancyVector[];
-    toString: (vec: FancyVector) => string;
+    start?: Vec;
+    targets: Vec[];
+    cursor: Vec;
+    deltas: Vec[];
+    toString: (vec: Vec) => string;
 };
 
 /**
@@ -30,7 +30,9 @@ export const prioritizeDirection = ({ start, targets, cursor, deltas, toString }
 
     while (direction.dotProduct(cursor.minus(start)) > 0 && --maxIterations > 0) {
         const bestDelta = deltas.reduce((prev, next) =>
-            prev.distanceAlong(direction) >= next.distanceAlong(direction) ? prev : next,
+            prev.scalarProjectionOnto(direction) >= next.scalarProjectionOnto(direction)
+                ? prev
+                : next,
         );
         current = current.plus(bestDelta);
         direction = cursor.minus(current);

@@ -174,7 +174,7 @@ describe("StorageManager", () => {
             ],
         });
 
-        expect(storage.histories["grid-question"].actions.length).toBe(3);
+        expect(storage.histories["grid-question"].actions).toHaveLength(3);
         expect(storage.histories["grid-question"].index).toBe(3);
     });
 
@@ -194,7 +194,7 @@ describe("StorageManager", () => {
             ],
         });
 
-        expect(storage.histories["grid-question"].actions.length).toBe(2);
+        expect(storage.histories["grid-question"].actions).toHaveLength(2);
         expect(storage.histories["grid-question"].index).toBe(2);
     });
 

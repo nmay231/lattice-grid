@@ -1,7 +1,6 @@
-import { zip } from "lodash";
 import { TextBlits } from "../components/SVGCanvas/Text";
 import { Layer, LayerClass, LayerHandlerResult, Point } from "../types";
-import { bySubset } from "../utils/structureUtils";
+import { zip } from "../utils/data";
 import { BaseLayer, methodNotImplemented } from "./BaseLayer";
 import { numberTyper } from "./controls/numberTyper";
 import { handleEventsSelection, KeyDownEventHandler, SelectedProps } from "./controls/selection";
@@ -52,7 +51,6 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
         const history: LayerHandlerResult<NumberProps>["history"] = [];
 
         for (const [id, old, new_] of zip(ids, states, newStates)) {
-            if (id === undefined || old === undefined || new_ === undefined) break; // They should be the same length
             if (old === new_) continue;
 
             history.push({
@@ -111,26 +109,22 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
 
     getBlits: INumberLayer["getBlits"] = ({ grid, storage, settings }) => {
         const stored = storage.getStored<NumberProps>({ grid, layer: this });
-        const points = stored.objects
-            .keys()
-            .filter(bySubset(stored.groups.getGroup(settings.editMode)));
-        const { cells } = grid.getPoints({
-            settings,
-            connections: {
-                cells: {
-                    svgPoint: true,
-                    maxRadius: { shape: "square", size: "large" },
-                },
-            },
-            points,
-        });
+        const group = stored.groups.getGroup(settings.editMode);
+        const points = stored.objects.keys().filter((id) => group.has(id));
+
+        const pt = grid.getPointTransformer(settings);
+        const [cellMap, cells] = pt.fromPoints("cells", points);
+        const toSVG = cells.toSVGPoints();
+        const maxRadius = pt.maxRadius({ type: "cells", shape: "square", size: "lg" });
 
         const blits: TextBlits["blits"] = {};
-        for (const id of points) {
+        for (const [id, cell] of cellMap.entries()) {
+            const point = toSVG.get(cell);
+            if (!point) continue; // TODO?
             blits[id] = {
                 text: stored.objects.get(id).state,
-                point: cells[id].svgPoint,
-                size: cells[id].maxRadius * 1.6,
+                point,
+                size: maxRadius * 1.6,
             };
         }
 

@@ -1,4 +1,4 @@
-import { keypressString, smartSort } from "./stringUtils";
+import { keypressString, smartSort } from "./string";
 
 describe("keypressStringShorthand", () => {
     const call = (arg: Partial<Parameters<typeof keypressString>[0]>) => {

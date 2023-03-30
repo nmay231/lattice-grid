@@ -1,28 +1,25 @@
 import { LayerStorage } from "../LayerStorage";
 import { LayerHandlerResult } from "../types";
 import { IndexedOrderedMap } from "../utils/OrderedMap";
-import { getEventEssentials, GetEventEssentialsArg } from "../utils/testUtils";
+import { layerEventEssentials } from "../utils/testing/layerEventEssentials";
 import { NumberLayer, NumberProps } from "./Number";
 
 describe("Number Layer", () => {
-    const eventEssentials = (arg: GetEventEssentialsArg<NumberProps> = {}) =>
-        getEventEssentials(arg);
-
     // Layer with numbers 0-9
     const settings9 = { max: 9, negatives: false };
     const layer9 = NumberLayer.create({ layers: new IndexedOrderedMap() });
-    layer9.newSettings({ ...eventEssentials(), newSettings: settings9 });
+    layer9.newSettings({ ...layerEventEssentials(), newSettings: settings9 });
 
     // Layer with numbers -64 to 64
     const settings64 = { max: 64, negatives: true };
     const layer64 = NumberLayer.create({ layers: new IndexedOrderedMap() });
-    layer64.newSettings({ ...eventEssentials(), newSettings: settings64 });
+    layer64.newSettings({ ...layerEventEssentials(), newSettings: settings64 });
 
     type HistoryType = LayerHandlerResult<NumberProps>["history"];
 
     it("places numbers", () => {
         const result = layer9.handleKeyDown({
-            ...eventEssentials(),
+            ...layerEventEssentials(),
             type: "keyDown",
             keypress: "1",
             points: ["id1", "id2"],
@@ -45,7 +42,7 @@ describe("Number Layer", () => {
         });
 
         const result = layer9.handleKeyDown({
-            ...eventEssentials({ stored }),
+            ...layerEventEssentials({ stored }),
             type: "delete",
             keypress: "Delete",
             points: ["toDelete", "alsoDelete"],
@@ -68,12 +65,12 @@ describe("Number Layer", () => {
         });
 
         const result = layer9.newSettings({
-            ...eventEssentials({ stored }),
+            ...layerEventEssentials({ stored }),
             newSettings: { max: 10, negatives: true },
         });
         expect(result.history).toEqual<HistoryType>([]);
 
-        layer9.newSettings({ ...eventEssentials(), newSettings: settings9 });
+        layer9.newSettings({ ...layerEventEssentials(), newSettings: settings9 });
     });
 
     it("deletes objects when the number range decreases", () => {
@@ -88,7 +85,7 @@ describe("Number Layer", () => {
         });
 
         const result = layer64.newSettings({
-            ...eventEssentials({ stored }),
+            ...layerEventEssentials({ stored }),
             newSettings: { max: 7, negatives: false },
         });
 
@@ -97,7 +94,7 @@ describe("Number Layer", () => {
             { id: "4,4", object: null },
         ]);
 
-        layer64.newSettings({ ...eventEssentials(), newSettings: settings9 });
+        layer64.newSettings({ ...layerEventEssentials(), newSettings: settings9 });
     });
 
     // TODO: Not implemented, might never be honestly.

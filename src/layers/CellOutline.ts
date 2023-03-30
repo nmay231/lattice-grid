@@ -51,6 +51,7 @@ export class CellOutlineLayer extends BaseLayer<CellOutlineProps> implements ICe
                 ...result,
                 history: (result.history || []).map((action) => ({
                     ...action,
+                    // TODO: Would I eventually support modifying the grid in the answer editMode? Does that even make sense?
                     editMode: "question",
                 })),
             };
@@ -58,78 +59,14 @@ export class CellOutlineLayer extends BaseLayer<CellOutlineProps> implements ICe
         return {};
     }
 
-    getBlits: ICellOutlineLayer["getBlits"] = ({ grid, storage, settings }) => {
-        if (settings.editMode === "answer") return [];
-
+    getBlits: ICellOutlineLayer["getBlits"] = ({ settings, storage, grid }) => {
         const stored = storage.getStored<CellOutlineProps>({
             grid,
             layer: this,
         });
 
-        // TODO: Would I eventually support modifying the grid in the answer editMode? Does that even make sense?
         const blacklist = stored.groups.getGroup("question");
-        const points = grid.getAllPoints("cells").filter((point) => !blacklist.has(point));
-        const { cells, gridEdge } = grid.getPoints({
-            settings,
-            points,
-            connections: {
-                cells: {
-                    edges: { corners: { svgPoint: true } },
-                    shrinkwrap: { key: "gridEdge", svgPolygons: { inset: -4 } },
-                },
-            },
-        });
-
-        const Nothing = { x1: 0, x2: 0, y1: 0, y2: 0 };
-        const edges: Record<string, typeof Nothing> = {};
-        for (const cell in cells) {
-            for (const edge in cells[cell].edges) {
-                /* If a cell does not share an edge with another cell, use a thick line. */
-                if (edges[edge] === undefined) {
-                    edges[edge] = Nothing;
-                } else {
-                    const corners = cells[cell].edges[edge].corners;
-                    const [[x1, y1], [x2, y2]] = Object.values(corners).map(
-                        ({ svgPoint }: any) => svgPoint,
-                    );
-                    edges[edge] = { x1, y1, x2, y2 };
-                }
-            }
-        }
-
-        for (const id in edges) {
-            if (edges[id] === Nothing) {
-                delete edges[id];
-            }
-        }
-
-        const outline: Record<string, any> = {};
-        for (const key in gridEdge.svgPolygons) {
-            outline[key] = { points: gridEdge.svgPolygons[key] };
-        }
-
-        return [
-            {
-                id: "grid",
-                blitter: "line",
-                blits: edges,
-                style: {
-                    stroke: "black",
-                    strokeWidth: 2,
-                    strokeLinecap: "square",
-                },
-            },
-            {
-                id: "outline",
-                blitter: "polygon",
-                blits: outline,
-                style: {
-                    stroke: "black",
-                    strokeWidth: 10,
-                    strokeLinejoin: "miter",
-                    fill: "none",
-                },
-            },
-        ];
+        if (settings.editMode === "answer") return [];
+        return grid._getBlits({ blacklist, settings });
     };
 }

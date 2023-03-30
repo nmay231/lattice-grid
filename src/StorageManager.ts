@@ -12,7 +12,7 @@ import {
     StorageReducer,
 } from "./types";
 import { errorNotification } from "./utils/DOMUtils";
-import { stringifyAnything } from "./utils/stringUtils";
+import { stringifyAnything } from "./utils/string";
 
 type GridAndLayer = { grid: Pick<Grid, "id">; layer: Pick<Layer, "id"> };
 // TODO: Recursive Pick type?

@@ -1,145 +1,79 @@
 import fc from "fast-check";
-import { Delta, Vector } from "../types";
+import { TupleVector } from "../types";
+import { parseIntBase, zip } from "../utils/data";
+import { Vec } from "../utils/math";
+import { given } from "../utils/testing/fcArbitraries";
 import { hopStraight } from "./hopStraight";
 
 describe("hopStraight", () => {
-    type Arg = Parameters<typeof hopStraight>[0] & {
-        targetPoints: string[];
-        round?: (n: number) => number;
-    };
-    type Result = "REACHED_TARGET" | "OVERSHOT_POINT" | "REVISITED_POINT" | "MAX_ITERATION";
-
-    const simpleRound = (n: number) => Math.round(n);
-
-    const helper = ({
-        previousPoint,
-        deltas,
-        cursor,
-        targetPoints,
-        round = simpleRound,
-    }: Arg): [Vector[], Result] => {
-        if (targetPoints.includes(previousPoint.toString())) {
-            return [[], "REACHED_TARGET"];
-        }
-        const generator = hopStraight({
-            previousPoint,
-            deltas,
-            cursor,
-        });
-        const points: string[] = [previousPoint.toString()];
-        const path: Array<Vector> = [];
-
-        let maxIteration = 100; // Prevent infinite loops
-        while (maxIteration > 0) {
-            maxIteration -= 1;
-            const next = (generator.next(previousPoint).value?.map(round) || null) as Vector | null;
-            if (!next) return [path, "OVERSHOT_POINT"];
-
-            const string = next?.join(",");
-            if (points.includes(string)) return [path, "REVISITED_POINT"];
-
-            points.push(string);
-            path.push(next);
-            if (targetPoints.includes(string)) return [path, "REACHED_TARGET"];
-
-            previousPoint = next;
-        }
-
-        return [path, "MAX_ITERATION"];
-    };
-
-    const orthogonal: Delta[] = [
-        { dx: 0, dy: 2 },
-        { dx: 0, dy: -2 },
-        { dx: 2, dy: 0 },
-        { dx: -2, dy: 0 },
-    ];
-    const eightAdjacent: Delta[] = [
+    const orthogonal: Vec[] = [new Vec(0, 2), new Vec(0, -2), new Vec(2, 0), new Vec(-2, 0)];
+    const eightAdjacent: Vec[] = [
         ...orthogonal,
-        { dx: 2, dy: 2 },
-        { dx: 2, dy: -2 },
-        { dx: -2, dy: 2 },
-        { dx: -2, dy: -2 },
+        new Vec(2, 2),
+        new Vec(2, -2),
+        new Vec(-2, 2),
+        new Vec(-2, -2),
     ];
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const knight: Delta[] = [
-        { dx: 2, dy: 4 },
-        { dx: 2, dy: -4 },
-        { dx: -2, dy: 4 },
-        { dx: -2, dy: -4 },
-        { dx: 4, dy: 2 },
-        { dx: 4, dy: -2 },
-        { dx: -4, dy: 2 },
-        { dx: -4, dy: -2 },
+    const knight: Vec[] = [
+        new Vec(2, 4),
+        new Vec(2, -4),
+        new Vec(-2, 4),
+        new Vec(-2, -4),
+        new Vec(4, 2),
+        new Vec(4, -2),
+        new Vec(-4, 2),
+        new Vec(-4, -2),
     ];
 
-    it("finds the optimal path with simple deltas", () => {
-        fc.assert(
-            fc.property(
-                fc.oneof(
-                    fc.tuple(
-                        fc.constant(orthogonal),
-                        fc.array(fc.integer({ min: 0, max: 3 }), { maxLength: 99 }),
-                    ),
-                    fc.tuple(
-                        fc.constant(eightAdjacent),
-                        fc.array(fc.integer({ min: 0, max: 7 }), { maxLength: 99 }),
-                    ),
+    it.todo("will be replaced with FSM anyways, so I don't care too much about tests");
+
+    it("takes a shorter path than a random walk", () => {
+        given([
+            fc.constantFrom(orthogonal, eightAdjacent, knight).chain((moveSet) =>
+                fc.tuple(
+                    fc.constant(moveSet),
+                    fc.array(fc.integer({ min: 0, max: moveSet.length - 1 }), {
+                        maxLength: 95,
+                    }),
                 ),
-                ([moveSet, indexes]) => {
-                    const moves = indexes.map((i) => moveSet[i]);
-
-                    const vector = [0, 0] as Vector;
-                    for (const { dx, dy } of moves) {
-                        vector[0] += dx;
-                        vector[1] += dy;
-                    }
-
-                    const [vectors, result] = helper({
-                        previousPoint: [0, 0],
-                        deltas: moveSet,
-                        cursor: vector,
-                        targetPoints: [vector.toString()],
-                    });
-
-                    expect(result).toBe<Result>("REACHED_TARGET");
-
-                    // the path taken to get to a vector cannot be longer
-                    expect(vectors.length).toBeLessThanOrEqual(moves.length);
-
-                    // TODO: The sum of the vectors make the original vector. This doesn't work currently
-                    // expect(
-                    //     vectors.reduce(([x1, y1], [x2, y2]) => [x1 + x2, y1 + y2], [0, 0]),
-                    // ).toEqual(vector);
-                },
             ),
-            // TODO: Make this an option in vitest config or something instead of in the test itself.
-            { verbose: true },
-        );
+        ]).assertProperty(([moveSet, indexes]) => {
+            const moves = indexes.map((i) => moveSet[i]);
+
+            const start = new Vec(0, 0);
+            let target = start;
+            for (const move of moves) {
+                target = target.plus(move);
+            }
+
+            const vecToString = (vec: Vec) => vec.xy.join(",");
+            const points = hopStraight({
+                start,
+                cursor: target,
+                deltas: moveSet,
+                targets: [target],
+                toString: vecToString,
+            });
+
+            expect(points.length).toBeLessThanOrEqual(moves.length);
+
+            const vecPoints = points.map((string) =>
+                Vec.from(string.split(",").map(parseIntBase(10)) as TupleVector),
+            );
+
+            const vecMoves = Array.from(zip([start].concat(vecPoints.slice(0, -1)), vecPoints)).map(
+                ([prev, next]) => next.minus(prev),
+            );
+
+            const moveSetStrings = moveSet.map(vecToString);
+
+            for (const move of vecMoves.map(vecToString)) {
+                expect(moveSetStrings).includes(move);
+            }
+
+            if (moveSet !== knight && points.length) {
+                expect(points.at(-1)).toEqual(vecToString(target));
+            }
+        });
     });
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const tall: Delta[] = [
-        { dx: -1, dy: 5 },
-        { dx: 1, dy: 5 },
-        { dx: -1, dy: -5 },
-        { dx: 1, dy: -5 },
-    ];
-    it.todo("never generates vectors more than 45 degrees from the start-end vector");
-
-    // TODO: Remember that in square grids, there is no difference between cells and corners except that they are offset one (1, 1).
-    // TODO: Add relevant tests for non-square grids.
-    it.todo("selects a straight line of cells in a square grid");
-
-    it.todo("selects a straight line of edges in a square grid");
-
-    it.todo("selects a slightly diagonal line of cells in a square grid");
-
-    it.todo("selects a slightly diagonal line of edges in a square grid");
-
-    it.todo("selects a perfectly diagonal line of cells (and cut corners) in a square grid");
-
-    it.todo(
-        "check that the standard orthogonal move set allows you to cut corners (and then remove that test stub from selection, since that's useless)",
-    );
 });

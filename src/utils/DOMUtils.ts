@@ -1,5 +1,5 @@
 import { NotificationProps, showNotification } from "@mantine/notifications";
-import { stringifyAnything } from "./stringUtils";
+import { stringifyAnything } from "./string";
 
 export const errorNotification = (
     props: Partial<Pick<NotificationProps, "message" | "title">> & {

@@ -1,8 +1,10 @@
-import { prioritizeDirection } from "../algorithms/prioritizeDirection";
-import { PuzzleManager } from "../PuzzleManager";
-import { Grid, Point, PointType, Vector } from "../types";
+import { hopStraight } from "../algorithms/hopStraight";
+import { LineBlits } from "../components/SVGCanvas/Line";
+import { Grid, Point, PointType, TupleVector } from "../types";
+import { parseIntBase } from "../utils/data";
 import { errorNotification } from "../utils/DOMUtils";
-import { FancyVector } from "../utils/math";
+import { Vec } from "../utils/math";
+import { randomStringId } from "../utils/string";
 
 export type SquareGridParams = {
     type: "square";
@@ -12,16 +14,281 @@ export type SquareGridParams = {
     minY: number;
 };
 
+// TODO: Remove GridPoint type or replace with a thin wrapper around the Vector class. Or just straight up use _SquareGridPoints. I need an array most of the time anyways.
 type GridPoint = { x: number; y: number; type: PointType };
-type GetPointsArg = Parameters<Grid["getPoints"]>[0];
-type InternalGetPointsArg = Parameters<Grid["getPoints"]>[0] & {
-    pointType: PointType;
-    gridPoints: { point: GridPoint; result: any }[];
-    finalResult: any;
-};
+
+// TODO: Eventually, there will be more generic types called GridTransformer and GridPoints that the _Square* variants will `implement`. But I don't know what their abstraction will be. I will wait until I add another grid type to decide on that (most likely hex grid).
+// interface GridPoints<PT extends PointType = PointType> {
+//     type: PT;
+//     toSVGPoints(settings: Pick<PuzzleManager["settings"], "cellSize">): Map<FancyVector, Vector>;
+// }
+
+type Settings = Parameters<Grid["getPointTransformer"]>[0];
+
+class _SquareGridPoints<PT extends PointType = PointType> {
+    constructor(public type: PT, public settings: Settings) {}
+
+    points: Vec[] = [];
+
+    adjacent(type: PointType) {
+        const t2t = `${this.type}->${type}` as `${PointType}->${PointType}`;
+
+        if (t2t === "cells->cells" || t2t === "corners->corners" || t2t === "edges->edges") {
+            throw errorNotification({
+                error: null,
+                message: "trying to find points adjacent to its own type",
+            });
+        }
+
+        const map = new Map<Vec, Vec[]>();
+
+        if (t2t === "edges->cells" || t2t === "edges->corners") {
+            const upDown: TupleVector[] = [
+                [0, -1],
+                [0, 1],
+            ];
+            const leftRight: TupleVector[] = [
+                [-1, 0],
+                [1, 0],
+            ];
+
+            for (const point of this.points) {
+                // deltas = (t2t === edges->cells) XOR (x is even) ? upDown : leftRight
+                const deltas = (type === "cells") !== !(point.x & 1) ? upDown : leftRight;
+
+                const neighbors = deltas.map((delta) => point.plus(delta));
+                map.set(point, neighbors);
+            }
+            return [map] as const;
+        }
+
+        let deltas: TupleVector[];
+        if (t2t === "corners->cells" || t2t === "cells->corners") {
+            deltas = [
+                [1, 1],
+                [-1, 1],
+                [1, -1],
+                [-1, -1],
+            ];
+        } else {
+            deltas = [
+                [0, 1],
+                [0, -1],
+                [1, 0],
+                [-1, 0],
+            ];
+        }
+        for (const point of this.points) {
+            const neighbors = deltas.map((delta) => point.plus(delta));
+            map.set(point, neighbors);
+        }
+        return [map] as const;
+    }
+
+    toSVGPoints() {
+        const { cellSize } = this.settings;
+        const halfCell = cellSize / 2;
+        // TODO: Map.fromEntries()
+        const map = new Map<Vec, TupleVector>();
+        for (const point of this.points) {
+            map.set(point, point.scale(halfCell).xy);
+        }
+        return map;
+    }
+}
+
+// TODO: Only export for testing in the future. I'm temporarily using it's types in types.ts
+// TODO: Also, I don't have a clear sense on which methods should be in the transformer and which on GridPoints, as well as the general format of return types...
+export class _SquareGridTransformer {
+    constructor(public settings: Settings) {}
+
+    fromPoints<PT extends PointType = PointType>(type: PT, points: Point[]) {
+        const gp = new _SquareGridPoints<PT>(type, this.settings);
+        const map = new Map<string, Vec>();
+        for (const point of points) {
+            const vec = Vec.from(point.split(",").map(parseIntBase(10)) as TupleVector);
+            // TODO: Verify that `point` has PointType = `type`. How to deal with values that are not? Treat them as nulls or just filter?
+            gp.points.push(vec);
+            map.set(point, vec);
+        }
+
+        return [map, gp] as const;
+    }
+
+    maxRadius({
+        type,
+        shape,
+        size,
+    }: {
+        type: PointType;
+        shape: "square" | "circle";
+        size: "lg" | "md" | "sm";
+    }) {
+        // TODO: I'm literally making up these values as I go along... I need a more cohesive understanding of how these will be used before deciding on definite values. Alternatively, I can allow a value from [0%, 100%] and then it's up to the layer to provide sensible defaults.
+        const shapeMap: Record<PointType, Record<typeof shape, number>> = {
+            cells: { square: 1, circle: 1 },
+            corners: { square: 0.9, circle: 1 },
+            edges: { square: 0.8, circle: 0.8 },
+        };
+        const sizeMap: Record<PointType, Record<typeof size, number>> = {
+            cells: { lg: 0.9, md: 0.5, sm: 0.2 },
+            corners: { lg: 0.8, md: 0.4, sm: 0.1 },
+            edges: { lg: 0.8, md: 0.4, sm: 0.2 },
+        };
+
+        return (this.settings.cellSize / 2) * shapeMap[type][shape] * sizeMap[type][size];
+    }
+
+    sorter({ direction = "NW" } = { direction: "NW" }) {
+        type Sorter = (a: Vec, b: Vec) => number;
+        const sorters: Record<string, Sorter> = {
+            N: (a, b) => a.y - b.y,
+            S: (a, b) => b.y - a.y,
+            E: (a, b) => b.x - a.x,
+            W: (a, b) => a.x - b.x,
+        };
+        const primary = sorters[direction[0]];
+        const secondary = sorters[direction[1]];
+
+        if (!primary || !secondary) {
+            throw errorNotification({
+                error: null,
+                message: `direction=${direction} must be two characters made from "NESW"`,
+            });
+        }
+
+        return ((a, b) => primary(a, b) || secondary(a, b)) satisfies Sorter;
+    }
+
+    svgOutline(gp: _SquareGridPoints<"cells">) {
+        const map = new Map<Vec, Vec[]>();
+        for (const point of gp.points) {
+            map.set(point, [
+                point.plus([1, 1]).scale(this.settings.cellSize / 2),
+                point.plus([1, -1]).scale(this.settings.cellSize / 2),
+                point.plus([-1, -1]).scale(this.settings.cellSize / 2),
+                point.plus([-1, 1]).scale(this.settings.cellSize / 2),
+            ]);
+        }
+        return [map] as const;
+    }
+
+    shrinkwrap(gp: _SquareGridPoints<"cells">, { inset = 0 } = {}) {
+        return Array.from(this._shrinkwrap({ inset, gp, halfCell: this.settings.cellSize / 2 }));
+    }
+
+    /*
+     * Here is how inset is handled:
+     * Say we have a single group that loops around and has two corners that touch
+     * (asterisks are inside the group):
+     * **|
+     * --+--
+     *   |**
+     *
+     * When inset >= 0, then we get a nice drawing of two corners not touching.
+     * **|
+     * --.
+     *     .--
+     *     |**
+     *
+     * But if inset > 0, then we would draw two corners overlapping, and that's ugly.
+     * So instead, we merge the corners taking the "intersection" of the two corners:
+     * ****|
+     * ****+--
+     * --+****
+     *   |****
+     *
+     * To find the lines in the correct order, we travel along the edges clockwise and
+     * pick the first edge from the counterclockwise direction when inset <= 0, and
+     * from the clockwise direction when inset > 0.
+     */
+    *_shrinkwrap(arg: { inset: number; gp: _SquareGridPoints<"cells">; halfCell: number }) {
+        const { inset, gp, halfCell } = arg;
+        if (!gp.points.length) return;
+        const [edgeMap] = gp.adjacent("edges");
+
+        // I really wish JS had a tuple type that worked with strict equality...
+        // Because we don't, we must resort to string conversion when checking for equality.
+        type Sadness = string;
+        /** edgeString => [edge, cell] */
+        const edgeShell = new Map<Sadness, [Vec, Vec]>();
+
+        for (const [cell, edges] of edgeMap.entries()) {
+            for (const edge of edges) {
+                const edgeString = edge.xy.join(",");
+                // Add edges only if there is one neighboring cell, otherwise delete
+                if (!edgeShell.delete(edgeString)) edgeShell.set(edgeString, [edge, cell]);
+            }
+        }
+
+        const theEggShellWasEmpty = () => {
+            // :P
+            return errorNotification({
+                error: null,
+                message: "Shrinkwrap: the generated edgeShell was unexpectedly empty",
+            });
+        };
+        const { value: start, done } = edgeShell.values().next();
+        if (done) throw theEggShellWasEmpty();
+        let [edge, cell] = start;
+        let startingEdge = edge;
+
+        /** Array<[Corner, Normal]> */
+        let cornersNormals: Array<[Vec, Vec]> = [];
+
+        const nextEdgeDirection = inset >= 0 ? [1, 0, -1] : [-1, 0, 1];
+        let maxIteration = 1000;
+
+        while (--maxIteration > 0) {
+            const normal = edge.minus(cell);
+            const forward = normal.rotate90(1);
+            const nextCorner = edge.plus(forward);
+            cornersNormals.push([nextCorner, normal]);
+
+            for (const rotation of nextEdgeDirection) {
+                const nextEdge = nextCorner.plus(forward.rotate90(rotation));
+                const nextValue = edgeShell.get(nextEdge.xy.join(","));
+                if (!nextValue) continue;
+                [edge, cell] = nextValue;
+                break;
+            }
+            edgeShell.delete(edge.xy.join(","));
+            if (edge === startingEdge) {
+                // We closed the loop and must yield this section of loop, after applying inset
+                const corners: Vec[] = [];
+
+                let nextNormal = cornersNormals[0][1];
+                cornersNormals.reverse();
+
+                for (const [corner, normal] of cornersNormals) {
+                    if (!normal.equals(nextNormal)) {
+                        corners.push(
+                            corner.scale(halfCell).minus(normal.plus(nextNormal).scale(inset)),
+                        );
+                    }
+                    nextNormal = normal;
+                }
+                corners.reverse();
+                cornersNormals = [];
+
+                yield corners.map((vec) => vec.xy.join(",")) satisfies string[];
+                if (!edgeShell.size) return;
+
+                const { value, done } = edgeShell.values().next();
+                if (done) throw theEggShellWasEmpty();
+                [edge, cell] = value;
+                startingEdge = edge;
+            }
+        }
+        throw errorNotification({
+            error: null,
+            message: "Max iteration reached in shrinkwrap algorithm",
+        });
+    }
+}
 
 export class SquareGrid implements Grid {
-    id = "TODO: use a uuid generator";
+    id = `SquareGrid-${randomStringId([])}`; // TODO: Filter other grid ids
     width = 1;
     height = 1;
     x0 = 0;
@@ -111,10 +378,10 @@ export class SquareGrid implements Grid {
         const { cellSize } = settings;
         const halfCell = cellSize / 2;
 
-        const deltas = dxy.map(({ dx, dy }) => new FancyVector([dx, dy]));
-        const cursor = new FancyVector([x / halfCell, y / halfCell]);
+        let deltas = dxy.map(({ dx, dy }) => new Vec(dx, dy));
+        const cursor = new Vec(x / halfCell, y / halfCell);
 
-        const firstPoint = new FancyVector([Math.floor(cursor.x), Math.floor(cursor.y)]);
+        const firstPoint = new Vec(Math.floor(cursor.x), Math.floor(cursor.y));
         const targets = [
             firstPoint,
             firstPoint.plus([1, 0]),
@@ -122,12 +389,16 @@ export class SquareGrid implements Grid {
             firstPoint.plus([1, 1]),
         ].filter((p) => pointTypes.includes(this._stringToGridPoint(p.xy.join(",")).type));
 
-        let start: FancyVector | undefined = undefined;
+        let start: Vec | undefined = undefined;
         if (previousPoint) {
-            start = new FancyVector(previousPoint.split(",").map((x) => parseInt(x)) as Vector);
+            start = Vec.from(previousPoint.split(",").map(parseIntBase(10)) as TupleVector);
+
+            // Filter any deltas that would backtrack
+            const direction = cursor.minus(start);
+            deltas = deltas.filter((vec) => vec.positiveAngleTo(direction) < Math.PI / 2);
         }
 
-        const points = prioritizeDirection({
+        const points = hopStraight({
             start,
             cursor,
             deltas,
@@ -138,442 +409,14 @@ export class SquareGrid implements Grid {
         return points;
     };
 
-    getPoints({
-        settings,
-        points: stringPoints = [],
-        connections,
-        includeOutOfBounds = false,
-    }: GetPointsArg) {
-        const finalResult: any = {};
-        const points = stringPoints.map(this._stringToGridPoint.bind(this));
-
-        for (const key in connections) {
-            const pointType = key as PointType;
-            const justGridPoints = points.length
-                ? points.filter(({ type }) => type === pointType)
-                : this._getAllGridPoints(pointType);
-
-            finalResult[pointType] = {};
-            const gridPoints = [];
-            for (const point of justGridPoints) {
-                const result = {};
-                finalResult[pointType][`${point.x},${point.y}`] = result;
-                gridPoints.push({ point, result });
-            }
-
-            this._getPoints({
-                settings,
-                pointType,
-                connections: connections[pointType],
-                gridPoints,
-                finalResult,
-                includeOutOfBounds,
-            });
-        }
-
-        return finalResult;
+    getPointTransformer(settings: Settings) {
+        return new _SquareGridTransformer(settings);
     }
 
     _outOfBounds(gridPoint: GridPoint) {
         const x = gridPoint.x / 2 - this.x0;
         const y = gridPoint.y / 2 - this.y0;
         return x < 0 || x > this.width || y < 0 || y > this.height;
-    }
-
-    _getPoints({
-        settings,
-        pointType,
-        connections,
-        gridPoints,
-        finalResult,
-        includeOutOfBounds,
-    }: InternalGetPointsArg) {
-        for (const key in connections) {
-            const nextType = key as PointType;
-            let deltas;
-            switch (`${pointType}->${nextType}`) {
-                case "corners->cells":
-                case "cells->corners":
-                    deltas = [
-                        { dx: 1, dy: 1 },
-                        { dx: -1, dy: 1 },
-                        { dx: 1, dy: -1 },
-                        { dx: -1, dy: -1 },
-                    ];
-                // eslint-disable-next-line no-fallthrough
-                case "cells->edges":
-                case "corners->edges": {
-                    deltas = deltas ?? [
-                        { dx: 0, dy: 1 },
-                        { dx: 0, dy: -1 },
-                        { dx: 1, dy: 0 },
-                        { dx: -1, dy: 0 },
-                    ];
-
-                    const newGridPoints = [];
-                    for (const { point, result } of gridPoints) {
-                        result[nextType] = result[nextType] ?? {};
-
-                        for (const { dx, dy } of deltas) {
-                            const nextPoint = {
-                                x: point.x + dx,
-                                y: point.y + dy,
-                                type: nextType,
-                            };
-                            const nextString = `${nextPoint.x},${nextPoint.y}`;
-                            if (!includeOutOfBounds && this._outOfBounds(nextPoint)) {
-                                continue;
-                            }
-
-                            const nextResult =
-                                result[nextType][nextString] ||
-                                (connections[nextType] === true ? null : {});
-                            result[nextType][nextString] = nextResult;
-                            newGridPoints.push({
-                                point: nextPoint,
-                                result: nextResult,
-                            });
-                        }
-                    }
-                    this._getPoints({
-                        settings,
-                        pointType: nextType,
-                        connections: connections[nextType],
-                        gridPoints: newGridPoints,
-                        includeOutOfBounds,
-                        finalResult,
-                    });
-                    break;
-                }
-                case "edges->cells":
-                case "edges->corners": {
-                    const upDown = [
-                        { dx: 0, dy: -1 },
-                        { dx: 0, dy: 1 },
-                    ];
-                    const leftRight = [
-                        { dx: -1, dy: 0 },
-                        { dx: 1, dy: 0 },
-                    ];
-
-                    const newGridPoints = [];
-                    for (const { point, result } of gridPoints) {
-                        // (connection === edges->cells) XOR (x is even) ? upDown : leftRight
-                        const neighbors =
-                            (nextType === "cells") !== (point.x === (point.x >> 1) << 1)
-                                ? upDown
-                                : leftRight;
-
-                        result[nextType] = result[nextType] ?? {};
-
-                        for (const { dx, dy } of neighbors) {
-                            const nextPoint = {
-                                x: point.x + dx,
-                                y: point.y + dy,
-                                type: nextType,
-                            };
-                            const nextString = `${nextPoint.x},${nextPoint.y}`;
-                            if (!includeOutOfBounds && this._outOfBounds(nextPoint)) {
-                                continue;
-                            }
-
-                            const nextResult =
-                                result[nextType][nextString] ||
-                                (connections[nextType] === true ? null : {});
-                            result[nextType][nextString] = nextResult;
-                            newGridPoints.push({
-                                point: nextPoint,
-                                result: nextResult,
-                            });
-                        }
-                    }
-                    this._getPoints({
-                        settings,
-                        pointType: nextType,
-                        connections: connections[nextType],
-                        gridPoints: newGridPoints,
-                        includeOutOfBounds,
-                        finalResult,
-                    });
-                    break;
-                }
-                case "cells->svgPoint":
-                case "edges->svgPoint":
-                case "corners->svgPoint": {
-                    if (connections[nextType] !== true) {
-                        // TODO
-                        throw errorNotification({
-                            error: null,
-                            message: "Params for svgPoint are not supported!",
-                            forever: true,
-                        });
-                    }
-
-                    const { cellSize } = settings;
-                    const halfCell = cellSize / 2;
-                    for (const { point, result } of gridPoints) {
-                        result[nextType] = [point.x * halfCell, point.y * halfCell];
-                    }
-                    break;
-                }
-                case "cells->svgOutline": {
-                    if (connections[nextType] !== true) {
-                        // TODO
-                        throw errorNotification({
-                            error: null,
-                            message: "Params for svgOutline are not supported!",
-                            forever: true,
-                        });
-                    }
-
-                    const { cellSize } = settings;
-                    const halfCell = cellSize / 2;
-                    for (const { point, result } of gridPoints) {
-                        result[nextType] = [
-                            [(point.x - 1) * halfCell, (point.y - 1) * halfCell],
-                            [(point.x + 1) * halfCell, (point.y - 1) * halfCell],
-                            [(point.x + 1) * halfCell, (point.y + 1) * halfCell],
-                            [(point.x - 1) * halfCell, (point.y + 1) * halfCell],
-                        ];
-                    }
-                    break;
-                }
-                case "cells->shrinkwrap": {
-                    const result: any = {};
-                    const { key, svgPolygons, edgePoints } = connections[nextType];
-                    finalResult[key || "shrinkwrap"] = result;
-
-                    if (svgPolygons) {
-                        result.svgPolygons = this._shrinkwrap({
-                            settings,
-                            gridPoints: gridPoints.map(({ point }) => point),
-                            inset: svgPolygons.inset ?? 0,
-                        });
-                    }
-                    if (edgePoints) {
-                        // TODO
-                    }
-                    break;
-                }
-                case "cells->sorted":
-                case "corners->sorted":
-                case "edges->sorted": {
-                    const { key, direction } = connections[nextType];
-
-                    if (typeof direction !== "string" || direction.length !== 2) {
-                        throw errorNotification({
-                            error: null,
-                            message: `param direction required to be string of length two instead of "${direction}"`,
-                            forever: true,
-                        });
-                    }
-                    const [primary, secondary] = direction.toUpperCase();
-
-                    type XYPoint = { x: number; y: number };
-                    const sorts: Record<string, (a: XYPoint, b: XYPoint) => number> = {
-                        N: (a, b) => a.y - b.y,
-                        S: (a, b) => b.y - a.y,
-                        E: (a, b) => b.x - a.x,
-                        W: (a, b) => a.x - b.x,
-                    };
-                    finalResult[key || "sorted"] = gridPoints
-                        .map(({ point }) => point)
-                        // Yes, we sort by the secondary direction before the primary.
-                        .sort(sorts[secondary])
-                        .sort(sorts[primary])
-                        .map((point) => `${point.x},${point.y}`);
-                    break;
-                }
-                case "corners->rows":
-                case "cells->rows": {
-                    const { types } =
-                        connections[nextType] === true ? { types: "all" } : connections[nextType];
-
-                    const horizontal = types === "all" || types?.indexOf("horizontal") > -1;
-                    const vertical = types === "all" || types?.indexOf("vertical") > -1;
-
-                    for (const { point, result } of gridPoints) {
-                        const isCell = point.type === "cells";
-                        const rows = [];
-                        if (horizontal) {
-                            const horRow = [];
-                            for (
-                                let x = this.x0 * 2 + Number(isCell);
-                                x <= 2 * this.width;
-                                x += 2
-                            ) {
-                                horRow.push(`${x},${point.y}`);
-                            }
-                            rows.push(horRow);
-                        }
-                        if (vertical) {
-                            const verRow = [];
-                            for (
-                                let y = this.y0 * 2 + Number(isCell);
-                                y <= 2 * this.height;
-                                y += 2
-                            ) {
-                                verRow.push(`${point.x},${y}`);
-                            }
-                            rows.push(verRow);
-                        }
-                        result[nextType] = rows;
-                    }
-                    break;
-                }
-                case "cells->maxRadius":
-                case "corners->maxRadius":
-                case "edges->maxRadius": {
-                    const { shape, size } = connections[nextType];
-                    let radius = settings.cellSize / 2;
-
-                    // TODO: I'm literally making up these values as I go along...
-                    const shapeMap: Record<PointType, Record<string, number>> = {
-                        cells: { square: 1, circle: 1 },
-                        corners: { square: 0.9, circle: 1 },
-                        edges: { square: 0.8, circle: 0.8 },
-                    };
-                    const sizeMap: Record<PointType, Record<string, number>> = {
-                        cells: { large: 0.9, medium: 0.5, small: 0.2 },
-                        corners: { large: 0.8, medium: 0.4, small: 0.1 },
-                        edges: { large: 0.8, medium: 0.4, small: 0.2 },
-                    };
-
-                    radius *= shapeMap[pointType][shape] * sizeMap[pointType][size];
-
-                    for (const { result } of gridPoints) {
-                        // For some other grids, the radius will be different for different cells, etc.
-                        result[nextType] = radius;
-                    }
-
-                    break;
-                }
-                default:
-                    throw errorNotification({ error: null, message: "", forever: true });
-            }
-        }
-    }
-
-    _shrinkwrap({
-        settings,
-        gridPoints,
-        inset,
-    }: {
-        settings: PuzzleManager["settings"];
-        gridPoints: GridPoint[];
-        inset?: number;
-    }) {
-        inset = inset || 0;
-        const cellPoints: [number, number][] = [];
-        const edgesLeft: Record<string, [number, number]> = {};
-        let [dx, dy] = [0, -1];
-        for (const cell of gridPoints) {
-            const { x, y } = cell;
-            for (let i = 0; i < 4; i++) {
-                const edge = `${x + dx},${y + dy}`;
-                if (edge in edgesLeft) {
-                    delete edgesLeft[edge];
-                } else {
-                    edgesLeft[edge] = [x, y];
-                }
-                [dx, dy] = [-dy, dx];
-            }
-            cellPoints.push([x, y]);
-        }
-
-        // Points are converted to strings to allow easy comparison
-        const cells = cellPoints.map((cell) => cell.toString());
-        let maxIteration = 100 * cells.length; // Prevent infinite loops
-        const result = [];
-
-        while (Object.keys(edgesLeft).length && maxIteration > 0) {
-            maxIteration--;
-
-            const edgeKey = Object.keys(edgesLeft)[0];
-            const firstEdge = edgeKey.split(",").map((i) => parseInt(i));
-
-            let next: [number, number];
-            let current = edgesLeft[edgeKey];
-            [dx, dy] = [firstEdge[0] - current[0], firstEdge[1] - current[1]];
-
-            let cellAcrossBoundary = (cell: [number, number]) => !cells.includes(cell.toString());
-
-            // If the inset is negative, we traverse around the outside instead of the inside.
-            // Otherwise, lines would overlap on touching corners
-            if (inset < 0) {
-                cellAcrossBoundary = (cell) => cells.includes(cell.toString());
-                current = [current[0] + 2 * dx, current[1] + 2 * dy];
-                [dx, dy] = [-dx, -dy];
-            }
-
-            let edge: [number, number] | "asdf" = "asdf";
-            const edgeLoop = [];
-
-            // Collect the edges around a contiguous group of cells
-            while (edge.toString() !== edgeLoop[0]?.toString() && maxIteration > 0) {
-                maxIteration--;
-                next = [current[0] + 2 * dx, current[1] + 2 * dy];
-
-                if (cellAcrossBoundary(next)) {
-                    // Add the edge to the loop and rotate clockwise
-                    edge = [current[0] + dx, current[1] + dy];
-                    edgeLoop.push(edge);
-                    [dx, dy] = [-dy, dx];
-
-                    if (edgeLoop.length === 1) {
-                        edge = "asdf"; // Prevent a premature stop
-                    }
-                } else {
-                    // Move forward and rotate counter-clockwise
-                    current = next;
-                    [dx, dy] = [dy, -dx];
-                }
-            }
-            if (maxIteration <= 0) {
-                throw errorNotification({
-                    error: null,
-                    message: "Reached iteration limit in shrinkwrap inner loop",
-                    forever: true,
-                });
-            }
-
-            edgeLoop.pop();
-
-            // Convert the edges of the loop to corners and add the inset
-            const cornerLoop = [];
-            const { cellSize } = settings;
-            const absInset = Math.abs(inset);
-
-            for (let i = 0; i < edgeLoop.length; i++) {
-                edge = edgeLoop[i];
-                const nextEdge = edgeLoop[(i + 1) % edgeLoop.length];
-
-                const corner = [edge[0] + dx, edge[1] + dy];
-                const insetCorner = [
-                    (cellSize * corner[0]) / 2 + absInset * -dy,
-                    (cellSize * corner[1]) / 2 + absInset * dx,
-                ];
-
-                const vectorProjection = [dx ** 2, dy ** 2]; // Needed later
-                [dx, dy] = [nextEdge[0] - corner[0], nextEdge[1] - corner[1]];
-                // If the edges are perpendicular, adjust the corner loop appropriately.
-                insetCorner[0] += vectorProjection[0] * -dy * absInset;
-                insetCorner[1] += vectorProjection[1] * dx * absInset;
-                cornerLoop.push(insetCorner);
-
-                delete edgesLeft[edge.toString()];
-            }
-            result.push(cornerLoop);
-        }
-        if (maxIteration <= 0) {
-            throw errorNotification({
-                error: null,
-                message: "Reached iteration limit in shrinkwrap outer loop",
-                forever: true,
-            });
-        }
-
-        return result;
     }
 
     _stringToGridPoint(point: Point): GridPoint {
@@ -630,4 +473,109 @@ export class SquareGrid implements Grid {
     getAllPoints(type: PointType) {
         return this._getAllGridPoints(type).map(({ x, y }) => `${x},${y}`);
     }
+
+    _getBlits: Grid["_getBlits"] = ({ blacklist, settings }) => {
+        const pt = this.getPointTransformer(settings);
+        const minX = 2 * this.x0 - 1;
+        const minY = 2 * this.y0 - 1;
+        const maxX = 2 * (this.x0 + this.width) + 1;
+        const maxY = 2 * (this.y0 + this.height) + 1;
+
+        // TODO: CellOutline should be filtering out of bound points from being selected in the first place, but this solves any duplication issues for now.
+        const outside = new Set([...blacklist]);
+        for (let x = minX; x <= maxX; x += 2) {
+            outside.add(`${x},${minY}`);
+            outside.add(`${x},${maxY}`);
+        }
+        for (let y = minY; y <= maxY; y += 2) {
+            outside.add(`${minX},${y}`);
+            outside.add(`${maxX},${y}`);
+        }
+        const [, cells] = pt.fromPoints("cells", [...outside]);
+
+        const inset = 4;
+        const shrinkwrap = pt.shrinkwrap(cells, { inset });
+        const cs = settings.cellSize;
+        let outlierCorner: string | null = `${cs * minX + inset},${cs * minY + inset}`;
+
+        for (const [index, group] of Object.entries(shrinkwrap)) {
+            if (group.includes(outlierCorner)) {
+                shrinkwrap.splice(parseInt(index), 1);
+                outlierCorner = null;
+                break;
+            }
+        }
+        if (outlierCorner) {
+            errorNotification({ error: null, message: "Could not remove extra grid border" });
+        }
+        const outline: Record<string, any> = {};
+        for (const [key, points] of Object.entries(shrinkwrap)) {
+            outline[key] = { points };
+        }
+
+        const edgeBlacklist = new Set<Point>();
+        for (const point of cells.points) {
+            edgeBlacklist.add(point.plus([-1, 0]).xy.join(","));
+            edgeBlacklist.add(point.plus([1, 0]).xy.join(","));
+            edgeBlacklist.add(point.plus([0, -1]).xy.join(","));
+            edgeBlacklist.add(point.plus([0, 1]).xy.join(","));
+        }
+
+        const edges: LineBlits["blits"] = {};
+        const edgePoints = this.getAllPoints("edges").filter((edge) => !edgeBlacklist.has(edge));
+        const [edgeMap] = pt.fromPoints("edges", edgePoints);
+
+        const halfCell = settings.cellSize / 2;
+        for (const [key, edge] of edgeMap.entries()) {
+            const cornerOffset: TupleVector = edge.x & 1 ? [1, 0] : [0, 1];
+            const a = edge.minus(cornerOffset).scale(halfCell);
+            const b = edge.plus(cornerOffset).scale(halfCell);
+            edges[key] = { x1: a.x, y1: a.y, x2: b.x, y2: b.y };
+        }
+
+        return [
+            {
+                id: "grid",
+                blitter: "line",
+                blits: edges,
+                style: {
+                    stroke: "black",
+                    strokeWidth: 2,
+                    strokeLinecap: "square",
+                },
+            },
+            {
+                id: "outline",
+                blitter: "polygon",
+                blits: outline,
+                style: {
+                    stroke: "black",
+                    strokeWidth: 10,
+                    strokeLinejoin: "miter",
+                    fill: "none",
+                },
+            },
+        ];
+
+        // Potentially better, but not simple method of getting the edge blits
+        // Blacklist the corners
+        // const filterX = new DefaultMap<number, Set<number>>(() => new Set());
+        // const filterY = new DefaultMap<number, Set<number>>(() => new Set());
+        // for (const { x, y } of cells.points) {
+        //     filterX.get(x - 1).add(y - 1, y + 1);
+        //     filterX.get(x + 1).add(y - 1, y + 1);
+        //     filterY.get(y - 1).add(x - 1, x + 1);
+        //     filterY.get(y + 1).add(x - 1, x + 1);
+        // }
+
+        // ,const edges: LineBlits["blits"] = {};
+        // for (let x = minX; x <= maxX; x += 2) {
+        //     outside.add(`${x},${minY}`);
+        //     outside.add(`${x},${maxY}`);
+        // }
+        // for (let y = minY; y <= maxY; y += 2) {
+        //     outside.add(`${minX},${y}`);
+        //     outside.add(`${maxX},${y}`);
+        // }
+    };
 }

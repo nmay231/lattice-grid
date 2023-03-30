@@ -2,7 +2,7 @@ import type { ref } from "valtio";
 import type { LineBlits } from "./components/SVGCanvas/Line";
 import type { PolygonBlits } from "./components/SVGCanvas/Polygon";
 import type { TextBlits } from "./components/SVGCanvas/Text";
-import type { SquareGridParams } from "./grids/SquareGrid";
+import type { SquareGridParams, _SquareGridTransformer } from "./grids/SquareGrid";
 import type { availableLayers } from "./layers";
 import type { PuzzleManager } from "./PuzzleManager";
 import type { StorageManager } from "./StorageManager";
@@ -76,7 +76,10 @@ export type CleanedDOMEvent =
     | PointerMoveOrDown;
 
 export type LayerEventEssentials<LP extends LayerProps> = {
-    grid: Pick<Grid, "id" | "getAllPoints" | "getPoints" | "selectPointsWithCursor">;
+    grid: Pick<
+        Grid,
+        "id" | "getAllPoints" | "selectPointsWithCursor" | "getPointTransformer" | "_getBlits"
+    >;
     storage: StorageManager;
     settings: PuzzleManager["settings"];
     tempStorage: Partial<LP["TempStorage"]>;
@@ -93,30 +96,36 @@ export type LayerHandlerResult<LP extends LayerProps> = {
 
 // #region - Explicit Type Names
 // It helps with changing all of the types if necessary, and also with being explicit with how composite types are used (at least in the definition).
+export type ObjectId = string;
 export type Point = string;
-export type Vector = [number, number];
-export type Delta = { dx: number; dy: number };
-
 export type PointType = "cells" | "edges" | "corners";
 export type EditMode = "question" | "answer";
 export type StorageMode = EditMode | "ui";
 export type PageMode = "edit" | "play";
-export type ObjectId = string;
+// #endregion
 
-// TODO: This has become the misc region. Maybe make an explicitly misc one and keep this one clean?
+// #region - Misc
+export type TupleVector = [number, number];
+export type Delta = { dx: number; dy: number };
+
+export type RecursivePartial<T> = {
+    [P in keyof T]?: T[P] extends (infer U)[]
+        ? RecursivePartial<U>[]
+        : T[P] extends object
+        ? RecursivePartial<T[P]>
+        : T[P];
+};
+
+// Rename valtio refs to not confuse them with React refs
 export type ValtioRef<T extends object> = ReturnType<typeof ref<T>>;
 // #endregion
 
 // #region - Grids
 export type Grid = {
     id: string;
-    // TODO: More specific types
-    getPoints: (arg: {
-        settings: PuzzleManager["settings"];
-        points?: Point[];
-        connections: NeedsUpdating;
-        includeOutOfBounds?: boolean;
-    }) => NeedsUpdating;
+    getPointTransformer: (
+        settings: Pick<PuzzleManager["settings"], "cellSize">,
+    ) => _SquareGridTransformer;
     getAllPoints: (type: PointType) => Point[];
     selectPointsWithCursor: (arg: {
         settings: PuzzleManager["settings"];
@@ -141,6 +150,13 @@ export type Grid = {
         rotate: number;
         resize: (amount: number) => void;
     }[];
+    _getBlits({
+        blacklist,
+        settings,
+    }: {
+        blacklist: Set<string>;
+        settings: Pick<PuzzleManager["settings"], "cellSize">;
+    }): BlitGroup[];
 };
 // #endregion
 

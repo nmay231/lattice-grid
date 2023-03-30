@@ -1,6 +1,5 @@
 import { PolygonBlits } from "../components/SVGCanvas/Polygon";
 import { Layer, LayerClass } from "../types";
-import { bySubset } from "../utils/structureUtils";
 import { BaseLayer, methodNotImplemented } from "./BaseLayer";
 import { handleEventsCurrentSetting, OnePointProps } from "./controls/onePoint";
 
@@ -73,20 +72,22 @@ export class BackgroundColorLayer
 
     getBlits: IBackgroundColorLayer["getBlits"] = ({ grid, storage, settings }) => {
         const stored = storage.getStored<BackgroundColorProps>({ grid, layer: this });
-        const renderOrder = stored.objects
-            .keys()
-            .filter(bySubset(stored.groups.getGroup(settings.editMode)));
-        const { cells } = grid.getPoints({
-            settings,
-            connections: { cells: { svgOutline: true } },
-            points: [...renderOrder],
-        });
+        const group = stored.groups.getGroup(settings.editMode);
+        const renderOrder = stored.objects.keys().filter((id) => group.has(id));
+
+        const pt = grid.getPointTransformer(settings);
+        const [cellMap, cells] = pt.fromPoints("cells", renderOrder);
+        const [outlineMap] = pt.svgOutline(cells);
 
         const objectsByColor: Record<Color, PolygonBlits["blits"]> = {};
         for (const id of renderOrder) {
             const { state } = stored.objects.get(id);
+            const outline = outlineMap.get(cellMap.get(id));
+            if (!outline) continue; // TODO?
             objectsByColor[state] = objectsByColor[state] ?? {};
-            objectsByColor[state][id] = { points: cells[id].svgOutline };
+            objectsByColor[state][id] = {
+                points: outline.map((vec) => vec.xy.join(",")),
+            };
         }
 
         return Object.keys(objectsByColor).map((color) => ({

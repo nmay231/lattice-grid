@@ -1,6 +1,7 @@
 import { isEqual } from "lodash";
 import { LineBlits } from "../components/SVGCanvas/Line";
 import { Delta, Layer, LayerClass, LayerProps, Point } from "../types";
+import { zip } from "../utils/data";
 import { BaseLayer } from "./BaseLayer";
 
 interface DebugSelectPointsProps extends LayerProps {
@@ -151,24 +152,21 @@ export class DebugSelectPointsLayer
         }
 
         const blits: LineBlits["blits"] = {};
-        const { cells } = grid.getPoints({
-            settings,
-            connections: { cells: { svgPoint: true } },
-            points: object.points,
-        });
+        const pt = grid.getPointTransformer(settings);
+        const [map, points] = pt.fromPoints("cells", object.points);
+        const cells = points.toSVGPoints();
 
-        for (let index = 0; index < object.points.length - 1; index++) {
-            const start = object.points[index];
-            const end = object.points[index + 1];
-            blits[end] = {
-                style: { stroke: "black", strokeWidth: "3px", strokeLinecap: "round" },
-                x1: cells[start].svgPoint[0],
-                y1: cells[start].svgPoint[1],
-                x2: cells[end].svgPoint[0],
-                y2: cells[end].svgPoint[1],
-            };
+        for (const [_start, _end] of zip(object.points, object.points.slice(1))) {
+            const start = cells.get(map.get(_start));
+            const end = cells.get(map.get(_end));
+            if (!start || !end) break;
+
+            const [x1, y1] = start;
+            const [x2, y2] = end;
+            blits[_end] = { x1, y1, x2, y2 };
         }
 
-        return [{ id: "path", blitter: "line", blits }];
+        const style = { stroke: "black", strokeWidth: "3px", strokeLinecap: "round" } as const;
+        return [{ id: "path", blitter: "line", style, blits }];
     };
 }
