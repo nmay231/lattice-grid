@@ -313,7 +313,7 @@ describe("SquareGridTransformer.shrinkwrap", () => {
         given([FCCellVector(), FCStraightVector()]).assertProperty((start, vec) => {
             const points = pointsFromLine(start, vec);
             const pt = pointTransformer();
-            const [, cells] = pt.fromPoints("cells", points);
+            const [, cells] = pt.fromPoints("cells", shuffle(points));
             const shrinkwrap = pt.shrinkwrap(cells);
 
             const corners = boundingCorners(start, vec);
@@ -339,7 +339,7 @@ describe("SquareGridTransformer.shrinkwrap", () => {
                 expect(points).toHaveLength(width * height);
 
                 const pt = pointTransformer();
-                const [, cells] = pt.fromPoints("cells", points);
+                const [, cells] = pt.fromPoints("cells", shuffle(points));
                 const shrinkwrap = pt.shrinkwrap(cells);
 
                 const expected = [
@@ -372,7 +372,10 @@ describe("SquareGridTransformer.shrinkwrap", () => {
             const points2 = pointsFromLine(end, vec2);
 
             const pt = pointTransformer();
-            const [, cells] = pt.fromPoints("cells", [...new Set([...points1, ...points2])]);
+            const [, cells] = pt.fromPoints(
+                "cells",
+                shuffle([...new Set([...points1, ...points2])]),
+            );
             const shrinkwrap = pt.shrinkwrap(cells);
 
             const corners1 = boundingCorners(start, vec1);
@@ -425,7 +428,7 @@ describe("SquareGridTransformer.shrinkwrap", () => {
             ]);
 
             const pt = pointTransformer();
-            const [, cells] = pt.fromPoints("cells", [...points]);
+            const [, cells] = pt.fromPoints("cells", shuffle([...points]));
             const shrinkwrap = pt.shrinkwrap(cells);
 
             const vecUp = center.plus(up);
@@ -471,7 +474,7 @@ describe("SquareGridTransformer.shrinkwrap", () => {
             ]);
 
             const pt = pointTransformer();
-            const [, cells] = pt.fromPoints("cells", [...points]);
+            const [, cells] = pt.fromPoints("cells", shuffle([...points]));
             const shrinkwrap = pt.shrinkwrap(cells);
 
             expect(shrinkwrap).toHaveLength(2);
@@ -505,7 +508,7 @@ describe("SquareGridTransformer.shrinkwrap", () => {
      * |   [] <-- Makes a touching corner here
      * +--+
      */
-    it("shrinkwraps something with touching corners, inset >= 0", () => {
+    it("shrinkwraps one thing with touching corners, inset >= 0", () => {
         given([
             FCCellVector(),
             FCStraightVector({ minLength: 2, vertical: false }),
@@ -535,7 +538,7 @@ describe("SquareGridTransformer.shrinkwrap", () => {
             expect(deleted).toBe(true);
 
             const pt = pointTransformer({ cellSize: 20 });
-            const [, cells] = pt.fromPoints("cells", [...points]);
+            const [, cells] = pt.fromPoints("cells", shuffle([...points]));
             const shrinkwrap = pt.shrinkwrap(cells, { inset: 1 });
 
             expect(shrinkwrap).toHaveLength(1);
@@ -565,7 +568,7 @@ describe("SquareGridTransformer.shrinkwrap", () => {
         });
     });
 
-    it("shrinkwraps something with touching corners, inset < 0", () => {
+    it("shrinkwraps one thing with touching corners, inset < 0", () => {
         given([
             FCCellVector(),
             FCStraightVector({ minLength: 2, vertical: false }),
@@ -595,7 +598,7 @@ describe("SquareGridTransformer.shrinkwrap", () => {
             expect(deleted).toBe(true);
 
             const pt = pointTransformer({ cellSize: 20 });
-            const [, cells] = pt.fromPoints("cells", [...points]);
+            const [, cells] = pt.fromPoints("cells", shuffle([...points]));
             const shrinkwrap = pt.shrinkwrap(cells, { inset: -1 });
 
             expect(shrinkwrap).toHaveLength(2);
@@ -628,5 +631,77 @@ describe("SquareGridTransformer.shrinkwrap", () => {
                 new Set([putMaxAtStart(inner), putMaxAtStart(outer)]),
             );
         });
+    });
+
+    it("shrinkwraps two things with touching corners, inset >= 0", () => {
+        const pt = pointTransformer({ cellSize: 20 });
+        {
+            const [, cells] = pt.fromPoints("cells", shuffle(["1,1", "3,3"]));
+            const shrinkwrap = pt.shrinkwrap(cells, { inset: 1 });
+
+            const expected: typeof shrinkwrap = [
+                ["1,1", "19,1", "19,19", "1,19"],
+                ["21,21", "39,21", "39,39", "21,39"],
+            ];
+
+            expect(shrinkwrap).toHaveLength(2);
+            expect(new Set(shrinkwrap.map(putMaxAtStart))).toEqual(
+                new Set(expected.map(putMaxAtStart)),
+            );
+        }
+        {
+            const [, cells] = pt.fromPoints("cells", shuffle(["3,1", "1,3"]));
+            const shrinkwrap = pt.shrinkwrap(cells, { inset: 1 });
+
+            const expected: typeof shrinkwrap = [
+                ["1,21", "19,21", "19,39", "1,39"],
+                ["21,1", "39,1", "39,19", "21,19"],
+            ];
+
+            expect(shrinkwrap).toHaveLength(2);
+            expect(new Set(shrinkwrap.map(putMaxAtStart))).toEqual(
+                new Set(expected.map(putMaxAtStart)),
+            );
+        }
+    });
+
+    it("shrinkwraps two things with touching corners, inset < 0", () => {
+        const pt = pointTransformer({ cellSize: 20 });
+        {
+            const [, cells] = pt.fromPoints("cells", shuffle(["1,1", "3,3"]));
+            const shrinkwrap = pt.shrinkwrap(cells, { inset: -1 });
+
+            const expected = [
+                "-1,-1",
+                "21,-1",
+                "21,19",
+                "41,19",
+                "41,41",
+                "19,41",
+                "19,21",
+                "-1,21",
+            ];
+
+            expect(shrinkwrap).toHaveLength(1);
+            expect(putMaxAtStart(shrinkwrap[0])).toEqual(putMaxAtStart(expected));
+        }
+        {
+            const [, cells] = pt.fromPoints("cells", shuffle(["1,3", "3,1"]));
+            const shrinkwrap = pt.shrinkwrap(cells, { inset: -1 });
+
+            const expected = [
+                "19,-1",
+                "41,-1",
+                "41,21",
+                "21,21",
+                "21,41",
+                "-1,41",
+                "-1,19",
+                "19,19",
+            ];
+
+            expect(shrinkwrap).toHaveLength(1);
+            expect(putMaxAtStart(shrinkwrap[0])).toEqual(putMaxAtStart(expected));
+        }
     });
 });

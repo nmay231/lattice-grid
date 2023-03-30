@@ -55,11 +55,11 @@ export class Vec {
             case 0:
                 return this;
             case 1:
-                return new Vec(this.y, -this.x);
+                return new Vec(-this.y, this.x);
             case 2:
                 return new Vec(-this.x, -this.y);
             case 3:
-                return new Vec(-this.y, this.x);
+                return new Vec(this.y, -this.x);
             default:
                 throw Error(`must be an integer number of quarter-turns: ${clockwiseQuarterTurns}`);
         }

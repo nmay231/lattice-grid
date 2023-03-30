@@ -104,7 +104,24 @@ describe("Vector", () => {
         });
     });
 
-    it("rotates by quarter turns", () => {
+    it.each([
+        { input: [0, -1], rotations: 1, output: [1, 0] }, // Up to right
+        // Yes, -0. I hate floating point numbers sometimes...
+        { input: [0, -1], rotations: 2, output: [-0, 1] }, // Up to down
+        { input: [0, -1], rotations: 3, output: [-1, -0] }, // Up to left
+        { input: [0, -1], rotations: 4, output: [0, -1] }, // Up back to up
+    ] satisfies Array<{ input: TupleVector; rotations: number; output: TupleVector }>)(
+        "rotates by quarter turns",
+        ({ input, rotations, output }) => {
+            const vec = Vec.from([...input]);
+            expect(vec.rotate90(rotations).xy).toEqual(output);
+
+            // vec remains unchanged
+            expect(vec.xy).toEqual(input);
+        },
+    );
+
+    it("rotates by quarter turns with certain properties", () => {
         given([
             FCRepeat(2, FCNormalFloat()),
             fc.integer({ min: 1000, max: 1000 }), // cos() and sin() become too inaccurate with large angles

@@ -222,7 +222,7 @@ export class _SquareGridTransformer {
         }
 
         const theEggShellWasEmpty = () => {
-            //:P
+            // :P
             return errorNotification({
                 error: null,
                 message: "Shrinkwrap: the generated edgeShell was unexpectedly empty",
@@ -231,6 +231,7 @@ export class _SquareGridTransformer {
         const { value: start, done } = edgeShell.values().next();
         if (done) throw theEggShellWasEmpty();
         let [edge, cell] = start;
+        let startingEdge = edge;
 
         /** Array<[Corner, Normal]> */
         let cornersNormals: Array<[Vec, Vec]> = [];
@@ -251,36 +252,23 @@ export class _SquareGridTransformer {
                 [edge, cell] = nextValue;
                 break;
             }
-
-            if (!edgeShell.delete(edge.xy.join(","))) {
+            edgeShell.delete(edge.xy.join(","));
+            if (edge === startingEdge) {
                 // We closed the loop and must yield this section of loop, after applying inset
                 const corners: Vec[] = [];
 
-                cornersNormals.pop(); // The starting corner is added twice
+                let nextNormal = cornersNormals[0][1];
+                cornersNormals.reverse();
 
-                // TODO: Replace with for-loop once tests are in place
-                // let nextNormal = cornersNormals[0][1];
-                // cornersNormals.reverse();
-
-                // ,for (const [corner, normal] of cornersNormals) {
-                //     if (!normal.equals(nextNormal)) {
-                //         corners.push(
-                //             corner.scale(halfCell).minus(normal.plus(nextNormal).scale(inset)),
-                //         );
-                //     }
-                //     nextNormal = normal;
-                // }
-
-                // Abuse the reduceRight method
-                cornersNormals.reduceRight((nextNormal, [corner, normal]) => {
+                for (const [corner, normal] of cornersNormals) {
                     if (!normal.equals(nextNormal)) {
                         corners.push(
                             corner.scale(halfCell).minus(normal.plus(nextNormal).scale(inset)),
                         );
                     }
-                    return normal;
-                }, cornersNormals[0][1]);
-
+                    nextNormal = normal;
+                }
+                corners.reverse();
                 cornersNormals = [];
 
                 yield corners.map((vec) => vec.xy.join(",")) satisfies string[];
@@ -289,6 +277,7 @@ export class _SquareGridTransformer {
                 const { value, done } = edgeShell.values().next();
                 if (done) throw theEggShellWasEmpty();
                 [edge, cell] = value;
+                startingEdge = edge;
             }
         }
         throw errorNotification({
