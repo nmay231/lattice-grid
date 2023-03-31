@@ -9,9 +9,8 @@ import { mergeRefs, useEventListener, useFocusTrap } from "@mantine/hooks";
 import { useEffect } from "react";
 import { proxy, useSnapshot } from "valtio";
 import { type PuzzleManager } from "../PuzzleManager";
+import { FocusGroup, ModalName } from "../types";
 import { LatestTimeout } from "./primitiveWrappers";
-
-export type FocusGroup = "layerList" | "controlSettings" | "constraintSettings" | "none" | "debug";
 
 // Export for testing
 export const _focusState = {
@@ -107,8 +106,6 @@ export const useFocusElementHandler = () => {
 
     return { ref: mergeRefs(keyDownRef, focusInRef), unfocus };
 };
-
-export type ModalName = "blockly" | "import-export" | "resize-grid";
 
 const modalProxy = proxy({ modal: null as null | ModalName });
 

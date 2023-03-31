@@ -118,6 +118,9 @@ export type RecursivePartial<T> = {
 
 // Rename valtio refs to not confuse them with React refs
 export type ValtioRef<T extends object> = ReturnType<typeof ref<T>>;
+
+export type ModalName = "blockly" | "import-export" | "resize-grid";
+export type FocusGroup = "layerList" | "controlSettings" | "constraintSettings" | "none" | "debug";
 // #endregion
 
 // #region - Grids
