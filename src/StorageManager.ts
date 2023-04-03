@@ -1,5 +1,4 @@
 import { LayerStorage } from "./LayerStorage";
-import { PuzzleManager } from "./PuzzleManager";
 import {
     Grid,
     History,
@@ -8,6 +7,7 @@ import {
     LayerProps,
     NeedsUpdating,
     PartialHistoryAction,
+    PuzzleForStorage,
     StorageMode,
     StorageReducer,
 } from "./types";
@@ -15,11 +15,6 @@ import { notify } from "./utils/notifications";
 import { stringifyAnything } from "./utils/string";
 
 type GridAndLayer = { grid: Pick<Grid, "id">; layer: Pick<Layer, "id"> };
-// TODO: Recursive Pick type?
-export type PuzzleForStorage = {
-    grid: Pick<PuzzleManager["grid"], "id">;
-    settings: Pick<PuzzleManager["settings"], "editMode">;
-};
 
 export class StorageManager {
     objects: Record<Grid["id"], Record<Layer["id"], LayerStorage>> = {};
@@ -88,23 +83,22 @@ export class StorageManager {
         for (const partialAction of actions) {
             const layerId = (partialAction as NeedsUpdating).layerId || defaultLayerId;
             const storageMode = partialAction.storageMode || currentEditMode;
-            const { objects, groups } = this.objects[gridId][layerId];
+            const stored = this.objects[gridId][layerId];
             const history = this.histories[`${gridId}-${storageMode}`];
 
-            const puzzle = {} as NeedsUpdating;
             const action = this.masterReducer(puzzle, {
                 objectId: partialAction.id,
                 layerId,
                 // This relies on NaN !== (anything including NaN)
                 batchId: partialAction.batchId && Number(partialAction.batchId),
                 object: partialAction.object,
-                nextObjectId: objects.getNextKey(partialAction.id),
+                nextObjectId: stored.objects.getNextKey(partialAction.id),
             });
             if (!action) {
                 continue; // One of the reducers chose to ignore this action
             }
 
-            const undoAction = this._ApplyHistoryAction({ objects, groups, action, storageMode });
+            const undoAction = this._applyHistoryAction({ storageMode, stored, action });
 
             // TODO: I temporarily filter ui actions from history to prevent any unintended bugs.
             if (partialAction.batchId === "ignore" || storageMode === "ui") {
@@ -137,26 +131,25 @@ export class StorageManager {
         }
     }
 
-    _ApplyHistoryAction(
-        arg: Pick<LayerStorage, "objects" | "groups"> & {
-            action: HistoryAction;
-            storageMode: StorageMode;
-        },
-    ) {
-        const { objects, groups, action, storageMode } = arg;
+    _applyHistoryAction(arg: {
+        stored: LayerStorage;
+        storageMode: StorageMode;
+        action: HistoryAction;
+    }) {
+        const { action, storageMode, stored } = arg;
 
         const undoAction: HistoryAction = {
             ...action,
-            object: objects.get(action.objectId) || null,
-            nextObjectId: objects.getNextKey(action.objectId),
+            object: stored.objects.get(action.objectId) || null,
+            nextObjectId: stored.objects.getNextKey(action.objectId),
         };
 
         if (action.object === null) {
-            objects.delete(action.objectId);
-            groups.deleteKey(action.objectId);
+            stored.objects.delete(action.objectId);
+            stored.groups.deleteKey(action.objectId);
         } else {
-            objects.set(action.objectId, action.object, action.nextObjectId);
-            groups.setKey(action.objectId, storageMode);
+            stored.objects.set(action.objectId, action.object, action.nextObjectId);
+            stored.groups.setKey(action.objectId, storageMode);
         }
 
         return undoAction;
@@ -177,9 +170,9 @@ export class StorageManager {
         do {
             history.index--;
             action = history.actions[history.index];
-            const { objects, groups } = this.objects[gridId][action.layerId];
+            const stored = this.objects[gridId][action.layerId];
 
-            const redo = this._ApplyHistoryAction({ objects, groups, action, storageMode });
+            const redo = this._applyHistoryAction({ stored, action, storageMode });
             // Replace the action with its opposite
             history.actions.splice(history.index, 1, redo);
 
@@ -203,9 +196,9 @@ export class StorageManager {
         const returnedActions: HistoryAction[] = [];
         do {
             action = history.actions[history.index];
-            const { objects, groups } = this.objects[gridId][action.layerId];
+            const stored = this.objects[gridId][action.layerId];
 
-            const undo = this._ApplyHistoryAction({ objects, groups, action, storageMode });
+            const undo = this._applyHistoryAction({ stored, action, storageMode });
             // Replace the action with its opposite
             history.actions.splice(history.index, 1, undo);
             history.index++;

@@ -230,7 +230,11 @@ export type History = {
     index: number;
 };
 
-export type StorageReducer<Type> = (puzzle: PuzzleManager, arg: Type) => Type;
+export type PuzzleForStorage = {
+    grid: Pick<PuzzleManager["grid"], "id">;
+    settings: Pick<PuzzleManager["settings"], "editMode">;
+};
+export type StorageReducer<Type> = (puzzle: PuzzleForStorage, arg: Type) => Type;
 // #endregion
 
 // #region - Rendering
