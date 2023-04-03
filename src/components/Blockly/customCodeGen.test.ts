@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { UserCodeJSON } from "../../userComputation/codeBlocks";
 import { Blockly } from "../../utils/imports/blockly";
 import { codeGen } from "./customCodeGen";
@@ -43,7 +44,7 @@ describe("codeGen", () => {
 
         const didConnect = defineAlias
             .getInput("EXPRESSION")
-            ?.connection.connect(integer.outputConnection);
+            ?.connection!.connect(integer.outputConnection!);
 
         expect(didConnect).toBe(true);
         expect(generate(defineAlias)).toEqual<UserCodeJSON>({
@@ -102,19 +103,19 @@ describe("codeGen", () => {
 
         const didConnect1 = ifElse
             .getInput("EXPRESSION")
-            ?.connection.connect(readAlias.outputConnection);
+            ?.connection!.connect(readAlias.outputConnection!);
 
         const defineAlias1 = workspace.newBlock("DefineAlias", "id3");
         defineAlias1.getField("NAME")?.setValue(variable.getId());
         const didConnect2 = ifElse
             .getInput("IF")
-            ?.connection.connect(defineAlias1.previousConnection);
+            ?.connection!.connect(defineAlias1.previousConnection!);
 
         const defineAlias2 = workspace.newBlock("DefineAlias", "id4");
         defineAlias2.getField("NAME")?.setValue(variable.getId());
         const didConnect3 = ifElse
             .getInput("ELSE")
-            ?.connection.connect(defineAlias2.previousConnection);
+            ?.connection!.connect(defineAlias2.previousConnection!);
 
         expect(didConnect1).toBe(true);
         expect(didConnect2).toBe(true);

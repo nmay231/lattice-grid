@@ -1,3 +1,4 @@
+import { puzzleProxy } from "../../state/puzzle";
 import { UserCodeJSON } from "../../userComputation/codeBlocks";
 import { DEFAULT_ALIAS_NAME } from "../../userComputation/utils";
 import { Blockly } from "../../utils/imports/blockly";
@@ -96,7 +97,7 @@ blocks["MarkInvalid"] = {
             .appendField(new Blockly.FieldTextInput("Shown to solver"), "MESSAGE");
         this.appendDummyInput()
             .appendField("highlight?")
-            .appendField(new Blockly.FieldCheckbox("highlight"), "HIGHLIGHTED");
+            .appendField(new Blockly.FieldCheckbox(), "HIGHLIGHTED");
         this.setPreviousStatement(true, null);
         this.setNextStatement(true, null);
         this.setColour(230);
@@ -107,11 +108,10 @@ blocks["ObjectSelector"] = {
     init() {
         this.appendDummyInput().appendField(
             new Blockly.FieldDropdown(() => {
-                return [];
                 // TODO: Generate and update this list outside of this init() method using valtio.subscribe on puzzle.layers
-                // return puzzleProxy.puzzle.layers
-                //     .values()
-                //     .map(({ id, displayName }) => [displayName, id]);
+                return puzzleProxy.puzzle.layers
+                    .values()
+                    .map(({ id, displayName }) => [displayName, id]);
             }),
             "LAYER_ID",
         );
