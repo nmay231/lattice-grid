@@ -1,13 +1,12 @@
 import { cloneDeep } from "lodash";
 import { PuzzleManager } from "../PuzzleManager";
 import { Layer, LayerClass, LayerProps } from "../types";
-import { errorNotification } from "../utils/DOMUtils";
+import { notify } from "../utils/notifications";
 
 /** I could annotate all attributes that are assigned at runtime with an exclamation to mark them as assigned elsewhere (`attr!: type`), but then I don't have visibility into the cause of certain errors */
 export const methodNotImplemented = ({ name }: { name: string }) => {
     return (): any => {
-        throw errorNotification({
-            error: null,
+        throw notify.error({
             message: `Method: ${name} called before implementing!`,
             forever: true,
         });

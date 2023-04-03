@@ -7,7 +7,7 @@ import {
     PartialHistoryAction,
     Point,
 } from "../../types";
-import { errorNotification } from "../../utils/DOMUtils";
+import { notify } from "../../utils/notifications";
 import { stringifyAnything } from "../../utils/string";
 
 export interface SelectedProps extends LayerProps {
@@ -219,8 +219,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                 return { history, discontinueInput: true };
             }
             default: {
-                throw errorNotification({
-                    error: null,
+                throw notify.error({
                     message: `Unknown event in selected layer ${
                         layer.displayName
                     }: ${stringifyAnything(event)}`,

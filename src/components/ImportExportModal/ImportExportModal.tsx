@@ -14,8 +14,8 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { LayerStorageJSON } from "../../LayerStorage";
 import { usePuzzle } from "../../state/puzzle";
 import { Layer } from "../../types";
-import { errorNotification } from "../../utils/DOMUtils";
 import { openModal, useFocusElementHandler, useModal } from "../../utils/focusManagement";
+import { notify } from "../../utils/notifications";
 import { compressJSON } from "../../utils/string";
 import { currentEncodingVersion, importPuzzle, PuzzleData } from "./importPuzzle";
 
@@ -61,7 +61,7 @@ export const ImportExportModal = () => {
     }, [puzzle, opened, exportPlay]);
 
     const noRefSet = () => {
-        throw errorNotification({ error: null, message: "Ref not set in import/export textarea" });
+        throw notify.error({ message: "Ref not set in import/export textarea" });
     };
 
     const handleImport = () => {
@@ -87,7 +87,7 @@ export const ImportExportModal = () => {
             })
             .catch((error) => {
                 setImportAttempted(true);
-                errorNotification({
+                notify.error({
                     error,
                     title: "Failed to paste",
                     message:

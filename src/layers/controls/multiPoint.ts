@@ -9,7 +9,7 @@ import {
     Point,
     PointType,
 } from "../../types";
-import { errorNotification } from "../../utils/DOMUtils";
+import { notify } from "../../utils/notifications";
 import { smartSort } from "../../utils/string";
 
 export interface MultiPointLayerProps extends LayerProps {
@@ -41,8 +41,7 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
     },
 ) => {
     if (!pointTypes?.length) {
-        throw errorNotification({
-            error: null,
+        throw notify.error({
             message: "Multipoint handler was not provided required parameters",
             forever: true,
         });
@@ -237,8 +236,7 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
                 return { discontinueInput: true };
             }
             default: {
-                throw errorNotification({
-                    error: null,
+                throw notify.error({
                     message: `Multipoint unknown event.type=${type}`,
                     forever: true,
                 });

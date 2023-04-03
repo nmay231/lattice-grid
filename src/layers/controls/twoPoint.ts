@@ -1,6 +1,6 @@
 import { isEqual } from "lodash";
 import { Layer, LayerProps, Point, PointType, UnknownObject } from "../../types";
-import { errorNotification } from "../../utils/DOMUtils";
+import { notify } from "../../utils/notifications";
 import { smartSort } from "../../utils/string";
 
 export interface TwoPointProps extends LayerProps {
@@ -27,8 +27,7 @@ export const handleEventsCurrentSetting = <LP extends TwoPointProps>(
     { directional, pointTypes, stopOnFirstPoint, deltas }: Arg = {},
 ) => {
     if (!pointTypes?.length || !deltas?.length) {
-        throw errorNotification({
-            error: null,
+        throw notify.error({
             message: "twoPoint currentSetting was not provided required parameters",
             forever: true,
         });

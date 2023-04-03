@@ -22,8 +22,8 @@ import {
     UnknownObject,
     ValtioRef,
 } from "./types";
-import { errorNotification } from "./utils/DOMUtils";
 import { valtioRef } from "./utils/imports/valtio";
+import { notify } from "./utils/notifications";
 import { IndexedOrderedMap } from "./utils/OrderedMap";
 import { LatestTimeout } from "./utils/primitiveWrappers";
 import { stringifyAnything } from "./utils/string";
@@ -78,7 +78,7 @@ export class PuzzleManager {
             this._loadPuzzle(data as NeedsUpdating); // TODO: zod verification?
             this.renderChange({ type: "draw", layerIds: "all" });
         } catch (error: NeedsUpdating) {
-            errorNotification({
+            notify.error({
                 error: error as Error,
                 message: "Failed to load puzzle from local storage",
             });
@@ -148,8 +148,7 @@ export class PuzzleManager {
                 }
             }
         } else {
-            throw errorNotification({
-                error: null,
+            throw notify.error({
                 message: `Failed to render to canvas: ${stringifyAnything(change)}`,
             });
         }
@@ -227,8 +226,7 @@ export class PuzzleManager {
         const from = layers.order.indexOf(beingMoved);
         const to = layers.order.indexOf(target);
         if (from === -1 || to === -1) {
-            throw errorNotification({
-                error: null,
+            throw notify.error({
                 message: `shuffleLayerOnto: One of ${beingMoved} => ${target} not in ${layers.keys()}`,
             });
         }
@@ -244,8 +242,7 @@ export class PuzzleManager {
                 `[data-layerid="${this.layers.currentKey}"]`,
             );
             if (!elm) {
-                throw errorNotification({
-                    error: null,
+                throw notify.error({
                     message: `focusCurrentLayer: Unable to focus the current LayerItem ${this.layers.currentKey}`,
                 });
             }
@@ -262,10 +259,7 @@ export class PuzzleManager {
 
         const oldLayerId = this.layers.currentKey;
         if (!this.layers.select(layerId)) {
-            throw errorNotification({
-                error: null,
-                message: "selectLayer: trying to select a non-existent layer",
-            });
+            throw notify.error({ message: "selectLayer: trying to select a non-existent layer" });
         }
 
         if (oldLayerId !== layerId) {

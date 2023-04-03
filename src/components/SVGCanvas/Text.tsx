@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { errorNotification } from "../../utils/DOMUtils";
+import { notify } from "../../utils/notifications";
 
 export type TextBlits = {
     id: string;
@@ -41,7 +41,7 @@ export const Text: React.FC<TextProps> = React.memo(function Text({ blits, style
         } else if (originY === "bottom") {
             result.dominantBaseline = "alphabetic";
         } else {
-            errorNotification({ error: null, message: `Text element: Invalid originY=${originY}` });
+            notify.error({ message: `Text element: Invalid originY=${originY}` });
         }
 
         if (originX === "left") {
@@ -51,7 +51,7 @@ export const Text: React.FC<TextProps> = React.memo(function Text({ blits, style
         } else if (originX === "right") {
             result.textAnchor = "end";
         } else {
-            errorNotification({ error: null, message: `Text element: Invalid originX=${originX}` });
+            notify.error({ message: `Text element: Invalid originX=${originX}` });
         }
 
         return result;

@@ -1,6 +1,6 @@
 import { TextBlits } from "../components/SVGCanvas/Text";
 import { Layer, LayerClass } from "../types";
-import { errorNotification } from "../utils/DOMUtils";
+import { notify } from "../utils/notifications";
 import { BaseLayer, methodNotImplemented } from "./BaseLayer";
 import { handleEventsSelection, KeyDownEventHandler, SelectedProps } from "./controls/selection";
 
@@ -232,8 +232,7 @@ export class ToggleCharactersLayer
                 };
             }
         } else {
-            errorNotification({
-                error: null,
+            notify.error({
                 message: `Unknown displayStyle in ToggleCharacters ${this.settings.displayStyle}`,
                 forever: true,
             });

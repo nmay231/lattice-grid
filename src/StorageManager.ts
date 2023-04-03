@@ -11,7 +11,7 @@ import {
     StorageMode,
     StorageReducer,
 } from "./types";
-import { errorNotification } from "./utils/DOMUtils";
+import { notify } from "./utils/notifications";
 import { stringifyAnything } from "./utils/string";
 
 type GridAndLayer = { grid: Pick<Grid, "id">; layer: Pick<Layer, "id"> };
@@ -64,8 +64,7 @@ export class StorageManager {
             this.masterReducer = (puzzle, action) =>
                 this.storageReducers.reduce((prev, reduce) => reduce(puzzle, prev), action);
         } else {
-            errorNotification({
-                error: null,
+            notify.error({
                 message: `Storage: Failed to remove a reducer ${stringifyAnything(
                     reducer,
                 )}. Reducer was never added or already removed!`,

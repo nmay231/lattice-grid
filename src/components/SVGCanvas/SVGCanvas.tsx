@@ -6,7 +6,7 @@ import { blitGroupsProxy } from "../../state/blits";
 import { canvasSizeProxy, CANVAS_CONTAINER_ID } from "../../state/canvasSize";
 import { usePuzzle } from "../../state/puzzle";
 import { BlitGroup, Layer, NeedsUpdating, StorageMode } from "../../types";
-import { errorNotification } from "../../utils/DOMUtils";
+import { notify } from "../../utils/notifications";
 import { sidebarProxy, smallPageWidth } from "../SideBar/sidebarProxy";
 import { Line } from "./Line";
 import { Polygon } from "./Polygon";
@@ -109,7 +109,7 @@ export const SVGCanvas = React.memo(function SVGCanvas() {
     useEffect(() => {
         const current = scrollArea.current;
         if (!current) {
-            throw errorNotification({ error: null, message: "Canvas element not found." });
+            throw notify.error({ message: "Canvas element not found." });
         }
 
         const onWheel = controls.onWheel.bind(controls);

@@ -1,5 +1,5 @@
 import { Layer, LayerHandlerResult, LayerProps, Point, PointType } from "../../types";
-import { errorNotification } from "../../utils/DOMUtils";
+import { notify } from "../../utils/notifications";
 
 type CommonArgs = { pointTypes: PointType[]; deltas: any };
 
@@ -47,8 +47,7 @@ export const handleEventsCycleStates = <
     { states, pointTypes, deltas }: CommonArgs & { states: ObjectState[] },
 ) => {
     if (!states?.length || !pointTypes?.length) {
-        throw errorNotification({
-            error: null,
+        throw notify.error({
             message: "onePoint cycleStates was not provided required parameters",
             forever: true,
         });
@@ -97,8 +96,7 @@ export const handleEventsCurrentSetting = <
     { pointTypes, deltas }: CommonArgs,
 ) => {
     if (!pointTypes?.length || !deltas?.length) {
-        throw errorNotification({
-            error: null,
+        throw notify.error({
             message: "onePoint currentSetting was not provided required parameters",
             forever: true,
         });

@@ -2,7 +2,7 @@ import { LayerStorage, LayerStorageJSON } from "../../LayerStorage";
 import { PuzzleManager } from "../../PuzzleManager";
 import { StorageManager } from "../../StorageManager";
 import { Layer, LocalStorageData, NeedsUpdating } from "../../types";
-import { errorNotification } from "../../utils/DOMUtils";
+import { notify } from "../../utils/notifications";
 import { decompressJSON } from "../../utils/string";
 
 export type PuzzleData = {
@@ -18,15 +18,13 @@ export const importPuzzle = (puzzle: PuzzleManager, text: string) => {
         // TODO: zod or similar
         const puzzleData = decompressJSON(text) as NeedsUpdating as PuzzleData;
         if (!puzzleData?.version || typeof puzzleData.version !== "string")
-            return errorNotification({
-                error: null,
+            return notify.error({
                 title: "Failed to parse",
                 message: "malformed puzzle string",
             });
         else if (puzzleData.version !== currentEncodingVersion) {
-            return errorNotification({
+            return notify.error({
                 forever: true,
-                error: null,
                 title: "Old puzzle string",
                 message:
                     "The puzzle string is incompatible with the current version." +
@@ -54,7 +52,7 @@ export const importPuzzle = (puzzle: PuzzleManager, text: string) => {
         }
         puzzle.renderChange({ type: "draw", layerIds: "all" });
     } catch (error) {
-        throw errorNotification({
+        throw notify.error({
             error: error as NeedsUpdating,
             title: "Failed to parse",
             message: "Bad puzzle data or unknown error",
