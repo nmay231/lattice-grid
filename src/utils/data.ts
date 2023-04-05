@@ -7,15 +7,26 @@
  */
 export const parseIntBase = (base: number) => (str: string) => parseInt(str, base);
 
+const minReducer = <T = any>(sorter: (a: T, b: T) => number) => {
+    return (a: T, b: T) => (sorter(a, b) <= 0 ? a : b);
+};
+const maxReducer = <T = any>(sorter: (a: T, b: T) => number) => {
+    return (a: T, b: T) => (sorter(a, b) > 0 ? a : b);
+};
 /**
- * Reuse a sorter function (that is suitable for Array.sort()) to extract the max value from an array.
+ * Reuse a sorter function (that is suitable for Array.sort()) to extract the min/max value from an array.
  * ```ts
  * const sortByX = (a, b) => a.x - b.x
- * const max = array.reduce(maxReducer(sortByX))
+ * const max = array.reduce(reduceTo.max(sortByX))
  * ```
  */
-export const maxReducer = <T = any>(sorter: (a: T, b: T) => number) => {
-    return (a: T, b: T) => (sorter(a, b) > 0 ? a : b);
+export const reduceTo = {
+    min: minReducer,
+    max: maxReducer,
+    /** Aliased to min */
+    first: minReducer,
+    /** Aliased to max */
+    last: maxReducer,
 };
 
 type List<T> = ArrayLike<T>;

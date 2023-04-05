@@ -1,7 +1,7 @@
 import fc from "fast-check";
 import { shuffle } from "lodash";
 import { TupleVector } from "../types";
-import { maxReducer } from "../utils/data";
+import { reduceTo } from "../utils/data";
 import { Vec } from "../utils/math";
 import { smartSort } from "../utils/string";
 import { FCRepeat, given } from "../utils/testing/fcArbitraries";
@@ -304,7 +304,7 @@ describe("SquareGridTransformer.shrinkwrap", () => {
 
     // The shrinkwrap is only guaranteed to give the outline in a clockwise direction; we don't know which corner will be given first. This function "rotates" the array to a consistent start (with the max at the start)
     const putMaxAtStart = (arr: string[]) => {
-        const max = arr.reduce(maxReducer(smartSort));
+        const max = arr.reduce(reduceTo.max(smartSort));
         const index = arr.indexOf(max);
         return [...arr.slice(index), ...arr.slice(0, index)];
     };

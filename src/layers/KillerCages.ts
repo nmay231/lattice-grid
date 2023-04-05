@@ -1,7 +1,7 @@
 import { PolygonBlits } from "../components/SVGCanvas/Polygon";
 import { TextBlits } from "../components/SVGCanvas/Text";
 import { Layer, LayerClass, NeedsUpdating } from "../types";
-import { maxReducer } from "../utils/data";
+import { reduceTo } from "../utils/data";
 import { Vec } from "../utils/math";
 import { BaseLayer, methodNotImplemented } from "./BaseLayer";
 import {
@@ -106,8 +106,7 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
 
             if (object.state !== null) {
                 const topLeft = pt.sorter({ direction: "NW" });
-                const corner = cells.points.reduce(maxReducer(topLeft));
-
+                const corner = cells.points.reduce(reduceTo.first(topLeft));
                 const maxRadius = pt.maxRadius({ type: "cells", shape: "square", size: "lg" });
 
                 numberBlits[corner.xy.join(",")] = {
