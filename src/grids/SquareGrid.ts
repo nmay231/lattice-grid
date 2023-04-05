@@ -1,10 +1,10 @@
 import { hopStraight } from "../algorithms/hopStraight";
-import { LineBlits } from "../components/SVGCanvas/Line";
-import { Grid, Point, PointType, TupleVector } from "../types";
+import { Grid, LineBlitGroup, Point, PointType, PolygonBlitGroup, TupleVector } from "../types";
 import { parseIntBase } from "../utils/data";
 import { Vec } from "../utils/math";
 import { notify } from "../utils/notifications";
 import { randomStringId } from "../utils/string";
+import styles from "./styles.module.css";
 
 export type SquareGridParams = {
     type: "square";
@@ -496,9 +496,9 @@ export class SquareGrid implements Grid {
         if (outlierCorner) {
             notify.error({ message: "Could not remove extra grid border" });
         }
-        const outline: Record<string, any> = {};
+        const outline: PolygonBlitGroup["elements"] = new Map();
         for (const [key, points] of Object.entries(shrinkwrap)) {
-            outline[key] = { points };
+            outline.set(key, { points: points.join(" "), className: styles.gridSolidOutline });
         }
 
         const edgeBlacklist = new Set<Point>();
@@ -509,7 +509,7 @@ export class SquareGrid implements Grid {
             edgeBlacklist.add(point.plus([0, 1]).xy.join(","));
         }
 
-        const edges: LineBlits["blits"] = {};
+        const edges: LineBlitGroup["elements"] = new Map();
         const edgePoints = this.getAllPoints("edges").filter((edge) => !edgeBlacklist.has(edge));
         const [edgeMap] = pt.fromPoints("edges", edgePoints);
 
@@ -518,30 +518,25 @@ export class SquareGrid implements Grid {
             const cornerOffset: TupleVector = edge.x & 1 ? [1, 0] : [0, 1];
             const a = edge.minus(cornerOffset).scale(halfCell);
             const b = edge.plus(cornerOffset).scale(halfCell);
-            edges[key] = { x1: a.x, y1: a.y, x2: b.x, y2: b.y };
+            edges.set(key, {
+                x1: a.x,
+                y1: a.y,
+                x2: b.x,
+                y2: b.y,
+                className: styles.gridInternalLines,
+            });
         }
 
         return [
             {
                 id: "grid",
-                blitter: "line",
-                blits: edges,
-                style: {
-                    stroke: "black",
-                    strokeWidth: 2,
-                    strokeLinecap: "square",
-                },
+                type: "line",
+                elements: edges,
             },
             {
                 id: "outline",
-                blitter: "polygon",
-                blits: outline,
-                style: {
-                    stroke: "black",
-                    strokeWidth: 10,
-                    strokeLinejoin: "miter",
-                    fill: "none",
-                },
+                type: "polygon",
+                elements: outline,
             },
         ];
 

@@ -1,0 +1,11 @@
+.gridInternalLines {
+    stroke: black;
+    stroke-width: 2;
+    stroke-linecap: square;
+}
+.gridSolidOutline {
+    stroke: black;
+    stroke-width: 10;
+    stroke-linejoin: miter;
+    fill: none;
+}

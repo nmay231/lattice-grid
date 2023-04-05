@@ -1,0 +1,62 @@
+.backgroundColor {
+    stroke-width: 2;
+    stroke: black;
+}
+
+.debugSelectPoints {
+    stroke: black;
+    stroke-width: 3px;
+    stroke-linecap: round;
+}
+
+.killerCagesOutline {
+    stroke-dasharray: 7 3;
+    stroke-dashoffset: 3.5;
+    stroke: #333;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    fill: none;
+}
+
+.simpleLine {
+    stroke-width: 4;
+    stroke-linecap: round;
+}
+
+.selection {
+    stroke: #00f9;
+    stroke-width: 6;
+    stroke-linejoin: round;
+    fill: none;
+}
+
+/* TODO: Test these render as expected */
+.text {
+    user-select: none;
+    direction: ltr;
+    font-family: sans-serif;
+}
+.textTop {
+    composes: text;
+    dominant-baseline: hanging;
+}
+.textVerticalCenter {
+    composes: text;
+    dominant-baseline: central;
+}
+.textBottom {
+    composes: text;
+    dominant-baseline: alphabetic;
+}
+.textLeft {
+    composes: text;
+    text-anchor: start;
+}
+.textHorizontalCenter {
+    composes: text;
+    text-anchor: middle;
+}
+.textRight {
+    composes: text;
+    text-anchor: end;
+}

@@ -86,21 +86,21 @@ describe("SquareGrid", () => {
 
         expect(rest).toEqual([]);
         expect(edges).toEqual({
-            blits: {
-                "1,2": { x1: -0, x2: 20, y1: 20, y2: 20 },
-                "2,1": { x1: 20, x2: 20, y1: -0, y2: 20 },
-                "2,3": { x1: 20, x2: 20, y1: 20, y2: 40 },
-                "3,2": { x1: 20, x2: 40, y1: 20, y2: 20 },
-            },
-            blitter: "line",
+            elements: new Map([
+                ["1,2", { className: expect.any(String), x1: -0, x2: 20, y1: 20, y2: 20 }],
+                ["2,1", { className: expect.any(String), x1: 20, x2: 20, y1: -0, y2: 20 }],
+                ["3,2", { className: expect.any(String), x1: 20, x2: 40, y1: 20, y2: 20 }],
+                ["2,3", { className: expect.any(String), x1: 20, x2: 20, y1: 20, y2: 40 }],
+            ]),
             id: "grid",
-            style: { stroke: "black", strokeLinecap: "square", strokeWidth: 2 },
+            type: "line",
         });
         expect(shrinkwrap).toEqual({
-            blits: { "0": { points: ["-4,-4", "-4,44", "44,44", "44,-4"] } },
-            blitter: "polygon",
+            elements: new Map([
+                ["0", { className: expect.any(String), points: "-4,-4 -4,44 44,44 44,-4" }],
+            ]),
             id: "outline",
-            style: { fill: "none", stroke: "black", strokeLinejoin: "miter", strokeWidth: 10 },
+            type: "polygon",
         });
 
         // Remove the bottom left and top right corners
@@ -111,29 +111,15 @@ describe("SquareGrid", () => {
 
         expect(rest).toEqual([]);
         expect(edges).toEqual({
-            blits: {},
-            blitter: "line",
+            elements: new Map(),
             id: "grid",
-            style: { stroke: "black", strokeLinecap: "square", strokeWidth: 2 },
+            type: "line",
         });
+        const points = "-4,16 -4,44 24,44 24,24 44,24 44,-4 16,-4 16,16";
         expect(shrinkwrap).toEqual({
-            blits: {
-                "0": {
-                    points: [
-                        "-4,16",
-                        "-4,44",
-                        "24,44",
-                        "24,24",
-                        "44,24",
-                        "44,-4",
-                        "16,-4",
-                        "16,16",
-                    ],
-                },
-            },
-            blitter: "polygon",
+            elements: new Map([["0", { className: expect.any(String), points }]]),
             id: "outline",
-            style: { fill: "none", stroke: "black", strokeLinejoin: "miter", strokeWidth: 10 },
+            type: "polygon",
         });
     });
 });

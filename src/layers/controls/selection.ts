@@ -6,9 +6,11 @@ import {
     LayerProps,
     PartialHistoryAction,
     Point,
+    PolygonBlitGroup,
 } from "../../types";
 import { notify } from "../../utils/notifications";
 import { stringifyAnything } from "../../utils/string";
+import styles from "../layers.module.css";
 
 export interface SelectedProps extends LayerProps {
     TempStorage: {
@@ -236,9 +238,10 @@ export const handleEventsSelection = <LP extends SelectedProps>(
         const states = points.map((id) => stored.objects.get(id).state);
         const pt = grid.getPointTransformer(settings);
 
-        const blits: Record<string, any> = {};
+        const elements: PolygonBlitGroup["elements"] = new Map();
 
         if (points.length) {
+            const className = styles.selection;
             for (const group of new Set(states)) {
                 const [, cells] = pt.fromPoints(
                     "cells",
@@ -247,23 +250,10 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                 const shrinkwrap = pt.shrinkwrap(cells, { inset: 3 });
 
                 for (const [key, points] of Object.entries(shrinkwrap)) {
-                    blits[`${group}-${key}`] = { points };
+                    elements.set(`${group}-${key}`, { className, points: points.join(" ") });
                 }
             }
         }
-        return [
-            {
-                id: "selection",
-                blitter: "polygon",
-                blits,
-                style: {
-                    stroke: "#00F9",
-                    strokeWidth: 6,
-                    strokeLinejoin: "round",
-                    fill: "none",
-                },
-                renderOnlyWhenFocused: true,
-            },
-        ];
+        return [{ id: "selection", type: "polygon", elements }];
     };
 };

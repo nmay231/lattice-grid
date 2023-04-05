@@ -1,8 +1,8 @@
 import { isEqual } from "lodash";
-import { LineBlits } from "../components/SVGCanvas/Line";
-import { Delta, Layer, LayerClass, LayerProps, Point } from "../types";
+import { Delta, Layer, LayerClass, LayerProps, LineBlitGroup, Point } from "../types";
 import { zip } from "../utils/data";
 import { BaseLayer } from "./BaseLayer";
+import styles from "./layers.module.css";
 
 interface DebugSelectPointsProps extends LayerProps {
     TempStorage: { previousPoint: Point; newPoints: Point[] };
@@ -151,7 +151,7 @@ export class DebugSelectPointsLayer
             return [];
         }
 
-        const blits: LineBlits["blits"] = {};
+        const elements: LineBlitGroup["elements"] = new Map();
         const pt = grid.getPointTransformer(settings);
         const [map, points] = pt.fromPoints("cells", object.points);
         const cells = points.toSVGPoints();
@@ -163,10 +163,9 @@ export class DebugSelectPointsLayer
 
             const [x1, y1] = start;
             const [x2, y2] = end;
-            blits[_end] = { x1, y1, x2, y2 };
+            elements.set(_end, { x1, y1, x2, y2, className: styles.debugSelectPoints });
         }
 
-        const style = { stroke: "black", strokeWidth: "3px", strokeLinecap: "round" } as const;
-        return [{ id: "path", blitter: "line", style, blits }];
+        return [{ id: "path", type: "line", elements }];
     };
 }

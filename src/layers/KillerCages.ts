@@ -1,6 +1,4 @@
-import { PolygonBlits } from "../components/SVGCanvas/Polygon";
-import { TextBlits } from "../components/SVGCanvas/Text";
-import { Layer, LayerClass, NeedsUpdating } from "../types";
+import { Layer, LayerClass, NeedsUpdating, PolygonBlitGroup, TextBlitGroup } from "../types";
 import { reduceTo } from "../utils/data";
 import { Vec } from "../utils/math";
 import { BaseLayer, methodNotImplemented } from "./BaseLayer";
@@ -10,6 +8,7 @@ import {
     MultiPointLayerProps,
 } from "./controls/multiPoint";
 import { numberTyper } from "./controls/numberTyper";
+import styles from "./layers.module.css";
 
 interface KillerCagesProps extends MultiPointLayerProps {
     ObjectState: MultiPointLayerProps["ObjectState"] & { state: string | null };
@@ -38,10 +37,7 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
     }) satisfies LayerClass<KillerCagesProps>["create"];
 
     _handleKeyDown: IKillerCagesLayer["_handleKeyDown"] = ({ type, keypress, grid, storage }) => {
-        const stored = storage.getStored<KillerCagesProps>({
-            layer: this,
-            grid,
-        });
+        const stored = storage.getStored<KillerCagesProps>({ grid, layer: this });
 
         if (!stored.permStorage.currentObjectId) return {};
 
@@ -79,16 +75,14 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
     };
 
     getBlits: IKillerCagesLayer["getBlits"] = ({ grid, storage, settings }) => {
-        const stored = storage.getStored<KillerCagesProps>({
-            grid,
-            layer: this,
-        });
+        const stored = storage.getStored<KillerCagesProps>({ grid, layer: this });
         const group = stored.groups.getGroup(settings.editMode);
         const renderOrder = stored.objects.keys().filter((id) => group.has(id));
         const pt = grid.getPointTransformer(settings);
 
-        const cageBlits: PolygonBlits["blits"] = {};
-        const numberBlits: TextBlits["blits"] = {};
+        const cageBlits: PolygonBlitGroup["elements"] = new Map();
+        const numberBlits: TextBlitGroup["elements"] = new Map();
+        const textStyles = [styles.textTop, styles.textLeft].join(" ");
 
         for (const id of renderOrder) {
             const object = stored.objects.get(id);
@@ -98,50 +92,34 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
             const style =
                 id === stored.permStorage.currentObjectId ? { stroke: "#33F" } : undefined;
             for (const [key, wrap] of Object.entries(shrinkwrap)) {
-                cageBlits[`${id}-${key}`] = {
+                cageBlits.set(`${id}-${key}`, {
+                    className: styles.killerCagesOutline,
                     style,
-                    points: wrap,
-                };
+                    points: wrap.join(" "),
+                });
             }
 
             if (object.state !== null) {
                 const topLeft = pt.sorter({ direction: "NW" });
                 const corner = cells.points.reduce(reduceTo.first(topLeft));
                 const maxRadius = pt.maxRadius({ type: "cells", shape: "square", size: "lg" });
+                const point = corner
+                    .scale(settings.cellSize / 2)
+                    .plus(new Vec(1, 1).scale(-0.85 * maxRadius));
 
-                numberBlits[corner.xy.join(",")] = {
-                    text: object.state,
-                    point: corner
-                        .scale(settings.cellSize / 2)
-                        .plus(new Vec(1, 1).scale(-0.85 * maxRadius)).xy,
-                    size: 12,
-                };
+                numberBlits.set(corner.xy.join(","), {
+                    className: textStyles,
+                    children: object.state, // TODO: I don't like this React concept leaking... Then again, className is sorta React specific.
+                    x: point.x,
+                    y: point.y,
+                    fontSize: "12px",
+                });
             }
         }
 
         return [
-            {
-                id: "killerCage",
-                blitter: "polygon",
-                blits: cageBlits,
-                style: {
-                    strokeDasharray: "7 3",
-                    strokeDashoffset: 3.5,
-                    stroke: "#333",
-                    strokeWidth: 1.8,
-                    strokeLinecap: "round",
-                    fill: "none",
-                },
-            },
-            {
-                id: "numbers",
-                blitter: "text",
-                blits: numberBlits,
-                style: {
-                    originX: "left",
-                    originY: "top",
-                },
-            },
+            { id: "killerCage", type: "polygon", elements: cageBlits },
+            { id: "numbers", type: "text", elements: numberBlits },
         ];
     };
 

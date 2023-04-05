@@ -1,9 +1,9 @@
-import { TextBlits } from "../components/SVGCanvas/Text";
-import { Layer, LayerClass, LayerHandlerResult, Point } from "../types";
+import { Layer, LayerClass, LayerHandlerResult, Point, TextBlitGroup } from "../types";
 import { zip } from "../utils/data";
 import { BaseLayer, methodNotImplemented } from "./BaseLayer";
 import { numberTyper } from "./controls/numberTyper";
 import { handleEventsSelection, KeyDownEventHandler, SelectedProps } from "./controls/selection";
+import styles from "./layers.module.css";
 
 export interface NumberProps extends SelectedProps {
     ObjectState: { state: string; point: Point };
@@ -117,27 +117,20 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
         const toSVG = cells.toSVGPoints();
         const maxRadius = pt.maxRadius({ type: "cells", shape: "square", size: "lg" });
 
-        const blits: TextBlits["blits"] = {};
+        const className = [styles.textHorizontalCenter, styles.textVerticalCenter].join(" ");
+        const elements: TextBlitGroup["elements"] = new Map();
         for (const [id, cell] of cellMap.entries()) {
             const point = toSVG.get(cell);
             if (!point) continue; // TODO?
-            blits[id] = {
-                text: stored.objects.get(id).state,
-                point,
-                size: maxRadius * 1.6,
-            };
+            elements.set(id, {
+                className,
+                children: stored.objects.get(id).state,
+                x: point[0],
+                y: point[1],
+                fontSize: maxRadius * 1.6,
+            });
         }
 
-        return [
-            {
-                id: "number",
-                blitter: "text",
-                blits,
-                style: {
-                    originX: "center",
-                    originY: "center",
-                },
-            },
-        ];
+        return [{ id: "number", type: "text", elements }];
     };
 }

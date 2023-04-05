@@ -1,7 +1,5 @@
+import React from "react";
 import type { ref } from "valtio";
-import type { LineBlits } from "./components/SVGCanvas/Line";
-import type { PolygonBlits } from "./components/SVGCanvas/Polygon";
-import type { TextBlits } from "./components/SVGCanvas/Text";
 import type { SquareGridParams, _SquareGridTransformer } from "./grids/SquareGrid";
 import type { availableLayers } from "./layers";
 import type { PuzzleManager } from "./PuzzleManager";
@@ -191,7 +189,12 @@ export type Layer<LP extends LayerProps = LayerProps> = {
         layerEvent: Omit<PointerMoveOrDown, "points"> & LayerEventEssentials<LP>,
     ) => Point[];
     handleEvent: (layerEvent: LayerEvent<LP>) => LayerHandlerResult<LP>;
-    getBlits: (data: Omit<LayerEventEssentials<LP>, "tempStorage">) => BlitGroup[];
+    getBlits: (
+        data: Omit<LayerEventEssentials<LP>, "tempStorage"> & {
+            /** ObjectId => className(s) as a string */
+            // TODO: styleGroups: Map<ObjectId, string>;
+        },
+    ) => BlitGroup[];
     getOverlayBlits?: (data: Omit<LayerEventEssentials<LP>, "tempStorage">) => BlitGroup[];
 };
 
@@ -244,8 +247,16 @@ export type RenderChange =
     | { type: "switchLayer" }
     | { type: "reorder" };
 
-// TODO: More specific types
-export type BlitGroup = LineBlits | TextBlits | PolygonBlits;
+type Elements<T> = Map<ObjectId, React.SVGAttributes<T>>;
+export type TextBlitGroup = { id: string; type: "text"; elements: Elements<SVGTextElement> };
+export type LineBlitGroup = { id: string; type: "line"; elements: Elements<SVGLineElement> };
+export type PolygonBlitGroup = {
+    id: string;
+    type: "polygon";
+    elements: Elements<SVGPolygonElement>;
+};
+
+export type BlitGroup = TextBlitGroup | LineBlitGroup | PolygonBlitGroup;
 // #endregion
 
 // #region - Parsing
