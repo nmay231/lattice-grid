@@ -1,4 +1,4 @@
-import { Layer, LayerClass, PolygonBlitGroup } from "../types";
+import { Layer, LayerClass, PolygonSVGGroup } from "../types";
 import { BaseLayer, methodNotImplemented } from "./BaseLayer";
 import { handleEventsCurrentSetting, OnePointProps } from "./controls/onePoint";
 import styles from "./layers.module.css";
@@ -70,7 +70,7 @@ export class BackgroundColorLayer
         return {};
     };
 
-    getBlits: IBackgroundColorLayer["getBlits"] = ({ grid, storage, settings }) => {
+    getSVG: IBackgroundColorLayer["getSVG"] = ({ grid, storage, settings }) => {
         const stored = storage.getStored<BackgroundColorProps>({ grid, layer: this });
         const group = stored.groups.getGroup(settings.editMode);
         const renderOrder = stored.objects.keys().filter((id) => group.has(id));
@@ -79,7 +79,7 @@ export class BackgroundColorLayer
         const [cellMap, cells] = pt.fromPoints("cells", renderOrder);
         const [outlineMap] = pt.svgOutline(cells);
 
-        const elements: PolygonBlitGroup["elements"] = new Map();
+        const elements: PolygonSVGGroup["elements"] = new Map();
         for (const id of renderOrder) {
             const { state: color } = stored.objects.get(id);
             const outline = outlineMap.get(cellMap.get(id));

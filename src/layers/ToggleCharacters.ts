@@ -1,4 +1,4 @@
-import { Layer, LayerClass, TextBlitGroup } from "../types";
+import { Layer, LayerClass, TextSVGGroup } from "../types";
 import { notify } from "../utils/notifications";
 import { BaseLayer, methodNotImplemented } from "./BaseLayer";
 import { handleEventsSelection, KeyDownEventHandler, SelectedProps } from "./controls/selection";
@@ -177,7 +177,7 @@ export class ToggleCharactersLayer
         };
     };
 
-    getBlits: IToggleCharactersLayer["getBlits"] = ({ grid, storage, settings }) => {
+    getSVG: IToggleCharactersLayer["getSVG"] = ({ grid, storage, settings }) => {
         const stored = storage.getStored<ToggleCharactersProps>({ grid, layer: this });
         const group = stored.groups.getGroup(settings.editMode);
         const ids = stored.objects.keys().filter((id) => group.has(id));
@@ -187,7 +187,7 @@ export class ToggleCharactersLayer
         const toSVG = cells.toSVGPoints();
         const maxRadius = pt.maxRadius({ type: "cells", shape: "square", size: "lg" });
 
-        const elements: TextBlitGroup["elements"] = new Map();
+        const elements: TextSVGGroup["elements"] = new Map();
         if (this.settings.displayStyle === "center") {
             const className = [styles.textHorizontalCenter, styles.textVerticalCenter].join(" ");
             for (const [id, { state }] of stored.objects.entries()) {

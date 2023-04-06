@@ -1,4 +1,3 @@
-import { OVERLAY_LAYER_ID } from "../state/blits";
 import { Layer, LayerClass, LayerProps } from "../types";
 import { BaseLayer } from "./BaseLayer";
 
@@ -6,6 +5,7 @@ interface OverlayProps extends LayerProps {}
 
 interface IOverlayLayer extends Layer<OverlayProps> {}
 
+export const OVERLAY_LAYER_ID: (typeof OverlayLayer)["type"] = "OverlayLayer";
 export class OverlayLayer extends BaseLayer<OverlayProps> implements IOverlayLayer {
     static ethereal = true;
     static readonly type = "OverlayLayer";
@@ -29,7 +29,7 @@ export class OverlayLayer extends BaseLayer<OverlayProps> implements IOverlayLay
     newSettings() {
         return {};
     }
-    getBlits() {
+    getSVG() {
         return [];
     }
 }

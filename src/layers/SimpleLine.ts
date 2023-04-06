@@ -1,4 +1,4 @@
-import { Layer, LayerClass, LineBlitGroup, ObjectId, Point, PointType } from "../types";
+import { Layer, LayerClass, LineSVGGroup, ObjectId, Point, PointType } from "../types";
 import { BaseLayer, methodNotImplemented } from "./BaseLayer";
 import { handleEventsCurrentSetting, TwoPointProps } from "./controls/twoPoint";
 import styles from "./layers.module.css";
@@ -113,7 +113,7 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
         return { history: history || undefined };
     };
 
-    getBlits: ISimpleLineLayer["getBlits"] = ({ grid, storage, settings }) => {
+    getSVG: ISimpleLineLayer["getSVG"] = ({ grid, storage, settings }) => {
         const stored = storage.getStored<SimpleLineProps>({
             grid,
             layer: this,
@@ -128,7 +128,7 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
         const [pointMap, gridPoints] = pt.fromPoints(this.settings.pointType, allPoints);
         const toSVG = gridPoints.toSVGPoints();
 
-        const elements: LineBlitGroup["elements"] = new Map();
+        const elements: LineSVGGroup["elements"] = new Map();
         for (const id of renderOrder) {
             const { state, points } = stored.objects.get(id);
             const first = toSVG.get(pointMap.get(points[0]));

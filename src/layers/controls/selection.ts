@@ -6,7 +6,7 @@ import {
     LayerProps,
     PartialHistoryAction,
     Point,
-    PolygonBlitGroup,
+    PolygonSVGGroup,
 } from "../../types";
 import { notify } from "../../utils/notifications";
 import { stringifyAnything } from "../../utils/string";
@@ -231,14 +231,14 @@ export const handleEventsSelection = <LP extends SelectedProps>(
         }
     };
 
-    layer.getOverlayBlits = ({ grid, storage, settings }) => {
+    layer.getOverlaySVG = ({ grid, storage, settings }) => {
         // TODO: Selection can be made by multiple layers, but not all layers support the same cells/corners selection. In the future, I need to filter the points by the type of points selectable by the current layer.
         const stored = storage.getStored<InternalProps>({ grid, layer: { id: layerId } });
         const points = stored.objects.keys().filter((key) => stored.objects.get(key).state);
         const states = points.map((id) => stored.objects.get(id).state);
         const pt = grid.getPointTransformer(settings);
 
-        const elements: PolygonBlitGroup["elements"] = new Map();
+        const elements: PolygonSVGGroup["elements"] = new Map();
 
         if (points.length) {
             const className = styles.selection;

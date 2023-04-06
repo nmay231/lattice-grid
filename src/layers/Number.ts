@@ -1,4 +1,4 @@
-import { Layer, LayerClass, LayerHandlerResult, Point, TextBlitGroup } from "../types";
+import { Layer, LayerClass, LayerHandlerResult, Point, TextSVGGroup } from "../types";
 import { zip } from "../utils/data";
 import { BaseLayer, methodNotImplemented } from "./BaseLayer";
 import { numberTyper } from "./controls/numberTyper";
@@ -107,7 +107,7 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
         return { history };
     };
 
-    getBlits: INumberLayer["getBlits"] = ({ grid, storage, settings }) => {
+    getSVG: INumberLayer["getSVG"] = ({ grid, storage, settings }) => {
         const stored = storage.getStored<NumberProps>({ grid, layer: this });
         const group = stored.groups.getGroup(settings.editMode);
         const points = stored.objects.keys().filter((id) => group.has(id));
@@ -118,7 +118,7 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
         const maxRadius = pt.maxRadius({ type: "cells", shape: "square", size: "lg" });
 
         const className = [styles.textHorizontalCenter, styles.textVerticalCenter].join(" ");
-        const elements: TextBlitGroup["elements"] = new Map();
+        const elements: TextSVGGroup["elements"] = new Map();
         for (const [id, cell] of cellMap.entries()) {
             const point = toSVG.get(cell);
             if (!point) continue; // TODO?

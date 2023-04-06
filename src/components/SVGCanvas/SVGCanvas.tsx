@@ -2,22 +2,22 @@ import { createStyles, ScrollArea } from "@mantine/core";
 import React, { useEffect, useRef } from "react";
 import { useProxy } from "valtio/utils";
 import { PuzzleManager } from "../../PuzzleManager";
-import { blitGroupsProxy } from "../../state/blits";
 import { canvasSizeProxy, CANVAS_CONTAINER_ID } from "../../state/canvasSize";
 import { usePuzzle } from "../../state/puzzle";
 import { notify } from "../../utils/notifications";
 import { sidebarProxy, smallPageWidth } from "../SideBar/sidebarProxy";
 
-const Inner = React.memo(function Inner({ layers: layersProxy }: Pick<PuzzleManager, "layers">) {
+const Inner = React.memo(function Inner(arg: Pick<PuzzleManager, "layers" | "SVGGroups">) {
+    const { layers: layersProxy, SVGGroups: SVGGroupProxy } = arg;
     const layers = useProxy(layersProxy);
     const { minX, minY, width, height } = useProxy(canvasSizeProxy);
-    const blitGroups = useProxy(blitGroupsProxy);
+    const SVGGroups = useProxy(SVGGroupProxy);
 
     return (
         <svg viewBox={`${minX} ${minY} ${width} ${height}`}>
             {layers.order.flatMap((id) => {
                 // TODO: Allow question and answer to be reordered. Also fix this monstrosity.
-                const question = blitGroups[`${id}-question`].flatMap((group) => {
+                const question = SVGGroups[`${id}-question`].flatMap((group) => {
                     const prefix = `${id}-question-${group.id}`;
                     return [...group.elements.entries()].map(([id, element]) =>
                         React.createElement(group.type, {
@@ -26,7 +26,7 @@ const Inner = React.memo(function Inner({ layers: layersProxy }: Pick<PuzzleMana
                         }),
                     );
                 });
-                const answer = blitGroups[`${id}-answer`].flatMap((group) => {
+                const answer = SVGGroups[`${id}-answer`].flatMap((group) => {
                     const prefix = `${id}-answer-${group.id}`;
                     return [...group.elements.entries()].map(([id, element]) =>
                         React.createElement(group.type, {
@@ -78,7 +78,7 @@ export const SVGCanvas = React.memo(function SVGCanvas() {
     const { opened } = useProxy(sidebarProxy);
     const { classes } = useStyles({ smallPageWidth, sidebarOpened: opened });
 
-    const { controls, layers } = usePuzzle();
+    const { controls, layers, SVGGroups } = usePuzzle();
     const { width } = useProxy(canvasSizeProxy);
 
     const scrollArea = useRef<HTMLDivElement>(null);
@@ -109,7 +109,7 @@ export const SVGCanvas = React.memo(function SVGCanvas() {
                 style={{ width: canvasWidth, maxWidth: `${width}px` }}
             >
                 <div className={classes.innerContainer} {...controls.eventListeners}>
-                    <Inner layers={layers} />
+                    <Inner layers={layers} SVGGroups={SVGGroups} />
                 </div>
             </div>
         </ScrollArea>

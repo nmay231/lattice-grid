@@ -7,7 +7,6 @@ import { CellOutlineLayer } from "./layers/CellOutline";
 import { SELECTION_ID } from "./layers/controls/selection";
 import { NumberLayer } from "./layers/Number";
 import { OverlayLayer } from "./layers/Overlay";
-import { blitGroupsProxy } from "./state/blits";
 import { canvasSizeProxy } from "./state/canvasSize";
 import { StorageManager } from "./StorageManager";
 import {
@@ -19,6 +18,7 @@ import {
     NeedsUpdating,
     PageMode,
     RenderChange,
+    SVGGroup,
     UnknownObject,
     ValtioRef,
 } from "./types";
@@ -32,19 +32,18 @@ export class PuzzleManager {
     layers = proxy(new IndexedOrderedMap<ValtioRef<Layer>>((layer) => !layer.ethereal));
     UILayer = availableLayers["OverlayLayer"].create(this);
     CellOutlineLayer = availableLayers["CellOutlineLayer"].create(this);
+    SVGGroups = proxy({} as Record<Layer["id"], ValtioRef<SVGGroup[]>>);
 
     grid: Grid = new SquareGrid();
     storage = new StorageManager();
     controls = new ControlsManager(this);
+
     settings = proxy({
         editMode: "question" as EditMode,
         pageMode: "edit" as PageMode,
         debugging: false,
         borderPadding: 60,
         cellSize: 60,
-        // The time window allowed between parts of a single action, e.g. typing a two-digit number
-        // TODO: This might still be used, but not any time soon and definitely not for the reason above.
-        actionWindowMs: 600,
     });
 
     startUp() {
@@ -118,17 +117,17 @@ export class PuzzleManager {
             // I don't need to do anything because render order is handled by layersAtom
             // TODO: Remove this change event? It would mainly be useful for future subscribing features.
         } else if (change.type === "delete") {
-            delete blitGroupsProxy[change.layerId];
+            delete this.SVGGroups[change.layerId];
         } else if (change.type === "switchLayer") {
             const layer = this.layers.get(currentLayerId);
 
-            blitGroupsProxy[`${this.UILayer.id}-question`] = valtioRef(
-                layer.getOverlayBlits?.({ ...this }) || [],
+            this.SVGGroups[`${this.UILayer.id}-question`] = valtioRef(
+                layer.getOverlaySVG?.({ ...this }) || [],
             );
         } else if (change.type === "draw") {
-            // Only render the overlay blits of the current layer
-            blitGroupsProxy[`${this.UILayer.id}-question`] = valtioRef(
-                this.layers.get(currentLayerId).getOverlayBlits?.({ ...this }) || [],
+            // Only render the overlay SVG of the current layer
+            this.SVGGroups[`${this.UILayer.id}-question`] = valtioRef(
+                this.layers.get(currentLayerId).getOverlaySVG?.({ ...this }) || [],
             );
 
             // TODO: Allowing layerIds === "all" is mostly used for resizing the grid. How to efficiently redraw layers that depend on the size of the grid. Are there even layers other than grids that need to rerender on resizes? If there are, should they have to explicitly subscribe to these events?
@@ -139,8 +138,8 @@ export class PuzzleManager {
             for (const layerId of layerIds) {
                 for (const editMode of ["question", "answer"] satisfies EditMode[]) {
                     const layer = this.layers.get(layerId);
-                    blitGroupsProxy[`${layer.id}-${editMode}`] = valtioRef(
-                        layer.getBlits({
+                    this.SVGGroups[`${layer.id}-${editMode}`] = valtioRef(
+                        layer.getSVG({
                             ...this,
                             settings: { ...this.settings, editMode },
                         }),

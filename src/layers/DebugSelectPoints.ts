@@ -1,5 +1,5 @@
 import { isEqual } from "lodash";
-import { Delta, Layer, LayerClass, LayerProps, LineBlitGroup, Point } from "../types";
+import { Delta, Layer, LayerClass, LayerProps, LineSVGGroup, Point } from "../types";
 import { zip } from "../utils/data";
 import { BaseLayer } from "./BaseLayer";
 import styles from "./layers.module.css";
@@ -134,11 +134,11 @@ export class DebugSelectPointsLayer
         return {};
     };
 
-    getBlits() {
+    getSVG() {
         return [];
     }
 
-    getOverlayBlits: IDebugSelectPointsLayer["getOverlayBlits"] = ({ grid, storage, settings }) => {
+    getOverlaySVG: IDebugSelectPointsLayer["getOverlaySVG"] = ({ grid, storage, settings }) => {
         const object = storage
             .getStored<DebugSelectPointsProps>({ grid, layer: this })
             .objects.get(Line_ID);
@@ -151,7 +151,7 @@ export class DebugSelectPointsLayer
             return [];
         }
 
-        const elements: LineBlitGroup["elements"] = new Map();
+        const elements: LineSVGGroup["elements"] = new Map();
         const pt = grid.getPointTransformer(settings);
         const [map, points] = pt.fromPoints("cells", object.points);
         const cells = points.toSVGPoints();

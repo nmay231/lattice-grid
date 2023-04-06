@@ -59,11 +59,11 @@ export class CellOutlineLayer extends BaseLayer<CellOutlineProps> implements ICe
         return {};
     }
 
-    getBlits: ICellOutlineLayer["getBlits"] = ({ settings, storage, grid }) => {
+    getSVG: ICellOutlineLayer["getSVG"] = ({ settings, storage, grid }) => {
         const stored = storage.getStored<CellOutlineProps>({ grid, layer: this });
 
         const blacklist = stored.groups.getGroup("question");
         if (settings.editMode === "answer") return [];
-        return grid._getBlits({ blacklist, settings });
+        return grid._getSVG({ blacklist, settings });
     };
 }

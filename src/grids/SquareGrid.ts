@@ -1,5 +1,5 @@
 import { hopStraight } from "../algorithms/hopStraight";
-import { Grid, LineBlitGroup, Point, PointType, PolygonBlitGroup, TupleVector } from "../types";
+import { Grid, LineSVGGroup, Point, PointType, PolygonSVGGroup, TupleVector } from "../types";
 import { parseIntBase } from "../utils/data";
 import { Vec } from "../utils/math";
 import { notify } from "../utils/notifications";
@@ -462,7 +462,7 @@ export class SquareGrid implements Grid {
         return this._getAllGridPoints(type).map(({ x, y }) => `${x},${y}`);
     }
 
-    _getBlits: Grid["_getBlits"] = ({ blacklist, settings }) => {
+    _getSVG: Grid["_getSVG"] = ({ blacklist, settings }) => {
         const pt = this.getPointTransformer(settings);
         const minX = 2 * this.x0 - 1;
         const minY = 2 * this.y0 - 1;
@@ -496,7 +496,7 @@ export class SquareGrid implements Grid {
         if (outlierCorner) {
             notify.error({ message: "Could not remove extra grid border" });
         }
-        const outline: PolygonBlitGroup["elements"] = new Map();
+        const outline: PolygonSVGGroup["elements"] = new Map();
         for (const [key, points] of Object.entries(shrinkwrap)) {
             outline.set(key, { points: points.join(" "), className: styles.gridSolidOutline });
         }
@@ -509,7 +509,7 @@ export class SquareGrid implements Grid {
             edgeBlacklist.add(point.plus([0, 1]).xy.join(","));
         }
 
-        const edges: LineBlitGroup["elements"] = new Map();
+        const edges: LineSVGGroup["elements"] = new Map();
         const edgePoints = this.getAllPoints("edges").filter((edge) => !edgeBlacklist.has(edge));
         const [edgeMap] = pt.fromPoints("edges", edgePoints);
 

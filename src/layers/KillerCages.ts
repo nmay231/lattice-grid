@@ -1,4 +1,4 @@
-import { Layer, LayerClass, NeedsUpdating, PolygonBlitGroup, TextBlitGroup } from "../types";
+import { Layer, LayerClass, NeedsUpdating, PolygonSVGGroup, TextSVGGroup } from "../types";
 import { reduceTo } from "../utils/data";
 import { Vec } from "../utils/math";
 import { BaseLayer, methodNotImplemented } from "./BaseLayer";
@@ -74,14 +74,14 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
         return {};
     };
 
-    getBlits: IKillerCagesLayer["getBlits"] = ({ grid, storage, settings }) => {
+    getSVG: IKillerCagesLayer["getSVG"] = ({ grid, storage, settings }) => {
         const stored = storage.getStored<KillerCagesProps>({ grid, layer: this });
         const group = stored.groups.getGroup(settings.editMode);
         const renderOrder = stored.objects.keys().filter((id) => group.has(id));
         const pt = grid.getPointTransformer(settings);
 
-        const cageBlits: PolygonBlitGroup["elements"] = new Map();
-        const numberBlits: TextBlitGroup["elements"] = new Map();
+        const cageElements: PolygonSVGGroup["elements"] = new Map();
+        const numberElements: TextSVGGroup["elements"] = new Map();
         const textStyles = [styles.textTop, styles.textLeft].join(" ");
 
         for (const id of renderOrder) {
@@ -92,7 +92,7 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
             const style =
                 id === stored.permStorage.currentObjectId ? { stroke: "#33F" } : undefined;
             for (const [key, wrap] of Object.entries(shrinkwrap)) {
-                cageBlits.set(`${id}-${key}`, {
+                cageElements.set(`${id}-${key}`, {
                     className: styles.killerCagesOutline,
                     style,
                     points: wrap.join(" "),
@@ -107,7 +107,7 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
                     .scale(settings.cellSize / 2)
                     .plus(new Vec(1, 1).scale(-0.85 * maxRadius));
 
-                numberBlits.set(corner.xy.join(","), {
+                numberElements.set(corner.xy.join(","), {
                     className: textStyles,
                     children: object.state, // TODO: I don't like this React concept leaking... Then again, className is sorta React specific.
                     x: point.x,
@@ -118,12 +118,12 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
         }
 
         return [
-            { id: "killerCage", type: "polygon", elements: cageBlits },
-            { id: "numbers", type: "text", elements: numberBlits },
+            { id: "killerCage", type: "polygon", elements: cageElements },
+            { id: "numbers", type: "text", elements: numberElements },
         ];
     };
 
-    getOverlayBlits: IKillerCagesLayer["getOverlayBlits"] = () => {
+    getOverlaySVG: IKillerCagesLayer["getOverlaySVG"] = () => {
         // TODO: Only render the current Killer Cage when focused
         return [];
     };

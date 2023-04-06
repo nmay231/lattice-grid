@@ -76,7 +76,7 @@ export type CleanedDOMEvent =
 export type LayerEventEssentials<LP extends LayerProps> = {
     grid: Pick<
         Grid,
-        "id" | "getAllPoints" | "selectPointsWithCursor" | "getPointTransformer" | "_getBlits"
+        "id" | "getAllPoints" | "selectPointsWithCursor" | "getPointTransformer" | "_getSVG"
     >;
     storage: StorageManager;
     settings: PuzzleManager["settings"];
@@ -151,13 +151,13 @@ export type Grid = {
         rotate: number;
         resize: (amount: number) => void;
     }[];
-    _getBlits({
+    _getSVG({
         blacklist,
         settings,
     }: {
         blacklist: Set<string>;
         settings: Pick<PuzzleManager["settings"], "cellSize">;
-    }): BlitGroup[];
+    }): SVGGroup[];
 };
 // #endregion
 
@@ -189,13 +189,13 @@ export type Layer<LP extends LayerProps = LayerProps> = {
         layerEvent: Omit<PointerMoveOrDown, "points"> & LayerEventEssentials<LP>,
     ) => Point[];
     handleEvent: (layerEvent: LayerEvent<LP>) => LayerHandlerResult<LP>;
-    getBlits: (
+    getSVG: (
         data: Omit<LayerEventEssentials<LP>, "tempStorage"> & {
             /** ObjectId => className(s) as a string */
             // TODO: styleGroups: Map<ObjectId, string>;
         },
-    ) => BlitGroup[];
-    getOverlayBlits?: (data: Omit<LayerEventEssentials<LP>, "tempStorage">) => BlitGroup[];
+    ) => SVGGroup[];
+    getOverlaySVG?: (data: Omit<LayerEventEssentials<LP>, "tempStorage">) => SVGGroup[];
 };
 
 export type LayerClass<LP extends LayerProps = LayerProps> = {
@@ -248,15 +248,15 @@ export type RenderChange =
     | { type: "reorder" };
 
 type Elements<T> = Map<ObjectId, React.SVGAttributes<T>>;
-export type TextBlitGroup = { id: string; type: "text"; elements: Elements<SVGTextElement> };
-export type LineBlitGroup = { id: string; type: "line"; elements: Elements<SVGLineElement> };
-export type PolygonBlitGroup = {
+export type TextSVGGroup = { id: string; type: "text"; elements: Elements<SVGTextElement> };
+export type LineSVGGroup = { id: string; type: "line"; elements: Elements<SVGLineElement> };
+export type PolygonSVGGroup = {
     id: string;
     type: "polygon";
     elements: Elements<SVGPolygonElement>;
 };
 
-export type BlitGroup = TextBlitGroup | LineBlitGroup | PolygonBlitGroup;
+export type SVGGroup = TextSVGGroup | LineSVGGroup | PolygonSVGGroup;
 // #endregion
 
 // #region - Parsing

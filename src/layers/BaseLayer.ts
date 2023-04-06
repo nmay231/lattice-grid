@@ -23,7 +23,7 @@ const randomId = (blacklist: Layer["id"][], suggested: Layer["id"]) => {
 };
 
 export abstract class BaseLayer<LP extends LayerProps>
-    implements Omit<Layer<LP>, "newSettings" | "getBlits">
+    implements Omit<Layer<LP>, "newSettings" | "getSVG">
 {
     static ethereal = true;
     static displayName = "INTERNAL_BASE_LAYER";

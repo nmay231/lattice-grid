@@ -78,8 +78,8 @@ describe("SquareGrid", () => {
     });
 
     // TODO: Testing implementation, not behavior. Replace with some sorta image snapshot testing.
-    it("_getBlits()", () => {
-        let [edges, shrinkwrap, ...rest] = smallGrid._getBlits({
+    it("_getSVG()", () => {
+        let [edges, shrinkwrap, ...rest] = smallGrid._getSVG({
             blacklist: new Set(),
             settings: { cellSize: 20 },
         });
@@ -104,7 +104,7 @@ describe("SquareGrid", () => {
         });
 
         // Remove the bottom left and top right corners
-        [edges, shrinkwrap, ...rest] = smallGrid._getBlits({
+        [edges, shrinkwrap, ...rest] = smallGrid._getSVG({
             blacklist: new Set(["1,1", "3,3"]),
             settings: { cellSize: 20 },
         });
