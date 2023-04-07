@@ -1,6 +1,7 @@
 import { Layer, LayerClass, LayerHandlerResult, Point, TextSVGGroup } from "../types";
 import { zip } from "../utils/data";
-import { BaseLayer, methodNotImplemented } from "./BaseLayer";
+import { notify } from "../utils/notifications";
+import { BaseLayer } from "./BaseLayer";
 import { numberTyper } from "./controls/numberTyper";
 import { handleEventsSelection, KeyDownEventHandler, SelectedProps } from "./controls/selection";
 import styles from "./layers.module.css";
@@ -20,11 +21,12 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
     static displayName = "Number";
     static defaultSettings = { max: 9, negatives: false };
 
-    handleEvent = methodNotImplemented({ name: "Number.handleEvent" });
-    gatherPoints = methodNotImplemented({ name: "Number.gatherPoints" });
-    _numberTyper = methodNotImplemented({
-        name: "Number._numberTyper",
-    }) as INumberLayer["_numberTyper"];
+    _numberTyper: INumberLayer["_numberTyper"] = () => {
+        throw notify.error({
+            message: `${this.type}._numberTyper() called before implementing!`,
+            forever: true,
+        });
+    };
 
     static create = ((puzzle): NumberLayer => {
         return new NumberLayer(NumberLayer, puzzle);

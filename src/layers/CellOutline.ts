@@ -1,5 +1,5 @@
 import { Layer, LayerClass, ObjectId, Point } from "../types";
-import { BaseLayer, methodNotImplemented } from "./BaseLayer";
+import { BaseLayer } from "./BaseLayer";
 import { handleEventsCycleStates, OnePointProps } from "./controls/onePoint";
 
 type ObjectState = true;
@@ -21,13 +21,6 @@ export class CellOutlineLayer extends BaseLayer<CellOutlineProps> implements ICe
             CellOutlineLayer.uniqueInstance || new CellOutlineLayer(CellOutlineLayer, puzzle);
         return CellOutlineLayer.uniqueInstance;
     }) satisfies LayerClass<CellOutlineProps>["create"];
-
-    handleEvent: ICellOutlineLayer["handleEvent"] = methodNotImplemented({
-        name: "CellOutline.handleEvent",
-    });
-    gatherPoints: ICellOutlineLayer["gatherPoints"] = methodNotImplemented({
-        name: "CellOutline.gatherPoints",
-    });
 
     static controls = undefined;
     static constraints = undefined;

@@ -3,16 +3,6 @@ import { PuzzleManager } from "../PuzzleManager";
 import { Layer, LayerClass, LayerProps } from "../types";
 import { notify } from "../utils/notifications";
 
-/** I could annotate all attributes that are assigned at runtime with an exclamation to mark them as assigned elsewhere (`attr!: type`), but then I don't have visibility into the cause of certain errors */
-export const methodNotImplemented = ({ name }: { name: string }) => {
-    return (): any => {
-        throw notify.error({
-            message: `Method: ${name} called before implementing!`,
-            forever: true,
-        });
-    };
-};
-
 const randomId = (blacklist: Layer["id"][], suggested: Layer["id"]) => {
     let id: Layer["id"] = suggested;
     let num = 1;
@@ -47,7 +37,17 @@ export abstract class BaseLayer<LP extends LayerProps>
         this.rawSettings = cloneDeep(klass.defaultSettings);
     }
 
-    abstract gatherPoints: Layer<LP>["gatherPoints"];
+    gatherPoints: Layer<LP>["gatherPoints"] = () => {
+        throw notify.error({
+            message: `${this.type}.gatherPoints() called before implementing!`,
+            forever: true,
+        });
+    };
 
-    abstract handleEvent: Layer<LP>["handleEvent"];
+    handleEvent: Layer<LP>["handleEvent"] = () => {
+        throw notify.error({
+            message: `${this.type}.handleEvent() called before implementing!`,
+            forever: true,
+        });
+    };
 }

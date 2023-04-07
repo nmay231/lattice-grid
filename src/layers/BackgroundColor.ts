@@ -1,5 +1,5 @@
 import { Layer, LayerClass, PolygonSVGGroup } from "../types";
-import { BaseLayer, methodNotImplemented } from "./BaseLayer";
+import { BaseLayer } from "./BaseLayer";
 import { handleEventsCurrentSetting, OnePointProps } from "./controls/onePoint";
 import styles from "./layers.module.css";
 
@@ -23,8 +23,6 @@ export class BackgroundColorLayer
     static defaultSettings = { selectedState: "blue" };
 
     settings = this.rawSettings;
-    handleEvent = methodNotImplemented({ name: "BackgroundColor.handleEvent" });
-    gatherPoints = methodNotImplemented({ name: "BackgroundColor.gatherPoints" });
 
     static create = ((puzzle): BackgroundColorLayer => {
         return new BackgroundColorLayer(BackgroundColorLayer, puzzle);

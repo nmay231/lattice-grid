@@ -49,7 +49,6 @@ export class DebugSelectPointsLayer
         diagonal: false,
         knight: false,
     };
-
     settings: IDebugSelectPointsLayer["settings"] = { deltas: [] };
 
     newSettings: IDebugSelectPointsLayer["newSettings"] = ({ newSettings }) => {

@@ -1,7 +1,8 @@
 import { Layer, LayerClass, NeedsUpdating, PolygonSVGGroup, TextSVGGroup } from "../types";
 import { reduceTo } from "../utils/data";
 import { Vec } from "../utils/math";
-import { BaseLayer, methodNotImplemented } from "./BaseLayer";
+import { notify } from "../utils/notifications";
+import { BaseLayer } from "./BaseLayer";
 import {
     handleEventsUnorderedSets,
     MultiPointKeyDownHandler,
@@ -26,11 +27,13 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
     static defaultSettings = { selectedState: "blue" };
 
     settings = this.rawSettings;
-    handleEvent = methodNotImplemented({ name: "KillerCages.handleEvent" });
-    gatherPoints = methodNotImplemented({ name: "KillerCages.gatherPoints" });
-    _numberTyper = methodNotImplemented({
-        name: "KillerCages._numberTyper",
-    }) as IKillerCagesLayer["_numberTyper"];
+
+    _numberTyper: IKillerCagesLayer["_numberTyper"] = () => {
+        throw notify.error({
+            message: `${this.type}._numberTyper() called before implementing!`,
+            forever: true,
+        });
+    };
 
     static create = ((puzzle): KillerCagesLayer => {
         return new KillerCagesLayer(KillerCagesLayer, puzzle);

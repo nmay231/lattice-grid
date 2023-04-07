@@ -1,6 +1,6 @@
 import { Layer, LayerClass, TextSVGGroup } from "../types";
 import { notify } from "../utils/notifications";
-import { BaseLayer, methodNotImplemented } from "./BaseLayer";
+import { BaseLayer } from "./BaseLayer";
 import { handleEventsSelection, KeyDownEventHandler, SelectedProps } from "./controls/selection";
 import styles from "./layers.module.css";
 
@@ -37,8 +37,6 @@ export class ToggleCharactersLayer
     };
 
     settings = this.rawSettings;
-    handleEvent = methodNotImplemented({ name: "ToggleCharacters.handleEvent" });
-    gatherPoints = methodNotImplemented({ name: "ToggleCharacters.gatherPoints" });
 
     static create = ((puzzle): ToggleCharactersLayer => {
         return new ToggleCharactersLayer(ToggleCharactersLayer, puzzle);

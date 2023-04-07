@@ -1,5 +1,5 @@
 import { Layer, LayerClass, LineSVGGroup, ObjectId, Point, PointType } from "../types";
-import { BaseLayer, methodNotImplemented } from "./BaseLayer";
+import { BaseLayer } from "./BaseLayer";
 import { handleEventsCurrentSetting, TwoPointProps } from "./controls/twoPoint";
 import styles from "./layers.module.css";
 
@@ -34,8 +34,6 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
         pointType: "cells",
         selectedState: { stroke: "green" },
     };
-    handleEvent = methodNotImplemented({ name: "SimpleLine.handleEvent" });
-    gatherPoints = methodNotImplemented({ name: "SimpleLine.gatherPoints" });
 
     static create = ((puzzle): SimpleLineLayer => {
         return new SimpleLineLayer(SimpleLineLayer, puzzle);
