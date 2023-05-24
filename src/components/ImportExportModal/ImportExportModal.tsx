@@ -38,8 +38,9 @@ export const ImportExportModal = () => {
     const { opened, close } = useModal("import-export");
 
     const { copied, copy, error: copyError } = useClipboard({ timeout: 3000 });
+    const [answerCheck, setAnswerCheck] = useState<Layer["id"][]>([]);
 
-    const puzzleString = useMemo(() => {
+    const puzzleWithoutAnswerCheck = useMemo(() => {
         if (opened) {
             // Assume only one grid
             const currentObjects = puzzle.storage.objects[puzzle.grid.id];
@@ -51,14 +52,23 @@ export const ImportExportModal = () => {
             }
             const params = puzzle._getParams();
             // TODO: Synchronize version numbers from one source.
-            const string = compressJSON({
+            return {
                 objects,
                 params,
                 version: currentEncodingVersion,
+            } satisfies Omit<PuzzleData, "answerCheck">;
+        }
+    }, [puzzle, opened]);
+
+    const puzzleString = useMemo(() => {
+        if (puzzleWithoutAnswerCheck) {
+            const string = compressJSON({
+                ...puzzleWithoutAnswerCheck,
+                answerCheck,
             } satisfies PuzzleData);
             return `${window.location.origin}/${exportPlay ? "" : "edit"}?${string}`;
         }
-    }, [puzzle, opened, exportPlay]);
+    }, [puzzleWithoutAnswerCheck, answerCheck, exportPlay]);
 
     const noRefSet = () => {
         throw notify.error({ message: "Ref not set in import/export textarea" });
@@ -107,7 +117,27 @@ export const ImportExportModal = () => {
                 </Text>
 
                 <Textarea autosize readOnly minRows={1} maxRows={6} mb="md" value={puzzleString} />
-                <Text size="sm" italic weight="bold" align="center" mb="md" color="red">
+
+                <Text size="sm">Which layers are answer checked?</Text>
+                {puzzle.layers
+                    .entries()
+                    .filter(([, layer]) => !layer.ethereal)
+                    .map(([layerId, layer]) => (
+                        <Checkbox
+                            key={layerId}
+                            label={layer.displayName}
+                            checked={answerCheck.includes(layerId)}
+                            onChange={() => {
+                                if (answerCheck.includes(layerId)) {
+                                    setAnswerCheck(answerCheck.filter((id) => id !== layerId));
+                                } else {
+                                    setAnswerCheck([...answerCheck, layerId]);
+                                }
+                            }}
+                        />
+                    ))}
+
+                <Text size="sm" italic weight="bold" align="center" mt="md" mb="md" color="red">
                     This only exports solving URLs. Feature complete edit-mode URLs are in the
                     works.
                 </Text>

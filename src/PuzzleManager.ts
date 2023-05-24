@@ -1,4 +1,5 @@
 import { arrayMove } from "@dnd-kit/sortable";
+import { isEqual } from "lodash";
 import { proxy } from "valtio";
 import { ControlsManager } from "./ControlsManager";
 import { SquareGrid } from "./grids/SquareGrid";
@@ -16,6 +17,7 @@ import {
     LayerClass,
     LocalStorageData,
     NeedsUpdating,
+    ObjectId,
     PageMode,
     RenderChange,
     SVGGroup,
@@ -37,6 +39,7 @@ export class PuzzleManager {
     grid: Grid = new SquareGrid();
     storage = new StorageManager();
     controls = new ControlsManager(this);
+    answers = new Map<Layer["id"], Record<ObjectId, UnknownObject>>();
 
     settings = proxy({
         editMode: "question" as EditMode,
@@ -144,6 +147,32 @@ export class PuzzleManager {
                             settings: { ...this.settings, editMode },
                         }),
                     );
+                }
+            }
+
+            // Quick and dirty answer check
+            if (this.settings.pageMode === "play" && this.answers.size) {
+                // TODO: This assumes that all objects can be checked to be equal using recursive equality. Some objects might have hidden state that is not relevant to answer checking
+                let correct = true;
+                for (const [layerId, expected] of this.answers.entries()) {
+                    const actual = this.storage
+                        .getStored({ layer: { id: layerId }, grid: this.grid })
+                        .getObjectsByGroup("answer").map;
+
+                    if (!isEqual(expected, actual)) {
+                        correct = false;
+                        break;
+                    }
+                }
+
+                if (correct) {
+                    notify.info({
+                        title: "Yay! You solved it",
+                        message: "your answer matches the setter's answer",
+                        forever: true,
+                    });
+                    // Clear to reset checking and only display one notification
+                    this.answers = new Map();
                 }
             }
         } else {

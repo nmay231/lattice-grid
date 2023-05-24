@@ -6,11 +6,12 @@ import { notify } from "../../utils/notifications";
 import { decompressJSON } from "../../utils/string";
 
 export type PuzzleData = {
-    version: `alpha-${0 | 1}`;
+    version: `alpha-${0 | 1 | 2}`;
     params: LocalStorageData;
     objects: Record<Layer["id"], LayerStorageJSON>;
+    answerCheck: Layer["id"][];
 };
-export const currentEncodingVersion: PuzzleData["version"] = "alpha-1";
+export const currentEncodingVersion: PuzzleData["version"] = "alpha-2";
 
 // TODO: Move into a method of PuzzleManager and test
 export const importPuzzle = (puzzle: PuzzleManager, text: string) => {
@@ -27,8 +28,8 @@ export const importPuzzle = (puzzle: PuzzleManager, text: string) => {
                 forever: true,
                 title: "Old puzzle string",
                 message:
-                    "The puzzle string is incompatible with the current version." +
-                    " Backwards compatibility is not a concern until this software leaves alpha",
+                    `The puzzle string is incompatible with the current version (${puzzleData.version} < ${currentEncodingVersion}).` +
+                    " Backwards compatibility is not a concern until this software leaves alpha (sorry)",
             });
         }
         puzzle.storage = new StorageManager();
@@ -40,15 +41,13 @@ export const importPuzzle = (puzzle: PuzzleManager, text: string) => {
             if (!(layerId in puzzleData.objects)) continue;
             const storage = LayerStorage.fromJSON(puzzleData.objects[layerId]);
             gridObjects[layerId] = storage;
-            const bad = [
-                ...storage.groups.getGroup("answer").values(),
-                ...storage.groups.getGroup("ui").values(),
-            ];
 
-            for (const objectId of bad) {
-                storage.objects.delete(objectId);
-                storage.groups.deleteKey(objectId);
+            if (puzzleData.answerCheck.includes(layerId)) {
+                puzzle.answers.set(layerId, storage.getObjectsByGroup("answer").map);
             }
+
+            storage.clearGroup("answer");
+            storage.clearGroup("ui");
         }
         puzzle.renderChange({ type: "draw", layerIds: "all" });
     } catch (error) {
