@@ -114,10 +114,7 @@ export class PuzzleManager {
             return;
         }
 
-        if (change.type === "reorder") {
-            // I don't need to do anything because render order is handled by layersAtom
-            // TODO: Remove this change event? It would mainly be useful for future subscribing features.
-        } else if (change.type === "delete") {
+        if (change.type === "delete") {
             delete this.SVGGroups[change.layerId];
         } else if (change.type === "switchLayer") {
             const layer = this.layers.get(currentLayerId);
@@ -258,7 +255,6 @@ export class PuzzleManager {
         }
 
         layers.order.splice(0, layers.order.length, ...arrayMove(layers.order, from, to));
-        this.renderChange({ type: "reorder" });
     }
 
     focusCurrentLayer() {

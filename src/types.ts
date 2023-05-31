@@ -244,8 +244,7 @@ export type StorageReducer<Type> = (puzzle: PuzzleForStorage, arg: Type) => Type
 export type RenderChange =
     | { type: "draw"; layerIds: Layer["id"][] | "all" }
     | { type: "delete"; layerId: Layer["id"] }
-    | { type: "switchLayer" }
-    | { type: "reorder" };
+    | { type: "switchLayer" };
 
 type Elements<T> = Map<ObjectId, React.SVGAttributes<T>>;
 export type TextSVGGroup = { id: string; type: "text"; elements: Elements<SVGTextElement> };
