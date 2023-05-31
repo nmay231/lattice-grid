@@ -96,7 +96,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
         switch (event.type) {
             case "cancelAction": {
                 history = internal.objects.keys().map((id) => obj({ id, object: null }));
-                return { discontinueInput: true, history };
+                return { history };
             }
             case "delete":
             case "keyDown": {
@@ -128,7 +128,6 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                         // Batch all of the external layer's actions together
                         batchId,
                     })),
-                    discontinueInput: true,
                 };
             }
             case "pointerDown":
@@ -197,11 +196,10 @@ export const handleEventsSelection = <LP extends SelectedProps>(
             case "pointerUp": {
                 if (tempStorage.removeSingle) {
                     return {
-                        discontinueInput: true,
                         history: [obj({ id: internal.objects.keys()[0], object: null })],
                     };
                 }
-                return { discontinueInput: true };
+                return {};
             }
             case "undoRedo": {
                 const newIds = event.actions.map(({ objectId: id }) => id);
@@ -218,7 +216,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                     // TODO: This implicitly removes group information (b/c state=2). However, it seems really difficult to resolve unless selections are kept in history, but that opens up a whole can of worms.
                     ...newIds.map((id) => obj({ id, object: { state: 2 } })),
                 );
-                return { history, discontinueInput: true };
+                return { history };
             }
             default: {
                 throw notify.error({

@@ -68,12 +68,10 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
         expect(pointerMove.history).toEqual<HistoryType>([
             { batchId: 13, id: "a;b", object: { points: ["a", "b"], state: { x: 42 } } },
         ]);
-        expect(pointerMove.discontinueInput).toBeFalsy();
 
         // Ensure clean result
         const pointerUp = handler.events.pointerUp();
         expect(pointerUp.history?.length).toBeFalsy();
-        expect(pointerUp.discontinueInput).toBeTruthy();
         expect(handler.storage.getNewBatchId).toBeCalledTimes(1);
     });
 
@@ -96,7 +94,6 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
             { batchId: 13, id: "a;c", object: { points: ["a", "c"], state: { x: 42 } } },
             { batchId: 13, id: "b;c", object: { points: ["b", "c"], state: { x: 42 } } },
         ]);
-        expect(pointerMove1.discontinueInput).toBeFalsy();
 
         // When two more points are selected
         const points3 = handler.gatherPoints({ type: "pointerMove", points: ["d", "e"] });
@@ -109,12 +106,10 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
             { batchId: 13, id: "b;d", object: { points: ["b", "d"], state: { x: 42 } } },
             { batchId: 13, id: "d;e", object: { points: ["d", "e"], state: { x: 42 } } },
         ]);
-        expect(pointerMove2.discontinueInput).toBeFalsy();
 
         // Ensure clean result
         const pointerUp = handler.events.pointerUp();
         expect(pointerUp.history?.length).toBeFalsy();
-        expect(pointerUp.discontinueInput).toBeTruthy();
         expect(handler.storage.getNewBatchId).toBeCalledTimes(1);
     });
 
@@ -140,12 +135,10 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
         expect(pointerMove.history).toEqual<HistoryType>([
             { batchId: 13, id: "a;b", object: null },
         ]);
-        expect(pointerMove.discontinueInput).toBeFalsy();
 
         // Ensure clean result
         const pointerUp = handler.events.pointerUp();
         expect(pointerUp.history?.length).toBeFalsy();
-        expect(pointerUp.discontinueInput).toBeTruthy();
         expect(handler.storage.getNewBatchId).toBeCalledTimes(1);
     });
 
@@ -171,12 +164,10 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
         expect(pointerMove.history).toEqual<HistoryType>([
             { batchId: 13, id: "a;b", object: { points: ["a", "b"], state: { x: 42 } } },
         ]);
-        expect(pointerMove.discontinueInput).toBeFalsy();
 
         // Ensure clean result
         const pointerUp = handler.events.pointerUp();
         expect(pointerUp.history?.length).toBeFalsy();
-        expect(pointerUp.discontinueInput).toBeTruthy();
         expect(handler.storage.getNewBatchId).toBeCalledTimes(1);
     });
 
@@ -202,7 +193,6 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
         expect(pointerMove1.history).toEqual<HistoryType>([
             { batchId: 13, id: "2;3", object: { points: ["2", "3"], state: { x: 42 } } },
         ]);
-        expect(pointerMove1.discontinueInput).toBeFalsy();
 
         // When the existing line is drawn over
         const points3 = handler.gatherPoints({ type: "pointerMove", points: ["1"] });
@@ -216,12 +206,10 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
             // TODO: it should not pollute history by adding lines that already exist
             { batchId: 13, id: "1;2", object: { points: ["1", "2"], state: { x: 42 } } },
         ]);
-        expect(pointerMove2.discontinueInput).toBeFalsy();
 
         // Ensure clean result
         const pointerUp = handler.events.pointerUp();
         expect(pointerUp.history?.length).toBeFalsy();
-        expect(pointerUp.discontinueInput).toBeTruthy();
         expect(handler.storage.getNewBatchId).toBeCalledTimes(1);
     });
 
@@ -247,7 +235,6 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
         expect(pointerMove1.history).toEqual<HistoryType>([
             { batchId: 13, id: "1;2", object: null },
         ]);
-        expect(pointerMove1.discontinueInput).toBeFalsy();
 
         // When selecting more points over untouched area
         const points3 = handler.gatherPoints({ type: "pointerMove", points: ["3"] });
@@ -257,12 +244,10 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
 
         // Then they should not draw lines
         expect(pointerMove2.history?.length).toBeFalsy();
-        expect(pointerMove2.discontinueInput).toBeFalsy();
 
         // Ensure clean result
         const pointerUp = handler.events.pointerUp();
         expect(pointerUp.history?.length).toBeFalsy();
-        expect(pointerUp.discontinueInput).toBeTruthy();
         expect(handler.storage.getNewBatchId).toBeCalledTimes(1);
     });
 

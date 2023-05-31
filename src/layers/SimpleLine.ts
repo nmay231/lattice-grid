@@ -98,7 +98,6 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
             // TODO: Directional true/false is ambiguous. There are three types: lines and arrows with/without overlap
             directional: false,
             pointTypes: [this.settings.pointType],
-            stopOnFirstPoint: false,
             // TODO: Replace deltas with FSM
             deltas: [
                 { dx: 0, dy: 2 },

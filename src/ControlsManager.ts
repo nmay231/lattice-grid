@@ -263,8 +263,7 @@ export class ControlsManager {
             this.tempStorage = {};
         }
 
-        // TODO: Deprecate discontinueInput
-        const { discontinueInput, history } = layer.handleEvent(layerEvent);
+        const { history } = layer.handleEvent(layerEvent);
 
         this.puzzle.storage.addToHistory({
             puzzle: this.puzzle,

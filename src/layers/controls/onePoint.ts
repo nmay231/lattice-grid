@@ -57,7 +57,7 @@ export const handleEventsCycleStates = <
 
     layer.handleEvent = (event): LayerHandlerResult<LP> => {
         if (event.type !== "pointerDown" && event.type !== "pointerMove") {
-            return { discontinueInput: true };
+            return {};
         }
 
         const { grid, storage, tempStorage } = event;
@@ -106,7 +106,7 @@ export const handleEventsCurrentSetting = <
 
     layer.handleEvent = (event): LayerHandlerResult<LP> => {
         if (event.type !== "pointerDown" && event.type !== "pointerMove") {
-            return { discontinueInput: true };
+            return {};
         }
 
         const { grid, storage, tempStorage } = event;

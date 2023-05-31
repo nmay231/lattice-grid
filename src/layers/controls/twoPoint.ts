@@ -17,14 +17,15 @@ export type MinimalSettings = { selectedState: UnknownObject };
 type Arg = Partial<{
     directional: boolean;
     pointTypes: PointType[];
-    stopOnFirstPoint: boolean;
+    // TODO: This can be inplemented using an if-statement in gatherPoints rather than discontinueInput
+    // stopOnFirstPoint: boolean;
     // TODO: Replace deltas with FSM
     deltas: { dx: number; dy: number }[];
 }>;
 
 export const handleEventsCurrentSetting = <LP extends TwoPointProps>(
     layer: Layer<LP> & { settings: MinimalSettings },
-    { directional, pointTypes, stopOnFirstPoint, deltas }: Arg = {},
+    { directional, pointTypes, deltas }: Arg = {},
 ) => {
     if (!pointTypes?.length || !deltas?.length) {
         throw notify.error({
@@ -53,9 +54,7 @@ export const handleEventsCurrentSetting = <LP extends TwoPointProps>(
 
     layer.handleEvent = (event) => {
         const { grid, storage, type, tempStorage } = event;
-        if (type !== "pointerDown" && type !== "pointerMove") {
-            return { discontinueInput: true };
-        } else if (!event.points.length) {
+        if ((type !== "pointerDown" && type !== "pointerMove") || !event.points.length) {
             return {};
         }
 
@@ -95,9 +94,6 @@ export const handleEventsCurrentSetting = <LP extends TwoPointProps>(
             }
         }
 
-        return {
-            discontinueInput: stopOnFirstPoint,
-            history,
-        };
+        return { history };
     };
 };

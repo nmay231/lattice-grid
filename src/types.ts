@@ -87,7 +87,6 @@ export type LayerEvent<LP extends LayerProps> = CleanedDOMEvent & LayerEventEsse
 
 // TODO: Adding OtherState makes sense for IncompleteHistoryAction, but not for LayerHandlerResult. Should this somehow be another property on LayerProps?
 export type LayerHandlerResult<LP extends LayerProps> = {
-    discontinueInput?: boolean;
     history?: PartialHistoryAction<LP>[];
 };
 // #endregion
