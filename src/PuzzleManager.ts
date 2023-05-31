@@ -61,14 +61,11 @@ export class PuzzleManager {
         this.storage.addStorage({ grid: this.grid, layer: { id: SELECTION_ID } });
 
         // Guarantee that these layers will be present even if the saved puzzle fails to add them
-        const requiredLayers = [CellOutlineLayer, OverlayLayer];
-        for (const layer of requiredLayers) {
-            this.addLayer(layer, null);
-        }
+        this.addLayer(OverlayLayer, null);
+        this.addLayer(CellOutlineLayer, null);
     }
 
     loadPuzzle() {
-        this.resetLayers();
         const local = localStorage.getItem("_currentPuzzle");
         if (!local) {
             this.freshPuzzle();
@@ -76,6 +73,7 @@ export class PuzzleManager {
         }
 
         try {
+            this.resetLayers();
             const data = JSON.parse(local);
             this._loadPuzzle(data as NeedsUpdating); // TODO: zod verification?
             this.renderChange({ type: "draw", layerIds: "all" });
@@ -96,10 +94,10 @@ export class PuzzleManager {
     }
 
     _loadPuzzle(data: LocalStorageData) {
-        this.grid.setParams(data.grid);
         for (const { id, type: layerClass, rawSettings } of data.layers) {
             this.addLayer(availableLayers[layerClass], id, rawSettings);
         }
+        this.grid.setParams(data.grid);
     }
 
     resizeCanvas() {

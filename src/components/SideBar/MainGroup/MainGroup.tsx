@@ -26,10 +26,7 @@ export const MainGroup = () => {
                                 tabIndex={0}
                                 color="red"
                                 onClick={() => {
-                                    // Temporary in it's current form
                                     puzzle.freshPuzzle();
-                                    puzzle.resizeCanvas();
-                                    puzzle.renderChange({ type: "draw", layerIds: "all" });
                                     unfocus();
                                 }}
                             >
