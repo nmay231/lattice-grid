@@ -24,7 +24,15 @@ export class Vec {
     }
 
     minus(other: Vec | TupleVector) {
-        return this.scale(-1).plus(other).scale(-1); // TODO: Too lazy right now...
+        if (other instanceof Vec) {
+            other = other.xy;
+        }
+        return new Vec(this.x - other[0], this.y - other[1]);
+    }
+
+    /** Calculate the vector that connects the tip of this vector to the tip of the `other` vector */
+    drawTo(other: Vec | TupleVector) {
+        return this.minus(other).scale(-1);
     }
 
     unit() {

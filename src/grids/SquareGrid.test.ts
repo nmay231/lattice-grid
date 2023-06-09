@@ -87,8 +87,8 @@ describe("SquareGrid", () => {
         expect(rest).toEqual([]);
         expect(edges).toEqual({
             elements: new Map([
-                ["1,2", { className: expect.any(String), x1: -0, x2: 20, y1: 20, y2: 20 }],
-                ["2,1", { className: expect.any(String), x1: 20, x2: 20, y1: -0, y2: 20 }],
+                ["1,2", { className: expect.any(String), x1: 0, x2: 20, y1: 20, y2: 20 }],
+                ["2,1", { className: expect.any(String), x1: 20, x2: 20, y1: 0, y2: 20 }],
                 ["3,2", { className: expect.any(String), x1: 20, x2: 40, y1: 20, y2: 20 }],
                 ["2,3", { className: expect.any(String), x1: 20, x2: 20, y1: 20, y2: 40 }],
             ]),

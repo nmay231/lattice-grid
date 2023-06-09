@@ -235,7 +235,7 @@ export class _SquareGridTransformer {
         let maxIteration = 1000;
 
         while (--maxIteration > 0) {
-            const normal = edge.minus(cell);
+            const normal = cell.drawTo(edge);
             const forward = normal.rotate90(1);
             const nextCorner = edge.plus(forward);
             cornersNormals.push([nextCorner, normal]);
@@ -386,7 +386,7 @@ export class SquareGrid implements Grid {
             start = Vec.from(previousPoint.split(",").map(parseIntBase(10)) as TupleVector);
 
             // Filter any deltas that would backtrack
-            const direction = cursor.minus(start);
+            const direction = start.drawTo(cursor);
             deltas = deltas.filter((vec) => vec.positiveAngleTo(direction) < Math.PI / 2);
         }
 
