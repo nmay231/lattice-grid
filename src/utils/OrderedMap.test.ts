@@ -143,6 +143,34 @@ describe("OrderedMap", () => {
         ]);
     });
 
+    it("treats added keys equal to nextKey as if nextKey was unspecified", () => {
+        // Given a map with some items
+        const map = new OrderedMap();
+        map.set("a", 1);
+        map.set("b", 1);
+
+        map.set("c", 2, "c");
+        expect(map.entries()).toEqual([
+            ["a", 1],
+            ["b", 1],
+            ["c", 2],
+        ]);
+
+        map.set("c", 3, "c");
+        expect(map.entries()).toEqual([
+            ["a", 1],
+            ["b", 1],
+            ["c", 3],
+        ]);
+
+        map.set("a", 4, "a");
+        expect(map.entries()).toEqual([
+            ["b", 1],
+            ["c", 3],
+            ["a", 4],
+        ]);
+    });
+
     it("supports has, get, keys, values, and entries", () => {
         const map = new OrderedMap<number>();
 

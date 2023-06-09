@@ -35,12 +35,10 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         expect(pointerDown.history).toEqual<HistoryType>([
             { batchId: 1, id: "a", object: { points: ["a"], state: null } },
         ]);
-        expect(pointerDown.discontinueInput).toBeFalsy();
 
         // Ensure clean result
         const pointerUp = handler.events.pointerUp();
         expect(pointerUp.history?.length).toBeFalsy();
-        expect(pointerUp.discontinueInput).toBeTruthy();
     });
 
     it("draws a new object when a previous one was selected", () => {
@@ -64,11 +62,9 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         expect(pointerDown.history).toEqual<HistoryType>([
             { batchId: 1, id: "b", object: { points: ["b"], state: null } },
         ]);
-        expect(pointerDown.discontinueInput).toBeFalsy();
 
         const pointerUp = handler.events.pointerUp();
         expect(pointerUp.history?.length).toBeFalsy();
-        expect(pointerUp.discontinueInput).toBeTruthy();
     });
 
     it("expands and shrinks an object", () => {
@@ -85,7 +81,6 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         expect(pointerDown.history).toEqual<HistoryType>([
             { batchId: 42, id: "y", object: { points: ["y"], state: null } },
         ]);
-        expect(pointerDown.discontinueInput).toBeFalsy();
 
         // ... and continuing selecting more points
         const points2 = handler.gatherPoints({ type: "pointerMove", points: ["z", "x"] });
@@ -96,7 +91,6 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         expect(pointerMove1.history).toEqual<HistoryType>([
             { batchId: 42, id: "y", object: { points: ["x", "y", "z"], state: null } },
         ]);
-        expect(pointerMove1.discontinueInput).toBeFalsy();
 
         // When we select previous points
         const points3 = handler.gatherPoints({ type: "pointerMove", points: ["y"] });
@@ -107,7 +101,6 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         expect(pointerMove2.history).toEqual<HistoryType>([
             { batchId: 42, id: "y", object: { points: ["y", "z"], state: null } },
         ]);
-        expect(pointerMove2.discontinueInput).toBeFalsy();
 
         // When the user finishes
         const pointerUp = handler.events.pointerUp();
@@ -123,7 +116,6 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         ]);
         // TODO: The above is only true until ids become more like symbols and are not reliant on the current points at all.
         // TODO: expect(pointerUp.history?.length).toBeFalsy()
-        expect(pointerUp.discontinueInput).toBeTruthy();
         expect(handler.storage.getNewBatchId).toBeCalledTimes(1);
     });
 
@@ -152,7 +144,6 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
                 object: { points: ["a", "b"], state: null },
             },
         ]);
-        expect(pointerDown.discontinueInput).toBeFalsy();
 
         const pointerUp = handler.events.pointerUp();
 
@@ -165,7 +156,6 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
                 object: { points: ["a"], state: null },
             },
         ]);
-        expect(pointerUp.discontinueInput).toBeTruthy();
         expect(handler.storage.getNewBatchId).toBeCalledTimes(1);
     });
 
@@ -204,14 +194,12 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
         expect(pointerMove.history).toEqual<HistoryType>([
             { batchId: 42, id: "a;b", object: { points: ["b", "c"], state: null } },
         ]);
-        expect(pointerMove.discontinueInput).toBeFalsy();
 
         const pointerUp = handler.events.pointerUp();
         expect(pointerUp.history).toEqual<HistoryType>([
             { batchId: 42, id: "a;b", object: null },
             { batchId: 42, id: "b;c", object: { points: ["b", "c"], state: null } },
         ]);
-        expect(pointerUp.discontinueInput).toBeTruthy();
         expect(handler.storage.getNewBatchId).toBeCalledTimes(1);
     });
 

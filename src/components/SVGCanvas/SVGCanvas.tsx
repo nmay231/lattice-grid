@@ -2,46 +2,46 @@ import { createStyles, ScrollArea } from "@mantine/core";
 import React, { useEffect, useRef } from "react";
 import { useProxy } from "valtio/utils";
 import { PuzzleManager } from "../../PuzzleManager";
-import { blitGroupsProxy } from "../../state/blits";
 import { canvasSizeProxy, CANVAS_CONTAINER_ID } from "../../state/canvasSize";
 import { usePuzzle } from "../../state/puzzle";
-import { BlitGroup, Layer, NeedsUpdating, StorageMode } from "../../types";
-import { errorNotification } from "../../utils/DOMUtils";
+import { notify } from "../../utils/notifications";
 import { sidebarProxy, smallPageWidth } from "../SideBar/sidebarProxy";
-import { Line } from "./Line";
-import { Polygon } from "./Polygon";
-import { Text } from "./Text";
 
-const blitters = {
-    polygon: Polygon,
-    line: Line,
-    text: Text,
-} as const;
+const Inner = React.memo(function Inner(arg: Pick<PuzzleManager, "layers" | "SVGGroups">) {
+    const { layers: layersProxy, SVGGroups: SVGGroupProxy } = arg;
+    const layers = useProxy(layersProxy);
+    const { minX, minY, width, height } = useProxy(canvasSizeProxy);
+    const SVGGroups = useProxy(SVGGroupProxy);
 
-const blitList = ({
-    groups,
-    layerId,
-    storageMode,
-}: {
-    groups: BlitGroup[];
-    layerId: Layer["id"];
-    storageMode: StorageMode;
-}) => {
-    return groups.map((group) => {
-        const Blitter = blitters[group.blitter];
-        return (
-            <Blitter
-                // I was hoping typescript would be smarter...
-                blits={group.blits as NeedsUpdating}
-                style={group.style as NeedsUpdating}
-                key={`${layerId}-${storageMode}-${group.id}`}
-            />
-        );
-    });
-};
+    return (
+        <svg viewBox={`${minX} ${minY} ${width} ${height}`}>
+            {layers.order.flatMap((id) => {
+                // TODO: Allow question and answer to be reordered. Also fix this monstrosity.
+                const question = SVGGroups[`${id}-question`].flatMap((group) => {
+                    const prefix = `${id}-question-${group.id}`;
+                    return [...group.elements.entries()].map(([id, element]) =>
+                        React.createElement(group.type, {
+                            ...element,
+                            key: `${prefix}-${id}`,
+                        }),
+                    );
+                });
+                const answer = SVGGroups[`${id}-answer`].flatMap((group) => {
+                    const prefix = `${id}-answer-${group.id}`;
+                    return [...group.elements.entries()].map(([id, element]) =>
+                        React.createElement(group.type, {
+                            ...element,
+                            key: `${prefix}-${id}`,
+                        }),
+                    );
+                });
+                return question.concat(answer);
+            })}
+        </svg>
+    );
+});
 
 type Arg1 = { smallPageWidth: string; sidebarOpened: boolean };
-
 const useStyles = createStyles((theme, { smallPageWidth, sidebarOpened }: Arg1) => ({
     scrollArea: {
         display: "flex",
@@ -73,43 +73,19 @@ const useStyles = createStyles((theme, { smallPageWidth, sidebarOpened }: Arg1) 
     },
 }));
 
-const Inner = React.memo(function Inner({ layers: layersProxy }: Pick<PuzzleManager, "layers">) {
-    const layers = useProxy(layersProxy);
-    const { minX, minY, width, height } = useProxy(canvasSizeProxy);
-    const blitGroups = useProxy(blitGroupsProxy);
-
-    return (
-        <svg viewBox={`${minX} ${minY} ${width} ${height}`}>
-            {layers.order.flatMap((id) => {
-                // TODO: Allow question and answer to be reordered. Also fix this monstrosity.
-                const question = blitList({
-                    groups: blitGroups[`${id}-question`] || [],
-                    layerId: id,
-                    storageMode: "question",
-                });
-                const answer = blitList({
-                    groups: blitGroups[`${id}-answer`] || [],
-                    layerId: id,
-                    storageMode: "answer",
-                });
-                return question.concat(answer);
-            })}
-        </svg>
-    );
-});
-
+// TODO: Add dependency injection so it can be used in color swatches, resize modal, etc.
 export const SVGCanvas = React.memo(function SVGCanvas() {
     const { opened } = useProxy(sidebarProxy);
     const { classes } = useStyles({ smallPageWidth, sidebarOpened: opened });
 
-    const { controls, layers } = usePuzzle();
+    const { controls, layers, SVGGroups } = usePuzzle();
     const { width } = useProxy(canvasSizeProxy);
 
     const scrollArea = useRef<HTMLDivElement>(null);
     useEffect(() => {
         const current = scrollArea.current;
         if (!current) {
-            throw errorNotification({ error: null, message: "Canvas element not found." });
+            throw notify.error({ message: "Canvas element not found." });
         }
 
         const onWheel = controls.onWheel.bind(controls);
@@ -133,7 +109,7 @@ export const SVGCanvas = React.memo(function SVGCanvas() {
                 style={{ width: canvasWidth, maxWidth: `${width}px` }}
             >
                 <div className={classes.innerContainer} {...controls.eventListeners}>
-                    <Inner layers={layers} />
+                    <Inner layers={layers} SVGGroups={SVGGroups} />
                 </div>
             </div>
         </ScrollArea>

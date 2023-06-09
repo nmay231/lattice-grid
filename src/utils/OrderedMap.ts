@@ -12,7 +12,7 @@ export class OrderedMap<V> {
             this.order.splice(this.order.indexOf(key), 1);
         }
         this.map[key] = value;
-        if (nextKey === null || !(nextKey in this.map)) {
+        if (nextKey === null || !(nextKey in this.map) || key === nextKey) {
             this.order.push(key);
         } else {
             this.order.splice(this.order.indexOf(nextKey), 0, key);
@@ -64,10 +64,6 @@ export class IndexedOrderedMap<V> extends OrderedMap<V> {
 
     constructor(public selectable: (value: V) => boolean = () => true) {
         super();
-    }
-
-    set(key: string, value: V, nextKey: string | null = null): void {
-        super.set(key, value, nextKey);
     }
 
     getNextSelectableKey(key: string): string | null {

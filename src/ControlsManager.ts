@@ -11,9 +11,9 @@ import {
     TupleVector,
     UnknownObject,
 } from "./types";
-import { errorNotification } from "./utils/DOMUtils";
 import { focusProxy, _focusState } from "./utils/focusManagement";
 import { euclidean, Vec } from "./utils/math";
+import { notify } from "./utils/notifications";
 import { DelayedCallback } from "./utils/primitiveWrappers";
 import { keypressString } from "./utils/string";
 
@@ -263,8 +263,7 @@ export class ControlsManager {
             this.tempStorage = {};
         }
 
-        // TODO: Deprecate discontinueInput
-        const { discontinueInput, history } = layer.handleEvent(layerEvent);
+        const { history } = layer.handleEvent(layerEvent);
 
         this.puzzle.storage.addToHistory({
             puzzle: this.puzzle,
@@ -459,8 +458,7 @@ export class ControlsManager {
         if (this.interactingPointers) return; // Don't draw and zoom at the same time
 
         if (rawEvent.deltaMode !== rawEvent.DOM_DELTA_PIXEL) {
-            throw errorNotification({
-                error: null,
+            throw notify.error({
                 title: "Submit a bug report if you get this error.",
                 message: `TODO: I need to handle WheelEvent.deltaMode=${rawEvent.deltaMode}`,
                 forever: true,

@@ -1,9 +1,10 @@
-import { TextBlits } from "../components/SVGCanvas/Text";
-import { Layer, LayerClass, LayerHandlerResult, Point } from "../types";
+import { Layer, LayerClass, LayerHandlerResult, Point, TextSVGGroup } from "../types";
 import { zip } from "../utils/data";
-import { BaseLayer, methodNotImplemented } from "./BaseLayer";
+import { notify } from "../utils/notifications";
+import { BaseLayer } from "./BaseLayer";
 import { numberTyper } from "./controls/numberTyper";
 import { handleEventsSelection, KeyDownEventHandler, SelectedProps } from "./controls/selection";
+import styles from "./layers.module.css";
 
 export interface NumberProps extends SelectedProps {
     ObjectState: { state: string; point: Point };
@@ -20,11 +21,12 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
     static displayName = "Number";
     static defaultSettings = { max: 9, negatives: false };
 
-    handleEvent = methodNotImplemented({ name: "Number.handleEvent" });
-    gatherPoints = methodNotImplemented({ name: "Number.gatherPoints" });
-    _numberTyper = methodNotImplemented({
-        name: "Number._numberTyper",
-    }) as INumberLayer["_numberTyper"];
+    _numberTyper: INumberLayer["_numberTyper"] = () => {
+        throw notify.error({
+            message: `${this.type}._numberTyper() called before implementing!`,
+            forever: true,
+        });
+    };
 
     static create = ((puzzle): NumberLayer => {
         return new NumberLayer(NumberLayer, puzzle);
@@ -107,7 +109,7 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
         return { history };
     };
 
-    getBlits: INumberLayer["getBlits"] = ({ grid, storage, settings }) => {
+    getSVG: INumberLayer["getSVG"] = ({ grid, storage, settings }) => {
         const stored = storage.getStored<NumberProps>({ grid, layer: this });
         const group = stored.groups.getGroup(settings.editMode);
         const points = stored.objects.keys().filter((id) => group.has(id));
@@ -117,27 +119,20 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
         const toSVG = cells.toSVGPoints();
         const maxRadius = pt.maxRadius({ type: "cells", shape: "square", size: "lg" });
 
-        const blits: TextBlits["blits"] = {};
+        const className = [styles.textHorizontalCenter, styles.textVerticalCenter].join(" ");
+        const elements: TextSVGGroup["elements"] = new Map();
         for (const [id, cell] of cellMap.entries()) {
             const point = toSVG.get(cell);
             if (!point) continue; // TODO?
-            blits[id] = {
-                text: stored.objects.get(id).state,
-                point,
-                size: maxRadius * 1.6,
-            };
+            elements.set(id, {
+                className,
+                children: stored.objects.get(id).state,
+                x: point[0],
+                y: point[1],
+                fontSize: maxRadius * 1.6,
+            });
         }
 
-        return [
-            {
-                id: "number",
-                blitter: "text",
-                blits,
-                style: {
-                    originX: "center",
-                    originY: "center",
-                },
-            },
-        ];
+        return [{ id: "number", type: "text", elements }];
     };
 }

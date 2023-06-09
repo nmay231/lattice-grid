@@ -52,12 +52,10 @@ describe("selection controls", () => {
                 object: { state: 2 },
             },
         ]);
-        expect(pointerDown.discontinueInput).toBeFalsy();
 
         // Ensure clean result
         const pointerUp = handler.events.pointerUp();
         expect(pointerUp.history?.length).toBeFalsy();
-        expect(pointerUp.discontinueInput).toBeTruthy();
     });
 
     it("deselects a cell by clicking on it", () => {
@@ -83,7 +81,6 @@ describe("selection controls", () => {
                 object: null,
             },
         ]);
-        expect(pointerUp.discontinueInput).toBeTruthy();
     });
 
     it.todo("does not deselect the first cell when selecting multiple");
@@ -120,13 +117,11 @@ describe("selection controls", () => {
                 object: { state: 2 },
             },
         ]);
-        expect(pointerDown.discontinueInput).toBeFalsy();
 
         // Ensure clean result
         const pointerUp = handler.events.pointerUp();
 
         expect(pointerUp.history?.length).toBeFalsy();
-        expect(pointerUp.discontinueInput).toBeTruthy();
     });
 
     it("deselects a cell when clicking another one", () => {
@@ -158,13 +153,11 @@ describe("selection controls", () => {
                 object: { state: 2 },
             },
         ]);
-        expect(pointerDown.discontinueInput).toBeFalsy();
 
         // Ensure clean result
         const pointerUp = handler.events.pointerUp();
 
         expect(pointerUp.history?.length).toBeFalsy();
-        expect(pointerUp.discontinueInput).toBeTruthy();
     });
 
     it("adds cells to the selection when holding ctrl", () => {
@@ -189,7 +182,6 @@ describe("selection controls", () => {
                 object: { state: 2 },
             },
         ]);
-        expect(pointerDown.discontinueInput).toBeFalsy();
 
         // When more cells are selected
         const pointerMove = handler.events.pointerMove({
@@ -214,12 +206,10 @@ describe("selection controls", () => {
                 object: { state: 2 },
             },
         ]);
-        expect(pointerMove.discontinueInput).toBeFalsy();
 
         // Ensure clean result
         const pointerUp = handler.events.pointerUp();
         expect(pointerUp.history?.length).toBeFalsy();
-        expect(pointerUp.discontinueInput).toBeTruthy();
     });
 
     it("merges disjoint selections when dragging over an existing group", () => {
@@ -244,7 +234,6 @@ describe("selection controls", () => {
                 object: { state: 2 },
             },
         ]);
-        expect(pointerDown.discontinueInput).toBeFalsy();
 
         // When the cursor is dragged over a cell in the first group
         const pointerMove = handler.events.pointerMove({ points: ["point2"], ctrlKey: true });
@@ -266,12 +255,10 @@ describe("selection controls", () => {
                 object: { state: 2 },
             },
         ]);
-        expect(pointerMove.discontinueInput).toBeFalsy();
 
         // Ensure clean result
         const pointerUp = handler.events.pointerUp();
         expect(pointerUp.history?.length).toBeFalsy();
-        expect(pointerUp.discontinueInput).toBeTruthy();
     });
 
     it("batches together storingLayer actions", () => {
@@ -300,7 +287,6 @@ describe("selection controls", () => {
             { id: "id1", object: { asdf: "something1" }, batchId: 1 },
             { id: "id2", object: { asdf: "something2" }, batchId: 1 },
         ]);
-        expect(keyDown.discontinueInput).toBeTruthy();
     });
 
     it("selects objects affected by undo/redo", () => {
@@ -354,7 +340,6 @@ describe("selection controls", () => {
                 object: { state: 2 },
             },
         ]);
-        expect(result.discontinueInput).toBeTruthy();
     });
 
     // Prob not necessary b/c of generalized FSMs

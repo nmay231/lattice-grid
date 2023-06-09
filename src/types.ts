@@ -1,7 +1,5 @@
+import React from "react";
 import type { ref } from "valtio";
-import type { LineBlits } from "./components/SVGCanvas/Line";
-import type { PolygonBlits } from "./components/SVGCanvas/Polygon";
-import type { TextBlits } from "./components/SVGCanvas/Text";
 import type { SquareGridParams, _SquareGridTransformer } from "./grids/SquareGrid";
 import type { availableLayers } from "./layers";
 import type { PuzzleManager } from "./PuzzleManager";
@@ -78,7 +76,7 @@ export type CleanedDOMEvent =
 export type LayerEventEssentials<LP extends LayerProps> = {
     grid: Pick<
         Grid,
-        "id" | "getAllPoints" | "selectPointsWithCursor" | "getPointTransformer" | "_getBlits"
+        "id" | "getAllPoints" | "selectPointsWithCursor" | "getPointTransformer" | "_getSVG"
     >;
     storage: StorageManager;
     settings: PuzzleManager["settings"];
@@ -89,7 +87,6 @@ export type LayerEvent<LP extends LayerProps> = CleanedDOMEvent & LayerEventEsse
 
 // TODO: Adding OtherState makes sense for IncompleteHistoryAction, but not for LayerHandlerResult. Should this somehow be another property on LayerProps?
 export type LayerHandlerResult<LP extends LayerProps> = {
-    discontinueInput?: boolean;
     history?: PartialHistoryAction<LP>[];
 };
 // #endregion
@@ -153,13 +150,13 @@ export type Grid = {
         rotate: number;
         resize: (amount: number) => void;
     }[];
-    _getBlits({
+    _getSVG({
         blacklist,
         settings,
     }: {
         blacklist: Set<string>;
         settings: Pick<PuzzleManager["settings"], "cellSize">;
-    }): BlitGroup[];
+    }): SVGGroup[];
 };
 // #endregion
 
@@ -191,8 +188,13 @@ export type Layer<LP extends LayerProps = LayerProps> = {
         layerEvent: Omit<PointerMoveOrDown, "points"> & LayerEventEssentials<LP>,
     ) => Point[];
     handleEvent: (layerEvent: LayerEvent<LP>) => LayerHandlerResult<LP>;
-    getBlits: (data: Omit<LayerEventEssentials<LP>, "tempStorage">) => BlitGroup[];
-    getOverlayBlits?: (data: Omit<LayerEventEssentials<LP>, "tempStorage">) => BlitGroup[];
+    getSVG: (
+        data: Omit<LayerEventEssentials<LP>, "tempStorage"> & {
+            /** ObjectId => className(s) as a string */
+            // TODO: styleGroups: Map<ObjectId, string>;
+        },
+    ) => SVGGroup[];
+    getOverlaySVG?: (data: Omit<LayerEventEssentials<LP>, "tempStorage">) => SVGGroup[];
 };
 
 export type LayerClass<LP extends LayerProps = LayerProps> = {
@@ -230,18 +232,29 @@ export type History = {
     index: number;
 };
 
-export type StorageReducer<Type> = (puzzle: PuzzleManager, arg: Type) => Type;
+export type PuzzleForStorage = {
+    grid: Pick<PuzzleManager["grid"], "id">;
+    settings: Pick<PuzzleManager["settings"], "editMode">;
+};
+export type StorageReducer<Type> = (puzzle: PuzzleForStorage, arg: Type) => Type;
 // #endregion
 
 // #region - Rendering
 export type RenderChange =
     | { type: "draw"; layerIds: Layer["id"][] | "all" }
     | { type: "delete"; layerId: Layer["id"] }
-    | { type: "switchLayer" }
-    | { type: "reorder" };
+    | { type: "switchLayer" };
 
-// TODO: More specific types
-export type BlitGroup = LineBlits | TextBlits | PolygonBlits;
+type Elements<T> = Map<ObjectId, React.SVGAttributes<T>>;
+export type TextSVGGroup = { id: string; type: "text"; elements: Elements<SVGTextElement> };
+export type LineSVGGroup = { id: string; type: "line"; elements: Elements<SVGLineElement> };
+export type PolygonSVGGroup = {
+    id: string;
+    type: "polygon";
+    elements: Elements<SVGPolygonElement>;
+};
+
+export type SVGGroup = TextSVGGroup | LineSVGGroup | PolygonSVGGroup;
 // #endregion
 
 // #region - Parsing

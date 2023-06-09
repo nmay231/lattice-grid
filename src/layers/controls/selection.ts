@@ -6,9 +6,11 @@ import {
     LayerProps,
     PartialHistoryAction,
     Point,
+    PolygonSVGGroup,
 } from "../../types";
-import { errorNotification } from "../../utils/DOMUtils";
+import { notify } from "../../utils/notifications";
 import { stringifyAnything } from "../../utils/string";
+import styles from "../layers.module.css";
 
 export interface SelectedProps extends LayerProps {
     TempStorage: {
@@ -94,7 +96,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
         switch (event.type) {
             case "cancelAction": {
                 history = internal.objects.keys().map((id) => obj({ id, object: null }));
-                return { discontinueInput: true, history };
+                return { history };
             }
             case "delete":
             case "keyDown": {
@@ -126,7 +128,6 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                         // Batch all of the external layer's actions together
                         batchId,
                     })),
-                    discontinueInput: true,
                 };
             }
             case "pointerDown":
@@ -195,11 +196,10 @@ export const handleEventsSelection = <LP extends SelectedProps>(
             case "pointerUp": {
                 if (tempStorage.removeSingle) {
                     return {
-                        discontinueInput: true,
                         history: [obj({ id: internal.objects.keys()[0], object: null })],
                     };
                 }
-                return { discontinueInput: true };
+                return {};
             }
             case "undoRedo": {
                 const newIds = event.actions.map(({ objectId: id }) => id);
@@ -216,11 +216,10 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                     // TODO: This implicitly removes group information (b/c state=2). However, it seems really difficult to resolve unless selections are kept in history, but that opens up a whole can of worms.
                     ...newIds.map((id) => obj({ id, object: { state: 2 } })),
                 );
-                return { history, discontinueInput: true };
+                return { history };
             }
             default: {
-                throw errorNotification({
-                    error: null,
+                throw notify.error({
                     message: `Unknown event in selected layer ${
                         layer.displayName
                     }: ${stringifyAnything(event)}`,
@@ -230,16 +229,17 @@ export const handleEventsSelection = <LP extends SelectedProps>(
         }
     };
 
-    layer.getOverlayBlits = ({ grid, storage, settings }) => {
+    layer.getOverlaySVG = ({ grid, storage, settings }) => {
         // TODO: Selection can be made by multiple layers, but not all layers support the same cells/corners selection. In the future, I need to filter the points by the type of points selectable by the current layer.
         const stored = storage.getStored<InternalProps>({ grid, layer: { id: layerId } });
         const points = stored.objects.keys().filter((key) => stored.objects.get(key).state);
         const states = points.map((id) => stored.objects.get(id).state);
         const pt = grid.getPointTransformer(settings);
 
-        const blits: Record<string, any> = {};
+        const elements: PolygonSVGGroup["elements"] = new Map();
 
         if (points.length) {
+            const className = styles.selection;
             for (const group of new Set(states)) {
                 const [, cells] = pt.fromPoints(
                     "cells",
@@ -248,23 +248,10 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                 const shrinkwrap = pt.shrinkwrap(cells, { inset: 3 });
 
                 for (const [key, points] of Object.entries(shrinkwrap)) {
-                    blits[`${group}-${key}`] = { points };
+                    elements.set(`${group}-${key}`, { className, points: points.join(" ") });
                 }
             }
         }
-        return [
-            {
-                id: "selection",
-                blitter: "polygon",
-                blits,
-                style: {
-                    stroke: "#00F9",
-                    strokeWidth: 6,
-                    strokeLinejoin: "round",
-                    fill: "none",
-                },
-                renderOnlyWhenFocused: true,
-            },
-        ];
+        return [{ id: "selection", type: "polygon", elements }];
     };
 };

@@ -1,10 +1,10 @@
 import { hopStraight } from "../algorithms/hopStraight";
-import { LineBlits } from "../components/SVGCanvas/Line";
-import { Grid, Point, PointType, TupleVector } from "../types";
+import { Grid, LineSVGGroup, Point, PointType, PolygonSVGGroup, TupleVector } from "../types";
 import { parseIntBase } from "../utils/data";
-import { errorNotification } from "../utils/DOMUtils";
 import { Vec } from "../utils/math";
+import { notify } from "../utils/notifications";
 import { randomStringId } from "../utils/string";
+import styles from "./styles.module.css";
 
 export type SquareGridParams = {
     type: "square";
@@ -34,10 +34,7 @@ class _SquareGridPoints<PT extends PointType = PointType> {
         const t2t = `${this.type}->${type}` as `${PointType}->${PointType}`;
 
         if (t2t === "cells->cells" || t2t === "corners->corners" || t2t === "edges->edges") {
-            throw errorNotification({
-                error: null,
-                message: "trying to find points adjacent to its own type",
-            });
+            throw notify.error({ message: "trying to find points adjacent to its own type" });
         }
 
         const map = new Map<Vec, Vec[]>();
@@ -151,8 +148,7 @@ export class _SquareGridTransformer {
         const secondary = sorters[direction[1]];
 
         if (!primary || !secondary) {
-            throw errorNotification({
-                error: null,
+            throw notify.error({
                 message: `direction=${direction} must be two characters made from "NESW"`,
             });
         }
@@ -223,8 +219,7 @@ export class _SquareGridTransformer {
 
         const theEggShellWasEmpty = () => {
             // :P
-            return errorNotification({
-                error: null,
+            return notify.error({
                 message: "Shrinkwrap: the generated edgeShell was unexpectedly empty",
             });
         };
@@ -280,10 +275,7 @@ export class _SquareGridTransformer {
                 startingEdge = edge;
             }
         }
-        throw errorNotification({
-            error: null,
-            message: "Max iteration reached in shrinkwrap algorithm",
-        });
+        throw notify.error({ message: "Max iteration reached in shrinkwrap algorithm" });
     }
 }
 
@@ -462,11 +454,7 @@ export class SquareGrid implements Grid {
             }
             return arr;
         } else {
-            throw errorNotification({
-                error: null,
-                message: `Unrecognized point type=${type}`,
-                forever: true,
-            });
+            throw notify.error({ message: `Unrecognized point type=${type}`, forever: true });
         }
     }
 
@@ -474,7 +462,7 @@ export class SquareGrid implements Grid {
         return this._getAllGridPoints(type).map(({ x, y }) => `${x},${y}`);
     }
 
-    _getBlits: Grid["_getBlits"] = ({ blacklist, settings }) => {
+    _getSVG: Grid["_getSVG"] = ({ blacklist, settings }) => {
         const pt = this.getPointTransformer(settings);
         const minX = 2 * this.x0 - 1;
         const minY = 2 * this.y0 - 1;
@@ -506,11 +494,11 @@ export class SquareGrid implements Grid {
             }
         }
         if (outlierCorner) {
-            errorNotification({ error: null, message: "Could not remove extra grid border" });
+            notify.error({ message: "Could not remove extra grid border" });
         }
-        const outline: Record<string, any> = {};
+        const outline: PolygonSVGGroup["elements"] = new Map();
         for (const [key, points] of Object.entries(shrinkwrap)) {
-            outline[key] = { points };
+            outline.set(key, { points: points.join(" "), className: styles.gridSolidOutline });
         }
 
         const edgeBlacklist = new Set<Point>();
@@ -521,7 +509,7 @@ export class SquareGrid implements Grid {
             edgeBlacklist.add(point.plus([0, 1]).xy.join(","));
         }
 
-        const edges: LineBlits["blits"] = {};
+        const edges: LineSVGGroup["elements"] = new Map();
         const edgePoints = this.getAllPoints("edges").filter((edge) => !edgeBlacklist.has(edge));
         const [edgeMap] = pt.fromPoints("edges", edgePoints);
 
@@ -530,30 +518,25 @@ export class SquareGrid implements Grid {
             const cornerOffset: TupleVector = edge.x & 1 ? [1, 0] : [0, 1];
             const a = edge.minus(cornerOffset).scale(halfCell);
             const b = edge.plus(cornerOffset).scale(halfCell);
-            edges[key] = { x1: a.x, y1: a.y, x2: b.x, y2: b.y };
+            edges.set(key, {
+                x1: a.x,
+                y1: a.y,
+                x2: b.x,
+                y2: b.y,
+                className: styles.gridInternalLines,
+            });
         }
 
         return [
             {
                 id: "grid",
-                blitter: "line",
-                blits: edges,
-                style: {
-                    stroke: "black",
-                    strokeWidth: 2,
-                    strokeLinecap: "square",
-                },
+                type: "line",
+                elements: edges,
             },
             {
                 id: "outline",
-                blitter: "polygon",
-                blits: outline,
-                style: {
-                    stroke: "black",
-                    strokeWidth: 10,
-                    strokeLinejoin: "miter",
-                    fill: "none",
-                },
+                type: "polygon",
+                elements: outline,
             },
         ];
 

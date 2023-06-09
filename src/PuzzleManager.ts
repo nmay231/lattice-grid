@@ -1,4 +1,5 @@
 import { arrayMove } from "@dnd-kit/sortable";
+import { isEqual } from "lodash";
 import { proxy } from "valtio";
 import { ControlsManager } from "./ControlsManager";
 import { SquareGrid } from "./grids/SquareGrid";
@@ -7,7 +8,6 @@ import { CellOutlineLayer } from "./layers/CellOutline";
 import { SELECTION_ID } from "./layers/controls/selection";
 import { NumberLayer } from "./layers/Number";
 import { OverlayLayer } from "./layers/Overlay";
-import { blitGroupsProxy } from "./state/blits";
 import { canvasSizeProxy } from "./state/canvasSize";
 import { StorageManager } from "./StorageManager";
 import {
@@ -17,13 +17,15 @@ import {
     LayerClass,
     LocalStorageData,
     NeedsUpdating,
+    ObjectId,
     PageMode,
     RenderChange,
+    SVGGroup,
     UnknownObject,
     ValtioRef,
 } from "./types";
-import { errorNotification } from "./utils/DOMUtils";
 import { valtioRef } from "./utils/imports/valtio";
+import { notify } from "./utils/notifications";
 import { IndexedOrderedMap } from "./utils/OrderedMap";
 import { LatestTimeout } from "./utils/primitiveWrappers";
 import { stringifyAnything } from "./utils/string";
@@ -32,19 +34,19 @@ export class PuzzleManager {
     layers = proxy(new IndexedOrderedMap<ValtioRef<Layer>>((layer) => !layer.ethereal));
     UILayer = availableLayers["OverlayLayer"].create(this);
     CellOutlineLayer = availableLayers["CellOutlineLayer"].create(this);
+    SVGGroups = proxy({} as Record<Layer["id"], ValtioRef<SVGGroup[]>>);
 
     grid: Grid = new SquareGrid();
     storage = new StorageManager();
     controls = new ControlsManager(this);
+    answers = new Map<Layer["id"], Record<ObjectId, UnknownObject>>();
+
     settings = proxy({
         editMode: "question" as EditMode,
         pageMode: "edit" as PageMode,
         debugging: false,
         borderPadding: 60,
         cellSize: 60,
-        // The time window allowed between parts of a single action, e.g. typing a two-digit number
-        // TODO: This might still be used, but not any time soon and definitely not for the reason above.
-        actionWindowMs: 600,
     });
 
     startUp() {
@@ -59,14 +61,11 @@ export class PuzzleManager {
         this.storage.addStorage({ grid: this.grid, layer: { id: SELECTION_ID } });
 
         // Guarantee that these layers will be present even if the saved puzzle fails to add them
-        const requiredLayers = [CellOutlineLayer, OverlayLayer];
-        for (const layer of requiredLayers) {
-            this.addLayer(layer, null);
-        }
+        this.addLayer(OverlayLayer, null);
+        this.addLayer(CellOutlineLayer, null);
     }
 
     loadPuzzle() {
-        this.resetLayers();
         const local = localStorage.getItem("_currentPuzzle");
         if (!local) {
             this.freshPuzzle();
@@ -74,11 +73,12 @@ export class PuzzleManager {
         }
 
         try {
+            this.resetLayers();
             const data = JSON.parse(local);
             this._loadPuzzle(data as NeedsUpdating); // TODO: zod verification?
             this.renderChange({ type: "draw", layerIds: "all" });
         } catch (error: NeedsUpdating) {
-            errorNotification({
+            notify.error({
                 error: error as Error,
                 message: "Failed to load puzzle from local storage",
             });
@@ -94,10 +94,10 @@ export class PuzzleManager {
     }
 
     _loadPuzzle(data: LocalStorageData) {
-        this.grid.setParams(data.grid);
         for (const { id, type: layerClass, rawSettings } of data.layers) {
             this.addLayer(availableLayers[layerClass], id, rawSettings);
         }
+        this.grid.setParams(data.grid);
     }
 
     resizeCanvas() {
@@ -114,21 +114,18 @@ export class PuzzleManager {
             return;
         }
 
-        if (change.type === "reorder") {
-            // I don't need to do anything because render order is handled by layersAtom
-            // TODO: Remove this change event? It would mainly be useful for future subscribing features.
-        } else if (change.type === "delete") {
-            delete blitGroupsProxy[change.layerId];
+        if (change.type === "delete") {
+            delete this.SVGGroups[change.layerId];
         } else if (change.type === "switchLayer") {
             const layer = this.layers.get(currentLayerId);
 
-            blitGroupsProxy[`${this.UILayer.id}-question`] = valtioRef(
-                layer.getOverlayBlits?.({ ...this }) || [],
+            this.SVGGroups[`${this.UILayer.id}-question`] = valtioRef(
+                layer.getOverlaySVG?.({ ...this }) || [],
             );
         } else if (change.type === "draw") {
-            // Only render the overlay blits of the current layer
-            blitGroupsProxy[`${this.UILayer.id}-question`] = valtioRef(
-                this.layers.get(currentLayerId).getOverlayBlits?.({ ...this }) || [],
+            // Only render the overlay SVG of the current layer
+            this.SVGGroups[`${this.UILayer.id}-question`] = valtioRef(
+                this.layers.get(currentLayerId).getOverlaySVG?.({ ...this }) || [],
             );
 
             // TODO: Allowing layerIds === "all" is mostly used for resizing the grid. How to efficiently redraw layers that depend on the size of the grid. Are there even layers other than grids that need to rerender on resizes? If there are, should they have to explicitly subscribe to these events?
@@ -139,17 +136,42 @@ export class PuzzleManager {
             for (const layerId of layerIds) {
                 for (const editMode of ["question", "answer"] satisfies EditMode[]) {
                     const layer = this.layers.get(layerId);
-                    blitGroupsProxy[`${layer.id}-${editMode}`] = valtioRef(
-                        layer.getBlits({
+                    this.SVGGroups[`${layer.id}-${editMode}`] = valtioRef(
+                        layer.getSVG({
                             ...this,
                             settings: { ...this.settings, editMode },
                         }),
                     );
                 }
             }
+
+            // Quick and dirty answer check
+            if (this.settings.pageMode === "play" && this.answers.size) {
+                // TODO: This assumes that all objects can be checked to be equal using recursive equality. Some objects might have hidden state that is not relevant to answer checking
+                let correct = true;
+                for (const [layerId, expected] of this.answers.entries()) {
+                    const actual = this.storage
+                        .getStored({ layer: { id: layerId }, grid: this.grid })
+                        .getObjectsByGroup("answer").map;
+
+                    if (!isEqual(expected, actual)) {
+                        correct = false;
+                        break;
+                    }
+                }
+
+                if (correct) {
+                    notify.info({
+                        title: "Yay! You solved it",
+                        message: "your answer matches the setter's answer",
+                        forever: true,
+                    });
+                    // Clear to reset checking and only display one notification
+                    this.answers = new Map();
+                }
+            }
         } else {
-            throw errorNotification({
-                error: null,
+            throw notify.error({
                 message: `Failed to render to canvas: ${stringifyAnything(change)}`,
             });
         }
@@ -227,14 +249,12 @@ export class PuzzleManager {
         const from = layers.order.indexOf(beingMoved);
         const to = layers.order.indexOf(target);
         if (from === -1 || to === -1) {
-            throw errorNotification({
-                error: null,
+            throw notify.error({
                 message: `shuffleLayerOnto: One of ${beingMoved} => ${target} not in ${layers.keys()}`,
             });
         }
 
         layers.order.splice(0, layers.order.length, ...arrayMove(layers.order, from, to));
-        this.renderChange({ type: "reorder" });
     }
 
     focusCurrentLayer() {
@@ -244,8 +264,7 @@ export class PuzzleManager {
                 `[data-layerid="${this.layers.currentKey}"]`,
             );
             if (!elm) {
-                throw errorNotification({
-                    error: null,
+                throw notify.error({
                     message: `focusCurrentLayer: Unable to focus the current LayerItem ${this.layers.currentKey}`,
                 });
             }
@@ -262,10 +281,7 @@ export class PuzzleManager {
 
         const oldLayerId = this.layers.currentKey;
         if (!this.layers.select(layerId)) {
-            throw errorNotification({
-                error: null,
-                message: "selectLayer: trying to select a non-existent layer",
-            });
+            throw notify.error({ message: "selectLayer: trying to select a non-existent layer" });
         }
 
         if (oldLayerId !== layerId) {

@@ -37,7 +37,7 @@ export class LayerStorage<LP extends LayerProps = LayerProps> {
     permStorage: Partial<LP["PermStorage"]> = {};
     groups = new DisjointSets<StorageMode>();
 
-    /** Mostly used for testing */
+    /** Was mostly used for testing, should probably be updated to be more convenient and general */
     static fromObjects<LP extends LayerProps>({
         ids,
         objs,
@@ -55,6 +55,22 @@ export class LayerStorage<LP extends LayerProps = LayerProps> {
         });
 
         return storage satisfies LayerStorageJSON;
+    }
+
+    getObjectsByGroup(group: StorageMode) {
+        const result = new OrderedMap<LP["ObjectState"]>();
+        const groupIds = this.groups.getGroup(group);
+        for (const [id, obj] of this.objects.entries()) {
+            if (groupIds.has(id)) result.set(id, obj);
+        }
+        return result;
+    }
+
+    clearGroup(group: StorageMode) {
+        for (const id of this.groups.getGroup(group)) {
+            this.objects.delete(id);
+            this.groups.deleteKey(id);
+        }
     }
 
     toJSON(): LayerStorageJSON {

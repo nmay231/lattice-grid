@@ -1,7 +1,7 @@
-import { PolygonBlits } from "../components/SVGCanvas/Polygon";
-import { Layer, LayerClass } from "../types";
-import { BaseLayer, methodNotImplemented } from "./BaseLayer";
+import { Layer, LayerClass, PolygonSVGGroup } from "../types";
+import { BaseLayer } from "./BaseLayer";
 import { handleEventsCurrentSetting, OnePointProps } from "./controls/onePoint";
+import styles from "./layers.module.css";
 
 type Color = string;
 
@@ -23,8 +23,6 @@ export class BackgroundColorLayer
     static defaultSettings = { selectedState: "blue" };
 
     settings = this.rawSettings;
-    handleEvent = methodNotImplemented({ name: "BackgroundColor.handleEvent" });
-    gatherPoints = methodNotImplemented({ name: "BackgroundColor.gatherPoints" });
 
     static create = ((puzzle): BackgroundColorLayer => {
         return new BackgroundColorLayer(BackgroundColorLayer, puzzle);
@@ -70,7 +68,7 @@ export class BackgroundColorLayer
         return {};
     };
 
-    getBlits: IBackgroundColorLayer["getBlits"] = ({ grid, storage, settings }) => {
+    getSVG: IBackgroundColorLayer["getSVG"] = ({ grid, storage, settings }) => {
         const stored = storage.getStored<BackgroundColorProps>({ grid, layer: this });
         const group = stored.groups.getGroup(settings.editMode);
         const renderOrder = stored.objects.keys().filter((id) => group.has(id));
@@ -79,23 +77,19 @@ export class BackgroundColorLayer
         const [cellMap, cells] = pt.fromPoints("cells", renderOrder);
         const [outlineMap] = pt.svgOutline(cells);
 
-        const objectsByColor: Record<Color, PolygonBlits["blits"]> = {};
+        const elements: PolygonSVGGroup["elements"] = new Map();
         for (const id of renderOrder) {
-            const { state } = stored.objects.get(id);
+            const { state: color } = stored.objects.get(id);
             const outline = outlineMap.get(cellMap.get(id));
             if (!outline) continue; // TODO?
-            objectsByColor[state] = objectsByColor[state] ?? {};
-            objectsByColor[state][id] = {
-                points: outline.map((vec) => vec.xy.join(",")),
-            };
+
+            elements.set(id, {
+                className: styles.backgroundColor,
+                fill: color,
+                points: outline.map((vec) => vec.xy.join(",")).join(" "),
+            });
         }
 
-        return Object.keys(objectsByColor).map((color) => ({
-            id: color,
-            blitter: "polygon",
-            // TODO: Should I keep stroke(Width) even after I allow putting this layer under the grid? It might be cleaner to keep the border so that it looks okay when placed outside of the grid. In any case, I can always add an option.
-            style: { fill: color, strokeWidth: 2, stroke: "black" },
-            blits: objectsByColor[color],
-        }));
+        return [{ id: "backgroundColor", type: "polygon", elements }];
     };
 }

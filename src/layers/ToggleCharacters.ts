@@ -1,8 +1,8 @@
-import { TextBlits } from "../components/SVGCanvas/Text";
-import { Layer, LayerClass } from "../types";
-import { errorNotification } from "../utils/DOMUtils";
-import { BaseLayer, methodNotImplemented } from "./BaseLayer";
+import { Layer, LayerClass, TextSVGGroup } from "../types";
+import { notify } from "../utils/notifications";
+import { BaseLayer } from "./BaseLayer";
 import { handleEventsSelection, KeyDownEventHandler, SelectedProps } from "./controls/selection";
+import styles from "./layers.module.css";
 
 type RawSettings = {
     // caseSwap allows upper- and lower-case letters to be used as separate characters but to be merged if there's no ambiguity.
@@ -37,8 +37,6 @@ export class ToggleCharactersLayer
     };
 
     settings = this.rawSettings;
-    handleEvent = methodNotImplemented({ name: "ToggleCharacters.handleEvent" });
-    gatherPoints = methodNotImplemented({ name: "ToggleCharacters.gatherPoints" });
 
     static create = ((puzzle): ToggleCharactersLayer => {
         return new ToggleCharactersLayer(ToggleCharactersLayer, puzzle);
@@ -108,10 +106,7 @@ export class ToggleCharactersLayer
 
         handleEventsSelection(this, {});
 
-        const { objects } = storage.getStored<ToggleCharactersProps>({
-            grid,
-            layer: this,
-        });
+        const { objects } = storage.getStored<ToggleCharactersProps>({ grid, layer: this });
 
         const history = [];
 
@@ -141,10 +136,7 @@ export class ToggleCharactersLayer
         if (!ids?.length) {
             return {};
         }
-        const stored = storage.getStored<ToggleCharactersProps>({
-            grid,
-            layer: this,
-        });
+        const stored = storage.getStored<ToggleCharactersProps>({ grid, layer: this });
 
         if (keypress === "Delete") {
             return {
@@ -183,11 +175,8 @@ export class ToggleCharactersLayer
         };
     };
 
-    getBlits: IToggleCharactersLayer["getBlits"] = ({ grid, storage, settings }) => {
-        const stored = storage.getStored<ToggleCharactersProps>({
-            grid,
-            layer: this,
-        });
+    getSVG: IToggleCharactersLayer["getSVG"] = ({ grid, storage, settings }) => {
+        const stored = storage.getStored<ToggleCharactersProps>({ grid, layer: this });
         const group = stored.groups.getGroup(settings.editMode);
         const ids = stored.objects.keys().filter((id) => group.has(id));
 
@@ -196,57 +185,54 @@ export class ToggleCharactersLayer
         const toSVG = cells.toSVGPoints();
         const maxRadius = pt.maxRadius({ type: "cells", shape: "square", size: "lg" });
 
-        const blits: TextBlits["blits"] = {};
-        let style: TextBlits["style"];
+        const elements: TextSVGGroup["elements"] = new Map();
         if (this.settings.displayStyle === "center") {
-            style = { originX: "center", originY: "center" };
+            const className = [styles.textHorizontalCenter, styles.textVerticalCenter].join(" ");
             for (const [id, { state }] of stored.objects.entries()) {
                 const point = toSVG.get(cellMap.get(id));
                 if (!point) continue; // TODO?
-                blits[id] = {
-                    text: state,
-                    point,
-                    size: Math.min(maxRadius / 1.5, (maxRadius * 4) / (state.length + 1)),
-                };
+                elements.set(id, {
+                    className,
+                    children: state,
+                    x: point[0],
+                    y: point[1],
+                    fontSize: Math.min(maxRadius / 1.5, (maxRadius * 4) / (state.length + 1)),
+                });
             }
         } else if (this.settings.displayStyle === "topBottom") {
-            style = { originX: "left", originY: "center" };
+            const className = [styles.textLeft, styles.textVerticalCenter].join(" ");
             for (const [id, { state: text }] of stored.objects.entries()) {
                 const split = Math.max(2, Math.ceil(text.length / 2));
                 const point = toSVG.get(cellMap.get(id));
                 if (!point) continue; // TODO?
 
-                blits[`${id}-top`] = {
-                    text: text.slice(0, split),
-                    point: [point[0] - maxRadius / 1.2, point[1] - maxRadius / 1.5],
-                    size: maxRadius / 2,
+                elements.set(`${id}-top`, {
+                    className,
+                    children: text.slice(0, split),
+                    x: point[0] - maxRadius / 1.2,
+                    y: point[1] - maxRadius / 1.5,
+                    fontSize: maxRadius / 2,
                     textLength: 1.8 * maxRadius,
                     lengthAdjust: "spacing",
-                };
-                blits[`${id}-bottom`] = {
-                    text: text.slice(split),
-                    point: [point[0] - maxRadius / 1.2, point[1] + maxRadius / 1.5],
-                    size: maxRadius / 2,
+                });
+                elements.set(`${id}-bottom`, {
+                    className,
+                    children: text.slice(split),
+                    x: point[0] - maxRadius / 1.2,
+                    y: point[1] + maxRadius / 1.5,
+                    fontSize: maxRadius / 2,
                     textLength: 1.8 * maxRadius,
                     lengthAdjust: "spacing",
-                };
+                });
             }
         } else {
-            errorNotification({
-                error: null,
+            notify.error({
                 message: `Unknown displayStyle in ToggleCharacters ${this.settings.displayStyle}`,
                 forever: true,
             });
             return [];
         }
 
-        return [
-            {
-                id: "togglecharacters",
-                blitter: "text",
-                blits,
-                style,
-            },
-        ];
+        return [{ id: "toggleCharacters", type: "text", elements }];
     };
 }

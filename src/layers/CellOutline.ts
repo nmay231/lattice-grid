@@ -1,5 +1,5 @@
 import { Layer, LayerClass, ObjectId, Point } from "../types";
-import { BaseLayer, methodNotImplemented } from "./BaseLayer";
+import { BaseLayer } from "./BaseLayer";
 import { handleEventsCycleStates, OnePointProps } from "./controls/onePoint";
 
 type ObjectState = true;
@@ -21,13 +21,6 @@ export class CellOutlineLayer extends BaseLayer<CellOutlineProps> implements ICe
             CellOutlineLayer.uniqueInstance || new CellOutlineLayer(CellOutlineLayer, puzzle);
         return CellOutlineLayer.uniqueInstance;
     }) satisfies LayerClass<CellOutlineProps>["create"];
-
-    handleEvent: ICellOutlineLayer["handleEvent"] = methodNotImplemented({
-        name: "CellOutline.handleEvent",
-    });
-    gatherPoints: ICellOutlineLayer["gatherPoints"] = methodNotImplemented({
-        name: "CellOutline.gatherPoints",
-    });
 
     static controls = undefined;
     static constraints = undefined;
@@ -59,14 +52,11 @@ export class CellOutlineLayer extends BaseLayer<CellOutlineProps> implements ICe
         return {};
     }
 
-    getBlits: ICellOutlineLayer["getBlits"] = ({ settings, storage, grid }) => {
-        const stored = storage.getStored<CellOutlineProps>({
-            grid,
-            layer: this,
-        });
+    getSVG: ICellOutlineLayer["getSVG"] = ({ settings, storage, grid }) => {
+        const stored = storage.getStored<CellOutlineProps>({ grid, layer: this });
 
         const blacklist = stored.groups.getGroup("question");
         if (settings.editMode === "answer") return [];
-        return grid._getBlits({ blacklist, settings });
+        return grid._getSVG({ blacklist, settings });
     };
 }

@@ -1,14 +1,26 @@
 import fc from "fast-check";
 import { range, zip as lodashZip } from "lodash";
-import { maxReducer, parseIntBase, zip as ourZip } from "./data";
+import { parseIntBase, reduceTo, zip as ourZip } from "./data";
 import { FCNormalFloat, FCRepeat, given } from "./testing/fcArbitraries";
 
-describe("maxReducer", () => {
-    it("gives the same value as the last value after sorting the array", () => {
+describe("reduceTo", () => {
+    it.each([
+        { arr: [1, 3, 0, 2], max: 3, min: 0 },
+        { arr: [-3, -1, 0, -2], max: 0, min: -3 },
+    ])("finds the min/max value", ({ arr, max, min }) => {
+        expect(arr.reduce(reduceTo.max((a, b) => a - b))).toBe(max);
+        expect(arr.reduce(reduceTo.last((a, b) => a - b))).toBe(max);
+
+        expect(arr.reduce(reduceTo.min((a, b) => a - b))).toBe(min);
+        expect(arr.reduce(reduceTo.first((a, b) => a - b))).toBe(min);
+    });
+
+    it("gives the same value as the first/last value after sorting the array", () => {
         given([fc.array(FCNormalFloat(), { minLength: 1 }), fc.compareFunc()]).assertProperty(
             (array, sorter) => {
                 const sorted = [...array].sort(sorter);
-                expect(array.reduce(maxReducer<number>(sorter))).toBeCloseTo(
+                expect(array.reduce(reduceTo.min<number>(sorter))).toBeCloseTo(sorted[0]);
+                expect(array.reduce(reduceTo.max<number>(sorter))).toBeCloseTo(
                     sorted[sorted.length - 1],
                 );
             },

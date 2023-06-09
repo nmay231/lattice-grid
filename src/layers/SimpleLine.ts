@@ -1,7 +1,7 @@
-import { LineBlits } from "../components/SVGCanvas/Line";
-import { Layer, LayerClass, ObjectId, Point, PointType } from "../types";
-import { BaseLayer, methodNotImplemented } from "./BaseLayer";
+import { Layer, LayerClass, LineSVGGroup, ObjectId, Point, PointType } from "../types";
+import { BaseLayer } from "./BaseLayer";
 import { handleEventsCurrentSetting, TwoPointProps } from "./controls/twoPoint";
+import styles from "./layers.module.css";
 
 const pointTypes = {
     "Cell to Cell": "cells",
@@ -34,8 +34,6 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
         pointType: "cells",
         selectedState: { stroke: "green" },
     };
-    handleEvent = methodNotImplemented({ name: "SimpleLine.handleEvent" });
-    gatherPoints = methodNotImplemented({ name: "SimpleLine.gatherPoints" });
 
     static create = ((puzzle): SimpleLineLayer => {
         return new SimpleLineLayer(SimpleLineLayer, puzzle);
@@ -100,7 +98,6 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
             // TODO: Directional true/false is ambiguous. There are three types: lines and arrows with/without overlap
             directional: false,
             pointTypes: [this.settings.pointType],
-            stopOnFirstPoint: false,
             // TODO: Replace deltas with FSM
             deltas: [
                 { dx: 0, dy: 2 },
@@ -113,7 +110,7 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
         return { history: history || undefined };
     };
 
-    getBlits: ISimpleLineLayer["getBlits"] = ({ grid, storage, settings }) => {
+    getSVG: ISimpleLineLayer["getSVG"] = ({ grid, storage, settings }) => {
         const stored = storage.getStored<SimpleLineProps>({
             grid,
             layer: this,
@@ -128,7 +125,7 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
         const [pointMap, gridPoints] = pt.fromPoints(this.settings.pointType, allPoints);
         const toSVG = gridPoints.toSVGPoints();
 
-        const blits: LineBlits["blits"] = {};
+        const elements: LineSVGGroup["elements"] = new Map();
         for (const id of renderOrder) {
             const { state, points } = stored.objects.get(id);
             const first = toSVG.get(pointMap.get(points[0]));
@@ -136,19 +133,9 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
             if (!first || !second) continue; // TODO?
             const [x1, y1] = first;
             const [x2, y2] = second;
-            blits[id] = { style: state, x1, y1, x2, y2 };
+            elements.set(id, { className: styles.simpleLine, ...state, x1, y1, x2, y2 });
         }
 
-        return [
-            {
-                id: "lines",
-                blitter: "line",
-                blits,
-                style: {
-                    strokeWidth: 4,
-                    strokeLinecap: "round",
-                },
-            },
-        ];
+        return [{ id: "lines", type: "line", elements }];
     };
 }

@@ -1,7 +1,7 @@
 import fc from "fast-check";
 import { shuffle } from "lodash";
 import { TupleVector } from "../types";
-import { maxReducer } from "../utils/data";
+import { reduceTo } from "../utils/data";
 import { Vec } from "../utils/math";
 import { smartSort } from "../utils/string";
 import { FCRepeat, given } from "../utils/testing/fcArbitraries";
@@ -78,62 +78,48 @@ describe("SquareGrid", () => {
     });
 
     // TODO: Testing implementation, not behavior. Replace with some sorta image snapshot testing.
-    it("_getBlits()", () => {
-        let [edges, shrinkwrap, ...rest] = smallGrid._getBlits({
+    it("_getSVG()", () => {
+        let [edges, shrinkwrap, ...rest] = smallGrid._getSVG({
             blacklist: new Set(),
             settings: { cellSize: 20 },
         });
 
         expect(rest).toEqual([]);
         expect(edges).toEqual({
-            blits: {
-                "1,2": { x1: -0, x2: 20, y1: 20, y2: 20 },
-                "2,1": { x1: 20, x2: 20, y1: -0, y2: 20 },
-                "2,3": { x1: 20, x2: 20, y1: 20, y2: 40 },
-                "3,2": { x1: 20, x2: 40, y1: 20, y2: 20 },
-            },
-            blitter: "line",
+            elements: new Map([
+                ["1,2", { className: expect.any(String), x1: -0, x2: 20, y1: 20, y2: 20 }],
+                ["2,1", { className: expect.any(String), x1: 20, x2: 20, y1: -0, y2: 20 }],
+                ["3,2", { className: expect.any(String), x1: 20, x2: 40, y1: 20, y2: 20 }],
+                ["2,3", { className: expect.any(String), x1: 20, x2: 20, y1: 20, y2: 40 }],
+            ]),
             id: "grid",
-            style: { stroke: "black", strokeLinecap: "square", strokeWidth: 2 },
+            type: "line",
         });
         expect(shrinkwrap).toEqual({
-            blits: { "0": { points: ["-4,-4", "-4,44", "44,44", "44,-4"] } },
-            blitter: "polygon",
+            elements: new Map([
+                ["0", { className: expect.any(String), points: "-4,-4 -4,44 44,44 44,-4" }],
+            ]),
             id: "outline",
-            style: { fill: "none", stroke: "black", strokeLinejoin: "miter", strokeWidth: 10 },
+            type: "polygon",
         });
 
         // Remove the bottom left and top right corners
-        [edges, shrinkwrap, ...rest] = smallGrid._getBlits({
+        [edges, shrinkwrap, ...rest] = smallGrid._getSVG({
             blacklist: new Set(["1,1", "3,3"]),
             settings: { cellSize: 20 },
         });
 
         expect(rest).toEqual([]);
         expect(edges).toEqual({
-            blits: {},
-            blitter: "line",
+            elements: new Map(),
             id: "grid",
-            style: { stroke: "black", strokeLinecap: "square", strokeWidth: 2 },
+            type: "line",
         });
+        const points = "-4,16 -4,44 24,44 24,24 44,24 44,-4 16,-4 16,16";
         expect(shrinkwrap).toEqual({
-            blits: {
-                "0": {
-                    points: [
-                        "-4,16",
-                        "-4,44",
-                        "24,44",
-                        "24,24",
-                        "44,24",
-                        "44,-4",
-                        "16,-4",
-                        "16,16",
-                    ],
-                },
-            },
-            blitter: "polygon",
+            elements: new Map([["0", { className: expect.any(String), points }]]),
             id: "outline",
-            style: { fill: "none", stroke: "black", strokeLinejoin: "miter", strokeWidth: 10 },
+            type: "polygon",
         });
     });
 });
@@ -304,7 +290,7 @@ describe("SquareGridTransformer.shrinkwrap", () => {
 
     // The shrinkwrap is only guaranteed to give the outline in a clockwise direction; we don't know which corner will be given first. This function "rotates" the array to a consistent start (with the max at the start)
     const putMaxAtStart = (arr: string[]) => {
-        const max = arr.reduce(maxReducer(smartSort));
+        const max = arr.reduce(reduceTo.max(smartSort));
         const index = arr.indexOf(max);
         return [...arr.slice(index), ...arr.slice(0, index)];
     };

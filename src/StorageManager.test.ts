@@ -1,6 +1,14 @@
 import { cloneDeep } from "lodash";
-import { PuzzleForStorage, StorageManager } from "./StorageManager";
-import { EditMode, Grid, History, HistoryAction, Layer, UnknownObject } from "./types";
+import { StorageManager } from "./StorageManager";
+import {
+    EditMode,
+    Grid,
+    History,
+    HistoryAction,
+    Layer,
+    PuzzleForStorage,
+    UnknownObject,
+} from "./types";
 
 type HistoryEntries = Array<[string, UnknownObject]>;
 
@@ -31,14 +39,14 @@ const gridLayer = (grid: Grid["id"], layer: Layer["id"]) => ({
 describe("StorageManager", () => {
     it("adds a new object correctly", () => {
         const storage = getNormalStorage();
-        const { objects, groups } = storage.getStored(gridLayer("grid", "layer1"));
+        const stored = storage.getStored(gridLayer("grid", "layer1"));
         const action: HistoryAction = {
             objectId: "objectId",
             layerId: "layer1",
             object: { asdf: "something" },
             nextObjectId: null,
         };
-        storage._ApplyHistoryAction({ objects, groups, action, storageMode: "question" });
+        storage._applyHistoryAction({ stored, action, storageMode: "question" });
 
         expect(storage.objects["grid"]["layer1"].objects.entries()).toEqual<HistoryEntries>([
             ["objectId", { asdf: "something" }],
@@ -47,29 +55,29 @@ describe("StorageManager", () => {
 
     it("deletes an object correctly", () => {
         const storage = getNormalStorage();
-        const { objects, groups } = storage.getStored(gridLayer("grid", "layer1"));
+        const stored = storage.getStored(gridLayer("grid", "layer1"));
         const action: HistoryAction = {
             objectId: "objectId",
             layerId: "layer1",
             object: null,
             nextObjectId: null,
         };
-        storage._ApplyHistoryAction({ objects, groups, action, storageMode: "question" });
+        storage._applyHistoryAction({ stored, action, storageMode: "question" });
 
         expect(storage.objects["grid"]["layer1"].objects.entries()).toEqual<HistoryEntries>([]);
     });
 
     it("object placement should be idempotent", () => {
         const storage = getNormalStorage();
-        const { objects, groups } = storage.getStored(gridLayer("grid", "layer1"));
+        const stored = storage.getStored(gridLayer("grid", "layer1"));
         const action: HistoryAction = {
             objectId: "objectId",
             layerId: "layer1",
             object: { asdf: "something" },
             nextObjectId: null,
         };
-        storage._ApplyHistoryAction({ objects, groups, action, storageMode: "question" });
-        storage._ApplyHistoryAction({ objects, groups, action, storageMode: "question" });
+        storage._applyHistoryAction({ stored, action, storageMode: "question" });
+        storage._applyHistoryAction({ stored, action, storageMode: "question" });
 
         expect(storage.objects["grid"]["layer1"].objects.entries()).toEqual<HistoryEntries>([
             ["objectId", { asdf: "something" }],
@@ -78,34 +86,29 @@ describe("StorageManager", () => {
 
     it("object deletion should be idempotent", () => {
         const storage = getNormalStorage();
-        const { objects, groups } = storage.getStored(gridLayer("grid", "layer1"));
+        const stored = storage.getStored(gridLayer("grid", "layer1"));
         const action: HistoryAction = {
             objectId: "objectId",
             layerId: "layer1",
             object: null,
             nextObjectId: null,
         };
-        storage._ApplyHistoryAction({ objects, groups, action, storageMode: "question" });
-        storage._ApplyHistoryAction({ objects, groups, action, storageMode: "question" });
+        storage._applyHistoryAction({ stored, action, storageMode: "question" });
+        storage._applyHistoryAction({ stored, action, storageMode: "question" });
 
         expect(storage.objects["grid"]["layer1"].objects.entries()).toEqual<HistoryEntries>([]);
     });
 
     it("returns the same object when inverted twice", () => {
         const storage = getNormalStorage();
-        const { objects, groups } = storage.getStored(gridLayer("grid", "layer1"));
+        const stored = storage.getStored(gridLayer("grid", "layer1"));
         const action: HistoryAction = {
             objectId: "objectId",
             layerId: "layer1",
             object: { asdf: "something" },
             nextObjectId: null,
         };
-        const inverse = storage._ApplyHistoryAction({
-            objects,
-            groups,
-            action,
-            storageMode: "question",
-        });
+        const inverse = storage._applyHistoryAction({ stored, action, storageMode: "question" });
         expect(inverse).toEqual<HistoryAction>({
             objectId: "objectId",
             layerId: "layer1",
@@ -113,12 +116,7 @@ describe("StorageManager", () => {
             nextObjectId: null,
         });
 
-        const sameAction = storage._ApplyHistoryAction({
-            objects,
-            groups,
-            action,
-            storageMode: "question",
-        });
+        const sameAction = storage._applyHistoryAction({ stored, action, storageMode: "question" });
         expect(sameAction).toEqual<HistoryAction>(action);
     });
 

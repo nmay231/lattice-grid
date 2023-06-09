@@ -1,18 +1,7 @@
 import { cloneDeep } from "lodash";
 import { PuzzleManager } from "../PuzzleManager";
 import { Layer, LayerClass, LayerProps } from "../types";
-import { errorNotification } from "../utils/DOMUtils";
-
-/** I could annotate all attributes that are assigned at runtime with an exclamation to mark them as assigned elsewhere (`attr!: type`), but then I don't have visibility into the cause of certain errors */
-export const methodNotImplemented = ({ name }: { name: string }) => {
-    return (): any => {
-        throw errorNotification({
-            error: null,
-            message: `Method: ${name} called before implementing!`,
-            forever: true,
-        });
-    };
-};
+import { notify } from "../utils/notifications";
 
 const randomId = (blacklist: Layer["id"][], suggested: Layer["id"]) => {
     let id: Layer["id"] = suggested;
@@ -24,7 +13,7 @@ const randomId = (blacklist: Layer["id"][], suggested: Layer["id"]) => {
 };
 
 export abstract class BaseLayer<LP extends LayerProps>
-    implements Omit<Layer<LP>, "newSettings" | "getBlits">
+    implements Omit<Layer<LP>, "newSettings" | "getSVG">
 {
     static ethereal = true;
     static displayName = "INTERNAL_BASE_LAYER";
@@ -48,7 +37,17 @@ export abstract class BaseLayer<LP extends LayerProps>
         this.rawSettings = cloneDeep(klass.defaultSettings);
     }
 
-    abstract gatherPoints: Layer<LP>["gatherPoints"];
+    gatherPoints: Layer<LP>["gatherPoints"] = () => {
+        throw notify.error({
+            message: `${this.type}.gatherPoints() called before implementing!`,
+            forever: true,
+        });
+    };
 
-    abstract handleEvent: Layer<LP>["handleEvent"];
+    handleEvent: Layer<LP>["handleEvent"] = () => {
+        throw notify.error({
+            message: `${this.type}.handleEvent() called before implementing!`,
+            forever: true,
+        });
+    };
 }

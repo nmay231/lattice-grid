@@ -1,15 +1,15 @@
-import { PolygonBlits } from "../components/SVGCanvas/Polygon";
-import { TextBlits } from "../components/SVGCanvas/Text";
-import { Layer, LayerClass, NeedsUpdating } from "../types";
-import { maxReducer } from "../utils/data";
+import { Layer, LayerClass, NeedsUpdating, PolygonSVGGroup, TextSVGGroup } from "../types";
+import { reduceTo } from "../utils/data";
 import { Vec } from "../utils/math";
-import { BaseLayer, methodNotImplemented } from "./BaseLayer";
+import { notify } from "../utils/notifications";
+import { BaseLayer } from "./BaseLayer";
 import {
     handleEventsUnorderedSets,
     MultiPointKeyDownHandler,
     MultiPointLayerProps,
 } from "./controls/multiPoint";
 import { numberTyper } from "./controls/numberTyper";
+import styles from "./layers.module.css";
 
 interface KillerCagesProps extends MultiPointLayerProps {
     ObjectState: MultiPointLayerProps["ObjectState"] & { state: string | null };
@@ -27,21 +27,20 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
     static defaultSettings = { selectedState: "blue" };
 
     settings = this.rawSettings;
-    handleEvent = methodNotImplemented({ name: "KillerCages.handleEvent" });
-    gatherPoints = methodNotImplemented({ name: "KillerCages.gatherPoints" });
-    _numberTyper = methodNotImplemented({
-        name: "KillerCages._numberTyper",
-    }) as IKillerCagesLayer["_numberTyper"];
+
+    _numberTyper: IKillerCagesLayer["_numberTyper"] = () => {
+        throw notify.error({
+            message: `${this.type}._numberTyper() called before implementing!`,
+            forever: true,
+        });
+    };
 
     static create = ((puzzle): KillerCagesLayer => {
         return new KillerCagesLayer(KillerCagesLayer, puzzle);
     }) satisfies LayerClass<KillerCagesProps>["create"];
 
     _handleKeyDown: IKillerCagesLayer["_handleKeyDown"] = ({ type, keypress, grid, storage }) => {
-        const stored = storage.getStored<KillerCagesProps>({
-            layer: this,
-            grid,
-        });
+        const stored = storage.getStored<KillerCagesProps>({ grid, layer: this });
 
         if (!stored.permStorage.currentObjectId) return {};
 
@@ -78,17 +77,15 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
         return {};
     };
 
-    getBlits: IKillerCagesLayer["getBlits"] = ({ grid, storage, settings }) => {
-        const stored = storage.getStored<KillerCagesProps>({
-            grid,
-            layer: this,
-        });
+    getSVG: IKillerCagesLayer["getSVG"] = ({ grid, storage, settings }) => {
+        const stored = storage.getStored<KillerCagesProps>({ grid, layer: this });
         const group = stored.groups.getGroup(settings.editMode);
         const renderOrder = stored.objects.keys().filter((id) => group.has(id));
         const pt = grid.getPointTransformer(settings);
 
-        const cageBlits: PolygonBlits["blits"] = {};
-        const numberBlits: TextBlits["blits"] = {};
+        const cageElements: PolygonSVGGroup["elements"] = new Map();
+        const numberElements: TextSVGGroup["elements"] = new Map();
+        const textStyles = [styles.textTop, styles.textLeft].join(" ");
 
         for (const id of renderOrder) {
             const object = stored.objects.get(id);
@@ -98,55 +95,38 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
             const style =
                 id === stored.permStorage.currentObjectId ? { stroke: "#33F" } : undefined;
             for (const [key, wrap] of Object.entries(shrinkwrap)) {
-                cageBlits[`${id}-${key}`] = {
+                cageElements.set(`${id}-${key}`, {
+                    className: styles.killerCagesOutline,
                     style,
-                    points: wrap,
-                };
+                    points: wrap.join(" "),
+                });
             }
 
             if (object.state !== null) {
                 const topLeft = pt.sorter({ direction: "NW" });
-                const corner = cells.points.reduce(maxReducer(topLeft));
-
+                const corner = cells.points.reduce(reduceTo.first(topLeft));
                 const maxRadius = pt.maxRadius({ type: "cells", shape: "square", size: "lg" });
+                const point = corner
+                    .scale(settings.cellSize / 2)
+                    .plus(new Vec(1, 1).scale(-0.85 * maxRadius));
 
-                numberBlits[corner.xy.join(",")] = {
-                    text: object.state,
-                    point: corner
-                        .scale(settings.cellSize / 2)
-                        .plus(new Vec(1, 1).scale(-0.85 * maxRadius)).xy,
-                    size: 12,
-                };
+                numberElements.set(corner.xy.join(","), {
+                    className: textStyles,
+                    children: object.state, // TODO: I don't like this React concept leaking... Then again, className is sorta React specific.
+                    x: point.x,
+                    y: point.y,
+                    fontSize: "12px",
+                });
             }
         }
 
         return [
-            {
-                id: "killerCage",
-                blitter: "polygon",
-                blits: cageBlits,
-                style: {
-                    strokeDasharray: "7 3",
-                    strokeDashoffset: 3.5,
-                    stroke: "#333",
-                    strokeWidth: 1.8,
-                    strokeLinecap: "round",
-                    fill: "none",
-                },
-            },
-            {
-                id: "numbers",
-                blitter: "text",
-                blits: numberBlits,
-                style: {
-                    originX: "left",
-                    originY: "top",
-                },
-            },
+            { id: "killerCage", type: "polygon", elements: cageElements },
+            { id: "numbers", type: "text", elements: numberElements },
         ];
     };
 
-    getOverlayBlits: IKillerCagesLayer["getOverlayBlits"] = () => {
+    getOverlaySVG: IKillerCagesLayer["getOverlaySVG"] = () => {
         // TODO: Only render the current Killer Cage when focused
         return [];
     };

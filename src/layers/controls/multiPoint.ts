@@ -9,7 +9,7 @@ import {
     Point,
     PointType,
 } from "../../types";
-import { errorNotification } from "../../utils/DOMUtils";
+import { notify } from "../../utils/notifications";
 import { smartSort } from "../../utils/string";
 
 export interface MultiPointLayerProps extends LayerProps {
@@ -41,8 +41,7 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
     },
 ) => {
     if (!pointTypes?.length) {
-        throw errorNotification({
-            error: null,
+        throw notify.error({
             message: "Multipoint handler was not provided required parameters",
             forever: true,
         });
@@ -98,15 +97,11 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
                     return result;
                 }
                 stored.permStorage.currentObjectId = undefined;
-                return {
-                    discontinueInput: true,
-                    history: [{ id: currentObjectId, object: null }],
-                };
+                return { history: [{ id: currentObjectId, object: null }] };
             }
             case "cancelAction": {
                 stored.permStorage.currentObjectId = undefined;
                 return {
-                    discontinueInput: true,
                     history: [
                         // Force a rerender without polluting history
                         { id: currentObjectId, batchId: "ignore", object },
@@ -140,15 +135,10 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
                 // Start drawing a new object
                 tempStorage.removeSingle = false;
                 stored.permStorage.currentObjectId = startPoint;
-                return {
-                    history: [
-                        {
-                            id: startPoint,
-                            batchId,
-                            object: { points: [startPoint], state: null },
-                        },
-                    ],
-                };
+                const history = [
+                    { id: startPoint, batchId, object: { points: [startPoint], state: null } },
+                ];
+                return { history };
             }
             case "pointerMove": {
                 tempStorage.removeSingle = false;
@@ -186,7 +176,7 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
             }
             case "pointerUp": {
                 if (currentObjectId === undefined) {
-                    return { discontinueInput: true };
+                    return {};
                 }
                 const batchId = tempStorage.batchId;
 
@@ -200,7 +190,6 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
                     // Delete the object if empty
                     if (!objectCopy.points.length) {
                         return {
-                            discontinueInput: true,
                             history: [{ id: currentObjectId, batchId, object: null }],
                         };
                     }
@@ -210,12 +199,11 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
                 objectCopy.points.sort(smartSort);
                 const newId = objectCopy.points.join(";");
                 if (oldId === newId) {
-                    return { discontinueInput: true };
+                    return {};
                 }
 
                 stored.permStorage.currentObjectId = newId;
                 return {
-                    discontinueInput: true,
                     history: [
                         { id: oldId, batchId, object: null },
                         { id: newId, batchId, object: objectCopy },
@@ -228,17 +216,15 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
                 if (last.object !== null) {
                     stored.permStorage.currentObjectId = last.objectId;
                     return {
-                        discontinueInput: true,
                         // TODO: Force render
                         history: [{ ...last, id: last.objectId, batchId: "ignore" }],
                     };
                 }
                 stored.permStorage.currentObjectId = undefined;
-                return { discontinueInput: true };
+                return {};
             }
             default: {
-                throw errorNotification({
-                    error: null,
+                throw notify.error({
                     message: `Multipoint unknown event.type=${type}`,
                     forever: true,
                 });
