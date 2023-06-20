@@ -245,16 +245,12 @@ export type RenderChange =
     | { type: "delete"; layerId: Layer["id"] }
     | { type: "switchLayer" };
 
-type Elements<T> = Map<ObjectId, React.SVGAttributes<T>>;
-export type TextSVGGroup = { id: string; type: "text"; elements: Elements<SVGTextElement> };
-export type LineSVGGroup = { id: string; type: "line"; elements: Elements<SVGLineElement> };
-export type PolygonSVGGroup = {
+export type SVGGroup<Type extends keyof SVGElementTagNameMap = keyof SVGElementTagNameMap> = {
     id: string;
-    type: "polygon";
-    elements: Elements<SVGPolygonElement>;
+    type: Type;
+    elements: Map<ObjectId, React.SVGAttributes<SVGElement>>;
 };
 
-export type SVGGroup = TextSVGGroup | LineSVGGroup | PolygonSVGGroup;
 // #endregion
 
 // #region - Parsing

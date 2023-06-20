@@ -1,4 +1,4 @@
-import { Layer, LayerClass, LineSVGGroup, ObjectId, Point, PointType } from "../types";
+import { Layer, LayerClass, ObjectId, Point, PointType, SVGGroup } from "../types";
 import { BaseLayer } from "./BaseLayer";
 import { handleEventsCurrentSetting, TwoPointProps } from "./controls/twoPoint";
 import styles from "./layers.module.css";
@@ -125,7 +125,7 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
         const [pointMap, gridPoints] = pt.fromPoints(this.settings.pointType, allPoints);
         const toSVG = gridPoints.toSVGPoints();
 
-        const elements: LineSVGGroup["elements"] = new Map();
+        const elements: SVGGroup["elements"] = new Map();
         for (const id of renderOrder) {
             const { state, points } = stored.objects.get(id);
             const first = toSVG.get(pointMap.get(points[0]));

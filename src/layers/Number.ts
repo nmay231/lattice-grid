@@ -1,4 +1,4 @@
-import { Layer, LayerClass, LayerHandlerResult, Point, TextSVGGroup } from "../types";
+import { Layer, LayerClass, LayerHandlerResult, Point, SVGGroup } from "../types";
 import { zip } from "../utils/data";
 import { notify } from "../utils/notifications";
 import { BaseLayer } from "./BaseLayer";
@@ -120,7 +120,7 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
         const maxRadius = pt.maxRadius({ type: "cells", shape: "square", size: "lg" });
 
         const className = [styles.textHorizontalCenter, styles.textVerticalCenter].join(" ");
-        const elements: TextSVGGroup["elements"] = new Map();
+        const elements: SVGGroup["elements"] = new Map();
         for (const [id, cell] of cellMap.entries()) {
             const point = toSVG.get(cell);
             if (!point) continue; // TODO?

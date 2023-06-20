@@ -1,4 +1,4 @@
-import { Layer, LayerClass, NeedsUpdating, PolygonSVGGroup, TextSVGGroup } from "../types";
+import { Layer, LayerClass, NeedsUpdating, SVGGroup } from "../types";
 import { reduceTo } from "../utils/data";
 import { Vec } from "../utils/math";
 import { notify } from "../utils/notifications";
@@ -83,8 +83,8 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
         const renderOrder = stored.objects.keys().filter((id) => group.has(id));
         const pt = grid.getPointTransformer(settings);
 
-        const cageElements: PolygonSVGGroup["elements"] = new Map();
-        const numberElements: TextSVGGroup["elements"] = new Map();
+        const cageElements: SVGGroup["elements"] = new Map();
+        const numberElements: SVGGroup["elements"] = new Map();
         const textStyles = [styles.textTop, styles.textLeft].join(" ");
 
         for (const id of renderOrder) {

@@ -1,4 +1,4 @@
-import { Layer, LayerClass, TextSVGGroup } from "../types";
+import { Layer, LayerClass, SVGGroup } from "../types";
 import { notify } from "../utils/notifications";
 import { BaseLayer } from "./BaseLayer";
 import { handleEventsSelection, KeyDownEventHandler, SelectedProps } from "./controls/selection";
@@ -185,7 +185,7 @@ export class ToggleCharactersLayer
         const toSVG = cells.toSVGPoints();
         const maxRadius = pt.maxRadius({ type: "cells", shape: "square", size: "lg" });
 
-        const elements: TextSVGGroup["elements"] = new Map();
+        const elements: SVGGroup["elements"] = new Map();
         if (this.settings.displayStyle === "center") {
             const className = [styles.textHorizontalCenter, styles.textVerticalCenter].join(" ");
             for (const [id, { state }] of stored.objects.entries()) {

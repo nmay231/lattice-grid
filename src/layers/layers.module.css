@@ -9,6 +9,10 @@
     stroke-linecap: round;
 }
 
+.debugSelectPointsCircles {
+    fill: black;
+}
+
 .killerCagesOutline {
     stroke-dasharray: 7 3;
     stroke-dashoffset: 3.5;
