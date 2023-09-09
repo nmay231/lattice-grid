@@ -1,7 +1,10 @@
 import { TupleVector } from "../types";
 
 export class Vec {
-    constructor(public x: number, public y: number) {}
+    constructor(
+        public x: number,
+        public y: number,
+    ) {}
 
     static from(vec: Vec | TupleVector) {
         return vec instanceof Vec ? vec : new Vec(vec[0], vec[1]);

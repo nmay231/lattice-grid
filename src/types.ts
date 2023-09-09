@@ -1,9 +1,9 @@
 import React from "react";
 import type { ref } from "valtio";
-import type { SquareGridParams, _SquareGridTransformer } from "./grids/SquareGrid";
-import type { availableLayers } from "./layers";
 import type { PuzzleManager } from "./PuzzleManager";
 import type { StorageManager } from "./StorageManager";
+import type { SquareGridParams, _SquareGridTransformer } from "./grids/SquareGrid";
+import type { availableLayers } from "./layers";
 import type { UserCodeJSON } from "./userComputation/codeBlocks";
 
 // #region - Compilation

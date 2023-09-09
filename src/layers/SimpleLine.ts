@@ -1,6 +1,6 @@
 import { Layer, LayerClass, ObjectId, Point, PointType, SVGGroup } from "../types";
 import { BaseLayer } from "./BaseLayer";
-import { handleEventsCurrentSetting, TwoPointProps } from "./controls/twoPoint";
+import { TwoPointProps, handleEventsCurrentSetting } from "./controls/twoPoint";
 import styles from "./layers.module.css";
 
 const pointTypes = {

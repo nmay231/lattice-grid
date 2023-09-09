@@ -1,7 +1,7 @@
 import { UserCodeJSON } from ".";
 import { ICodeBlock, VariableCodeBlock } from "../../types";
 import { ComputeManager } from "../ComputeManager";
-import { blockIsVariable, CompilerError } from "../utils";
+import { CompilerError, blockIsVariable } from "../utils";
 
 export interface IDebug {
     id: string;
@@ -11,7 +11,10 @@ export interface IDebug {
 
 export class Debug implements ICodeBlock<IDebug> {
     value: VariableCodeBlock;
-    constructor(public compute: ComputeManager, public json: IDebug) {
+    constructor(
+        public compute: ComputeManager,
+        public json: IDebug,
+    ) {
         if (!json.expression) {
             throw new CompilerError({
                 // TODO: Is there any value to allowing no expressions? Like maybe it could log information about the code run from that spot like "checked ten numbers from the number layer" or something. I don't have a real clear picture of how that would work though. Besides, I would implement that using shadow blocks which means json.expression would *always* be defined.

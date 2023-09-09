@@ -26,7 +26,10 @@ type GridPoint = { x: number; y: number; type: PointType };
 type Settings = Parameters<Grid["getPointTransformer"]>[0];
 
 class _SquareGridPoints<PT extends PointType = PointType> {
-    constructor(public type: PT, public settings: Settings) {}
+    constructor(
+        public type: PT,
+        public settings: Settings,
+    ) {}
 
     points: Vec[] = [];
 

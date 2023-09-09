@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { UserCodeJSON } from "../../userComputation/codeBlocks";
 import { Blockly } from "../../utils/imports/blockly";
 import { codeGen } from "./customCodeGen";

@@ -2,7 +2,7 @@ import { vi } from "vitest";
 import { LayerStorage } from "../../LayerStorage";
 import { NeedsUpdating, PartialHistoryAction, Point } from "../../types";
 import { layerEventRunner } from "../../utils/testing/layerEventRunner";
-import { handleEventsUnorderedSets, MultiPointLayerProps } from "./multiPoint";
+import { MultiPointLayerProps, handleEventsUnorderedSets } from "./multiPoint";
 
 describe("multiPoint.handleEventsUnorderedSets", () => {
     type SecondArg = Parameters<typeof handleEventsUnorderedSets>[1];

@@ -1,6 +1,6 @@
 import { Layer, LayerClass, SVGGroup } from "../types";
 import { BaseLayer } from "./BaseLayer";
-import { handleEventsCurrentSetting, OnePointProps } from "./controls/onePoint";
+import { OnePointProps, handleEventsCurrentSetting } from "./controls/onePoint";
 import styles from "./layers.module.css";
 
 type Color = string;

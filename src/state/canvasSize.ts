@@ -16,7 +16,7 @@ export const canvasSizeProxy = proxy({
 });
 
 export const CANVAS_CONTAINER_ID = "svgCanvasContainer";
+// eslint-disable-next-line vitest/require-hook
 subscribeKey(canvasSizeProxy, "zoom", (zoom) => {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     document.getElementById(CANVAS_CONTAINER_ID)!.style.setProperty("--canvas-zoom", `${zoom}`);
 });

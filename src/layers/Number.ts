@@ -3,7 +3,7 @@ import { zip } from "../utils/data";
 import { notify } from "../utils/notifications";
 import { BaseLayer } from "./BaseLayer";
 import { numberTyper } from "./controls/numberTyper";
-import { handleEventsSelection, KeyDownEventHandler, SelectedProps } from "./controls/selection";
+import { KeyDownEventHandler, SelectedProps, handleEventsSelection } from "./controls/selection";
 import styles from "./layers.module.css";
 
 export interface NumberProps extends SelectedProps {

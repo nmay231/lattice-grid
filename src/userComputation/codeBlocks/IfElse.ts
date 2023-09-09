@@ -30,7 +30,10 @@ export interface IIfElse {
 // };
 
 export class IfElse implements ICodeBlock<IIfElse> {
-    constructor(public compute: ComputeManager, public json: IIfElse) {
+    constructor(
+        public compute: ComputeManager,
+        public json: IIfElse,
+    ) {
         if (json.ifTrue?.length) {
             json.ifTrue.forEach((block) => compute.compileBlock(this, block));
         }

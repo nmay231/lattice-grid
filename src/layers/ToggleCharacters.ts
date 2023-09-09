@@ -1,7 +1,7 @@
 import { Layer, LayerClass, SVGGroup } from "../types";
 import { notify } from "../utils/notifications";
 import { BaseLayer } from "./BaseLayer";
-import { handleEventsSelection, KeyDownEventHandler, SelectedProps } from "./controls/selection";
+import { KeyDownEventHandler, SelectedProps, handleEventsSelection } from "./controls/selection";
 import styles from "./layers.module.css";
 
 type RawSettings = {

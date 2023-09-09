@@ -4,9 +4,9 @@ import { Vec } from "../utils/math";
 import { notify } from "../utils/notifications";
 import { BaseLayer } from "./BaseLayer";
 import {
-    handleEventsUnorderedSets,
     MultiPointKeyDownHandler,
     MultiPointLayerProps,
+    handleEventsUnorderedSets,
 } from "./controls/multiPoint";
 import { numberTyper } from "./controls/numberTyper";
 import styles from "./layers.module.css";

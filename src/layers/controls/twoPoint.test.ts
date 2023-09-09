@@ -3,9 +3,9 @@ import { LayerStorage } from "../../LayerStorage";
 import { NeedsUpdating, PartialHistoryAction } from "../../types";
 import { layerEventRunner } from "../../utils/testing/layerEventRunner";
 import {
-    handleEventsCurrentSetting as twoPointCurrentSetting,
     MinimalSettings,
     TwoPointProps,
+    handleEventsCurrentSetting as twoPointCurrentSetting,
 } from "./twoPoint";
 
 describe("twoPoint.handleEventsCurrentSetting", () => {

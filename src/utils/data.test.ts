@@ -1,6 +1,6 @@
 import fc from "fast-check";
-import { range, zip as lodashZip } from "lodash";
-import { parseIntBase, reduceTo, zip as ourZip } from "./data";
+import { zip as lodashZip, range } from "lodash";
+import { zip as ourZip, parseIntBase, reduceTo } from "./data";
 import { FCNormalFloat, FCRepeat, given } from "./testing/fcArbitraries";
 
 describe("reduceTo", () => {
