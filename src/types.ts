@@ -248,6 +248,7 @@ export type RenderChange =
 export type SVGGroup<Type extends keyof SVGElementTagNameMap = keyof SVGElementTagNameMap> = {
     id: string;
     type: Type;
+    className?: string;
     elements: Map<ObjectId, React.SVGAttributes<SVGElement>>;
 };
 

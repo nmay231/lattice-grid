@@ -34,7 +34,15 @@
     fill: none;
 }
 
-/* TODO: Test these render as expected */
+.mode-question .answer {
+    opacity: 50%;
+}
+
+.answer .text {
+    stroke: #3e86dd;
+    fill: #3e86dd;
+}
+
 .text {
     user-select: none;
     direction: ltr;
