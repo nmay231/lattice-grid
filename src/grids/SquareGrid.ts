@@ -484,10 +484,13 @@ export class SquareGrid implements Grid {
         }
         const [, cells] = pt.fromPoints("cells", [...outside]);
 
+        // We get the main border of the grid by shrinkwraping the cells just outside the grid + any cells removed by the user (blacklist)
+        // This is generally faster than processing all the cells in the grid, `2x + 2y + 4` vs `x * y`.
         const inset = 4;
         const shrinkwrap = pt.shrinkwrap(cells, { inset });
-        const cs = settings.cellSize;
-        let outlierCorner: string | null = `${cs * minX + inset},${cs * minY + inset}`;
+        // ... but that adds an extra shell that needs to be removed; we do that here.
+        const hc = settings.cellSize / 2;
+        let outlierCorner: string | null = `${hc * (minX - 1) + inset},${hc * (minY - 1) + inset}`;
 
         for (const [index, group] of Object.entries(shrinkwrap)) {
             if (group.includes(outlierCorner)) {
