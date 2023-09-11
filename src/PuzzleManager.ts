@@ -90,6 +90,7 @@ export class PuzzleManager {
         this.resetLayers();
         this.addLayer(NumberLayer, null);
         this.grid.setParams({ type: "square", width: 10, height: 10, minX: 0, minY: 0 });
+        this.resizeCanvas();
         this.renderChange({ type: "draw", layerIds: "all" });
     }
 
