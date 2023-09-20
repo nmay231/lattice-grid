@@ -1,4 +1,4 @@
-import { Delta, Layer, LayerClass, LayerProps, Point, SVGGroup } from "../types";
+import { Delta, FormSchema, Layer, LayerClass, LayerProps, Point, SVGGroup } from "../types";
 import { zip } from "../utils/data";
 import { Vec } from "../utils/math";
 import { BaseLayer } from "./BaseLayer";
@@ -30,19 +30,11 @@ export class DebugSelectPointsLayer
     static displayName = "DEBUG: Select Points";
 
     static controls = undefined;
-    static constraints = {
-        schema: {
-            type: "object",
-            properties: {
-                straight: { type: "boolean" },
-                diagonal: { type: "boolean" },
-                knight: { type: "boolean" },
-            },
-        },
-        uischemaElements: [
-            { type: "Control", label: "Straight", scope: "#/properties/straight" },
-            { type: "Control", label: "Diagonal", scope: "#/properties/diagonal" },
-            { type: "Control", label: "Knight", scope: "#/properties/knight" },
+    static constraints: FormSchema<DebugSelectPointsProps> = {
+        elements: [
+            { type: "boolean", key: "straight", desc: "Straight" },
+            { type: "boolean", key: "diagonal", desc: "Diagonal" },
+            { type: "boolean", key: "knight", desc: "Knight" },
         ],
     };
 

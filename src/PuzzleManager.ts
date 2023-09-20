@@ -238,7 +238,8 @@ export class PuzzleManager {
 
     changeLayerSettings(layerId: Layer["id"], newSettings: any) {
         const layer = this.layers.get(layerId);
-        const { history } = layer.newSettings({ ...this, newSettings });
+        const { grid, settings, storage } = this;
+        const { history } = layer.newSettings({ grid, settings, storage, newSettings });
 
         if (history?.length) {
             this.storage.addToHistory({ puzzle: this, layerId: layer.id, actions: history });

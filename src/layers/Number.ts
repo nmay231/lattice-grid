@@ -1,4 +1,4 @@
-import { Layer, LayerClass, LayerHandlerResult, Point, SVGGroup } from "../types";
+import { FormSchema, Layer, LayerClass, LayerHandlerResult, Point, SVGGroup } from "../types";
 import { zip } from "../utils/data";
 import { notify } from "../utils/notifications";
 import { BaseLayer } from "./BaseLayer";
@@ -64,22 +64,10 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
     };
 
     static controls = undefined;
-    static constraints = {
-        schema: {
-            type: "object",
-            properties: { negatives: { type: "boolean" }, max: { type: "integer" } },
-        },
-        uischemaElements: [
-            {
-                type: "Control",
-                label: "Allow Negatives",
-                scope: "#/properties/negatives",
-            },
-            {
-                type: "Control",
-                label: "Maximum",
-                scope: "#/properties/max",
-            },
+    static constraints: FormSchema<NumberProps> = {
+        elements: [
+            { type: "number", key: "max", desc: "Max", min: 0 },
+            { type: "boolean", key: "negatives", desc: "Allow negatives" },
         ],
     };
 

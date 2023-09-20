@@ -1,32 +1,28 @@
 import { useProxy } from "valtio/utils";
 import { availableLayers } from "../../../layers";
 import { usePuzzle } from "../../../state/puzzle";
-import { JSONSchema, Layer, LayerClass, UnknownObject } from "../../../types";
+import { FormSchema, Layer, LayerClass, LayerProps } from "../../../types";
 import { useFocusGroup } from "../../../utils/focusManagement";
-import { JsonFormsWrapper } from "../../JsonFormsWrapper";
+import { LayerForm } from "../../LayerForm";
 
-type InnerProps = { layer: Layer; controls: JSONSchema };
+type InnerProps = { layer: Layer; controls: FormSchema<LayerProps> };
 
 const _LayerControlSettings = ({ layer, controls }: InnerProps) => {
     const puzzle = usePuzzle();
     const { ref, unfocus } = useFocusGroup({ puzzle, group: "controlSettings" });
 
-    const { schema, uischemaElements } = controls;
-    const uischema = { type: "VerticalLayout", elements: uischemaElements };
-
     return (
         <div ref={ref}>
             {/* TODO: Hack Mantine's useFocusTrap so it doesn't focus the first element right away */}
             <div data-autofocus></div>
-            <JsonFormsWrapper
-                data={layer.rawSettings}
-                onChange={(newData: UnknownObject) => {
-                    puzzle.changeLayerSettings(layer.id, newData);
+            <LayerForm
+                initialValues={layer.rawSettings}
+                elements={controls.elements}
+                onChange={(rawSettings) => {
+                    puzzle.changeLayerSettings(layer.id, rawSettings);
                     puzzle.renderChange({ type: "draw", layerIds: [layer.id] });
                     unfocus();
                 }}
-                schema={schema}
-                uischema={uischema}
             />
         </div>
     );

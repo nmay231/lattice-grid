@@ -1,4 +1,4 @@
-import { Layer, LayerClass, SVGGroup } from "../types";
+import { FormSchema, Layer, LayerClass, SVGGroup } from "../types";
 import { BaseLayer } from "./BaseLayer";
 import { OnePointProps, handleEventsCurrentSetting } from "./controls/onePoint";
 import styles from "./layers.module.css";
@@ -28,23 +28,8 @@ export class BackgroundColorLayer
         return new BackgroundColorLayer(BackgroundColorLayer, puzzle);
     }) satisfies LayerClass<BackgroundColorProps>["create"];
 
-    static controls = {
-        schema: {
-            type: "object",
-            properties: {
-                selectedState: {
-                    type: "string",
-                    enum: ["blue", "green", "orange", "pink", "purple", "red", "yellow"],
-                },
-            },
-        },
-        uischemaElements: [
-            {
-                type: "Control",
-                label: "Color",
-                scope: "#/properties/selectedState",
-            },
-        ],
+    static controls: FormSchema<BackgroundColorProps> = {
+        elements: [{ type: "color", key: "selectedState", desc: "Fill color", showAll: true }],
     };
     static constraints = undefined;
 

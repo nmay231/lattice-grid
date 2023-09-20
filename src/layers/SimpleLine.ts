@@ -1,4 +1,4 @@
-import { Layer, LayerClass, ObjectId, Point, PointType, SVGGroup } from "../types";
+import { FormSchema, Layer, LayerClass, ObjectId, Point, PointType, SVGGroup } from "../types";
 import { BaseLayer } from "./BaseLayer";
 import { TwoPointProps, handleEventsCurrentSetting } from "./controls/twoPoint";
 import styles from "./layers.module.css";
@@ -39,42 +39,21 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
         return new SimpleLineLayer(SimpleLineLayer, puzzle);
     }) satisfies LayerClass<SimpleLineProps>["create"];
 
-    static constraints = {
-        schema: {
-            type: "object",
-            properties: {
-                connections: {
-                    type: "string",
-                    enum: Object.keys(pointTypes),
-                },
-            },
-        },
-        uischemaElements: [
+    static constraints: FormSchema<SimpleLineProps> = {
+        elements: [
             {
-                type: "Control",
-                label: "Connections",
-                scope: "#/properties/connections",
+                type: "dropdown",
+                key: "connections",
+                desc: "Where to draw lines",
+                // TODO: Change to label, value and get rid of `pointTypes`
+                pairs: Object.keys(pointTypes).map((key) => ({ label: key, value: key })),
+                // pairs: Object.entries(pointTypes).map(([label, value]) => ({ label, value })),
             },
         ],
     };
 
-    static controls = {
-        schema: {
-            type: "object",
-            properties: {
-                stroke: {
-                    type: "string",
-                    enum: ["blue", "green", "orange", "pink", "purple", "red", "yellow"],
-                },
-            },
-        },
-        uischemaElements: [
-            {
-                type: "Control",
-                label: "Color",
-                scope: "#/properties/stroke",
-            },
-        ],
+    static controls: FormSchema<SimpleLineProps> = {
+        elements: [{ type: "color", key: "stroke", desc: "Stroke color", showAll: true }],
     };
 
     newSettings: ISimpleLineLayer["newSettings"] = ({ newSettings, storage, grid }) => {

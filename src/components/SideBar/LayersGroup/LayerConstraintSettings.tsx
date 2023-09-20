@@ -1,56 +1,36 @@
-import { isEqual } from "lodash";
-import { useState } from "react";
+import { useRef } from "react";
 import { useProxy } from "valtio/utils";
 import { availableLayers } from "../../../layers";
 import { usePuzzle } from "../../../state/puzzle";
-import { JSONSchema, Layer, LayerClass } from "../../../types";
+import { FormSchema, Layer, LayerClass, LayerProps } from "../../../types";
 import { useFocusGroup } from "../../../utils/focusManagement";
-import { JsonFormsWrapper } from "../../JsonFormsWrapper";
+import { LayerForm } from "../../LayerForm";
 
-type InnerProps = { layer: Layer; constraints: JSONSchema };
+type InnerProps = { layer: Layer; constraints: FormSchema<LayerProps> };
 
 const _LayerConstraintSettings = ({ layer, constraints }: InnerProps) => {
     const puzzle = usePuzzle();
-    const initialSettings = layer.rawSettings;
-    const [settings, setSettings] = useState(initialSettings);
+    const resetForm = useRef(0);
     const { ref, unfocus } = useFocusGroup({ puzzle, group: "controlSettings" });
-
-    const handleSubmit: React.FormEventHandler = (event) => {
-        event.preventDefault();
-
-        puzzle.changeLayerSettings(layer.id, settings);
-        puzzle.renderChange({ type: "draw", layerIds: [layer.id] });
-        unfocus();
-    };
-
-    const handleCancel = () => {
-        setSettings(initialSettings);
-        unfocus();
-    };
-
-    const changed = !isEqual(settings, initialSettings);
-
-    const { schema, uischemaElements } = constraints;
-    const uischema = { type: "VerticalLayout", elements: uischemaElements };
 
     return (
         <div ref={ref}>
             {/* TODO: Hack Mantine's useFocusTrap so it doesn't focus the first element right away */}
             <div data-autofocus></div>
-            <form action="#" onSubmit={handleSubmit}>
-                <JsonFormsWrapper
-                    data={settings}
-                    onChange={setSettings}
-                    schema={schema}
-                    uischema={uischema}
-                />
-                <button type="submit" disabled={!changed}>
-                    Save
-                </button>
-                <button type="button" disabled={!changed} onClick={handleCancel}>
-                    Cancel
-                </button>
-            </form>
+            <LayerForm
+                // Force a new LayerForm to be created whenever settings changes. Mantines's useForm assumes initialValues never changes.
+                key={resetForm.current}
+                initialValues={layer.rawSettings}
+                elements={constraints.elements}
+                submitLabel="Save"
+                resetLabel="Cancel"
+                onSubmit={(newSettings) => {
+                    resetForm.current += 1;
+                    puzzle.changeLayerSettings(layer.id, newSettings);
+                    puzzle.renderChange({ type: "draw", layerIds: [layer.id] });
+                    unfocus();
+                }}
+            />
         </div>
     );
 };
