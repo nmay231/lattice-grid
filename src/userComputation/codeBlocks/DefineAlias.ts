@@ -10,7 +10,10 @@ export interface IDefineAlias {
 }
 
 export class DefineAlias implements ICodeBlock<IDefineAlias> {
-    constructor(public compute: ComputeManager, public json: IDefineAlias) {}
+    constructor(
+        public compute: ComputeManager,
+        public json: IDefineAlias,
+    ) {}
 
     registerVariableNames() {
         if (this.json.varId in this.compute.variables) {

@@ -13,7 +13,10 @@ export interface IObjectSelector {
 
 export class ObjectSelector implements ICodeBlock<IObjectSelector> {
     grid: Grid;
-    constructor(public compute: ComputeManager, public json: IObjectSelector) {
+    constructor(
+        public compute: ComputeManager,
+        public json: IObjectSelector,
+    ) {
         if (!json.layerId) {
             throw new CompilerError({
                 message: "ObjectSelector requires layerId",

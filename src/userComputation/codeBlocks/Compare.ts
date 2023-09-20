@@ -1,7 +1,7 @@
 import { UserCodeJSON } from ".";
 import { ICodeBlock, IVariableInfo, VariableCodeBlock } from "../../types";
 import { ComputeManager } from "../ComputeManager";
-import { blockIsVariable, CompilerError } from "../utils";
+import { CompilerError, blockIsVariable } from "../utils";
 
 export interface ICompare {
     id: string;
@@ -15,7 +15,10 @@ export class Compare implements ICodeBlock<ICompare> {
     left: VariableCodeBlock;
     right: VariableCodeBlock;
 
-    constructor(public compute: ComputeManager, public json: ICompare) {
+    constructor(
+        public compute: ComputeManager,
+        public json: ICompare,
+    ) {
         if (!json.left || !json.right) {
             throw new CompilerError({
                 message: "Left or right operator was not provided",

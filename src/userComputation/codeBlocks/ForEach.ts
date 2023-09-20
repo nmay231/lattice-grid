@@ -11,7 +11,10 @@ export interface IForEach {
 }
 
 export class ForEach implements ICodeBlock<IForEach> {
-    constructor(public compute: ComputeManager, public json: IForEach) {}
+    constructor(
+        public compute: ComputeManager,
+        public json: IForEach,
+    ) {}
 
     registerVariableNames() {
         console.log(this);

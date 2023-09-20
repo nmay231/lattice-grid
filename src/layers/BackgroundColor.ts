@@ -1,6 +1,6 @@
-import { Layer, LayerClass, PolygonSVGGroup } from "../types";
+import { Layer, LayerClass, SVGGroup } from "../types";
 import { BaseLayer } from "./BaseLayer";
-import { handleEventsCurrentSetting, OnePointProps } from "./controls/onePoint";
+import { OnePointProps, handleEventsCurrentSetting } from "./controls/onePoint";
 import styles from "./layers.module.css";
 
 type Color = string;
@@ -77,7 +77,7 @@ export class BackgroundColorLayer
         const [cellMap, cells] = pt.fromPoints("cells", renderOrder);
         const [outlineMap] = pt.svgOutline(cells);
 
-        const elements: PolygonSVGGroup["elements"] = new Map();
+        const elements: SVGGroup["elements"] = new Map();
         for (const id of renderOrder) {
             const { state: color } = stored.objects.get(id);
             const outline = outlineMap.get(cellMap.get(id));

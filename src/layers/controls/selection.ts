@@ -6,7 +6,7 @@ import {
     LayerProps,
     PartialHistoryAction,
     Point,
-    PolygonSVGGroup,
+    SVGGroup,
 } from "../../types";
 import { notify } from "../../utils/notifications";
 import { stringifyAnything } from "../../utils/string";
@@ -236,7 +236,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
         const states = points.map((id) => stored.objects.get(id).state);
         const pt = grid.getPointTransformer(settings);
 
-        const elements: PolygonSVGGroup["elements"] = new Map();
+        const elements: SVGGroup["elements"] = new Map();
 
         if (points.length) {
             const className = styles.selection;

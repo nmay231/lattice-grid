@@ -62,7 +62,7 @@ describe("hopStraight", () => {
             );
 
             const vecMoves = Array.from(zip([start].concat(vecPoints.slice(0, -1)), vecPoints)).map(
-                ([prev, next]) => next.minus(prev),
+                ([prev, next]) => prev.drawTo(next),
             );
 
             const moveSetStrings = moveSet.map(vecToString);

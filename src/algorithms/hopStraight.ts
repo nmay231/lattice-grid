@@ -18,7 +18,7 @@ export const hopStraight = ({ start, targets, cursor, deltas, toString }: Arg) =
     }
     const targetStrings = targets.map(toString);
 
-    let direction = cursor.minus(start);
+    let direction = start.drawTo(cursor);
     let current = start;
     let maxIterations = 100;
 
@@ -26,12 +26,12 @@ export const hopStraight = ({ start, targets, cursor, deltas, toString }: Arg) =
     const points = [toString(start)];
     if (targetStrings.includes(points[0])) return [];
 
-    while (direction.positiveAngleTo(cursor.minus(start)) < Math.PI / 2 && --maxIterations > 0) {
+    while (direction.positiveAngleTo(start.drawTo(cursor)) < Math.PI / 2 && --maxIterations > 0) {
         const bestDelta = deltas.reduce((prev, next) =>
             prev.positiveAngleTo(direction) < next.positiveAngleTo(direction) ? prev : next,
         );
         current = current.plus(bestDelta);
-        direction = cursor.minus(current);
+        direction = current.drawTo(cursor);
 
         const point = toString(current);
         if (points.includes(point)) return points.slice(1);

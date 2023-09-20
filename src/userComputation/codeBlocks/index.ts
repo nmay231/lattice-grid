@@ -2,7 +2,7 @@ import { Compare, ICompare } from "./Compare";
 import { Debug, IDebug } from "./Debug";
 import { DefineAlias, IDefineAlias } from "./DefineAlias";
 import { ForEach, IForEach } from "./ForEach";
-import { IfElse, IIfElse } from "./IfElse";
+import { IIfElse, IfElse } from "./IfElse";
 import { IInteger, Integer } from "./Integer";
 import { IMarkInvalid, MarkInvalid } from "./MarkInvalid";
 import { IObjectSelector, ObjectSelector } from "./ObjectSelector";

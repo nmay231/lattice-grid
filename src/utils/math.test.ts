@@ -33,6 +33,17 @@ describe("Vector", () => {
         expect(b.xy).toEqual([-3, 8]);
     });
 
+    it("can draw to another vector", () => {
+        const a = new Vec(1, 2);
+        const b = new Vec(-3, 8);
+        expect(a.drawTo(b).xy).toEqual([-4, 6]);
+        expect(a.drawTo([2, 1]).xy).toEqual([1, -1]);
+
+        // a and b remain unchanged
+        expect(a.xy).toEqual([1, 2]);
+        expect(b.xy).toEqual([-3, 8]);
+    });
+
     it("can be scaled", () => {
         const a = new Vec(1, 2);
         expect(a.scale(5).xy).toEqual([5, 10]);

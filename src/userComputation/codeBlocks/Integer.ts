@@ -8,7 +8,10 @@ export interface IInteger {
 }
 
 export class Integer implements ICodeBlock<IInteger> {
-    constructor(public compute: ComputeManager, public json: IInteger) {}
+    constructor(
+        public compute: ComputeManager,
+        public json: IInteger,
+    ) {}
 
     variableInfo(): IVariableInfo {
         return { rank: 0, scalarType: "integer" };

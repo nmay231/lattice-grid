@@ -9,7 +9,10 @@ export interface IRootBlock {
 }
 
 export class RootBlock implements ICodeBlock<IRootBlock> {
-    constructor(public compute: ComputeManager, public json: IRootBlock) {
+    constructor(
+        public compute: ComputeManager,
+        public json: IRootBlock,
+    ) {
         if (!Array.isArray(json.codeBody)) {
             compute.compilerErrors.push({
                 message: "RootBlock requires a codeBody attribute",

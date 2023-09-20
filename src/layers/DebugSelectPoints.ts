@@ -1,12 +1,12 @@
-import { isEqual } from "lodash";
-import { Delta, Layer, LayerClass, LayerProps, LineSVGGroup, Point } from "../types";
+import { Delta, Layer, LayerClass, LayerProps, Point, SVGGroup } from "../types";
 import { zip } from "../utils/data";
+import { Vec } from "../utils/math";
 import { BaseLayer } from "./BaseLayer";
 import styles from "./layers.module.css";
 
 interface DebugSelectPointsProps extends LayerProps {
-    TempStorage: { previousPoint: Point; newPoints: Point[] };
-    ObjectState: { points: Point[] };
+    TempStorage: { previousPoint: Point; start: Vec; end: Vec };
+    ObjectState: { points: Point[]; start: Vec; end: Vec };
     RawSettings: { straight: boolean; diagonal: boolean; knight: boolean };
 }
 
@@ -16,8 +16,10 @@ interface IDebugSelectPointsLayer extends Layer<DebugSelectPointsProps> {
     };
 }
 
-// There is only one line object in storage at any point (the previous is always deleted)
-const Line_ID = "objectId";
+// Object ids (there is only one copy of each at a time)
+const LINE_ID = "line";
+const START_ID = "start";
+const END_ID = "end";
 
 export class DebugSelectPointsLayer
     extends BaseLayer<DebugSelectPointsProps>
@@ -84,7 +86,7 @@ export class DebugSelectPointsLayer
             );
         }
 
-        return { history: [{ object: null, id: Line_ID }] };
+        return { history: [{ object: null, id: LINE_ID }] };
     };
 
     static create = ((puzzle): DebugSelectPointsLayer => {
@@ -110,22 +112,24 @@ export class DebugSelectPointsLayer
             if (!tempStorage.previousPoint) return [];
         }
 
-        if (isEqual(tempStorage.newPoints, newPoints)) return [];
-        tempStorage.newPoints = newPoints;
-
+        if (!tempStorage.start) {
+            tempStorage.start = new Vec(cursor.x, cursor.y);
+        }
+        tempStorage.end = new Vec(cursor.x, cursor.y);
         return [tempStorage.previousPoint, ...newPoints];
     };
 
     handleEvent: IDebugSelectPointsLayer["handleEvent"] = (event) => {
         // TODO: Include a circle on pointer down/up to give more precise information
         if (event.type === "pointerDown" || event.type === "pointerMove") {
+            const { start, end } = event.tempStorage;
             return {
                 history: [
                     {
-                        id: Line_ID,
+                        id: LINE_ID,
                         batchId: "ignore",
                         storageMode: "ui",
-                        object: { points: event.points },
+                        object: { points: event.points, start: start!, end: end! },
                     },
                 ],
             };
@@ -140,7 +144,7 @@ export class DebugSelectPointsLayer
     getOverlaySVG: IDebugSelectPointsLayer["getOverlaySVG"] = ({ grid, storage, settings }) => {
         const object = storage
             .getStored<DebugSelectPointsProps>({ grid, layer: this })
-            .objects.get(Line_ID);
+            .objects.get(LINE_ID);
 
         if (!object?.points.length) {
             return [];
@@ -150,7 +154,7 @@ export class DebugSelectPointsLayer
             return [];
         }
 
-        const elements: LineSVGGroup["elements"] = new Map();
+        const elements: SVGGroup["elements"] = new Map();
         const pt = grid.getPointTransformer(settings);
         const [map, points] = pt.fromPoints("cells", object.points);
         const cells = points.toSVGPoints();
@@ -165,6 +169,30 @@ export class DebugSelectPointsLayer
             elements.set(_end, { x1, y1, x2, y2, className: styles.debugSelectPoints });
         }
 
-        return [{ id: "path", type: "line", elements }];
+        const pointElements: SVGGroup["elements"] = new Map([
+            [
+                START_ID,
+                {
+                    cx: object.start.x,
+                    cy: object.start.y,
+                    r: 5,
+                    className: styles.debugSelectPointsCircles,
+                },
+            ],
+            [
+                END_ID,
+                {
+                    cx: object.end.x,
+                    cy: object.end.y,
+                    r: 5,
+                    className: styles.debugSelectPointsCircles,
+                },
+            ],
+        ]);
+
+        return [
+            { id: "path", type: "line", elements },
+            { id: "start", type: "circle", elements: pointElements },
+        ];
     };
 }

@@ -10,7 +10,10 @@ export interface IMarkInvalid {
 }
 
 export class MarkInvalid implements ICodeBlock<IMarkInvalid> {
-    constructor(public compute: ComputeManager, public json: IMarkInvalid) {
+    constructor(
+        public compute: ComputeManager,
+        public json: IMarkInvalid,
+    ) {
         throw new CompilerError({
             message: "MarkInvalid not supported yet",
             codeBlockIds: [this.json.id],

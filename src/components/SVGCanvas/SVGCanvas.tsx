@@ -1,8 +1,9 @@
 import { createStyles, ScrollArea } from "@mantine/core";
 import React, { useEffect, useRef } from "react";
 import { useProxy } from "valtio/utils";
+import layerStyles from "../../layers/layers.module.css";
 import { PuzzleManager } from "../../PuzzleManager";
-import { canvasSizeProxy, CANVAS_CONTAINER_ID } from "../../state/canvasSize";
+import { CANVAS_CONTAINER_ID, canvasSizeProxy } from "../../state/canvasSize";
 import { usePuzzle } from "../../state/puzzle";
 import { notify } from "../../utils/notifications";
 import { sidebarProxy, smallPageWidth } from "../SideBar/sidebarProxy";
@@ -18,21 +19,31 @@ const Inner = React.memo(function Inner(arg: Pick<PuzzleManager, "layers" | "SVG
             {layers.order.flatMap((id) => {
                 // TODO: Allow question and answer to be reordered. Also fix this monstrosity.
                 const question = SVGGroups[`${id}-question`].flatMap((group) => {
-                    const prefix = `${id}-question-${group.id}`;
-                    return [...group.elements.entries()].map(([id, element]) =>
-                        React.createElement(group.type, {
-                            ...element,
-                            key: `${prefix}-${id}`,
-                        }),
+                    const mainKey = `${id}-question-${group.id}`;
+                    const className = `${group.className ?? ""} ${layerStyles.question}`;
+                    return (
+                        <g className={className} key={mainKey}>
+                            {[...group.elements.entries()].map(([id, element]) =>
+                                React.createElement(group.type, {
+                                    ...element,
+                                    key: `${mainKey}-${id}`,
+                                }),
+                            )}
+                        </g>
                     );
                 });
                 const answer = SVGGroups[`${id}-answer`].flatMap((group) => {
-                    const prefix = `${id}-answer-${group.id}`;
-                    return [...group.elements.entries()].map(([id, element]) =>
-                        React.createElement(group.type, {
-                            ...element,
-                            key: `${prefix}-${id}`,
-                        }),
+                    const mainKey = `${id}-answer-${group.id}`;
+                    const className = `${group.className ?? ""} ${layerStyles.answer}`;
+                    return (
+                        <g className={className} key={mainKey}>
+                            {[...group.elements.entries()].map(([id, element]) =>
+                                React.createElement(group.type, {
+                                    ...element,
+                                    key: `${mainKey}-${id}`,
+                                }),
+                            )}
+                        </g>
                     );
                 });
                 return question.concat(answer);
@@ -76,10 +87,11 @@ const useStyles = createStyles((theme, { smallPageWidth, sidebarOpened }: Arg1) 
 // TODO: Add dependency injection so it can be used in color swatches, resize modal, etc.
 export const SVGCanvas = React.memo(function SVGCanvas() {
     const { opened } = useProxy(sidebarProxy);
-    const { classes } = useStyles({ smallPageWidth, sidebarOpened: opened });
+    const { cx, classes } = useStyles({ smallPageWidth, sidebarOpened: opened });
 
-    const { controls, layers, SVGGroups } = usePuzzle();
+    const { controls, layers, SVGGroups, settings } = usePuzzle();
     const { width } = useProxy(canvasSizeProxy);
+    const { editMode } = useProxy(settings);
 
     const scrollArea = useRef<HTMLDivElement>(null);
     useEffect(() => {
@@ -108,7 +120,10 @@ export const SVGCanvas = React.memo(function SVGCanvas() {
                 className={classes.outerContainer}
                 style={{ width: canvasWidth, maxWidth: `${width}px` }}
             >
-                <div className={classes.innerContainer} {...controls.eventListeners}>
+                <div
+                    className={cx(classes.innerContainer, layerStyles[`mode-${editMode}`])}
+                    {...controls.eventListeners}
+                >
                     <Inner layers={layers} SVGGroups={SVGGroups} />
                 </div>
             </div>

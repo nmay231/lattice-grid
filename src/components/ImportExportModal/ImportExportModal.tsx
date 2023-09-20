@@ -17,7 +17,7 @@ import { Layer } from "../../types";
 import { openModal, useFocusElementHandler, useModal } from "../../utils/focusManagement";
 import { notify } from "../../utils/notifications";
 import { compressJSON } from "../../utils/string";
-import { currentEncodingVersion, importPuzzle, PuzzleData } from "./importPuzzle";
+import { PuzzleData, currentEncodingVersion, importPuzzle } from "./importPuzzle";
 
 export const ImportExportButton = () => {
     const open = useCallback(() => openModal("import-export"), []);

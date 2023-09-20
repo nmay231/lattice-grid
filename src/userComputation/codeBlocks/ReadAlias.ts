@@ -10,7 +10,10 @@ export interface IReadAlias {
 export class ReadAlias implements ICodeBlock<IReadAlias> {
     _underlyingExpression?: VariableCodeBlock;
 
-    constructor(public compute: ComputeManager, public json: IReadAlias) {}
+    constructor(
+        public compute: ComputeManager,
+        public json: IReadAlias,
+    ) {}
 
     // TODO: Better error messages (I don't need to include the var name because the codeblock will be highlighted)
     // TODO: Also, this would be a usecase where being able to throw an error would be nice.

@@ -1,5 +1,5 @@
 import { hopStraight } from "../algorithms/hopStraight";
-import { Grid, LineSVGGroup, Point, PointType, PolygonSVGGroup, TupleVector } from "../types";
+import { Grid, Point, PointType, SVGGroup, TupleVector } from "../types";
 import { parseIntBase } from "../utils/data";
 import { Vec } from "../utils/math";
 import { notify } from "../utils/notifications";
@@ -26,7 +26,10 @@ type GridPoint = { x: number; y: number; type: PointType };
 type Settings = Parameters<Grid["getPointTransformer"]>[0];
 
 class _SquareGridPoints<PT extends PointType = PointType> {
-    constructor(public type: PT, public settings: Settings) {}
+    constructor(
+        public type: PT,
+        public settings: Settings,
+    ) {}
 
     points: Vec[] = [];
 
@@ -235,7 +238,7 @@ export class _SquareGridTransformer {
         let maxIteration = 1000;
 
         while (--maxIteration > 0) {
-            const normal = edge.minus(cell);
+            const normal = cell.drawTo(edge);
             const forward = normal.rotate90(1);
             const nextCorner = edge.plus(forward);
             cornersNormals.push([nextCorner, normal]);
@@ -386,7 +389,7 @@ export class SquareGrid implements Grid {
             start = Vec.from(previousPoint.split(",").map(parseIntBase(10)) as TupleVector);
 
             // Filter any deltas that would backtrack
-            const direction = cursor.minus(start);
+            const direction = start.drawTo(cursor);
             deltas = deltas.filter((vec) => vec.positiveAngleTo(direction) < Math.PI / 2);
         }
 
@@ -481,10 +484,13 @@ export class SquareGrid implements Grid {
         }
         const [, cells] = pt.fromPoints("cells", [...outside]);
 
+        // We get the main border of the grid by shrinkwraping the cells just outside the grid + any cells removed by the user (blacklist)
+        // This is generally faster than processing all the cells in the grid, `2x + 2y + 4` vs `x * y`.
         const inset = 4;
         const shrinkwrap = pt.shrinkwrap(cells, { inset });
-        const cs = settings.cellSize;
-        let outlierCorner: string | null = `${cs * minX + inset},${cs * minY + inset}`;
+        // ... but that adds an extra shell that needs to be removed; we do that here.
+        const hc = settings.cellSize / 2;
+        let outlierCorner: string | null = `${hc * (minX - 1) + inset},${hc * (minY - 1) + inset}`;
 
         for (const [index, group] of Object.entries(shrinkwrap)) {
             if (group.includes(outlierCorner)) {
@@ -496,7 +502,7 @@ export class SquareGrid implements Grid {
         if (outlierCorner) {
             notify.error({ message: "Could not remove extra grid border" });
         }
-        const outline: PolygonSVGGroup["elements"] = new Map();
+        const outline: SVGGroup["elements"] = new Map();
         for (const [key, points] of Object.entries(shrinkwrap)) {
             outline.set(key, { points: points.join(" "), className: styles.gridSolidOutline });
         }
@@ -509,7 +515,7 @@ export class SquareGrid implements Grid {
             edgeBlacklist.add(point.plus([0, 1]).xy.join(","));
         }
 
-        const edges: LineSVGGroup["elements"] = new Map();
+        const edges: SVGGroup["elements"] = new Map();
         const edgePoints = this.getAllPoints("edges").filter((edge) => !edgeBlacklist.has(edge));
         const [edgeMap] = pt.fromPoints("edges", edgePoints);
 

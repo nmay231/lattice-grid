@@ -87,8 +87,8 @@ describe("SquareGrid", () => {
         expect(rest).toEqual([]);
         expect(edges).toEqual({
             elements: new Map([
-                ["1,2", { className: expect.any(String), x1: -0, x2: 20, y1: 20, y2: 20 }],
-                ["2,1", { className: expect.any(String), x1: 20, x2: 20, y1: -0, y2: 20 }],
+                ["1,2", { className: expect.any(String), x1: 0, x2: 20, y1: 20, y2: 20 }],
+                ["2,1", { className: expect.any(String), x1: 20, x2: 20, y1: 0, y2: 20 }],
                 ["3,2", { className: expect.any(String), x1: 20, x2: 40, y1: 20, y2: 20 }],
                 ["2,3", { className: expect.any(String), x1: 20, x2: 20, y1: 20, y2: 40 }],
             ]),
@@ -172,6 +172,7 @@ describe("SquareGridTransformer", () => {
     // This would just be copying values for now, but I might change how maxRadius works in the future, giving reason to test it.
     it.todo("gives the maxRadius");
 
+    /* eslint-disable vitest/require-to-throw-message */
     it("errors on invalid arguments to sorter", () => {
         const pt = pointTransformer();
 
@@ -182,6 +183,7 @@ describe("SquareGridTransformer", () => {
         // Must be from NESW
         expect(() => pt.sorter({ direction: "XY" })).toThrow();
     });
+    /* eslint-enable vitest/require-to-throw-message */
 
     it("sorts by primary then by secondary directions", () => {
         const pt = pointTransformer();

@@ -1,9 +1,9 @@
 import React from "react";
 import type { ref } from "valtio";
-import type { SquareGridParams, _SquareGridTransformer } from "./grids/SquareGrid";
-import type { availableLayers } from "./layers";
 import type { PuzzleManager } from "./PuzzleManager";
 import type { StorageManager } from "./StorageManager";
+import type { SquareGridParams, _SquareGridTransformer } from "./grids/SquareGrid";
+import type { availableLayers } from "./layers";
 import type { UserCodeJSON } from "./userComputation/codeBlocks";
 
 // #region - Compilation
@@ -245,16 +245,13 @@ export type RenderChange =
     | { type: "delete"; layerId: Layer["id"] }
     | { type: "switchLayer" };
 
-type Elements<T> = Map<ObjectId, React.SVGAttributes<T>>;
-export type TextSVGGroup = { id: string; type: "text"; elements: Elements<SVGTextElement> };
-export type LineSVGGroup = { id: string; type: "line"; elements: Elements<SVGLineElement> };
-export type PolygonSVGGroup = {
+export type SVGGroup<Type extends keyof SVGElementTagNameMap = keyof SVGElementTagNameMap> = {
     id: string;
-    type: "polygon";
-    elements: Elements<SVGPolygonElement>;
+    type: Type;
+    className?: string;
+    elements: Map<ObjectId, React.SVGAttributes<SVGElement>>;
 };
 
-export type SVGGroup = TextSVGGroup | LineSVGGroup | PolygonSVGGroup;
 // #endregion
 
 // #region - Parsing

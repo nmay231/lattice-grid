@@ -2,14 +2,14 @@ import { arrayMove } from "@dnd-kit/sortable";
 import { isEqual } from "lodash";
 import { proxy } from "valtio";
 import { ControlsManager } from "./ControlsManager";
+import { StorageManager } from "./StorageManager";
 import { SquareGrid } from "./grids/SquareGrid";
 import { availableLayers } from "./layers";
 import { CellOutlineLayer } from "./layers/CellOutline";
-import { SELECTION_ID } from "./layers/controls/selection";
 import { NumberLayer } from "./layers/Number";
 import { OverlayLayer } from "./layers/Overlay";
+import { SELECTION_ID } from "./layers/controls/selection";
 import { canvasSizeProxy } from "./state/canvasSize";
-import { StorageManager } from "./StorageManager";
 import {
     EditMode,
     Grid,
@@ -24,9 +24,9 @@ import {
     UnknownObject,
     ValtioRef,
 } from "./types";
+import { IndexedOrderedMap } from "./utils/OrderedMap";
 import { valtioRef } from "./utils/imports/valtio";
 import { notify } from "./utils/notifications";
-import { IndexedOrderedMap } from "./utils/OrderedMap";
 import { LatestTimeout } from "./utils/primitiveWrappers";
 import { stringifyAnything } from "./utils/string";
 
@@ -90,6 +90,7 @@ export class PuzzleManager {
         this.resetLayers();
         this.addLayer(NumberLayer, null);
         this.grid.setParams({ type: "square", width: 10, height: 10, minX: 0, minY: 0 });
+        this.resizeCanvas();
         this.renderChange({ type: "draw", layerIds: "all" });
     }
 

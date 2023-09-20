@@ -2,9 +2,9 @@ import { LayerStorage } from "../../LayerStorage";
 import { NeedsUpdating, PartialHistoryAction } from "../../types";
 import { layerEventRunner } from "../../utils/testing/layerEventRunner";
 import {
-    handleEventsSelection,
-    SelectedProps,
     SELECTION_ID,
+    SelectedProps,
+    handleEventsSelection,
     _selectionObjMaker as obj,
 } from "./selection";
 
@@ -271,6 +271,7 @@ describe("selection controls", () => {
         const handler = layerEventRunner({ layer, stored });
 
         // ... and a layer that handles keyboard events
+        // eslint-disable-next-line vitest/prefer-spy-on
         layer.handleKeyDown = vi.fn().mockReturnValue({
             history: [
                 { id: "id1", object: { asdf: "something1" } },

@@ -3,14 +3,17 @@ import { useFocusGroup } from "./focusManagement";
 describe("focus groups", () => {
     beforeAll(() => {
         vi.useFakeTimers();
+        // TODO
+        console.log("useFocusGroup" || useFocusGroup);
     });
-    afterAll(() => {
-        vi.useRealTimers();
-    });
+
     afterEach(() => {
         vi.clearAllTimers();
     });
-    console.log("useFocusGroup" || useFocusGroup);
+
+    afterAll(() => {
+        vi.useRealTimers();
+    });
 
     // I'll definitely have to refactor the code to be a single function that builds all of the focus management utilities that share state correctly, like how it was for layersState originally.
     // Actually, it could probably be a single function for focusGroups and a different function that takes the state as input for modals (because it only needs a small portion of the state and is sorta separate other than that). If that's the case, have a different describe() block.

@@ -1,70 +1,31 @@
-# Getting Started with Create React App
+# Latgrid
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Presenting latgrid! An web app built to set puzzles of classic variants or allow you to create your own. Try it now on your phone or computer at https://latgrid.vercel.app
 
-## Available Scripts
+![Mobile screenshot of latgrid](docs/user/mobile-screenshot.jpg)
+![Desktop screenshot of latgrid](docs/user/desktop-screenshot.jpg)
 
-In the project directory, you can run:
+## Status
 
-### `yarn start`
+Latgrid is currently in development. While most planned features and ideas are in a private notebook at the moment (mostly for personal convenience), you can look at some of the notes that made their way into an issue by checking the issues tab. Here's a quick checklist of some things that are or will be implemented.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+-   [x] A few common tools (tentatively called layers) to draw numbers, lines, killer cages, etc.
+-   [x] Exporting puzzles to share with others with simple answer check.
+-   [ ] Easier editing of large grids on mobile. (Partially implemented; still need a draggable toolbar)
+-   [ ] Hex grids, triangular grids, etc.
+-   [ ] Dark theme, Colorblind theme.
+-   [ ] Managing your library of puzzles in a single tab with an export to/import from file feature.
+-   [ ] Multiple grids in a single puzzle separate or joined with portals or wrapping edges.
+-   [ ] Programmable constraints so that the rules of your custom puzzle variant don't have to be imagined but can actually be enforced.
+-   [ ] ~~Artificial General Intelligence paperclip generator.~~ That will have to wait for a different project.
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+## Why make another tool?
 
-### `yarn test`
+There are many other tools out there for setting puzzles, but most are to make specific genres (you cannot create your own variant). Penpa+ is an exception to this, but it has a few problems that made me still want to create a separate tool, most of which are technical.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+-   It has to support legacy urls. This is not a bad thing in and of itself (it's a very good thing since it means it is a success), but it does mean some tricks for shortening urls are not possible.
+-   It uses canvas instead of svg or dom elements. This means you don't have access to css to style elements and image scaling becomes much more of a problem. Additionally, you can't get true dark mode.
+-   It uses global scope js instead of modules making it hard to write tests. I contributed some code that expanded the amount of puzz.link puzzles that could be imported into penpa and had to go through some hoops just to set up a few snapshot tests.
+-   You can't use typescript. While some would consider that a plus, having typescript and other linting tools help catch certain mistakes early and often makes refactoring much easier.
 
-### `yarn build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `yarn eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
-
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `yarn build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+That all said, Latgrid will not replace Penpa+. It has some nice features that make it a better choice, e.g. everything is pure javascript meaning you can clone the project and run it locally without any build steps.

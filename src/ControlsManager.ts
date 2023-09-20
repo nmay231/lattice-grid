@@ -11,8 +11,8 @@ import {
     TupleVector,
     UnknownObject,
 } from "./types";
-import { focusProxy, _focusState } from "./utils/focusManagement";
-import { euclidean, Vec } from "./utils/math";
+import { _focusState, focusProxy } from "./utils/focusManagement";
+import { Vec, euclidean } from "./utils/math";
 import { notify } from "./utils/notifications";
 import { DelayedCallback } from "./utils/primitiveWrappers";
 import { keypressString } from "./utils/string";
@@ -315,7 +315,6 @@ export class ControlsManager {
         if (!layer || action === "ignore") return;
 
         // TODO: Better way to access scrollArea (I don't care right now)
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const scrollArea = rawEvent.currentTarget.parentElement!.parentElement!.parentElement!;
 
         if (action === "pan") {
