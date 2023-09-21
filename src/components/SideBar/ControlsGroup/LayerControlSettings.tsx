@@ -18,8 +18,8 @@ const _LayerControlSettings = ({ layer, controls }: InnerProps) => {
             <LayerForm
                 initialValues={layer.rawSettings}
                 elements={controls.elements}
-                onChange={(rawSettings) => {
-                    puzzle.changeLayerSettings(layer.id, rawSettings);
+                onChange={(newSettings) => {
+                    puzzle.changeLayerSettings(layer.id, newSettings);
                     puzzle.renderChange({ type: "draw", layerIds: [layer.id] });
                     unfocus();
                 }}

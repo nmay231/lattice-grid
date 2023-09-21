@@ -1,4 +1,13 @@
-import { Button, Checkbox, NumberInput, Select, TextInput } from "@mantine/core";
+import {
+    Button,
+    Checkbox,
+    ColorPicker,
+    NumberInput,
+    Select,
+    SimpleGrid,
+    Text,
+    TextInput,
+} from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { FormSchema, LayerProps } from "../../types";
 import { notify } from "../../utils/notifications";
@@ -25,6 +34,7 @@ export const LayerForm = <LP extends LayerProps = LayerProps>({
             // TODO: Layers might actually have validation in the future, but might as well do this for onChange for now
             return {};
         },
+        validateInputOnChange: !!onChange,
     });
 
     return (
@@ -35,6 +45,7 @@ export const LayerForm = <LP extends LayerProps = LayerProps>({
                         return (
                             <Checkbox
                                 key={element.key}
+                                mb={5}
                                 label={element.desc}
                                 {...form.getInputProps(element.key, { type: "checkbox" })}
                             />
@@ -44,6 +55,7 @@ export const LayerForm = <LP extends LayerProps = LayerProps>({
                         return (
                             <NumberInput
                                 key={element.key}
+                                mb={5}
                                 label={element.desc}
                                 min={element.min}
                                 max={element.max}
@@ -55,6 +67,7 @@ export const LayerForm = <LP extends LayerProps = LayerProps>({
                         return (
                             <TextInput
                                 key={element.key}
+                                mb={5}
                                 label={element.desc}
                                 {...form.getInputProps(element.key)}
                             />
@@ -64,6 +77,7 @@ export const LayerForm = <LP extends LayerProps = LayerProps>({
                         return (
                             <Select
                                 key={element.key}
+                                mb={5}
                                 label={element.desc}
                                 data={element.pairs}
                                 allowDeselect={false}
@@ -72,7 +86,27 @@ export const LayerForm = <LP extends LayerProps = LayerProps>({
                         );
                     }
                     case "color": {
-                        return "TODO!";
+                        return (
+                            <div key={element.key}>
+                                <Text>{element.desc}</Text>
+                                <ColorPicker
+                                    mb={5}
+                                    withPicker={false}
+                                    swatches={[
+                                        // TODO: Better color selection
+                                        "blue",
+                                        "green",
+                                        "orange",
+                                        "pink",
+                                        "purple",
+                                        "red",
+                                        "yellow",
+                                    ]}
+                                    swatchesPerRow={7}
+                                    {...form.getInputProps(element.key)}
+                                />
+                            </div>
+                        );
                     }
                     default:
                         // Typescript... Why do I have to do `as any` on never in these cases... So stupid...
@@ -81,14 +115,14 @@ export const LayerForm = <LP extends LayerProps = LayerProps>({
                 }
             })}
             {onSubmit && (
-                <>
+                <SimpleGrid cols={2} m="sm">
                     <Button type="submit" disabled={!form.isDirty()}>
                         {submitLabel ?? "Submit"}
                     </Button>
                     <Button type="reset" disabled={!form.isDirty()} onClick={form.reset}>
                         {resetLabel ?? "Reset"}
                     </Button>
-                </>
+                </SimpleGrid>
             )}
         </form>
     );
