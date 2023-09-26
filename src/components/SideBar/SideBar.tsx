@@ -13,18 +13,16 @@ type Arg1 = { smallPageWidth: string; utilityBarHeight: string; opened: boolean 
 const useStyles = createStyles((theme, { smallPageWidth, utilityBarHeight, opened }: Arg1) => ({
     container: {
         height: "100%",
-        width: "100svw",
+        width: "calc(100svw - 3px)",
         marginLeft: opened ? "-0svw" : "-100svw",
         transition: "margin-left 0.4s",
         borderRight: "3px solid rgb(54, 50, 50)",
-        marginRight: opened ? "-100svw" : "-3px",
         position: "absolute",
         zIndex: 1,
         backgroundColor: "white",
         [`@media (min-width: ${smallPageWidth})`]: {
-            width: "30svw",
+            width: "calc(30svw - 3px)",
             marginLeft: opened ? "-0svw" : "-30svw",
-            marginRight: "-3px",
             position: "unset",
         },
     },

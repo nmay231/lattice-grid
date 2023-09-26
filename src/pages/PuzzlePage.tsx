@@ -7,6 +7,7 @@ import { BlocklyModal } from "../components/Blockly/BlocklyModal";
 import { DebugPointers } from "../components/DebugPointers";
 import { ImportExportModal } from "../components/ImportExportModal";
 import { importPuzzle } from "../components/ImportExportModal/importPuzzle";
+import { MobileControls } from "../components/MobileControls";
 import { SVGCanvas } from "../components/SVGCanvas";
 import { SideBar } from "../components/SideBar";
 import { ResizeModal } from "../components/SideBar/MainGroup/ResizeModal";
@@ -31,12 +32,16 @@ const useGlobalEventListeners = (controls: ControlsManager) => {
 };
 
 const useStyles = createStyles({
-    container: {
+    mainContainer: {
         width: "100svw",
         height: "100svh",
         overflow: "hidden",
         display: "flex",
         flexDirection: "row",
+    },
+    canvasContainer: {
+        display: "relative",
+        flexDirection: "column",
     },
 });
 
@@ -63,9 +68,12 @@ export const PuzzlePage = ({ pageMode }: { pageMode: PageMode }) => {
     }, [puzzle, pageMode, navigate, params]);
 
     return (
-        <div className={classes.container}>
+        <div className={classes.mainContainer}>
             <SideBar />
-            <SVGCanvas />
+            <div className={classes.canvasContainer}>
+                <SVGCanvas />
+                <MobileControls />
+            </div>
             <DebugPointers />
 
             {/* TODO: Originally, the resize modal was designed to be inside the area of the svg canvas. Should I fix that, or leave it be and remove the useless code... */}
