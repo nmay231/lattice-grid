@@ -41,7 +41,6 @@ const useStyles = createStyles({
     },
     canvasContainer: {
         display: "relative",
-        flexDirection: "column",
     },
 });
 
