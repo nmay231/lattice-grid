@@ -4,6 +4,7 @@ import { usePuzzle } from "../../../state/puzzle";
 import { FormSchema, Layer, LayerClass, LayerProps } from "../../../types";
 import { useFocusGroup } from "../../../utils/focusManagement";
 import { LayerForm } from "../../LayerForm";
+import { Numpad } from "./Numpad";
 
 type InnerProps = { layer: Layer; controls: FormSchema<LayerProps> };
 
@@ -15,6 +16,14 @@ const _LayerControlSettings = ({ layer, controls }: InnerProps) => {
         <div ref={ref}>
             {/* TODO: Hack Mantine's useFocusTrap so it doesn't focus the first element right away */}
             <div data-autofocus></div>
+            {controls.numpadControls && (
+                <Numpad
+                    onKeyPress={(keypress) => {
+                        puzzle.controls.handleKeyPress(keypress);
+                        unfocus();
+                    }}
+                />
+            )}
             <LayerForm
                 initialValues={layer.rawSettings}
                 elements={controls.elements}
@@ -42,7 +51,7 @@ export const LayerControlSettings = () => {
     const layerClass = availableLayers[layerType as keyof typeof availableLayers] as LayerClass;
 
     if (!layerClass.controls) {
-        return <i>This layer has no control settings</i>;
+        return <i>This layer has no controls</i>;
     }
 
     return <_LayerControlSettings key={id} layer={layer} controls={layerClass.controls} />;

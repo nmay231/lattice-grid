@@ -11,6 +11,7 @@ import {
 import { useForm } from "@mantine/form";
 import { FormSchema, LayerProps } from "../../types";
 import { notify } from "../../utils/notifications";
+
 export interface LayerFormArgs<LP extends LayerProps> extends FormSchema<LP> {
     initialValues: LP["RawSettings"];
     onSubmit?: (values: LP["RawSettings"]) => void;
@@ -108,10 +109,10 @@ export const LayerForm = <LP extends LayerProps = LayerProps>({
                             </div>
                         );
                     }
-                    default:
-                        // Typescript... Why do I have to do `as any` on never in these cases... So stupid...
+                    default: {
                         notify.error({ message: `Unexpected form type: ${(element as any).type}` });
                         return;
+                    }
                 }
             })}
             {onSubmit && (

@@ -164,6 +164,7 @@ export type Grid = {
 type StringKeyof<T> = keyof T extends infer K ? (K extends string ? K : never) : never;
 
 export type FormSchema<LP extends LayerProps> = {
+    numpadControls?: true;
     elements: Array<
         | { type: "color"; key: StringKeyof<LP["RawSettings"]>; desc: string; showAll?: boolean }
         | {

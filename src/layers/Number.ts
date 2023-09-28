@@ -1,4 +1,4 @@
-import { FormSchema, Layer, LayerClass, LayerHandlerResult, Point, SVGGroup } from "../types";
+import { Layer, LayerClass, LayerHandlerResult, Point, SVGGroup } from "../types";
 import { zip } from "../utils/data";
 import { notify } from "../utils/notifications";
 import { BaseLayer } from "./BaseLayer";
@@ -63,8 +63,8 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
         return { history };
     };
 
-    static controls = undefined;
-    static constraints: FormSchema<NumberProps> = {
+    static controls: NumberLayer["controls"] = { elements: [], numpadControls: true };
+    static constraints: NumberLayer["constraints"] = {
         elements: [
             { type: "number", key: "max", desc: "Max", min: 0 },
             { type: "boolean", key: "negatives", desc: "Allow negatives" },

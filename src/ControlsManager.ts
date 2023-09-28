@@ -394,6 +394,10 @@ export class ControlsManager {
             return;
         }
 
+        this.handleKeyPress(keypress);
+    }
+
+    handleKeyPress(keypress: string) {
         let layer = this.getCurrentLayer();
         if (!layer) return;
 

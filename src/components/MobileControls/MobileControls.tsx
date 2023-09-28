@@ -1,4 +1,4 @@
-import { ActionIcon, Box, SimpleGrid, Tooltip, createStyles } from "@mantine/core";
+import { ActionIcon, Box, Tooltip, createStyles } from "@mantine/core";
 import { IoMdArrowRoundDown, IoMdArrowRoundUp } from "react-icons/io";
 import { useProxy } from "valtio/utils";
 import { useFocusElementHandler } from "../../utils/focusManagement";
@@ -60,20 +60,6 @@ export const MobileControls = () => {
                     </ActionIcon>
                 </Tooltip>
             </div>
-            <SimpleGrid cols={3} spacing={16} p="1rem" m="auto" w="auto">
-                <div style={{ width: "4rem", height: "4rem", backgroundColor: "red" }}>1</div>
-                <div style={{ width: "4rem", height: "4rem", backgroundColor: "red" }}>2</div>
-                <div style={{ width: "4rem", height: "4rem", backgroundColor: "red" }}>3</div>
-                <div style={{ width: "4rem", height: "4rem", backgroundColor: "red" }}>4</div>
-                <div style={{ width: "4rem", height: "4rem", backgroundColor: "red" }}>5</div>
-                <div style={{ width: "4rem", height: "4rem", backgroundColor: "red" }}>6</div>
-                <div style={{ width: "4rem", height: "4rem", backgroundColor: "red" }}>7</div>
-                <div style={{ width: "4rem", height: "4rem", backgroundColor: "red" }}>8</div>
-                <div style={{ width: "4rem", height: "4rem", backgroundColor: "red" }}>9</div>
-                <div style={{ width: "4rem", height: "4rem", backgroundColor: "red" }}>Del</div>
-                <div style={{ width: "4rem", height: "4rem", backgroundColor: "red" }}>0</div>
-                <div style={{ width: "4rem", height: "4rem", backgroundColor: "red" }}>Back</div>
-            </SimpleGrid>
         </Box>
     );
 };
