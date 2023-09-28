@@ -37,6 +37,14 @@ export class OrderedMap<V> {
         return i === -1 || i === this.order.length - 1 ? null : this.order[i + 1];
     }
 
+    firstKey(): string | null {
+        return this.order.length ? this.order[0] : null;
+    }
+
+    lastKey(): string | null {
+        return this.order.length ? this.order[this.order.length - 1] : null;
+    }
+
     keys(): string[] {
         return this.order;
     }
@@ -78,6 +86,18 @@ export class IndexedOrderedMap<V> extends OrderedMap<V> {
         do prev = this.getPrevKey(prev) || null;
         while (prev && !this.selectable(this.get(prev)));
         return prev;
+    }
+
+    firstSelectableKey(): string | null {
+        const first = this.firstKey();
+        if (!first || this.selectable(this.map[first])) return first;
+        return this.getNextSelectableKey(first);
+    }
+
+    lastSelectableKey(): string | null {
+        const last = this.lastKey();
+        if (!last || this.selectable(this.map[last])) return last;
+        return this.getPrevSelectableKey(last);
     }
 
     delete(key: string): boolean {
