@@ -55,13 +55,15 @@ export const MobileControls = () => {
     const { opened: sidebarOpened } = useProxy(sidebarProxy);
     const { cx, classes } = useStyles({ sidebarOpened });
 
+    const { ref: layerDropdownRef, unfocus } = useFocusElementHandler();
+
     // Look at this beauty... Can't wait to refactor
     return (
         <Box className={classes.container}>
             <div className={classes.buttons}>
                 <PuzzleModeToggle />
                 <IconButton
-                    label="Undo"
+                    label="Previous Layer"
                     className={classes.icon}
                     onClick={() => {
                         const id = puzzle.layers.currentKey;
@@ -75,10 +77,15 @@ export const MobileControls = () => {
                     <IoMdArrowRoundBack />
                 </IconButton>
                 <Select
+                    ref={layerDropdownRef}
                     allowDeselect={false}
                     value={currentLayerId}
                     onChange={(id) => {
                         if (id) puzzle.selectLayer(id);
+                    }}
+                    onDropdownClose={() => {
+                        // Actually needs some time, otherwise a layer can't be selected...
+                        setTimeout(() => unfocus(), 50);
                     }}
                     data={puzzle.layers
                         .entries()
@@ -89,7 +96,7 @@ export const MobileControls = () => {
                         }))}
                 />
                 <IconButton
-                    label="Undo"
+                    label="Next Layer"
                     className={classes.icon}
                     onClick={() => {
                         const id = puzzle.layers.currentKey;
@@ -134,7 +141,7 @@ export const MobileControls = () => {
 };
 type Arg2 = ActionIconProps & { label: string; onClick: () => void };
 const IconButton = ({ label, onClick, ...rest }: Arg2) => {
-    const { ref } = useFocusElementHandler();
+    const { ref, unfocus } = useFocusElementHandler();
     return (
         <Tooltip label={label} events={{ focus: true, hover: true, touch: true }}>
             <ActionIcon
@@ -142,7 +149,10 @@ const IconButton = ({ label, onClick, ...rest }: Arg2) => {
                 size="lg"
                 variant="filled"
                 color="blue"
-                onClick={onClick}
+                onClick={() => {
+                    onClick();
+                    unfocus();
+                }}
                 {...rest}
             />
         </Tooltip>
