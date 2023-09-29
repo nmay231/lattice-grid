@@ -1,16 +1,15 @@
-import { useRef } from "react";
 import { useProxy } from "valtio/utils";
 import { availableLayers } from "../../../layers";
 import { usePuzzle } from "../../../state/puzzle";
 import { FormSchema, Layer, LayerClass, LayerProps } from "../../../types";
 import { useFocusGroup } from "../../../utils/focusManagement";
-import { LayerForm } from "../../LayerForm";
+import { LayerForm, layerSettingsRerender } from "../../LayerForm";
 
 type InnerProps = { layer: Layer; constraints: FormSchema<LayerProps> };
 
 const _LayerConstraintSettings = ({ layer, constraints }: InnerProps) => {
     const puzzle = usePuzzle();
-    const resetForm = useRef(0);
+    const rerender = useProxy(layerSettingsRerender);
     const { ref, unfocus } = useFocusGroup({ puzzle, group: "controlSettings" });
 
     return (
@@ -19,13 +18,13 @@ const _LayerConstraintSettings = ({ layer, constraints }: InnerProps) => {
             <div data-autofocus></div>
             <LayerForm
                 // Force a new LayerForm to be created whenever settings changes. Mantines's useForm assumes initialValues never changes.
-                key={resetForm.current}
+                key={rerender.key}
                 initialValues={layer.rawSettings}
                 elements={constraints.elements}
                 submitLabel="Save"
                 resetLabel="Cancel"
                 onSubmit={(newSettings) => {
-                    resetForm.current += 1;
+                    rerender.key += 1;
                     puzzle.changeLayerSettings(layer.id, newSettings);
                     puzzle.renderChange({ type: "draw", layerIds: [layer.id] });
                     unfocus();
