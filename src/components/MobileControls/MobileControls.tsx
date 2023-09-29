@@ -67,7 +67,7 @@ export const MobileControls = () => {
                         const id = puzzle.layers.currentKey;
                         if (!id) return;
                         let prev = puzzle.layers.getPrevSelectableKey(id);
-                        if (!prev) prev = puzzle.layers.lastSelectableKey();
+                        if (!prev) prev = puzzle.layers.getLastSelectableKey();
                         if (!prev) return;
                         puzzle.selectLayer(prev);
                     }}
@@ -95,7 +95,7 @@ export const MobileControls = () => {
                         const id = puzzle.layers.currentKey;
                         if (!id) return;
                         let next = puzzle.layers.getNextSelectableKey(id);
-                        if (!next) next = puzzle.layers.firstSelectableKey();
+                        if (!next) next = puzzle.layers.getFirstSelectableKey();
                         if (!next) return;
                         puzzle.selectLayer(next);
                     }}
