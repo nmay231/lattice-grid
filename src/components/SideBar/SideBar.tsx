@@ -18,7 +18,7 @@ const useStyles = createStyles((theme, { smallPageWidth, utilityBarHeight, opene
         transition: "margin-left 0.4s",
         borderRight: "3px solid rgb(54, 50, 50)",
         position: "absolute",
-        zIndex: 1,
+        zIndex: 10, // Mobile controls buttons can show otherwise
         backgroundColor: "white",
         [`@media (min-width: ${smallPageWidth})`]: {
             width: "30svw",
