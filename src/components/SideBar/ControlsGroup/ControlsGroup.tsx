@@ -1,12 +1,19 @@
+import { Checkbox } from "@mantine/core";
+import { useProxy } from "valtio/utils";
+import { mobileControlsProxy } from "../../MobileControls";
 import { Group } from "../Group";
 import { LayerControlSettings } from "./LayerControlSettings";
 
-// TODO: Allow customization by selecting which sections are visible. Also allow the controls to (un)dock from the sidebar and be dragged around (mostly for mobile controls).
-
 export const ControlsGroup = () => {
+    const mobileControls = useProxy(mobileControlsProxy);
+
     return (
         <Group name="Controls" expanded>
-            {/* Layer control settings, aka Object placement/selection */}
+            <Checkbox
+                label="Enable mobile controls"
+                checked={mobileControls.enabled}
+                onChange={() => (mobileControls.enabled = !mobileControls.enabled)}
+            />
             <LayerControlSettings />
         </Group>
     );

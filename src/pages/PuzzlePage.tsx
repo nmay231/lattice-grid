@@ -2,12 +2,13 @@ import { createStyles } from "@mantine/core";
 import { usePageLeave } from "@mantine/hooks";
 import { useCallback, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useProxy } from "valtio/utils";
 import { ControlsManager } from "../ControlsManager";
 import { BlocklyModal } from "../components/Blockly/BlocklyModal";
 import { DebugPointers } from "../components/DebugPointers";
 import { ImportExportModal } from "../components/ImportExportModal";
 import { importPuzzle } from "../components/ImportExportModal/importPuzzle";
-import { MobileControls } from "../components/MobileControls";
+import { MobileControls, mobileControlsProxy } from "../components/MobileControls";
 import { SVGCanvas } from "../components/SVGCanvas";
 import { SideBar } from "../components/SideBar";
 import { ResizeModal } from "../components/SideBar/MainGroup/ResizeModal";
@@ -49,6 +50,7 @@ export const PuzzlePage = ({ pageMode }: { pageMode: PageMode }) => {
     const puzzle = usePuzzle();
     const navigate = useNavigate();
     const { search: params } = useLocation();
+    const { enabled: mobileControlsEnabled } = useProxy(mobileControlsProxy);
 
     usePageLeave(puzzle.controls.onPageBlur.bind(puzzle.controls));
     useGlobalEventListeners(puzzle.controls);
@@ -71,7 +73,7 @@ export const PuzzlePage = ({ pageMode }: { pageMode: PageMode }) => {
             <SideBar />
             <div className={classes.canvasContainer}>
                 <SVGCanvas />
-                <MobileControls />
+                {mobileControlsEnabled && <MobileControls />}
             </div>
             <DebugPointers />
 
