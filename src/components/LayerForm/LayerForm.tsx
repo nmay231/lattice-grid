@@ -47,7 +47,7 @@ export const LayerForm = <LP extends LayerProps = LayerProps>({
                             <Checkbox
                                 key={element.key}
                                 mb={5}
-                                label={element.desc}
+                                label={element.label}
                                 {...form.getInputProps(element.key, { type: "checkbox" })}
                             />
                         );
@@ -57,7 +57,7 @@ export const LayerForm = <LP extends LayerProps = LayerProps>({
                             <NumberInput
                                 key={element.key}
                                 mb={5}
-                                label={element.desc}
+                                label={element.label}
                                 min={element.min}
                                 max={element.max}
                                 {...form.getInputProps(element.key)}
@@ -69,7 +69,7 @@ export const LayerForm = <LP extends LayerProps = LayerProps>({
                             <TextInput
                                 key={element.key}
                                 mb={5}
-                                label={element.desc}
+                                label={element.label}
                                 {...form.getInputProps(element.key)}
                             />
                         );
@@ -79,7 +79,7 @@ export const LayerForm = <LP extends LayerProps = LayerProps>({
                             <Select
                                 key={element.key}
                                 mb={5}
-                                label={element.desc}
+                                label={element.label}
                                 data={element.pairs}
                                 allowDeselect={false}
                                 {...form.getInputProps(element.key)}
@@ -89,7 +89,7 @@ export const LayerForm = <LP extends LayerProps = LayerProps>({
                     case "color": {
                         return (
                             <div key={element.key}>
-                                <Text>{element.desc}</Text>
+                                <Text>{element.label}</Text>
                                 <ColorPicker
                                     mb={5}
                                     withPicker={false}

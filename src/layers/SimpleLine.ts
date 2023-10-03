@@ -44,7 +44,7 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
             {
                 type: "dropdown",
                 key: "connections",
-                desc: "Where to draw lines",
+                label: "Where to draw lines",
                 // TODO: Change to label, value and get rid of `pointTypes`
                 pairs: Object.keys(pointTypes).map((key) => ({ label: key, value: key })),
                 // pairs: Object.entries(pointTypes).map(([label, value]) => ({ label, value })),
@@ -53,7 +53,7 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
     };
 
     static controls: FormSchema<SimpleLineProps> = {
-        elements: [{ type: "color", key: "stroke", desc: "Stroke color", showAll: true }],
+        elements: [{ type: "color", key: "stroke", label: "Stroke color" }],
     };
 
     newSettings: ISimpleLineLayer["newSettings"] = ({ newSettings, storage, grid }) => {

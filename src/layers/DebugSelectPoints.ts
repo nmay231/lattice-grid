@@ -32,9 +32,9 @@ export class DebugSelectPointsLayer
     static controls = undefined;
     static constraints: FormSchema<DebugSelectPointsProps> = {
         elements: [
-            { type: "boolean", key: "straight", desc: "Straight" },
-            { type: "boolean", key: "diagonal", desc: "Diagonal" },
-            { type: "boolean", key: "knight", desc: "Knight" },
+            { type: "boolean", key: "straight", label: "Straight" },
+            { type: "boolean", key: "diagonal", label: "Diagonal" },
+            { type: "boolean", key: "knight", label: "Knight" },
         ],
     };
 

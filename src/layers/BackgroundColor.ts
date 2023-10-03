@@ -29,7 +29,7 @@ export class BackgroundColorLayer
     }) satisfies LayerClass<BackgroundColorProps>["create"];
 
     static controls: FormSchema<BackgroundColorProps> = {
-        elements: [{ type: "color", key: "selectedState", desc: "Fill color", showAll: true }],
+        elements: [{ type: "color", key: "selectedState", label: "Fill color" }],
     };
     static constraints = undefined;
 

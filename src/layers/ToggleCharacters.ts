@@ -48,12 +48,12 @@ export class ToggleCharactersLayer
             {
                 type: "string",
                 key: "characters",
-                desc: "Allowed characters",
+                label: "Allowed characters",
             },
             {
                 type: "dropdown",
                 key: "displayStyle",
-                desc: "How values are displayed",
+                label: "How values are displayed",
                 pairs: [
                     { label: "Centered", value: "center" }, // Middle across the center
                     { label: "Top and bottom", value: "topBottom" }, // Two rows, top and bottom

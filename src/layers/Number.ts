@@ -66,8 +66,8 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
     static controls: NumberLayer["controls"] = { elements: [], numpadControls: true };
     static constraints: NumberLayer["constraints"] = {
         elements: [
-            { type: "number", key: "max", desc: "Max", min: 0 },
-            { type: "boolean", key: "negatives", desc: "Allow negatives" },
+            { type: "number", key: "max", label: "Max", min: 0 },
+            { type: "boolean", key: "negatives", label: "Allow negatives" },
         ],
     };
 

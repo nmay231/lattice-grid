@@ -166,22 +166,22 @@ type StringKeyof<T> = keyof T extends infer K ? (K extends string ? K : never) :
 export type FormSchema<LP extends LayerProps> = {
     numpadControls?: true;
     elements: Array<
-        | { type: "color"; key: StringKeyof<LP["RawSettings"]>; desc: string; showAll?: boolean }
+        | { type: "color"; key: StringKeyof<LP["RawSettings"]>; label: string }
         | {
               type: "dropdown";
               key: StringKeyof<LP["RawSettings"]>;
-              desc: string;
+              label: string;
               pairs: Array<{ label: string; value: string }>;
           }
         | {
               type: "number";
               key: StringKeyof<LP["RawSettings"]>;
-              desc: string;
+              label: string;
               min?: number;
               max?: number;
           }
-        | { type: "boolean"; key: StringKeyof<LP["RawSettings"]>; desc: string }
-        | { type: "string"; key: StringKeyof<LP["RawSettings"]>; desc: string }
+        | { type: "boolean"; key: StringKeyof<LP["RawSettings"]>; label: string }
+        | { type: "string"; key: StringKeyof<LP["RawSettings"]>; label: string }
     >;
 };
 
