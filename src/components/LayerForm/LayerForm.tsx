@@ -1,16 +1,8 @@
-import {
-    Button,
-    Checkbox,
-    ColorPicker,
-    NumberInput,
-    Select,
-    SimpleGrid,
-    Text,
-    TextInput,
-} from "@mantine/core";
+import { Box, Button, Checkbox, NumberInput, Select, SimpleGrid, TextInput } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { FormSchema, LayerProps } from "../../types";
 import { notify } from "../../utils/notifications";
+import { LayerColorPicker } from "./LayerColorPicker";
 
 export interface LayerFormArgs<LP extends LayerProps> extends FormSchema<LP> {
     initialValues: LP["RawSettings"];
@@ -88,25 +80,12 @@ export const LayerForm = <LP extends LayerProps = LayerProps>({
                     }
                     case "color": {
                         return (
-                            <div key={element.key}>
-                                <Text>{element.label}</Text>
-                                <ColorPicker
-                                    mb={5}
-                                    withPicker={false}
-                                    swatches={[
-                                        // TODO: Better color selection
-                                        "blue",
-                                        "green",
-                                        "orange",
-                                        "pink",
-                                        "purple",
-                                        "red",
-                                        "yellow",
-                                    ]}
-                                    swatchesPerRow={7}
+                            <Box key={element.key} mb={5}>
+                                <LayerColorPicker
+                                    label={element.label}
                                     {...form.getInputProps(element.key)}
                                 />
-                            </div>
+                            </Box>
                         );
                     }
                     default: {

@@ -1,0 +1,7 @@
+.swatch {
+    cursor: pointer;
+}
+
+.selectedSwatch {
+    outline: solid 2px rgb(130 225 255); /* Copied from LayerList outline color */
+}
