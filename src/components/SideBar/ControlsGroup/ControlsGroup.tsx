@@ -13,6 +13,7 @@ export const ControlsGroup = () => {
                 label="Enable mobile controls"
                 checked={mobileControls.enabled}
                 onChange={() => (mobileControls.enabled = !mobileControls.enabled)}
+                m="sm"
             />
             <LayerControlSettings />
         </Group>

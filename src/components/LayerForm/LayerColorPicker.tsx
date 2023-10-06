@@ -26,7 +26,7 @@ interface Arg1 extends Pick<ReturnType<GetInputProps<any>>, "value" | "onChange"
 }
 export const LayerColorPicker = ({ label, value, onChange }: Arg1) => {
     return (
-        <Box ml="8px">
+        <Box m="auto">
             <Text>{label}</Text>
             <div className={styles.swatchGrid}>
                 {theOnlyColorsThatExistOnThePlanet.map((color) => (

@@ -1,3 +1,4 @@
+import { Text } from "@mantine/core";
 import { useProxy } from "valtio/utils";
 import { availableLayers } from "../../../layers";
 import { usePuzzle } from "../../../state/puzzle";
@@ -41,14 +42,22 @@ export const LayerConstraintSettings = () => {
     const layer = id && layers.get(id);
 
     if (!layer) {
-        return <i>Add a layer to get started</i>;
+        return (
+            <Text italic m="xs">
+                Add a layer to get started
+            </Text>
+        );
     }
 
     const layerType = layer.type;
     const layerClass = availableLayers[layerType as keyof typeof availableLayers] as LayerClass;
 
     if (!layerClass.constraints) {
-        return <i>This layer has no settings</i>;
+        return (
+            <Text italic m="xs">
+                This layer has no settings
+            </Text>
+        );
     }
 
     return <_LayerConstraintSettings key={id} layer={layer} constraints={layerClass.constraints} />;

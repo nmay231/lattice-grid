@@ -1,3 +1,4 @@
+import { Text } from "@mantine/core";
 import { useProxy } from "valtio/utils";
 import { availableLayers } from "../../../layers";
 import { usePuzzle } from "../../../state/puzzle";
@@ -14,7 +15,7 @@ const _LayerControlSettings = ({ layer, controls }: InnerProps) => {
     const rerender = useProxy(layerSettingsRerender);
 
     return (
-        <div ref={ref}>
+        <div ref={ref} style={{ margin: "auto" }}>
             {/* TODO: Hack Mantine's useFocusTrap so it doesn't focus the first element right away */}
             <div data-autofocus></div>
             {controls.numpadControls && (
@@ -47,14 +48,22 @@ export const LayerControlSettings = () => {
     const layer = id && layers.get(id);
 
     if (!layer) {
-        return <i>Add a layer to get started</i>;
+        return (
+            <Text italic m="xs">
+                Add a layer to get started
+            </Text>
+        );
     }
 
     const layerType = layer.type;
     const layerClass = availableLayers[layerType as keyof typeof availableLayers] as LayerClass;
 
     if (!layerClass.controls) {
-        return <i>This layer has no controls</i>;
+        return (
+            <Text italic m="xs">
+                This layer has no controls
+            </Text>
+        );
     }
 
     return <_LayerControlSettings key={id} layer={layer} controls={layerClass.controls} />;

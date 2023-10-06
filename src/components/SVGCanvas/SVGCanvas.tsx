@@ -59,7 +59,7 @@ const useStyles = createStyles(
         scrollArea: {
             display: "flex",
             flexDirection: "column",
-            height: mobileControlsOpened ? "60svh" : "100svh",
+            height: mobileControlsOpened ? "1fr" : "100svh",
             width: "100svw",
             transition: "width 400ms, height 400ms",
             overflow: "auto",

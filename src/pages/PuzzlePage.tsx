@@ -41,16 +41,23 @@ const useStyles = createStyles({
         flexDirection: "row",
     },
     canvasContainer: {
-        display: "relative",
+        display: "grid",
+        gridTemplateRows: "1fr 0fr",
+        // gridTemplateRows: mobileControlsOpened ? "1fr auto" : "1fr 0fr",
+        // transition: "grid-template-rows 2s",
+    },
+    canvasContainerOpened: {
+        gridTemplateRows: "1fr auto",
     },
 });
 
 export const PuzzlePage = ({ pageMode }: { pageMode: PageMode }) => {
-    const { classes } = useStyles();
+    const { enabled: mobileControlsEnabled, opened: mobileControlsOpened } =
+        useProxy(mobileControlsProxy);
+    const { cx, classes } = useStyles();
     const puzzle = usePuzzle();
     const navigate = useNavigate();
     const { search: params } = useLocation();
-    const { enabled: mobileControlsEnabled } = useProxy(mobileControlsProxy);
 
     usePageLeave(puzzle.controls.onPageBlur.bind(puzzle.controls));
     useGlobalEventListeners(puzzle.controls);
@@ -71,7 +78,12 @@ export const PuzzlePage = ({ pageMode }: { pageMode: PageMode }) => {
     return (
         <div className={classes.mainContainer}>
             <SideBar />
-            <div className={classes.canvasContainer}>
+            <div
+                className={cx(
+                    classes.canvasContainer,
+                    mobileControlsOpened && classes.canvasContainerOpened,
+                )}
+            >
                 <SVGCanvas />
                 {mobileControlsEnabled && <MobileControls />}
             </div>
