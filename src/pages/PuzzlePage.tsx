@@ -4,14 +4,15 @@ import { useCallback, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useProxy } from "valtio/utils";
 import { ControlsManager } from "../ControlsManager";
-import { BlocklyModal } from "../components/Blockly/BlocklyModal";
-import { DebugPointers } from "../components/DebugPointers";
-import { ImportExportModal } from "../components/ImportExportModal";
 import { importPuzzle } from "../components/ImportExportModal/importPuzzle";
-import { MobileControls, mobileControlsProxy } from "../components/MobileControls";
-import { SVGCanvas } from "../components/SVGCanvas";
-import { SideBar } from "../components/SideBar";
-import { ResizeModal } from "../components/SideBar/MainGroup/ResizeModal";
+import {
+    MobileControlsActual,
+    MobileControlsMetaControls,
+    mobileControlsProxy,
+} from "../components/MobileControls";
+import { SVGCanvasNew } from "../components/SVGCanvas/SVGCanvas";
+import { SideBarMain, SideBarUtilityBar } from "../components/SideBar/SideBar";
+import { sidebarProxy } from "../components/SideBar/sidebarProxy";
 import { usePuzzle } from "../state/puzzle";
 import { NeedsUpdating, PageMode } from "../types";
 import { useGlobalFocusListeners } from "../utils/focusManagement";
@@ -37,24 +38,21 @@ const useStyles = createStyles({
         width: "100svw",
         height: "100svh",
         overflow: "hidden",
-        display: "flex",
-        flexDirection: "row",
-    },
-    canvasContainer: {
         display: "grid",
-        gridTemplateRows: "1fr 0fr",
-        // gridTemplateRows: mobileControlsOpened ? "1fr auto" : "1fr 0fr",
-        // transition: "grid-template-rows 2s",
-    },
-    canvasContainerOpened: {
-        gridTemplateRows: "1fr auto",
+        gridTemplateRows:
+            "[page-top] 0px [invisible-top] auto [sidebar-top] auto [meta-controls-bottom] 1fr [controls-top] auto [invisible-bottom] 0px [page-bottom]",
+        gridTemplateColumns:
+            "[page-left] 0px [invisible-left] minmax(30svw, auto) [sidebar-right] 1fr [page-right]",
+        gap: "10px",
+        backgroundColor: "purple",
+        "& > *": {
+            backgroundColor: "white",
+        },
     },
 });
 
 export const PuzzlePage = ({ pageMode }: { pageMode: PageMode }) => {
-    const { enabled: mobileControlsEnabled, opened: mobileControlsOpened } =
-        useProxy(mobileControlsProxy);
-    const { cx, classes } = useStyles();
+    const { classes } = useStyles();
     const puzzle = usePuzzle();
     const navigate = useNavigate();
     const { search: params } = useLocation();
@@ -75,24 +73,67 @@ export const PuzzlePage = ({ pageMode }: { pageMode: PageMode }) => {
         }
     }, [puzzle, pageMode, navigate, params]);
 
+    const mobileControls = useProxy(mobileControlsProxy);
+    const sidebar = useProxy(sidebarProxy);
+    const sidebarRight = sidebar.opened ? "sidebar-right" : "invisible-left";
+    const metaControlsBottom = mobileControls.opened ? "meta-controls-bottom" : "invisible-top";
+    const controlsTop = mobileControls.opened ? "controls-top" : "invisible-bottom";
+
     return (
         <div className={classes.mainContainer}>
-            <SideBar />
+            <SideBarUtilityBar gridArea={`page-top / page-left / sidebar-top / ${sidebarRight}`} />
+            <SideBarMain gridArea={`sidebar-top / page-left / page-bottom / ${sidebarRight}`} />
+            <SVGCanvasNew
+                gridArea={`${metaControlsBottom} / ${sidebarRight} / ${controlsTop} / page-right`}
+            />
+            <MobileControlsMetaControls
+                gridArea={`page-top / ${sidebarRight} / ${metaControlsBottom} / page-right`}
+            />
+            <MobileControlsActual
+                gridArea={`${controlsTop} / ${sidebarRight} / page-bottom / page-right`}
+            />
+            {/* <div
+                style={{ gridArea: "page-top / page-left / meta-controls-bottom / sidebar-right" }}
+            >
+                SideBarUtilityBar
+            </div>
             <div
+                style={{
+                    gridArea: "meta-controls-bottom / page-left / page-bottom / sidebar-right",
+                }}
+            >
+                SideBarMain
+            </div>
+            <div
+                style={{
+                    gridArea: "meta-controls-bottom / sidebar-right / controls-top / page-right",
+                }}
+            >
+                SVGCanvasNew
+            </div>
+            <div
+                style={{ gridArea: "page-top / sidebar-right / meta-controls-bottom / page-right" }}
+            >
+                MobileControlsMetaControls
+            </div>
+            <div style={{ gridArea: "controls-top / sidebar-right / page-bottom / page-right" }}>
+                MobileControlsActual
+            </div> */}
+
+            {/* <div
                 className={cx(
                     classes.canvasContainer,
                     mobileControlsOpened && classes.canvasContainerOpened,
                 )}
-            >
-                <SVGCanvas />
-                {mobileControlsEnabled && <MobileControls />}
-            </div>
-            <DebugPointers />
+            ></div> */}
+            {/* {mobileControlsEnabled &&  */}
+            {/* } */}
+            {/* <DebugPointers /> */}
 
             {/* TODO: Originally, the resize modal was designed to be inside the area of the svg canvas. Should I fix that, or leave it be and remove the useless code... */}
-            <ResizeModal />
+            {/* <ResizeModal />
             <BlocklyModal />
-            <ImportExportModal />
+            <ImportExportModal /> */}
         </div>
     );
 };

@@ -6,8 +6,6 @@ import { PuzzleManager } from "../../PuzzleManager";
 import { CANVAS_CONTAINER_ID, canvasSizeProxy } from "../../state/canvasSize";
 import { usePuzzle } from "../../state/puzzle";
 import { notify } from "../../utils/notifications";
-import { mobileControlsProxy } from "../MobileControls";
-import { sidebarProxy, smallPageWidth } from "../SideBar/sidebarProxy";
 
 const Inner = React.memo(function Inner(arg: Pick<PuzzleManager, "layers" | "SVGGroups">) {
     const { layers: layersProxy, SVGGroups: SVGGroupProxy } = arg;
@@ -53,49 +51,44 @@ const Inner = React.memo(function Inner(arg: Pick<PuzzleManager, "layers" | "SVG
     );
 });
 
-type Arg1 = { smallPageWidth: string; sidebarOpened: boolean; mobileControlsOpened: boolean };
-const useStyles = createStyles(
-    (theme, { smallPageWidth, sidebarOpened, mobileControlsOpened }: Arg1) => ({
-        scrollArea: {
-            display: "flex",
-            flexDirection: "column",
-            height: mobileControlsOpened ? "1fr" : "100svh",
-            width: "100svw",
-            transition: "width 400ms, height 400ms",
-            overflow: "auto",
-            [`@media (min-width: ${smallPageWidth})`]: {
-                width: sidebarOpened ? "70svw" : "100svw",
-            },
-        },
-        outerContainer: {
-            // Remember, if I change box-sizing back to content-box, I will have to update my zoom in/out code.
-            // boxSizing: "border-box",
-            margin: "0px auto",
-            padding: "2em",
-            touchAction: "none",
-            WebkitOverflowScrolling: "touch",
-            overscrollBehaviorY: "none",
-        },
-        innerContainer: {
-            "--canvas-zoom": 0.0,
-            border: "1px dotted grey",
-            margin: "0px",
-            padding: "0px",
-            cursor: "pointer",
-            WebkitTapHighlightColor: "transparent", // Remove image highlight when drawing on mobile Chrome
-        },
-    }),
-);
+// type Arg1 = { smallPageWidth: string; sidebarOpened: boolean; mobileControlsOpened: boolean };
+const useStyles = createStyles((theme, { gridArea }: { gridArea: string }) => ({
+    scrollArea: {
+        gridArea,
+        display: "flex",
+        flexDirection: "column",
+        // height: mobileControlsOpened ? "1fr" : "100svh",
+        // width: "100svw",
+        transition: "width 400ms, height 400ms",
+        overflow: "auto",
+        // [`@media (min-width: ${smallPageWidth})`]: {
+        //     width: sidebarOpened ? "70svw" : "100svw",
+        // },
+    },
+    outerContainer: {
+        // Remember, if I change box-sizing back to content-box, I will have to update my zoom in/out code.
+        // boxSizing: "border-box",
+        margin: "0px auto",
+        padding: "2em",
+        touchAction: "none",
+        WebkitOverflowScrolling: "touch",
+        overscrollBehaviorY: "none",
+    },
+    innerContainer: {
+        "--canvas-zoom": 0.0,
+        border: "1px dotted grey",
+        margin: "0px",
+        padding: "0px",
+        cursor: "pointer",
+        WebkitTapHighlightColor: "transparent", // Remove image highlight when drawing on mobile Chrome
+    },
+}));
 
 // TODO: Add dependency injection so it can be used in color swatches, resize modal, etc.
-export const SVGCanvas = React.memo(function SVGCanvas() {
-    const { opened: sidebarOpened } = useProxy(sidebarProxy);
-    const { opened: mobileControlsOpened } = useProxy(mobileControlsProxy);
-    const { cx, classes } = useStyles({
-        smallPageWidth,
-        sidebarOpened,
-        mobileControlsOpened,
-    });
+export const SVGCanvasNew = React.memo(function SVGCanvas({ gridArea }: { gridArea: string }) {
+    // const { opened: sidebarOpened } = useProxy(sidebarProxy);
+    // const { opened: mobileControlsOpened } = useProxy(mobileControlsProxy);
+    const { cx, classes } = useStyles({ gridArea });
 
     const { controls, layers, SVGGroups, settings } = usePuzzle();
     const { width } = useProxy(canvasSizeProxy);

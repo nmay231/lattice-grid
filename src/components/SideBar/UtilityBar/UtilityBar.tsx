@@ -4,16 +4,17 @@ import { useProxy } from "valtio/utils";
 import { useFocusElementHandler } from "../../../utils/focusManagement";
 import { sidebarProxy } from "../sidebarProxy";
 
-const useStyles = createStyles((theme, { height }: { height: string }) => ({
+const useStyles = createStyles((theme, { gridArea }: { gridArea: string }) => ({
     container: {
-        height: `calc(${height} - 3px)`,
-        width: "100%",
+        // height: `calc(${height} - 3px)`,
+        // width: "100%",
+        gridArea,
         display: "flex",
         alignItems: "center",
         justifyContent: "end",
         padding: "6px",
 
-        borderBottom: "3px solid rgb(54, 50, 50)",
+        // borderBottom: "3px solid rgb(54, 50, 50)",
     },
     icon: {
         margin: "8px",
@@ -24,9 +25,9 @@ const useStyles = createStyles((theme, { height }: { height: string }) => ({
     },
 }));
 
-export const UtilityBar = ({ height }: { height: string }) => {
+export const UtilityBar = ({ gridArea }: { gridArea: string }) => {
     const sidebar = useProxy(sidebarProxy);
-    const { classes, cx } = useStyles({ height });
+    const { classes, cx } = useStyles({ gridArea });
     const { ref: openToggleRef } = useFocusElementHandler();
 
     return (

@@ -5,14 +5,16 @@ import { Group } from "../Group";
 import { LayerControlSettings } from "./LayerControlSettings";
 
 export const ControlsGroup = () => {
-    const mobileControls = useProxy(mobileControlsProxy);
+    const MobileControlsMetaControls = useProxy(mobileControlsProxy);
 
     return (
         <Group name="Controls" expanded>
             <Checkbox
                 label="Enable mobile controls"
-                checked={mobileControls.enabled}
-                onChange={() => (mobileControls.enabled = !mobileControls.enabled)}
+                checked={MobileControlsMetaControls.enabled}
+                onChange={() =>
+                    (MobileControlsMetaControls.enabled = !MobileControlsMetaControls.enabled)
+                }
                 m="sm"
             />
             <LayerControlSettings />
