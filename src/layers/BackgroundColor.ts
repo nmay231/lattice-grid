@@ -4,6 +4,8 @@ import { OnePointProps, handleEventsCurrentSetting } from "./controls/onePoint";
 import styles from "./layers.module.css";
 
 type Color = string;
+// TODO: Single file exporting all versions of colors?
+const BLUE: Color = "var(--user-light-blue)";
 
 interface BackgroundColorProps extends OnePointProps<Color> {
     RawSettings: { selectedState: Color };
@@ -20,7 +22,7 @@ export class BackgroundColorLayer
     static ethereal = false;
     static readonly type = "BackgroundColorLayer";
     static displayName = "Background Color";
-    static defaultSettings = { selectedState: "blue" };
+    static defaultSettings = { selectedState: BLUE };
 
     settings = this.rawSettings;
 
@@ -36,7 +38,7 @@ export class BackgroundColorLayer
     newSettings: IBackgroundColorLayer["newSettings"] = ({ newSettings }) => {
         this.rawSettings = newSettings;
         this.settings = {
-            selectedState: newSettings.selectedState || "blue",
+            selectedState: newSettings.selectedState || BLUE,
         };
 
         handleEventsCurrentSetting(this, {
