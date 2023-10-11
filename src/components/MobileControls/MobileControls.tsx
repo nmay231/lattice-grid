@@ -1,7 +1,7 @@
 import { ActionIcon, ActionIconProps, Box, Burger, Center, Select, Tooltip } from "@mantine/core";
 import { IoMdArrowDropleft, IoMdArrowDropright, IoMdRedo, IoMdUndo } from "react-icons/io";
 import { useProxy } from "valtio/utils";
-import { usePuzzle } from "../../state/puzzle";
+import { usePuzzle, useSettings } from "../../state/puzzle";
 import { useFocusElementHandler } from "../../utils/focusManagement";
 import { LayerControlSettings } from "../SideBar/ControlsGroup/LayerControlSettings";
 import { PuzzleModeToggle } from "../SideBar/MainGroup/PuzzleModeToggle";
@@ -15,6 +15,7 @@ export const MobileControlsMetaControls = () => {
     const currentLayerId = useProxy(layersProxy).currentKey;
     const sidebar = useProxy(sidebarProxy);
     const mobileControls = useProxy(mobileControlsProxy);
+    const { pageMode } = useSettings();
 
     const { ref: layerDropdownRef, unfocus } = useFocusElementHandler();
     const { ref: openToggleRef } = useFocusElementHandler();
@@ -25,9 +26,9 @@ export const MobileControlsMetaControls = () => {
             <div className={styles.row}>
                 <Box
                     className={styles.offsetIcon}
-                    pos={mobileControls.enabled ? "relative" : "absolute"}
+                    pos={mobileControls.enabled && pageMode === "edit" ? "relative" : "absolute"}
                     left="0px"
-                    top={mobileControls.enabled ? "0px" : "8px"}
+                    top={mobileControls.enabled && pageMode === "edit" ? "0px" : "8px"}
                 >
                     {!sidebar.opened ? (
                         <Tooltip
@@ -48,7 +49,7 @@ export const MobileControlsMetaControls = () => {
                     )}
                 </Box>
                 <div className={styles.row}>
-                    <PuzzleModeToggle />
+                    {pageMode === "edit" && <PuzzleModeToggle />}
                     <IconButton
                         ml="sm"
                         label="Undo"
