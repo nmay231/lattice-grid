@@ -10,8 +10,6 @@ export const mobileControlsProxy = proxy({
     enabled: isMobile,
 });
 
-// TODO: Update to the new eslint files so I can restrict vitest lints to only testing files
-// eslint-disable-next-line vitest/require-hook
 subscribeKey(mobileControlsProxy, "enabled", () => {
     mobileControlsProxy.opened = mobileControlsProxy.enabled;
 });
