@@ -6,12 +6,12 @@ import { notify } from "../../utils/notifications";
 import { decompressJSON } from "../../utils/string";
 
 export type PuzzleData = {
-    version: `alpha-${0 | 1 | 2}`;
+    version: `alpha-${0 | 1 | 2 | 3}`;
     params: LocalStorageData;
     objects: Record<Layer["id"], LayerStorageJSON>;
     answerCheck: Layer["id"][];
 };
-export const currentEncodingVersion: PuzzleData["version"] = "alpha-2";
+export const currentEncodingVersion: PuzzleData["version"] = "alpha-3";
 
 // TODO: Move into a method of PuzzleManager and test
 export const importPuzzle = (puzzle: PuzzleManager, text: string) => {
