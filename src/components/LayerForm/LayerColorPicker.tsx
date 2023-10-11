@@ -11,14 +11,14 @@ const theOnlyColorsThatExistOnThePlanet = [
     "var(--user-light-red)",
     "var(--user-light-purple)",
     "var(--user-light-gray)",
-    "var(--user-light-white)",
+    "var(--user-dark-white)",
     "var(--user-dark-green)",
     "var(--user-dark-blue)",
     "var(--user-dark-yelloworange)",
     "var(--user-dark-red)",
     "var(--user-dark-purple)",
     "var(--user-dark-gray)",
-    "var(--user-dark-white)",
+    "var(--user-light-white)",
 ];
 
 interface Arg1 extends Pick<ReturnType<GetInputProps<any>>, "value" | "onChange"> {

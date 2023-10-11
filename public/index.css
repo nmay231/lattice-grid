@@ -19,12 +19,12 @@ body {
     --user-light-red: oklch(60% 0.2459 29);
     --user-light-purple: oklch(67% 0.26 354);
     --user-light-gray: oklch(67% 0% 0);
-    --user-light-white: oklch(0% 0% 0);
+    --user-light-white: oklch(100% 0% 0);
     --user-dark-green: oklch(38% 0.12 141);
     --user-dark-blue: oklch(38% 0.25 265);
     --user-dark-yelloworange: oklch(69.12% 0.16 61.3);
     --user-dark-red: oklch(38% 0.15 29);
     --user-dark-purple: oklch(38% 0.21 330);
     --user-dark-gray: oklch(38% 0% 0);
-    --user-dark-white: oklch(100% 0% 0);
+    --user-dark-white: oklch(0% 0% 0);
 }
