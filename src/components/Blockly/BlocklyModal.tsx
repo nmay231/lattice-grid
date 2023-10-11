@@ -7,10 +7,14 @@ import { blocklyToolbox } from "../../userComputation/codeBlocks";
 import { addAliasCategoryToToolbox } from "../../userComputation/utils";
 import { openModal, useFocusElementHandler, useModal } from "../../utils/focusManagement";
 import { Blockly } from "../../utils/imports/blockly";
+import { sidebarProxy } from "../SideBar/sidebarProxy";
 import { codeGen } from "./customCodeGen";
 
 export const BlocklyModalButton: React.FC<{ children: string }> = ({ children }) => {
-    const open = useCallback(() => openModal("blockly"), []);
+    const open = useCallback(() => {
+        openModal("blockly");
+        sidebarProxy.opened = false;
+    }, []);
     const { ref } = useFocusElementHandler();
 
     // TODO: Technically, openModal handles calling unfocus from useFocusElementHandler. It's a bad habit to omit it in other button elements, but it's also bad to call unfocus and open out of order. I don't like that ambiguity...

@@ -4,6 +4,9 @@ import { useCallback, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useProxy } from "valtio/utils";
 import { ControlsManager } from "../ControlsManager";
+import { BlocklyModal } from "../components/Blockly/BlocklyModal";
+import { DebugPointers } from "../components/DebugPointers";
+import { ImportExportModal } from "../components/ImportExportModal";
 import { importPuzzle } from "../components/ImportExportModal/importPuzzle";
 import {
     MobileControlsActual,
@@ -12,6 +15,7 @@ import {
 } from "../components/MobileControls";
 import { SVGCanvas } from "../components/SVGCanvas/SVGCanvas";
 import { SideBar, UtilityBar } from "../components/SideBar";
+import { ResizeModal } from "../components/SideBar/MainGroup/ResizeModal";
 import { sidebarProxy } from "../components/SideBar/sidebarProxy";
 import { usePuzzle } from "../state/puzzle";
 import { NeedsUpdating, PageMode } from "../types";
@@ -92,12 +96,11 @@ export const PuzzlePage = ({ pageMode }: { pageMode: PageMode }) => {
                 </div>
             </div>
 
-            {/* <DebugPointers /> */}
+            <DebugPointers />
 
-            {/* TODO: Originally, the resize modal was designed to be inside the area of the svg canvas. Should I fix that, or leave it be and remove the useless code... */}
-            {/* <ResizeModal />
+            <ResizeModal />
             <BlocklyModal />
-            <ImportExportModal /> */}
+            <ImportExportModal />
         </div>
     );
 };
