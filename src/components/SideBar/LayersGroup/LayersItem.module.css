@@ -20,6 +20,8 @@
 }
 
 .handle {
+    /* Needed because otherwise you can't rearrange layers without scrolling */
+    touch-action: none;
     cursor: move;
 }
 
