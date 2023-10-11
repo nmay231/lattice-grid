@@ -1,0 +1,48 @@
+.item {
+    display: flex;
+    border-radius: 5px;
+    margin: 3px 0px;
+    & button {
+        color: inherit;
+        &:hover {
+            background-color: transparent;
+        }
+    }
+    & svg {
+        width: 1em;
+        height: 1em;
+    }
+}
+
+.itemSelected {
+    background-color: rgb(175 235 255);
+    outline: 2px solid rgb(130 225 255);
+}
+
+.handle {
+    cursor: move;
+}
+
+.itemBody {
+    display: flex;
+    align-items: center;
+    flex-grow: 1;
+    margin: 3px;
+    font-size: 1em;
+}
+
+.name {
+    cursor: pointer;
+    text-align: center;
+    flex-grow: 1;
+    margin: 0px 7px;
+}
+
+.nameSelected {
+    /* Adjust for the icon to the left of the text */
+    padding-right: 1em;
+}
+
+.remove {
+    cursor: pointer;
+}

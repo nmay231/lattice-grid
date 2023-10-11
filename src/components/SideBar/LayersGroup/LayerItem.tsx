@@ -1,53 +1,10 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { ActionIcon, createStyles } from "@mantine/core";
+import { ActionIcon, clsx } from "@mantine/core";
 import { IoIosArrowRoundForward, IoMdClose, IoMdMenu } from "react-icons/io";
+import styles from "./LayersItem.module.css";
 
-const useStyles = createStyles(() => ({
-    item: {
-        display: "flex",
-        borderRadius: "5px",
-        margin: "3px 0px",
-        "& button": {
-            color: "inherit",
-            "&:hover": {
-                backgroundColor: "transparent",
-            },
-        },
-        "& svg": {
-            width: "1em",
-            height: "1em",
-        },
-    },
-    itemSelected: {
-        backgroundColor: "rgb(175 235 255)",
-        outline: "2px solid rgb(130 225 255)",
-    },
-    handle: {
-        cursor: "move",
-    },
-    itemBody: {
-        display: "flex",
-        alignItems: "center",
-        flexGrow: 1,
-        margin: "3px",
-        fontSize: "1em",
-    },
-    name: {
-        cursor: "pointer",
-        textAlign: "center",
-        flexGrow: 1,
-        margin: "0px 7px",
-    },
-    nameSelected: {
-        paddingRight: "1em", // Adjust for the icon to the left of the text
-    },
-    remove: {
-        cursor: "pointer",
-    },
-}));
-
-type Props = {
+type LayerItemProps = {
     id: string;
     displayName: string;
     selected: boolean;
@@ -55,16 +12,15 @@ type Props = {
     handleDelete: React.PointerEventHandler;
 };
 
-export const LayerItem: React.FC<Props> = ({
+export const LayerItem = ({
     id,
     displayName,
     selected,
     editable,
     handleDelete,
-}) => {
+}: LayerItemProps) => {
     // TODO: I eventually want to be able to edit the layers using the keyboard
     const editing = false;
-    const { classes, cx } = useStyles();
     const { setNodeRef, transform, attributes, listeners, transition } = useSortable({ id });
 
     const style = {
@@ -74,26 +30,26 @@ export const LayerItem: React.FC<Props> = ({
     return (
         <div
             ref={setNodeRef}
-            className={cx(classes.item, selected && classes.itemSelected)}
+            className={clsx(styles.item, selected && styles.itemSelected)}
             style={style}
             {...(editing ? {} : attributes)}
             data-autofocus={selected || undefined}
             data-layerid={id}
             tabIndex={!editing ? 0 : -1}
         >
-            <div className={classes.itemBody}>
+            <div className={styles.itemBody}>
                 {editable && (
                     <ActionIcon
                         {...(editing ? attributes : {})}
                         {...listeners}
-                        className={classes.handle}
+                        className={styles.handle}
                         tabIndex={editing ? 0 : -1}
                     >
                         <IoMdMenu />
                     </ActionIcon>
                 )}
 
-                <div className={cx(classes.name, selected && classes.nameSelected)}>
+                <div className={clsx(styles.name, selected && styles.nameSelected)}>
                     {selected && <IoIosArrowRoundForward />}
                     <span>{displayName}</span>
                 </div>
@@ -101,7 +57,7 @@ export const LayerItem: React.FC<Props> = ({
                 {editable && (
                     <ActionIcon
                         onPointerDown={handleDelete}
-                        className={classes.remove}
+                        className={styles.remove}
                         tabIndex={editing ? 0 : -1}
                     >
                         <IoMdClose />
