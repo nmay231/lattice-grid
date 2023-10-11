@@ -1,1 +1,2 @@
-export { SideBarMain as SideBar } from "./SideBar";
+export { SideBar } from "./SideBar";
+export { UtilityBar } from "./UtilityBar";

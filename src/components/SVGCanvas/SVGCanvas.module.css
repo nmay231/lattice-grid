@@ -1,0 +1,25 @@
+.scrollArea {
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+    width: 100%;
+}
+
+.outerContainer {
+    margin: 0px auto;
+    padding: 2em;
+    touch-action: none;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: none;
+}
+
+.innerContainer {
+    --canvas-zoom: 0;
+    border: 1px dotted grey;
+    margin: 0px;
+    padding: 0px;
+    cursor: pointer;
+
+    /* Remove image highlight when drawing on mobile chromium browsers */
+    -webkit-tap-highlight-color: transparent;
+}

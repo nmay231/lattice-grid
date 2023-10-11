@@ -1,0 +1,16 @@
+.row {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+}
+.icon {
+    margin: 8px 3px;
+    /* TODO: Save smallScreenWidth as a :root variable? */
+    @media (min-width: 800px) {
+        margin: 8px;
+    }
+}
+.offsetIcon {
+    z-index: 100;
+}

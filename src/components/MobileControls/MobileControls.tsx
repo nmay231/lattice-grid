@@ -1,97 +1,80 @@
-import { ActionIcon, ActionIconProps, Select, Tooltip, createStyles } from "@mantine/core";
-import {
-    IoMdArrowDropleft,
-    IoMdArrowDropright,
-    IoMdArrowRoundDown,
-    IoMdArrowRoundUp,
-    IoMdRedo,
-    IoMdUndo,
-} from "react-icons/io";
+import { ActionIcon, ActionIconProps, Box, Burger, Center, Select, Tooltip } from "@mantine/core";
+import { IoMdArrowDropleft, IoMdArrowDropright, IoMdRedo, IoMdUndo } from "react-icons/io";
 import { useProxy } from "valtio/utils";
 import { usePuzzle } from "../../state/puzzle";
 import { useFocusElementHandler } from "../../utils/focusManagement";
 import { LayerControlSettings } from "../SideBar/ControlsGroup/LayerControlSettings";
 import { PuzzleModeToggle } from "../SideBar/MainGroup/PuzzleModeToggle";
-import { smallPageWidth } from "../SideBar/sidebarProxy";
+import { sidebarProxy } from "../SideBar/sidebarProxy";
+import styles from "./mobileControls.module.css";
 import { mobileControlsProxy } from "./mobileControlsProxy";
 
-const useStyles = createStyles((theme, { gridArea }: { gridArea: string }) => ({
-    metaControls: {
-        gridArea,
-
-        // width: "100%",
-        // borderBottom: "3px solid rgb(54, 50, 50)",
-        display: "grid",
-        overflow: "hidden",
-        gridTemplateAreas: `"edit-mode toggle-button"
-                            "layer-picker layer-picker"`,
-        alignContent: "center",
-        justifyContent: "center",
-    },
-    row: {
-        display: "flex",
-        alignItems: "center",
-    },
-    editRow: {
-        gridArea: "edit-mode",
-    },
-    layerPickerRow: {
-        gridArea: "layer-picker",
-    },
-    toggleButtonRow: {
-        gridArea: "toggle-button",
-    },
-    icon: {
-        margin: "8px 3px",
-        [`@media (min-width: ${smallPageWidth})`]: {
-            margin: "8px",
-        },
-    },
-    offsetIcon: {
-        top: "-60px",
-        zIndex: 1,
-    },
-}));
-
-export const MobileControlsMetaControls = ({ gridArea }: { gridArea: string }) => {
+export const MobileControlsMetaControls = () => {
     const puzzle = usePuzzle();
     const layersProxy = puzzle.layers;
     const currentLayerId = useProxy(layersProxy).currentKey;
-
-    const state = useProxy(mobileControlsProxy);
-    const { cx, classes } = useStyles({ gridArea });
+    const sidebar = useProxy(sidebarProxy);
+    const mobileControls = useProxy(mobileControlsProxy);
 
     const { ref: layerDropdownRef, unfocus } = useFocusElementHandler();
+    const { ref: openToggleRef } = useFocusElementHandler();
 
     // Look at this beauty... Can't wait to refactor
     return (
-        <div className={classes.metaControls}>
-            <div className={cx(classes.row, classes.editRow)}>
-                <PuzzleModeToggle />
-                <IconButton
-                    ml="sm"
-                    label="Undo"
-                    className={classes.icon}
-                    onClick={() => {
-                        puzzle.controls.handleKeyPress("ctrl-z");
-                    }}
+        <div>
+            <div className={styles.row}>
+                <Box
+                    className={styles.offsetIcon}
+                    pos={mobileControls.enabled ? "relative" : "absolute"}
+                    left="0px"
+                    top={mobileControls.enabled ? "0px" : "8px"}
                 >
-                    <IoMdUndo />
-                </IconButton>
-                <IconButton
-                    label="Redo"
-                    className={classes.icon}
-                    onClick={() => {
-                        puzzle.controls.handleKeyPress("ctrl-y");
-                    }}
-                >
-                    <IoMdRedo />
-                </IconButton>
+                    {!sidebar.opened ? (
+                        <Tooltip
+                            label="Toggle Sidebar"
+                            events={{ hover: true, focus: true, touch: true }}
+                        >
+                            <Burger
+                                ref={openToggleRef}
+                                opened={false}
+                                size="md"
+                                tabIndex={-1}
+                                onClick={() => (sidebar.opened = !sidebar.opened)}
+                            />
+                        </Tooltip>
+                    ) : (
+                        // TODO: Size manually copied from the width of the burger
+                        <Box w="29px" h="29px"></Box>
+                    )}
+                </Box>
+                <div className={styles.row}>
+                    <PuzzleModeToggle />
+                    <IconButton
+                        ml="sm"
+                        label="Undo"
+                        className={styles.icon}
+                        onClick={() => {
+                            puzzle.controls.handleKeyPress("ctrl-z");
+                        }}
+                    >
+                        <IoMdUndo />
+                    </IconButton>
+                    <IconButton
+                        label="Redo"
+                        className={styles.icon}
+                        onClick={() => {
+                            puzzle.controls.handleKeyPress("ctrl-y");
+                        }}
+                    >
+                        <IoMdRedo />
+                    </IconButton>
+                </div>
             </div>
-            <div className={cx(classes.row, classes.layerPickerRow)}>
+
+            <div className={styles.row}>
                 <IconButton
                     label="Previous Layer"
-                    className={classes.icon}
+                    className={styles.icon}
                     onClick={() => {
                         const id = puzzle.layers.currentKey;
                         if (!id) return;
@@ -124,7 +107,7 @@ export const MobileControlsMetaControls = ({ gridArea }: { gridArea: string }) =
                 />
                 <IconButton
                     label="Next Layer"
-                    className={classes.icon}
+                    className={styles.icon}
                     onClick={() => {
                         const id = puzzle.layers.currentKey;
                         if (!id) return;
@@ -137,24 +120,17 @@ export const MobileControlsMetaControls = ({ gridArea }: { gridArea: string }) =
                     <IoMdArrowDropright />
                 </IconButton>
             </div>
-            <div className={cx(classes.row, classes.toggleButtonRow)}>
-                <IconButton
-                    label="Toggle Mobile Controls"
-                    className={cx(classes.icon, !state.opened && classes.offsetIcon)}
-                    onClick={() => (state.opened = !state.opened)}
-                >
-                    {state.opened ? <IoMdArrowRoundDown /> : <IoMdArrowRoundUp />}
-                </IconButton>
-            </div>
         </div>
     );
 };
+
 type Arg2 = ActionIconProps & { label: string; onClick: () => void };
 const IconButton = ({ label, onClick, ...rest }: Arg2) => {
     const { ref, unfocus } = useFocusElementHandler();
     return (
         <Tooltip label={label} events={{ focus: true, hover: true, touch: true }}>
             <ActionIcon
+                component="button"
                 ref={ref}
                 size="lg"
                 variant="filled"
@@ -169,10 +145,10 @@ const IconButton = ({ label, onClick, ...rest }: Arg2) => {
     );
 };
 
-export const MobileControlsActual = ({ gridArea }: { gridArea: string }) => {
+export const MobileControlsActual = () => {
     return (
-        <div style={{ gridArea }}>
+        <Center>
             <LayerControlSettings />
-        </div>
+        </Center>
     );
 };
