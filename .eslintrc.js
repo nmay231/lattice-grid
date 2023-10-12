@@ -26,6 +26,10 @@ module.exports = {
         react: { version: "detect" },
     },
     rules: {
+        // TODO: Update to the new eslint files so I can restrict vitest lints to only testing files
+        // TODO: Besides one or two false positives, I also don't care right now...
+        "vitest/require-hook": "off",
+
         "@typescript-eslint/explicit-module-boundary-types": "off",
         "@typescript-eslint/no-empty-interface": ["error", { allowSingleExtends: true }],
         "@typescript-eslint/no-explicit-any": "off",

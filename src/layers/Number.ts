@@ -63,23 +63,11 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
         return { history };
     };
 
-    static controls = undefined;
-    static constraints = {
-        schema: {
-            type: "object",
-            properties: { negatives: { type: "boolean" }, max: { type: "integer" } },
-        },
-        uischemaElements: [
-            {
-                type: "Control",
-                label: "Allow Negatives",
-                scope: "#/properties/negatives",
-            },
-            {
-                type: "Control",
-                label: "Maximum",
-                scope: "#/properties/max",
-            },
+    static controls: NumberLayer["controls"] = { elements: [], numpadControls: true };
+    static constraints: NumberLayer["constraints"] = {
+        elements: [
+            { type: "number", key: "max", label: "Max", min: 0 },
+            { type: "boolean", key: "negatives", label: "Allow negatives" },
         ],
     };
 

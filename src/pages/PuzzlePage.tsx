@@ -1,18 +1,26 @@
-import { createStyles } from "@mantine/core";
+import { clsx } from "@mantine/core";
 import { usePageLeave } from "@mantine/hooks";
 import { useCallback, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useProxy } from "valtio/utils";
 import { ControlsManager } from "../ControlsManager";
 import { BlocklyModal } from "../components/Blockly/BlocklyModal";
 import { DebugPointers } from "../components/DebugPointers";
 import { ImportExportModal } from "../components/ImportExportModal";
 import { importPuzzle } from "../components/ImportExportModal/importPuzzle";
-import { SVGCanvas } from "../components/SVGCanvas";
-import { SideBar } from "../components/SideBar";
+import {
+    MobileControlsActual,
+    MobileControlsMetaControls,
+    mobileControlsProxy,
+} from "../components/MobileControls";
+import { SVGCanvas } from "../components/SVGCanvas/SVGCanvas";
+import { SideBar, UtilityBar } from "../components/SideBar";
 import { ResizeModal } from "../components/SideBar/MainGroup/ResizeModal";
+import { sidebarProxy } from "../components/SideBar/sidebarProxy";
 import { usePuzzle } from "../state/puzzle";
 import { NeedsUpdating, PageMode } from "../types";
 import { useGlobalFocusListeners } from "../utils/focusManagement";
+import styles from "./PuzzlePage.module.css";
 
 const useGlobalEventListeners = (controls: ControlsManager) => {
     // Element focus management
@@ -30,18 +38,7 @@ const useGlobalEventListeners = (controls: ControlsManager) => {
     }, [controls]);
 };
 
-const useStyles = createStyles({
-    container: {
-        width: "100svw",
-        height: "100svh",
-        overflow: "hidden",
-        display: "flex",
-        flexDirection: "row",
-    },
-});
-
 export const PuzzlePage = ({ pageMode }: { pageMode: PageMode }) => {
-    const { classes } = useStyles();
     const puzzle = usePuzzle();
     const navigate = useNavigate();
     const { search: params } = useLocation();
@@ -62,13 +59,45 @@ export const PuzzlePage = ({ pageMode }: { pageMode: PageMode }) => {
         }
     }, [puzzle, pageMode, navigate, params]);
 
+    const mobileControls = useProxy(mobileControlsProxy);
+    const sidebar = useProxy(sidebarProxy);
+
     return (
-        <div className={classes.container}>
-            <SideBar />
-            <SVGCanvas />
+        <div
+            className={clsx(
+                styles.mainContainer,
+                !sidebar.opened && styles.mainContainerSidebarClosed,
+            )}
+        >
+            <div className={clsx(styles.sidebar)}>
+                <UtilityBar />
+                <SideBar />
+            </div>
+            <div
+                className={clsx(
+                    styles.mainContent,
+                    !mobileControls.opened && styles.mainContentNoMobileControls,
+                )}
+            >
+                <div
+                    style={{
+                        marginTop: mobileControls.opened ? "0%" : "-100%",
+                    }}
+                >
+                    <MobileControlsMetaControls />
+                </div>
+                <SVGCanvas />
+                <div
+                    style={{
+                        marginBottom: mobileControls.opened ? "0%" : "-100%",
+                    }}
+                >
+                    <MobileControlsActual />
+                </div>
+            </div>
+
             <DebugPointers />
 
-            {/* TODO: Originally, the resize modal was designed to be inside the area of the svg canvas. Should I fix that, or leave it be and remove the useless code... */}
             <ResizeModal />
             <BlocklyModal />
             <ImportExportModal />

@@ -1,0 +1,14 @@
+.container {
+    display: flex;
+    align-items: center;
+    padding: 0px 3px;
+}
+
+.icon {
+    margin: 8px;
+}
+
+.offsetIcon {
+    right: -60px;
+    z-index: 1;
+}

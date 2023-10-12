@@ -1,9 +1,11 @@
-import { Layer, LayerClass, SVGGroup } from "../types";
+import { FormSchema, Layer, LayerClass, SVGGroup } from "../types";
 import { BaseLayer } from "./BaseLayer";
 import { OnePointProps, handleEventsCurrentSetting } from "./controls/onePoint";
 import styles from "./layers.module.css";
 
 type Color = string;
+// TODO: Single file exporting all versions of colors?
+const BLUE: Color = "var(--user-light-blue)";
 
 interface BackgroundColorProps extends OnePointProps<Color> {
     RawSettings: { selectedState: Color };
@@ -20,7 +22,7 @@ export class BackgroundColorLayer
     static ethereal = false;
     static readonly type = "BackgroundColorLayer";
     static displayName = "Background Color";
-    static defaultSettings = { selectedState: "blue" };
+    static defaultSettings = { selectedState: BLUE };
 
     settings = this.rawSettings;
 
@@ -28,30 +30,15 @@ export class BackgroundColorLayer
         return new BackgroundColorLayer(BackgroundColorLayer, puzzle);
     }) satisfies LayerClass<BackgroundColorProps>["create"];
 
-    static controls = {
-        schema: {
-            type: "object",
-            properties: {
-                selectedState: {
-                    type: "string",
-                    enum: ["blue", "green", "orange", "pink", "purple", "red", "yellow"],
-                },
-            },
-        },
-        uischemaElements: [
-            {
-                type: "Control",
-                label: "Color",
-                scope: "#/properties/selectedState",
-            },
-        ],
+    static controls: FormSchema<BackgroundColorProps> = {
+        elements: [{ type: "color", key: "selectedState", label: "Fill color" }],
     };
     static constraints = undefined;
 
     newSettings: IBackgroundColorLayer["newSettings"] = ({ newSettings }) => {
         this.rawSettings = newSettings;
         this.settings = {
-            selectedState: newSettings.selectedState || "blue",
+            selectedState: newSettings.selectedState || BLUE,
         };
 
         handleEventsCurrentSetting(this, {

@@ -1,16 +1,18 @@
+@import "/index.css";
+
 .backgroundColor {
     stroke-width: 2;
-    stroke: black;
+    stroke: var(--user-dark-white);
 }
 
 .debugSelectPoints {
-    stroke: black;
+    stroke: var(--user-dark-white);
     stroke-width: 3px;
     stroke-linecap: round;
 }
 
 .debugSelectPointsCircles {
-    fill: black;
+    fill: var(--user-dark-white);
 }
 
 .killerCagesOutline {

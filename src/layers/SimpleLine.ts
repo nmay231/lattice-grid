@@ -1,7 +1,10 @@
-import { Layer, LayerClass, ObjectId, Point, PointType, SVGGroup } from "../types";
+import { FormSchema, Layer, LayerClass, ObjectId, Point, PointType, SVGGroup } from "../types";
 import { BaseLayer } from "./BaseLayer";
 import { TwoPointProps, handleEventsCurrentSetting } from "./controls/twoPoint";
 import styles from "./layers.module.css";
+
+type Color = string;
+const GREEN: Color = "var(--user-light-green)";
 
 const pointTypes = {
     "Cell to Cell": "cells",
@@ -11,70 +14,49 @@ const pointTypes = {
 export interface SimpleLineProps extends TwoPointProps {
     ObjectState: {
         id: ObjectId;
-        state: { stroke: string };
+        state: { stroke: Color };
         points: Point[];
     };
     RawSettings: {
         connections: keyof typeof pointTypes;
-        stroke: string;
+        stroke: Color;
     };
 }
 
 interface ISimpleLineLayer extends Layer<SimpleLineProps> {
-    settings: { pointType: PointType; selectedState: { stroke: string } };
+    settings: { pointType: PointType; selectedState: { stroke: Color } };
 }
 
 export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimpleLineLayer {
     static ethereal = false;
     static readonly type = "SimpleLineLayer";
     static displayName = "Line";
-    static defaultSettings = { stroke: "green", connections: "Cell to Cell" as const };
+    static defaultSettings = { stroke: GREEN, connections: "Cell to Cell" as const };
 
     settings: ISimpleLineLayer["settings"] = {
         pointType: "cells",
-        selectedState: { stroke: "green" },
+        selectedState: { stroke: GREEN },
     };
 
     static create = ((puzzle): SimpleLineLayer => {
         return new SimpleLineLayer(SimpleLineLayer, puzzle);
     }) satisfies LayerClass<SimpleLineProps>["create"];
 
-    static constraints = {
-        schema: {
-            type: "object",
-            properties: {
-                connections: {
-                    type: "string",
-                    enum: Object.keys(pointTypes),
-                },
-            },
-        },
-        uischemaElements: [
+    static constraints: FormSchema<SimpleLineProps> = {
+        elements: [
             {
-                type: "Control",
-                label: "Connections",
-                scope: "#/properties/connections",
+                type: "dropdown",
+                key: "connections",
+                label: "Where to draw lines",
+                // TODO: Change to label, value and get rid of `pointTypes`
+                pairs: Object.keys(pointTypes).map((key) => ({ label: key, value: key })),
+                // pairs: Object.entries(pointTypes).map(([label, value]) => ({ label, value })),
             },
         ],
     };
 
-    static controls = {
-        schema: {
-            type: "object",
-            properties: {
-                stroke: {
-                    type: "string",
-                    enum: ["blue", "green", "orange", "pink", "purple", "red", "yellow"],
-                },
-            },
-        },
-        uischemaElements: [
-            {
-                type: "Control",
-                label: "Color",
-                scope: "#/properties/stroke",
-            },
-        ],
+    static controls: FormSchema<SimpleLineProps> = {
+        elements: [{ type: "color", key: "stroke", label: "Stroke color" }],
     };
 
     newSettings: ISimpleLineLayer["newSettings"] = ({ newSettings, storage, grid }) => {
@@ -90,7 +72,7 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
         this.settings = {
             pointType: pointTypes[newSettings.connections] || "cells",
             selectedState: {
-                stroke: newSettings.stroke || "green",
+                stroke: newSettings.stroke || GREEN,
             },
         };
 

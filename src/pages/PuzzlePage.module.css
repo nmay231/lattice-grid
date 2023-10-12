@@ -1,0 +1,53 @@
+.mainContainer {
+    width: 100svw;
+    height: 100svh;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: var(--sidebar-width) 1fr;
+    gap: 3px;
+    background-color: black;
+    & > * {
+        height: 100svh;
+        border-radius: 5px;
+    }
+
+    --sidebar-width: 100svw;
+    @media (min-width: 800px) {
+        --sidebar-width: 35svw;
+    }
+}
+
+.mainContainerSidebarClosed {
+    width: calc(100svw + var(--sidebar-width));
+    margin-left: calc(-1 * var(--sidebar-width));
+    gap: 0px;
+}
+
+.sidebar {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    gap: 3px;
+    background-color: black;
+    overflow: hidden;
+    & > * {
+        border-radius: 5px;
+        background-color: white;
+    }
+}
+
+.mainContent {
+    position: relative;
+    display: grid;
+    grid-template-rows: min-content 1fr min-content;
+    gap: 3px;
+    background-color: black;
+    & > * {
+        border-radius: 5px;
+        background-color: white;
+    }
+}
+
+.mainContentNoMobileControls {
+    grid-template-rows: 1fr 100svh 1fr;
+    gap: 0px;
+}

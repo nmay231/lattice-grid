@@ -161,7 +161,29 @@ export type Grid = {
 // #endregion
 
 // #region - Layers
-export type JSONSchema = { schema: NeedsUpdating; uischemaElements: NeedsUpdating[] };
+type StringKeyof<T> = keyof T extends infer K ? (K extends string ? K : never) : never;
+
+export type FormSchema<LP extends LayerProps> = {
+    numpadControls?: true;
+    elements: Array<
+        | { type: "color"; key: StringKeyof<LP["RawSettings"]>; label: string }
+        | {
+              type: "dropdown";
+              key: StringKeyof<LP["RawSettings"]>;
+              label: string;
+              pairs: Array<{ label: string; value: string }>;
+          }
+        | {
+              type: "number";
+              key: StringKeyof<LP["RawSettings"]>;
+              label: string;
+              min?: number;
+              max?: number;
+          }
+        | { type: "boolean"; key: StringKeyof<LP["RawSettings"]>; label: string }
+        | { type: "string"; key: StringKeyof<LP["RawSettings"]>; label: string }
+    >;
+};
 
 export type LayerProps = {
     // TODO: Try allowing settings and rawSettings to be optional
@@ -177,8 +199,8 @@ export type Layer<LP extends LayerProps = LayerProps> = {
     displayName: string;
     ethereal: boolean;
     rawSettings: LP["RawSettings"];
-    controls?: JSONSchema;
-    constraints?: JSONSchema;
+    controls?: FormSchema<LP>;
+    constraints?: FormSchema<LP>;
     newSettings(
         settingsChange: Omit<LayerEventEssentials<LP>, "tempStorage"> & {
             newSettings: LP["RawSettings"];
@@ -204,8 +226,8 @@ export type LayerClass<LP extends LayerProps = LayerProps> = {
     displayName: string;
     ethereal: boolean;
     defaultSettings: LP["RawSettings"];
-    controls?: JSONSchema;
-    constraints?: JSONSchema;
+    controls?: FormSchema<LP>;
+    constraints?: FormSchema<LP>;
 };
 // #endregion
 

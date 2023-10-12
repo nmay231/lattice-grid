@@ -1,32 +1,41 @@
+import { Text } from "@mantine/core";
 import { useProxy } from "valtio/utils";
 import { availableLayers } from "../../../layers";
 import { usePuzzle } from "../../../state/puzzle";
-import { JSONSchema, Layer, LayerClass, UnknownObject } from "../../../types";
+import { FormSchema, Layer, LayerClass, LayerProps } from "../../../types";
 import { useFocusGroup } from "../../../utils/focusManagement";
-import { JsonFormsWrapper } from "../../JsonFormsWrapper";
+import { LayerForm, layerSettingsRerender } from "../../LayerForm";
+import { Numpad } from "./Numpad";
 
-type InnerProps = { layer: Layer; controls: JSONSchema };
+type InnerProps = { layer: Layer; controls: FormSchema<LayerProps> };
 
 const _LayerControlSettings = ({ layer, controls }: InnerProps) => {
     const puzzle = usePuzzle();
     const { ref, unfocus } = useFocusGroup({ puzzle, group: "controlSettings" });
-
-    const { schema, uischemaElements } = controls;
-    const uischema = { type: "VerticalLayout", elements: uischemaElements };
+    const rerender = useProxy(layerSettingsRerender);
 
     return (
-        <div ref={ref}>
+        <div ref={ref} style={{ margin: "auto" }}>
             {/* TODO: Hack Mantine's useFocusTrap so it doesn't focus the first element right away */}
             <div data-autofocus></div>
-            <JsonFormsWrapper
-                data={layer.rawSettings}
-                onChange={(newData: UnknownObject) => {
-                    puzzle.changeLayerSettings(layer.id, newData);
+            {controls.numpadControls && (
+                <Numpad
+                    onKeyPress={(keypress) => {
+                        puzzle.controls.handleKeyPress(keypress);
+                        unfocus();
+                    }}
+                />
+            )}
+            <LayerForm
+                key={rerender.key}
+                initialValues={layer.rawSettings}
+                elements={controls.elements}
+                onChange={(newSettings) => {
+                    rerender.key += 1;
+                    puzzle.changeLayerSettings(layer.id, newSettings);
                     puzzle.renderChange({ type: "draw", layerIds: [layer.id] });
                     unfocus();
                 }}
-                schema={schema}
-                uischema={uischema}
             />
         </div>
     );
@@ -39,14 +48,22 @@ export const LayerControlSettings = () => {
     const layer = id && layers.get(id);
 
     if (!layer) {
-        return <i>Add a layer to get started</i>;
+        return (
+            <Text italic m="xs">
+                Add a layer to get started
+            </Text>
+        );
     }
 
     const layerType = layer.type;
     const layerClass = availableLayers[layerType as keyof typeof availableLayers] as LayerClass;
 
     if (!layerClass.controls) {
-        return <i>This layer has no control settings</i>;
+        return (
+            <Text italic m="xs">
+                This layer has no controls
+            </Text>
+        );
     }
 
     return <_LayerControlSettings key={id} layer={layer} controls={layerClass.controls} />;

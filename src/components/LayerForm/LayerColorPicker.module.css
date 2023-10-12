@@ -1,0 +1,14 @@
+.swatchGrid {
+    display: grid;
+    gap: 10px;
+    margin: 10px;
+    grid-template-columns: repeat(7, 35px);
+}
+
+.swatch {
+    cursor: pointer;
+}
+
+.selectedSwatch {
+    outline: solid 2px rgb(130 225 255); /* Copied from LayerList outline color */
+}

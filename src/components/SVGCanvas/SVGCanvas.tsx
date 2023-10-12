@@ -1,4 +1,4 @@
-import { createStyles, ScrollArea } from "@mantine/core";
+import { clsx, ScrollArea } from "@mantine/core";
 import React, { useEffect, useRef } from "react";
 import { useProxy } from "valtio/utils";
 import layerStyles from "../../layers/layers.module.css";
@@ -6,7 +6,7 @@ import { PuzzleManager } from "../../PuzzleManager";
 import { CANVAS_CONTAINER_ID, canvasSizeProxy } from "../../state/canvasSize";
 import { usePuzzle } from "../../state/puzzle";
 import { notify } from "../../utils/notifications";
-import { sidebarProxy, smallPageWidth } from "../SideBar/sidebarProxy";
+import styles from "./SVGCanvas.module.css";
 
 const Inner = React.memo(function Inner(arg: Pick<PuzzleManager, "layers" | "SVGGroups">) {
     const { layers: layersProxy, SVGGroups: SVGGroupProxy } = arg;
@@ -52,43 +52,8 @@ const Inner = React.memo(function Inner(arg: Pick<PuzzleManager, "layers" | "SVG
     );
 });
 
-type Arg1 = { smallPageWidth: string; sidebarOpened: boolean };
-const useStyles = createStyles((theme, { smallPageWidth, sidebarOpened }: Arg1) => ({
-    scrollArea: {
-        display: "flex",
-        flexDirection: "column",
-        height: "100svh",
-        width: "100svw",
-        overflow: "auto",
-        [`@media (min-width: ${smallPageWidth})`]: {
-            width: sidebarOpened ? "70svw" : "100svw",
-            transition: "width 0.4s",
-        },
-    },
-    outerContainer: {
-        // Remember, if I change box-sizing back to content-box, I will have to update my zoom in/out code.
-        // boxSizing: "border-box",
-        margin: "0px auto",
-        padding: "2em",
-        touchAction: "none",
-        WebkitOverflowScrolling: "touch",
-        overscrollBehaviorY: "none",
-    },
-    innerContainer: {
-        "--canvas-zoom": 0.0,
-        border: "1px dotted grey",
-        margin: "0px",
-        padding: "0px",
-        cursor: "pointer",
-        WebkitTapHighlightColor: "transparent", // Remove image highlight when drawing on mobile Chrome
-    },
-}));
-
 // TODO: Add dependency injection so it can be used in color swatches, resize modal, etc.
 export const SVGCanvas = React.memo(function SVGCanvas() {
-    const { opened } = useProxy(sidebarProxy);
-    const { cx, classes } = useStyles({ smallPageWidth, sidebarOpened: opened });
-
     const { controls, layers, SVGGroups, settings } = usePuzzle();
     const { width } = useProxy(canvasSizeProxy);
     const { editMode } = useProxy(settings);
@@ -114,14 +79,19 @@ export const SVGCanvas = React.memo(function SVGCanvas() {
     const canvasWidth = `calc(${zoom} * ${width}px + (1 - ${zoom}) * 100%)`;
 
     return (
-        <ScrollArea type="always" className={classes.scrollArea} viewportRef={scrollArea}>
+        <ScrollArea
+            type="always"
+            offsetScrollbars // Fixes glitchy resizing when toggling mobile controls
+            className={styles.scrollArea}
+            viewportRef={scrollArea}
+        >
             <div
                 id={CANVAS_CONTAINER_ID}
-                className={classes.outerContainer}
+                className={styles.outerContainer}
                 style={{ width: canvasWidth, maxWidth: `${width}px` }}
             >
                 <div
-                    className={cx(classes.innerContainer, layerStyles[`mode-${editMode}`])}
+                    className={clsx(styles.innerContainer, layerStyles[`mode-${editMode}`])}
                     {...controls.eventListeners}
                 >
                     <Inner layers={layers} SVGGroups={SVGGroups} />

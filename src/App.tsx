@@ -17,7 +17,7 @@ const theme: MantineThemeOverride = {
 
 export const App = () => {
     return (
-        <MantineProvider withGlobalStyles withNormalizeCSS theme={theme}>
+        <MantineProvider theme={theme}>
             <NotificationsProvider>
                 <BrowserRouter>
                     <Routes>

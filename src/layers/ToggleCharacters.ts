@@ -1,4 +1,4 @@
-import { Layer, LayerClass, SVGGroup } from "../types";
+import { FormSchema, Layer, LayerClass, SVGGroup } from "../types";
 import { notify } from "../utils/notifications";
 import { BaseLayer } from "./BaseLayer";
 import { KeyDownEventHandler, SelectedProps, handleEventsSelection } from "./controls/selection";
@@ -43,36 +43,23 @@ export class ToggleCharactersLayer
     }) satisfies LayerClass<ToggleCharactersProps>["create"];
 
     static controls = undefined;
-    static constraints = {
-        schema: {
-            type: "object",
-            properties: {
-                characters: {
-                    type: "string",
-                    description: "Allowed characters",
-                },
-                displayStyle: {
-                    type: "string",
-                    description: "How values are displayed",
-                    enum: [
-                        "center", // Middle across the center
-                        "topBottom", // Two rows, top and bottom
-                        // "clock", // Placed in a circle according spacing equally apart regardless of the chars placed
-                        // "tapa", // Morphs into a circle depending on how many chars are placed
-                    ],
-                },
-            },
-        },
-        uischemaElements: [
+    static constraints: FormSchema<ToggleCharactersProps> = {
+        elements: [
             {
-                type: "Control",
-                label: "Allowed Characters",
-                scope: "#/properties/characters",
+                type: "string",
+                key: "characters",
+                label: "Allowed characters",
             },
             {
-                type: "Control",
-                label: "Positioning",
-                scope: "#/properties/displayStyle",
+                type: "dropdown",
+                key: "displayStyle",
+                label: "How values are displayed",
+                pairs: [
+                    { label: "Centered", value: "center" }, // Middle across the center
+                    { label: "Top and bottom", value: "topBottom" }, // Two rows, top and bottom
+                    // { label: "Clockface", value: "clock" }, // Placed in a circle according spacing equally apart regardless of the chars placed
+                    // { label: "Tapa", value: "tapa" }, // Morphs into a circle depending on how many chars are placed
+                ],
             },
         ],
     };

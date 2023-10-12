@@ -5,10 +5,14 @@ import { useProxy } from "valtio/utils";
 import { canvasSizeProxy } from "../../../state/canvasSize";
 import { usePuzzle } from "../../../state/puzzle";
 import { openModal, useFocusElementHandler, useModal } from "../../../utils/focusManagement";
+import { sidebarProxy } from "../sidebarProxy";
 import { ReactComponent as SquareGridIcon } from "./SquareGridIcon.svg";
 
 export const ResizeGridButton = () => {
-    const open = useCallback(() => openModal("resize-grid"), []);
+    const open = useCallback(() => {
+        openModal("resize-grid");
+        sidebarProxy.opened = false;
+    }, []);
     const { ref } = useFocusElementHandler();
 
     return (
@@ -40,14 +44,7 @@ export const ResizeModal = () => {
     };
 
     return (
-        <Modal
-            opened={opened}
-            onClose={close}
-            style={{ position: "absolute" }}
-            styles={{ overlay: { position: "absolute !important" as any } }}
-            withinPortal={false}
-            centered
-        >
+        <Modal opened={opened} onClose={close} centered>
             <Paper p="lg" m="auto" style={{ display: "flex" }}>
                 <div style={{ position: "relative", margin: "auto" }}>
                     <SquareGridIcon width="10em" style={{ marginBottom: "2em" }} />
