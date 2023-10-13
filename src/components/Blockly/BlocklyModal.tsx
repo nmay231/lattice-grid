@@ -1,19 +1,23 @@
 import { Button, Drawer, Grid, Text } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { usePuzzle } from "../../state/puzzle";
 import { ComputeManager } from "../../userComputation/ComputeManager";
 import { blocklyToolbox } from "../../userComputation/codeBlocks";
 import { addAliasCategoryToToolbox } from "../../userComputation/utils";
 import { openModal, useFocusElementHandler, useModal } from "../../utils/focusManagement";
 import { Blockly } from "../../utils/imports/blockly";
+import { mobileControlsProxy } from "../MobileControls";
 import { sidebarProxy } from "../SideBar/sidebarProxy";
 import { codeGen } from "./customCodeGen";
 
-export const BlocklyModalButton: React.FC<{ children: string }> = ({ children }) => {
+export const BlocklyModalButton = ({ children }: { children: string }) => {
     const open = useCallback(() => {
         openModal("blockly");
-        sidebarProxy.opened = false;
+
+        if (mobileControlsProxy.isSmallScreen) {
+            sidebarProxy.opened = false;
+        }
     }, []);
     const { ref } = useFocusElementHandler();
 
@@ -25,7 +29,7 @@ export const BlocklyModalButton: React.FC<{ children: string }> = ({ children })
     );
 };
 
-export const BlocklyModal: React.FC = () => {
+export const BlocklyModal = () => {
     const { opened, close } = useModal("blockly");
     const [rendered, setRendered] = useState(false);
     const [blocks, setBlocks] = useLocalStorage<any>({

@@ -5,13 +5,17 @@ import { useProxy } from "valtio/utils";
 import { canvasSizeProxy } from "../../../state/canvasSize";
 import { usePuzzle } from "../../../state/puzzle";
 import { openModal, useFocusElementHandler, useModal } from "../../../utils/focusManagement";
+import { mobileControlsProxy } from "../../MobileControls";
 import { sidebarProxy } from "../sidebarProxy";
 import SquareGridIcon from "./SquareGridIcon.svg?react";
 
 export const ResizeGridButton = () => {
     const open = useCallback(() => {
         openModal("resize-grid");
-        sidebarProxy.opened = false;
+
+        if (mobileControlsProxy.isSmallScreen) {
+            sidebarProxy.opened = false;
+        }
     }, []);
     const { ref } = useFocusElementHandler();
 
