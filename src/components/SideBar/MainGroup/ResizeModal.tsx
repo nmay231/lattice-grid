@@ -6,7 +6,7 @@ import { canvasSizeProxy } from "../../../state/canvasSize";
 import { usePuzzle } from "../../../state/puzzle";
 import { openModal, useFocusElementHandler, useModal } from "../../../utils/focusManagement";
 import { sidebarProxy } from "../sidebarProxy";
-import { ReactComponent as SquareGridIcon } from "./SquareGridIcon.svg";
+import SquareGridIcon from "./SquareGridIcon.svg?react";
 
 export const ResizeGridButton = () => {
     const open = useCallback(() => {
