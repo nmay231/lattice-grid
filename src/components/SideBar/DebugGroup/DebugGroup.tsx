@@ -10,7 +10,7 @@ export const DebugGroup = () => {
         <Collapse name="Debug" expanded>
             <Center style={{ width: "100%" }} my="sm" component={Group}>
                 <Stack align="center">
-                    <Text mx="lg" align="center" weight="bold">
+                    <Text mx="lg" ta="center" fw="bold">
                         If you don&#39;t know what you did, you can type <Code>ctrl-`</Code> or{" "}
                         <Code>cmd-`</Code> to go back to normal.
                     </Text>

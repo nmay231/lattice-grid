@@ -1,5 +1,6 @@
-import { Box, ColorSwatch, SimpleGrid, Text, clsx } from "@mantine/core";
+import { Box, ColorSwatch, SimpleGrid, Text } from "@mantine/core";
 import { GetInputProps } from "@mantine/form/lib/types";
+import { clsx } from "clsx";
 import { useFocusElementHandler } from "../../utils/focusManagement";
 import styles from "./LayerColorPicker.module.css";
 

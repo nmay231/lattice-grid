@@ -1,6 +1,7 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { ActionIcon, clsx } from "@mantine/core";
+import { ActionIcon } from "@mantine/core";
+import { clsx } from "clsx";
 import { IoIosArrowRoundForward, IoMdClose, IoMdMenu } from "react-icons/io";
 import styles from "./LayersItem.module.css";
 
@@ -44,6 +45,7 @@ export const LayerItem = ({
                         {...listeners}
                         className={styles.handle}
                         tabIndex={editing ? 0 : -1}
+                        bg="none"
                     >
                         <IoMdMenu />
                     </ActionIcon>
@@ -59,6 +61,7 @@ export const LayerItem = ({
                         onPointerDown={handleDelete}
                         className={styles.remove}
                         tabIndex={editing ? 0 : -1}
+                        bg="none"
                     >
                         <IoMdClose />
                     </ActionIcon>

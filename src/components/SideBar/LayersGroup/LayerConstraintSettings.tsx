@@ -43,7 +43,7 @@ export const LayerConstraintSettings = () => {
 
     if (!layer) {
         return (
-            <Text italic m="xs">
+            <Text fs="italic" m="xs">
                 Add a layer to get started
             </Text>
         );
@@ -54,7 +54,7 @@ export const LayerConstraintSettings = () => {
 
     if (!layerClass.constraints) {
         return (
-            <Text italic m="xs">
+            <Text fs="italic" m="xs">
                 This layer has no settings
             </Text>
         );

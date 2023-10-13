@@ -1,5 +1,5 @@
-import { clsx } from "@mantine/core";
 import { usePageLeave } from "@mantine/hooks";
+import { clsx } from "clsx";
 import { useCallback, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useProxy } from "valtio/utils";

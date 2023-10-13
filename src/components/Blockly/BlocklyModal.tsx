@@ -112,7 +112,7 @@ export const BlocklyModal: React.FC = () => {
                     <div ref={blocklyDiv} style={{ width: "100%", height: "100%" }}></div>
                 </Grid.Col>
                 <Grid.Col span={1}>
-                    <Text component="p" italic weight="bold" mb="sm">
+                    <Text component="p" fs="italic" fw="bold" mb="sm">
                         This is a mockup, and does not actually run anything yet.
                     </Text>
                     <Button onClick={compileAndRun}>Run</Button>

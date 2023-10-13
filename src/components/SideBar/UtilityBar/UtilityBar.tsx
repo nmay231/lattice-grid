@@ -29,6 +29,7 @@ export const UtilityBar = () => {
                     className={styles.icon}
                     variant="filled"
                     color="gray"
+                    disabled
                     // tabIndex={-1}
                 >
                     <IoMdSettings />

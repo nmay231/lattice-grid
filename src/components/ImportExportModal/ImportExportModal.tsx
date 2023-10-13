@@ -113,10 +113,10 @@ export const ImportExportModal = () => {
     return (
         <Modal opened={opened} title="Import / Export Puzzle" onClose={close} size="lg">
             <Box p="sm">
-                <Text size="lg" italic weight="bold" align="center" color="yellow">
+                <Text size="lg" fs="italic" fw="bold" ta="center" c="yellow">
                     *Temporary solution for import/export*
                 </Text>
-                <Text size="sm" italic weight="bold" align="center" mb="md" color="red">
+                <Text size="sm" fs="italic" fw="bold" ta="center" mb="md" c="red">
                     This is a temporary format. URLs are not expected to work indefinitely.
                 </Text>
 
@@ -141,7 +141,7 @@ export const ImportExportModal = () => {
                         />
                     ))}
 
-                <Text size="sm" italic weight="bold" align="center" mt="md" mb="md" color="red">
+                <Text size="sm" fs="italic" fw="bold" ta="center" mt="md" mb="md" c="red">
                     This only exports solving URLs. Feature complete edit-mode URLs are in the
                     works.
                 </Text>
@@ -173,7 +173,7 @@ export const ImportExportModal = () => {
                     onChange={() => setImportAttempted(true)}
                 />
                 <Center>
-                    <Group spacing="sm">
+                    <Group gap="sm">
                         {importAttempted ? (
                             <Button onClick={handleImport}>Import</Button>
                         ) : (
