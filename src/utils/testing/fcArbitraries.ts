@@ -1,4 +1,4 @@
-import { Tuple } from "@mantine/styles";
+import { Tuple } from "@mantine/core";
 import fc from "fast-check";
 
 /**
