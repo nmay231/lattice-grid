@@ -1,5 +1,5 @@
-import { Tuple } from "@mantine/styles";
 import fc from "fast-check";
+import { Tuple } from "../../types";
 
 /**
  * Generate floating point numbers that are not too big or small, and

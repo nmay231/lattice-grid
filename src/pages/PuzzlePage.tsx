@@ -1,5 +1,5 @@
-import { clsx } from "@mantine/core";
 import { usePageLeave } from "@mantine/hooks";
+import { clsx } from "clsx";
 import { useCallback, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useProxy } from "valtio/utils";
@@ -13,6 +13,7 @@ import {
     MobileControlsMetaControls,
     mobileControlsProxy,
 } from "../components/MobileControls";
+import { useResizeObserver } from "../components/MobileControls/mobileControlsProxy";
 import { SVGCanvas } from "../components/SVGCanvas/SVGCanvas";
 import { SideBar, UtilityBar } from "../components/SideBar";
 import { ResizeModal } from "../components/SideBar/MainGroup/ResizeModal";
@@ -45,6 +46,7 @@ export const PuzzlePage = ({ pageMode }: { pageMode: PageMode }) => {
 
     usePageLeave(puzzle.controls.onPageBlur.bind(puzzle.controls));
     useGlobalEventListeners(puzzle.controls);
+    useResizeObserver();
 
     useEffect(() => {
         puzzle.settings.pageMode = pageMode;

@@ -34,7 +34,6 @@ export const AddNewLayerButton = () => {
             ref={ref}
             tabIndex={0}
             m="sm"
-            withinPortal
             onChange={handleSelectChange}
             value={layerType}
             data={nonEthereal}

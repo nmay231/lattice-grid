@@ -1,8 +1,24 @@
 .swatchGrid {
     display: grid;
-    gap: 10px;
-    margin: 10px;
-    grid-template-columns: repeat(7, 35px);
+    gap: var(--gap);
+    margin: var(--gap);
+    grid-template-columns: repeat(7, 1fr);
+    width: clamp(0px, calc(45px * 7 - var(--gap)), calc(100svw - 2 * var(--gap)));
+
+    --gap: 0.25rem;
+    @media (min-width: 400px) {
+        --gap: 10px;
+    }
+}
+
+.swatchOuterContainer {
+    width: 1fr;
+}
+
+.swatchInnerContainer {
+    position: relative;
+    width: 100%;
+    padding-bottom: 100%;
 }
 
 .swatch {

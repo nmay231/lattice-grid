@@ -1,8 +1,9 @@
-import { clsx, ScrollArea } from "@mantine/core";
+import { ScrollArea } from "@mantine/core";
+import { clsx } from "clsx";
 import React, { useEffect, useRef } from "react";
 import { useProxy } from "valtio/utils";
-import layerStyles from "../../layers/layers.module.css";
 import { PuzzleManager } from "../../PuzzleManager";
+import layerStyles from "../../layers/layers.module.css";
 import { CANVAS_CONTAINER_ID, canvasSizeProxy } from "../../state/canvasSize";
 import { usePuzzle } from "../../state/puzzle";
 import { notify } from "../../utils/notifications";

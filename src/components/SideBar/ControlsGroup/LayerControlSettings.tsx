@@ -49,7 +49,7 @@ export const LayerControlSettings = () => {
 
     if (!layer) {
         return (
-            <Text italic m="xs">
+            <Text fs="italic" m="xs">
                 Add a layer to get started
             </Text>
         );
@@ -60,7 +60,7 @@ export const LayerControlSettings = () => {
 
     if (!layerClass.controls) {
         return (
-            <Text italic m="xs">
+            <Text fs="italic" m="xs">
                 This layer has no controls
             </Text>
         );

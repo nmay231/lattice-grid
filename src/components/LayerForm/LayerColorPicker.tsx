@@ -1,5 +1,6 @@
-import { Box, ColorSwatch, SimpleGrid, Text, clsx } from "@mantine/core";
+import { Box, ColorSwatch, Text } from "@mantine/core";
 import { GetInputProps } from "@mantine/form/lib/types";
+import { clsx } from "clsx";
 import { useFocusElementHandler } from "../../utils/focusManagement";
 import styles from "./LayerColorPicker.module.css";
 
@@ -38,7 +39,6 @@ export const LayerColorPicker = ({ label, value, onChange }: Arg1) => {
                     />
                 ))}
             </div>
-            <SimpleGrid cols={7}></SimpleGrid>
         </Box>
     );
 };
@@ -52,16 +52,21 @@ const Swatch = ({ color, selected, onChange }: Arg2) => {
     const { ref } = useFocusElementHandler();
 
     return (
-        <ColorSwatch
-            ref={ref}
-            component="button"
-            type="button"
-            onClick={() => onChange(color)}
-            size={35}
-            radius="sm"
-            mr="8px"
-            className={clsx(styles.swatch, selected && styles.selectedSwatch)}
-            color={color}
-        />
+        <div className={styles.swatchOuterContainer}>
+            <div className={styles.swatchInnerContainer}>
+                <ColorSwatch
+                    ref={ref}
+                    className={clsx(styles.swatch, selected && styles.selectedSwatch)}
+                    pos="absolute"
+                    size="100%"
+                    component="button"
+                    type="button"
+                    onClick={() => onChange(color)}
+                    radius="sm"
+                    mr="8px"
+                    color={color}
+                />
+            </div>
+        </div>
     );
 };
