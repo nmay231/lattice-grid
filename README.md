@@ -1,6 +1,8 @@
 # Latgrid
 
-Presenting latgrid! An web app built to set puzzles of classic variants or allow you to create your own. Try it now on your phone or computer at https://latgrid.vercel.app
+Presenting latgrid! An web app built to set puzzles of classic variants or allow you to create your own. Try it now on your phone or PC at https://latgrid.vercel.app
+
+(Note: images may be out of date)
 
 ![Mobile screenshot of latgrid](docs/user/mobile-screenshot.jpg)
 ![Desktop screenshot of latgrid](docs/user/desktop-screenshot.jpg)
