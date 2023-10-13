@@ -11,13 +11,13 @@ Latgrid is currently in development. While most planned features and ideas are i
 
 -   [x] A few common tools (tentatively called layers) to draw numbers, lines, killer cages, etc.
 -   [x] Exporting puzzles to share with others with simple answer check.
--   [ ] Easier editing of large grids on mobile. (Partially implemented; still need a draggable toolbar)
+-   [x] Easier editing of large grids on mobile.
 -   [ ] Hex grids, triangular grids, etc.
 -   [ ] Dark theme, Colorblind theme.
 -   [ ] Managing your library of puzzles in a single tab with an export to/import from file feature.
 -   [ ] Multiple grids in a single puzzle separate or joined with portals or wrapping edges.
 -   [ ] Programmable constraints so that the rules of your custom puzzle variant don't have to be imagined but can actually be enforced.
--   [ ] ~~Artificial General Intelligence paperclip generator.~~ That will have to wait for a different project.
+-   [ ] ~~General Artificial Intelligence paperclip generator.~~ That will have to wait for a different project.
 
 ## Why make another tool?
 
