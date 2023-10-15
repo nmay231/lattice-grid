@@ -100,9 +100,17 @@ export class StorageManager {
 
             const undoAction = this._applyHistoryAction({ storageMode, stored, action });
 
-            // TODO: I temporarily filter ui actions from history to prevent any unintended bugs.
-            if (partialAction.batchId === "ignore" || storageMode === "ui") {
+            if (partialAction.batchId === "ignore") {
                 continue; // Do not include in history
+            }
+
+            // TODO: I temporarily filter ui actions from history to prevent any unintended bugs.
+            if (storageMode === "ui") {
+                notify.error({
+                    message: `Forgot to explicitly ignore UI input ${layerId}}`,
+                    forever: true,
+                });
+                continue;
             }
 
             const lastAction = history.actions[history.index - 1];
