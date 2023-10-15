@@ -209,6 +209,24 @@ export class StorageManager {
         return returnedActions;
     }
 
+    canUndo(puzzle: PuzzleForStorage): boolean {
+        const {
+            grid: { id: gridId },
+            settings: { editMode: storageMode },
+        } = puzzle;
+        const history = this.histories[`${gridId}-${storageMode}`];
+        return history && history.index > 0;
+    }
+
+    canRedo(puzzle: PuzzleForStorage): boolean {
+        const {
+            grid: { id: gridId },
+            settings: { editMode: storageMode },
+        } = puzzle;
+        const history = this.histories[`${gridId}-${storageMode}`];
+        return history && history.index < history.actions.length;
+    }
+
     _batchId = 1;
     getNewBatchId() {
         return this._batchId++;

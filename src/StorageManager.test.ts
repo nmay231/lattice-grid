@@ -225,6 +225,9 @@ describe("StorageManager", () => {
         const puzzle = fakePuzzle("grid", "question");
         const storage = getNormalStorage();
 
+        expect(storage.canUndo(puzzle)).toBe(false);
+        expect(storage.canRedo(puzzle)).toBe(false);
+
         const objectsBeforeAction = cloneDeep(storage.objects);
         storage.addToHistory({
             puzzle,
@@ -238,6 +241,9 @@ describe("StorageManager", () => {
         expect(objectsAfterAction["grid"]["layer1"].objects.entries()).toEqual<HistoryEntries>([
             ["id1", { asdf: "something1" }],
         ]);
+
+        expect(storage.canUndo(puzzle)).toBe(true);
+        expect(storage.canRedo(puzzle)).toBe(false);
 
         const afterRedo: StorageManager["histories"][0] = {
             actions: [
@@ -266,18 +272,28 @@ describe("StorageManager", () => {
         storage.undoHistory(puzzle);
         expect(storage.objects).toMatchObject(objectsBeforeAction);
         expect(storage.histories["grid-question"]).toEqual<History>(afterUndo);
+        expect(storage.canUndo(puzzle)).toBe(false);
+        expect(storage.canRedo(puzzle)).toBe(true);
+
         // A second undo should not change anything
         storage.undoHistory(puzzle);
         expect(storage.objects).toMatchObject(objectsBeforeAction);
         expect(storage.histories["grid-question"]).toEqual<History>(afterUndo);
+        expect(storage.canUndo(puzzle)).toBe(false);
+        expect(storage.canRedo(puzzle)).toBe(true);
 
         storage.redoHistory(puzzle);
         expect(storage.objects).toMatchObject(objectsAfterAction);
         expect(storage.histories["grid-question"]).toEqual<History>(afterRedo);
+        expect(storage.canUndo(puzzle)).toBe(true);
+        expect(storage.canRedo(puzzle)).toBe(false);
+
         // A second redo should not change anything
         storage.redoHistory(puzzle);
         expect(storage.objects).toMatchObject(objectsAfterAction);
         expect(storage.histories["grid-question"]).toEqual<History>(afterRedo);
+        expect(storage.canUndo(puzzle)).toBe(true);
+        expect(storage.canRedo(puzzle)).toBe(false);
     });
 
     it("does not batch actions if the batchId's are both undefined", () => {
