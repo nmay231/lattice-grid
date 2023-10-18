@@ -1,5 +1,5 @@
 import { Button, Modal, Paper } from "@mantine/core";
-import { useCallback, useEffect, useMemo } from "react";
+import React, { useCallback, useEffect, useMemo } from "react";
 import { IoIosArrowDown, IoIosArrowUp } from "react-icons/io";
 import { useProxy } from "valtio/utils";
 import { canvasSizeProxy } from "../../../state/canvasSize";
@@ -26,7 +26,7 @@ export const ResizeGridButton = () => {
     );
 };
 
-export const ResizeModal = () => {
+export const ResizeModal = React.memo(function ResizeModal() {
     const puzzle = usePuzzle();
     const buttons = useMemo(() => puzzle.grid.getCanvasResizers(), [puzzle]);
     const { opened, close } = useModal("resize-grid");
@@ -91,4 +91,4 @@ export const ResizeModal = () => {
             </Paper>
         </Modal>
     );
-};
+});

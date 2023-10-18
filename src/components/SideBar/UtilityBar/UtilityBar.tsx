@@ -1,11 +1,12 @@
 import { ActionIcon, Burger, Tooltip } from "@mantine/core";
+import React from "react";
 import { IoMdSettings } from "react-icons/io";
 import { useProxy } from "valtio/utils";
 import { useFocusElementHandler } from "../../../utils/focusManagement";
 import { sidebarProxy } from "../sidebarProxy";
 import styles from "./UtilityBar.module.css";
 
-export const UtilityBar = () => {
+export const UtilityBar = React.memo(function UtilityBar() {
     const sidebar = useProxy(sidebarProxy);
     const { ref: openToggleRef } = useFocusElementHandler();
 
@@ -37,4 +38,4 @@ export const UtilityBar = () => {
             </Tooltip>
         </div>
     );
-};
+});

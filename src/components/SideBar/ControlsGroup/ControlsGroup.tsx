@@ -1,10 +1,11 @@
 import { Checkbox } from "@mantine/core";
+import React from "react";
 import { useProxy } from "valtio/utils";
 import { mobileControlsProxy } from "../../MobileControls";
 import { Group } from "../Group";
 import { LayerControlSettings } from "./LayerControlSettings";
 
-export const ControlsGroup = () => {
+export const ControlsGroup = React.memo(function ControlsGroup() {
     const mobileControls = useProxy(mobileControlsProxy);
 
     return (
@@ -18,4 +19,4 @@ export const ControlsGroup = () => {
             <LayerControlSettings />
         </Group>
     );
-};
+});

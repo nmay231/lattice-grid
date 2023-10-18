@@ -10,7 +10,7 @@ import {
     Textarea,
 } from "@mantine/core";
 import { useClipboard } from "@mantine/hooks";
-import { useCallback, useMemo, useRef, useState } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import { LayerStorageJSON } from "../../LayerStorage";
 import { usePuzzle } from "../../state/puzzle";
 import { Layer } from "../../types";
@@ -38,7 +38,7 @@ export const ImportExportButton = () => {
     );
 };
 
-export const ImportExportModal = () => {
+export const ImportExportModal = React.memo(function ImportExportModal() {
     const puzzle = usePuzzle();
     const [importAttempted, setImportAttempted] = useState(false);
     const textRef = useRef<HTMLTextAreaElement>(null);
@@ -190,4 +190,4 @@ export const ImportExportModal = () => {
             </Box>
         </Modal>
     );
-};
+});

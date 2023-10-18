@@ -1,4 +1,5 @@
 import { Divider, ScrollArea } from "@mantine/core";
+import React from "react";
 import { useSettings } from "../../state/puzzle";
 import { CodeGroup } from "./ConstraintsGroup";
 import { ControlsGroup } from "./ControlsGroup";
@@ -8,7 +9,7 @@ import { MainGroup } from "./MainGroup";
 import styles from "./SideBar.module.css";
 import { UtilityBar } from "./UtilityBar";
 
-export const SideBar = () => {
+export const SideBar = React.memo(function SideBar() {
     const { pageMode, debugging: debug } = useSettings();
 
     return (
@@ -21,6 +22,6 @@ export const SideBar = () => {
             <Divider mb={20} /> {/* Show the user that there's nothing below. */}
         </ScrollArea>
     );
-};
+});
 
 export const SideBarUtilityBar = UtilityBar;

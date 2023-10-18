@@ -1,9 +1,10 @@
 import { Button, Center, Code, Group, Stack, Text } from "@mantine/core";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Group as Collapse } from "../Group";
 import { DummyFocusGroup } from "./DummyFocusGroup";
 
-export const DebugGroup = () => {
+export const DebugGroup = React.memo(function DebugGroup() {
     const navigate = useNavigate();
 
     return (
@@ -33,4 +34,4 @@ export const DebugGroup = () => {
             </Center>
         </Collapse>
     );
-};
+});

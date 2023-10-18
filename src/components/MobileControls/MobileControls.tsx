@@ -10,7 +10,7 @@ import { sidebarProxy } from "../SideBar/sidebarProxy";
 import styles from "./mobileControls.module.css";
 import { mobileControlsProxy } from "./mobileControlsProxy";
 
-export const MobileControlsMetaControls = () => {
+export const MobileControlsMetaControls = React.memo(function MobileControlsMetaControls() {
     const puzzle = usePuzzle();
     const layersProxy = puzzle.layers;
     const currentLayerId = useProxy(layersProxy).currentKey;
@@ -106,7 +106,7 @@ export const MobileControlsMetaControls = () => {
             </div>
         </div>
     );
-};
+});
 
 type Arg2 = ActionIconProps & { label: string; onClick: () => void };
 const IconButton = ({ label, onClick, ...rest }: Arg2) => {
@@ -129,13 +129,13 @@ const IconButton = ({ label, onClick, ...rest }: Arg2) => {
     );
 };
 
-export const MobileControlsActual = () => {
+export const MobileControlsActual = React.memo(function MobileControlsActual() {
     return (
         <Center>
             <LayerControlSettings />
         </Center>
     );
-};
+});
 
 const UndoRedo = React.memo(function UndoRedo() {
     const puzzle = usePuzzle();
