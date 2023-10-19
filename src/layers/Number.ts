@@ -1,5 +1,5 @@
-import { Layer, LayerClass, LayerHandlerResult, Point, SVGGroup } from "../types";
-import { zip } from "../utils/data";
+import { Layer, LayerClass, LayerHandlerResult, SVGGroup } from "../types";
+import { concat, zip } from "../utils/data";
 import { notify } from "../utils/notifications";
 import { BaseLayer } from "./BaseLayer";
 import { numberTyper } from "./controls/numberTyper";
@@ -7,7 +7,7 @@ import { KeyDownEventHandler, SelectedProps, handleEventsSelection } from "./con
 import styles from "./layers.module.css";
 
 export interface NumberProps extends SelectedProps {
-    ObjectState: { state: string; point: Point };
+    ObjectState: { state: string };
     RawSettings: { max: number; negatives: boolean };
 }
 
@@ -44,7 +44,10 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
             return {};
         }
 
-        const states: Array<string | null> = ids.map((id) => stored.objects.get(id)?.state ?? null);
+        const states: Array<string | null> = ids.map((id) => {
+            const object = stored.getObject(id);
+            return object?.state ?? null;
+        });
 
         const newStates = this._numberTyper(states, { type, keypress });
 
@@ -57,7 +60,7 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
 
             history.push({
                 id,
-                object: new_ === null ? null : { point: id, state: new_ },
+                object: new_ === null ? null : { state: new_ },
             });
         }
         return { history };
@@ -77,7 +80,7 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
 
         handleEventsSelection(this, {});
 
-        const { objects } = storage.getStored<NumberProps>({
+        const stored = storage.getStored<NumberProps>({
             grid,
             layer: this,
         });
@@ -87,7 +90,7 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
         // Delete numbers that are out of range
         const min = newSettings.negatives ? -newSettings.max : 0;
         const max = newSettings.max;
-        for (const [id, object] of objects.entries()) {
+        for (const [id, object] of concat(stored.entries("answer"), stored.entries("question"))) {
             const state = parseInt(object.state);
             if (state < min || state > max) {
                 history.push({ object: null, id });
@@ -100,21 +103,21 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
     getSVG: INumberLayer["getSVG"] = ({ grid, storage, settings }) => {
         const stored = storage.getStored<NumberProps>({ grid, layer: this });
         const group = stored.groups.getGroup(settings.editMode);
-        const points = stored.objects.keys().filter((id) => group.has(id));
 
         const pt = grid.getPointTransformer(settings);
-        const [cellMap, cells] = pt.fromPoints("cells", points);
+        const [cellMap, cells] = pt.fromPoints("cells", [...group]);
         const toSVG = cells.toSVGPoints();
         const maxRadius = pt.maxRadius({ type: "cells", shape: "square", size: "lg" });
 
         const className = [styles.textHorizontalCenter, styles.textVerticalCenter].join(" ");
         const elements: SVGGroup["elements"] = new Map();
-        for (const [id, cell] of cellMap.entries()) {
-            const point = toSVG.get(cell);
+        for (const [id, object] of stored.entries(settings.editMode)) {
+            const point = toSVG.get(cellMap.get(id));
             if (!point) continue; // TODO?
+
             elements.set(id, {
                 className,
-                children: stored.objects.get(id).state,
+                children: object.state,
                 x: point[0],
                 y: point[1],
                 fontSize: maxRadius * 1.6,

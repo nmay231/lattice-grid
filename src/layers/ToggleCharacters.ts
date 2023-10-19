@@ -1,4 +1,5 @@
-import { FormSchema, Layer, LayerClass, SVGGroup } from "../types";
+import { FormSchema, Layer, LayerClass, PartialHistoryAction, SVGGroup } from "../types";
+import { concat } from "../utils/data";
 import { notify } from "../utils/notifications";
 import { BaseLayer } from "./BaseLayer";
 import { KeyDownEventHandler, SelectedProps, handleEventsSelection } from "./controls/selection";
@@ -93,18 +94,22 @@ export class ToggleCharactersLayer
 
         handleEventsSelection(this, {});
 
-        const { objects } = storage.getStored<ToggleCharactersProps>({ grid, layer: this });
+        const stored = storage.getStored<ToggleCharactersProps>({ grid, layer: this });
 
-        const history = [];
+        const history: PartialHistoryAction<ToggleCharactersProps>[] = [];
 
         // Exclude disallowed characters
-        for (const [id, { state }] of objects.entries()) {
+        for (const [id, { state }] of concat(
+            stored.entries("answer"),
+            stored.entries("question"),
+        )) {
             const newState = [...state]
                 .filter((char) => this.settings.characters.indexOf(char) > -1)
                 .join("");
             if (newState !== state) {
                 history.push({
-                    object: { state: newState, point: id },
+                    object: { state: newState },
+                    storageMode: stored.groups.byKey[id],
                     id,
                 });
             }
@@ -126,10 +131,11 @@ export class ToggleCharactersLayer
         const stored = storage.getStored<ToggleCharactersProps>({ grid, layer: this });
 
         if (keypress === "Delete") {
+            const allIds = new Set(
+                concat(stored.groups.getGroup("answer"), stored.groups.getGroup("question")),
+            );
             return {
-                history: ids
-                    .filter((id) => stored.objects.has(id))
-                    .map((id) => ({ id, object: null })),
+                history: ids.filter((id) => allIds.has(id)).map((id) => ({ id, object: null })),
             };
         }
 
@@ -138,7 +144,10 @@ export class ToggleCharactersLayer
             return {};
         }
 
-        const states = ids.map((id) => stored.objects.get(id)?.state || "");
+        const states = ids.map((id) => {
+            const object = stored.getObject(id);
+            return object?.state || "";
+        });
         const allIncluded = states.reduce((prev, next) => prev && next.indexOf(char) > -1, true);
 
         let newStates: string[];
@@ -164,18 +173,18 @@ export class ToggleCharactersLayer
 
     getSVG: IToggleCharactersLayer["getSVG"] = ({ grid, storage, settings }) => {
         const stored = storage.getStored<ToggleCharactersProps>({ grid, layer: this });
-        const group = stored.groups.getGroup(settings.editMode);
-        const ids = stored.objects.keys().filter((id) => group.has(id));
 
         const pt = grid.getPointTransformer(settings);
-        const [cellMap, cells] = pt.fromPoints("cells", ids);
+        const [cellMap, cells] = pt.fromPoints("cells", [
+            ...stored.groups.getGroup(settings.editMode),
+        ]);
         const toSVG = cells.toSVGPoints();
         const maxRadius = pt.maxRadius({ type: "cells", shape: "square", size: "lg" });
 
         const elements: SVGGroup["elements"] = new Map();
         if (this.settings.displayStyle === "center") {
-            const className = [styles.textHorizontalCenter, styles.textVerticalCenter].join(" ");
-            for (const [id, { state }] of stored.objects.entries()) {
+            const className = `${styles.textHorizontalCenter} ${styles.textVerticalCenter}`;
+            for (const [id, { state }] of stored.entries(settings.editMode)) {
                 const point = toSVG.get(cellMap.get(id));
                 if (!point) continue; // TODO?
                 elements.set(id, {
@@ -187,8 +196,8 @@ export class ToggleCharactersLayer
                 });
             }
         } else if (this.settings.displayStyle === "topBottom") {
-            const className = [styles.textLeft, styles.textVerticalCenter].join(" ");
-            for (const [id, { state: text }] of stored.objects.entries()) {
+            const className = `${styles.textLeft} ${styles.textVerticalCenter}`;
+            for (const [id, { state: text }] of stored.entries(settings.editMode)) {
                 const split = Math.max(2, Math.ceil(text.length / 2));
                 const point = toSVG.get(cellMap.get(id));
                 if (!point) continue; // TODO?

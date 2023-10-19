@@ -33,11 +33,14 @@ export type LayerStorageJSON = {
 
 export class LayerStorage<LP extends LayerProps = LayerProps> {
     // TODO: Should this be where I wrap it in proxy?
+    /** @deprecated */
     objects = proxy(new OrderedMap<LP["ObjectState"]>());
+    /** @deprecated */
     permStorage: Partial<LP["PermStorage"]> = {};
+    /** @deprecated */
     groups = new DisjointSets<StorageMode>();
 
-    /** Was mostly used for testing, should probably be updated to be more convenient and general */
+    /** @deprecated Use setEntries() */
     static fromObjects<LP extends LayerProps>({
         ids,
         objs,
@@ -74,6 +77,10 @@ export class LayerStorage<LP extends LayerProps = LayerProps> {
         }
     }
 
+    getObject(id: ObjectId): LP["ObjectState"] {
+        return this.objects.get(id);
+    }
+
     clearGroup(group: StorageMode) {
         for (const id of this.groups.getGroup(group)) {
             this.objects.delete(id);
@@ -81,6 +88,7 @@ export class LayerStorage<LP extends LayerProps = LayerProps> {
         }
     }
 
+    /** Serialization to cache */
     toJSON(): LayerStorageJSON {
         return {
             objects: { map: this.objects.map, order: this.objects.order },
@@ -88,6 +96,7 @@ export class LayerStorage<LP extends LayerProps = LayerProps> {
         };
     }
 
+    /** Deserialization from cache */
     static fromJSON<LP extends LayerProps = LayerProps>(json: LayerStorageJSON): LayerStorage<LP> {
         const storage = new LayerStorage<LP>();
         Object.assign(storage.objects, json.objects);

@@ -45,7 +45,7 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
         if (!stored.permStorage.currentObjectId) return {};
 
         const id = stored.permStorage.currentObjectId;
-        const object = stored.objects.get(id);
+        const object = stored.getObject(id);
 
         if (type === "delete") {
             if (object.state === null) return {};
@@ -79,16 +79,13 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
 
     getSVG: IKillerCagesLayer["getSVG"] = ({ grid, storage, settings }) => {
         const stored = storage.getStored<KillerCagesProps>({ grid, layer: this });
-        const group = stored.groups.getGroup(settings.editMode);
-        const renderOrder = stored.objects.keys().filter((id) => group.has(id));
         const pt = grid.getPointTransformer(settings);
 
         const cageElements: SVGGroup["elements"] = new Map();
         const numberElements: SVGGroup["elements"] = new Map();
         const textStyles = [styles.textTop, styles.textLeft].join(" ");
 
-        for (const id of renderOrder) {
-            const object = stored.objects.get(id);
+        for (const [id, object] of stored.entries(settings.editMode)) {
             const [, cells] = pt.fromPoints("cells", object.points);
             const shrinkwrap = pt.shrinkwrap(cells, { inset: 5 });
 

@@ -1,4 +1,5 @@
 import { FormSchema, Layer, LayerClass, ObjectId, Point, PointType, SVGGroup } from "../types";
+import { concat } from "../utils/data";
 import { BaseLayer } from "./BaseLayer";
 import { TwoPointProps, handleEventsCurrentSetting } from "./controls/twoPoint";
 import styles from "./layers.module.css";
@@ -65,7 +66,9 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
         if (this.rawSettings.connections !== newSettings.connections) {
             // Clear stored if the type of connections allowed changes (because that would allow impossible-to-draw lines otherwise).
             const stored = storage.getStored({ grid, layer: this });
-            history = stored.objects.keys().map((id) => ({ id, object: null }));
+            history = [
+                ...concat(stored.groups.getGroup("question"), stored.groups.getGroup("answer")),
+            ].map((id) => ({ id, object: null }));
         }
 
         this.rawSettings = newSettings;
@@ -97,10 +100,9 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
             grid,
             layer: this,
         });
-        const group = stored.groups.getGroup(settings.editMode);
-        const renderOrder = stored.objects.keys().filter((id) => group.has(id));
-
-        let allPoints = renderOrder.map((id) => stored.objects.get(id).points).flat();
+        let allPoints = [...stored.entries(settings.editMode)].flatMap(
+            ([, object]) => object.points,
+        );
         allPoints = allPoints.filter((point, index) => index === allPoints.indexOf(point));
 
         const pt = grid.getPointTransformer(settings);
@@ -108,11 +110,11 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
         const toSVG = gridPoints.toSVGPoints();
 
         const elements: SVGGroup["elements"] = new Map();
-        for (const id of renderOrder) {
-            const { state, points } = stored.objects.get(id);
+        for (const [id, { state, points }] of stored.entries(settings.editMode)) {
             const first = toSVG.get(pointMap.get(points[0]));
             const second = toSVG.get(pointMap.get(points[1]));
             if (!first || !second) continue; // TODO?
+
             const [x1, y1] = first;
             const [x2, y2] = second;
             elements.set(id, { className: styles.simpleLine, ...state, x1, y1, x2, y2 });

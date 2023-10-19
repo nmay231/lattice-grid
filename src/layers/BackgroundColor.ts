@@ -57,16 +57,15 @@ export class BackgroundColorLayer
 
     getSVG: IBackgroundColorLayer["getSVG"] = ({ grid, storage, settings }) => {
         const stored = storage.getStored<BackgroundColorProps>({ grid, layer: this });
-        const group = stored.groups.getGroup(settings.editMode);
-        const renderOrder = stored.objects.keys().filter((id) => group.has(id));
 
         const pt = grid.getPointTransformer(settings);
-        const [cellMap, cells] = pt.fromPoints("cells", renderOrder);
+        const [cellMap, cells] = pt.fromPoints("cells", [
+            ...stored.groups.getGroup(settings.editMode),
+        ]);
         const [outlineMap] = pt.svgOutline(cells);
 
         const elements: SVGGroup["elements"] = new Map();
-        for (const id of renderOrder) {
-            const { state: color } = stored.objects.get(id);
+        for (const [id, { state: color }] of stored.entries(settings.editMode)) {
             const outline = outlineMap.get(cellMap.get(id));
             if (!outline) continue; // TODO?
 

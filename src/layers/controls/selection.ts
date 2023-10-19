@@ -92,10 +92,11 @@ export const handleEventsSelection = <LP extends SelectedProps>(
         const { grid, storage, tempStorage } = event;
         const internal = storage.getStored<InternalProps>({ grid, layer: { id: layerId } });
         let history: PartialHistoryAction<LP, InternalProps["ObjectState"]>[];
+        const allPoints = internal.groups.getGroup("question");
 
         switch (event.type) {
             case "cancelAction": {
-                history = internal.objects.keys().map((id) => obj({ id, object: null }));
+                history = [...allPoints].map((id) => obj({ id, object: null }));
                 return { history };
             }
             case "delete":
@@ -110,15 +111,13 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                 } else if (event.keypress === "ctrl-i") {
                     history = grid
                         .getAllPoints("cells")
-                        .map((id) =>
-                            obj({ id, object: internal.objects.has(id) ? null : { state: 1 } }),
-                        );
+                        .map((id) => obj({ id, object: allPoints.has(id) ? null : { state: 1 } }));
                     return {
                         history,
                     };
                 }
 
-                const actions = layer.handleKeyDown({ ...event, points: internal.objects.keys() });
+                const actions = layer.handleKeyDown({ ...event, points: [...allPoints] });
                 const batchId = storage.getNewBatchId();
 
                 return {
@@ -133,13 +132,14 @@ export const handleEventsSelection = <LP extends SelectedProps>(
             case "pointerDown":
             case "pointerMove": {
                 internal.permStorage.groupNumber = internal.permStorage.groupNumber || 1;
+                const currentPoints = internal.groups.getGroup("question");
                 const ids = event.points;
 
                 if (event.ctrlKey || event.shiftKey) {
                     if (tempStorage.targetState === undefined) {
                         // If targetState is undefined, there can only be one id
                         const id = ids[0];
-                        if (internal.objects.has(id)) {
+                        if (currentPoints.has(id)) {
                             tempStorage.targetState = null;
                             history = [obj({ id, object: null })];
                         } else {
@@ -151,20 +151,18 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                         }
                     } else if (tempStorage.targetState === null) {
                         history = ids
-                            .filter((id) => internal.objects.has(id))
+                            .filter((id) => currentPoints.has(id))
                             .map((id) => obj({ id, object: null }));
                     } else {
                         const groupsToMerge = new Set(
-                            ids.map((id) => internal.objects.get(id)?.state),
+                            ids.map((id) => internal.getObject(id)?.state),
                         );
                         const allIds = ids
-                            .filter((id) => !internal.objects.has(id))
+                            .filter((id) => !currentPoints.has(id))
                             .concat(
-                                internal.objects
-                                    .keys()
-                                    .filter((id) =>
-                                        groupsToMerge.has(internal.objects.get(id).state),
-                                    ),
+                                [...currentPoints].filter((id) =>
+                                    groupsToMerge.has(internal.getObject(id).state),
+                                ),
                             );
                         const state = tempStorage.targetState;
                         history = allIds.map((id) => obj({ id, object: { state } }));
@@ -177,7 +175,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                     history = [];
 
                     if (removeOld) {
-                        const oldIds = internal.objects.keys();
+                        const oldIds = [...currentPoints];
                         history = oldIds
                             .filter((toDelete) => ids.indexOf(toDelete) === -1)
                             .map((toDelete) => obj({ id: toDelete, object: null }));
@@ -196,7 +194,9 @@ export const handleEventsSelection = <LP extends SelectedProps>(
             case "pointerUp": {
                 if (tempStorage.removeSingle) {
                     return {
-                        history: [obj({ id: internal.objects.keys()[0], object: null })],
+                        history: [
+                            obj({ id: [...internal.groups.getGroup("question")][0], object: null }),
+                        ],
                     };
                 }
                 return {};
@@ -204,8 +204,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
             case "undoRedo": {
                 const newIds = event.actions.map(({ objectId: id }) => id);
                 // Clear old selection
-                const history: PartialHistoryAction[] = internal.objects
-                    .keys()
+                const history = [...internal.groups.getGroup("question")]
                     // TODO: This doesn't account for actions that do not apply to external layer. Do I need to fix?
                     .filter((oldId) => newIds.indexOf(oldId) === -1)
                     .map((oldId) => obj({ id: oldId, object: null }));
@@ -232,8 +231,8 @@ export const handleEventsSelection = <LP extends SelectedProps>(
     layer.getOverlaySVG = ({ grid, storage, settings }) => {
         // TODO: Selection can be made by multiple layers, but not all layers support the same cells/corners selection. In the future, I need to filter the points by the type of points selectable by the current layer.
         const stored = storage.getStored<InternalProps>({ grid, layer: { id: layerId } });
-        const points = stored.objects.keys().filter((key) => stored.objects.get(key).state);
-        const states = points.map((id) => stored.objects.get(id).state);
+        const points = [...stored.groups.getGroup("question")];
+        const states = points.map((id) => stored.getObject(id).state);
         const pt = grid.getPointTransformer(settings);
 
         const elements: SVGGroup["elements"] = new Map();

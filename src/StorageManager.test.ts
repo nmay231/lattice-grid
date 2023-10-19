@@ -48,7 +48,7 @@ describe("StorageManager", () => {
         };
         storage._applyHistoryAction({ stored, action, storageMode: "question" });
 
-        expect(storage.objects["grid"]["layer1"].objects.entries()).toEqual<HistoryEntries>([
+        expect([...storage.objects["grid"]["layer1"].entries("question")]).toEqual<HistoryEntries>([
             ["objectId", { asdf: "something" }],
         ]);
     });
@@ -64,7 +64,9 @@ describe("StorageManager", () => {
         };
         storage._applyHistoryAction({ stored, action, storageMode: "question" });
 
-        expect(storage.objects["grid"]["layer1"].objects.entries()).toEqual<HistoryEntries>([]);
+        expect([...storage.objects["grid"]["layer1"].entries("question")]).toEqual<HistoryEntries>(
+            [],
+        );
     });
 
     it("object placement should be idempotent", () => {
@@ -79,7 +81,7 @@ describe("StorageManager", () => {
         storage._applyHistoryAction({ stored, action, storageMode: "question" });
         storage._applyHistoryAction({ stored, action, storageMode: "question" });
 
-        expect(storage.objects["grid"]["layer1"].objects.entries()).toEqual<HistoryEntries>([
+        expect([...storage.objects["grid"]["layer1"].entries("question")]).toEqual<HistoryEntries>([
             ["objectId", { asdf: "something" }],
         ]);
     });
@@ -96,7 +98,9 @@ describe("StorageManager", () => {
         storage._applyHistoryAction({ stored, action, storageMode: "question" });
         storage._applyHistoryAction({ stored, action, storageMode: "question" });
 
-        expect(storage.objects["grid"]["layer1"].objects.entries()).toEqual<HistoryEntries>([]);
+        expect([...storage.objects["grid"]["layer1"].entries("question")]).toEqual<HistoryEntries>(
+            [],
+        );
     });
 
     it("returns the same object when inverted twice", () => {
@@ -136,7 +140,7 @@ describe("StorageManager", () => {
 
         storage.undoHistory(puzzle);
         // An non-batched undo should not affect the batched actions
-        expect(storage.objects["grid"]["layer1"].objects.entries()).toEqual<HistoryEntries>([
+        expect([...storage.objects["grid"]["layer1"].entries("question")]).toEqual<HistoryEntries>([
             ["id1", { asdf: "something1" }],
             ["id2", { asdf: "something2" }],
             ["id3", { asdf: "something3" }],
@@ -144,13 +148,13 @@ describe("StorageManager", () => {
 
         storage.undoHistory(puzzle);
         // Undo a batch of actions
-        expect(storage.objects["grid"]["layer1"].objects.entries()).toEqual<HistoryEntries>([
+        expect([...storage.objects["grid"]["layer1"].entries("question")]).toEqual<HistoryEntries>([
             ["id1", { asdf: "something1" }],
         ]);
 
         storage.redoHistory(puzzle);
         // Undo a batch of actions
-        expect(storage.objects["grid"]["layer1"].objects.entries()).toEqual<HistoryEntries>([
+        expect([...storage.objects["grid"]["layer1"].entries("question")]).toEqual<HistoryEntries>([
             ["id1", { asdf: "something1" }],
             ["id2", { asdf: "something2" }],
             ["id3", { asdf: "something3" }],
@@ -237,10 +241,12 @@ describe("StorageManager", () => {
         const objectsAfterAction = cloneDeep(storage.objects);
 
         // Ensure the initial states are good
-        expect(objectsBeforeAction["grid"]["layer1"].objects.entries()).toEqual<HistoryEntries>([]);
-        expect(objectsAfterAction["grid"]["layer1"].objects.entries()).toEqual<HistoryEntries>([
-            ["id1", { asdf: "something1" }],
-        ]);
+        expect([
+            ...objectsBeforeAction["grid"]["layer1"].entries("question"),
+        ]).toEqual<HistoryEntries>([]);
+        expect([
+            ...objectsAfterAction["grid"]["layer1"].entries("question"),
+        ]).toEqual<HistoryEntries>([["id1", { asdf: "something1" }]]);
 
         expect(storage.canUndo(puzzle)).toBe(true);
         expect(storage.canRedo(puzzle)).toBe(false);

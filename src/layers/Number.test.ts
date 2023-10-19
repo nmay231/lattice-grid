@@ -26,19 +26,15 @@ describe("Number Layer", () => {
         });
 
         expect(result.history).toEqual<HistoryType>([
-            { id: "id1", object: { point: "id1", state: "1" } },
-            { id: "id2", object: { point: "id2", state: "1" } },
+            { id: "id1", object: { state: "1" } },
+            { id: "id2", object: { state: "1" } },
         ]);
     });
 
     it("deletes some numbers", () => {
         const stored = LayerStorage.fromObjects<NumberProps>({
             ids: ["toDelete", "keep", "alsoDelete"],
-            objs: [
-                { point: "toDelete", state: "1" },
-                { point: "keep", state: "5" },
-                { point: "alsoDelete", state: "3" },
-            ],
+            objs: [{ state: "1" }, { state: "5" }, { state: "3" }],
         });
 
         const result = layer9.handleKeyDown({
@@ -57,11 +53,7 @@ describe("Number Layer", () => {
     it("does not delete objects when the number range increases", () => {
         const stored = LayerStorage.fromObjects<NumberProps>({
             ids: ["1,1", "2,2", "3,3"],
-            objs: [
-                { point: "1,1", state: "0" },
-                { point: "2,2", state: "5" },
-                { point: "3,3", state: "9" },
-            ],
+            objs: [{ state: "0" }, { state: "5" }, { state: "9" }],
         });
 
         const result = layer9.newSettings({
@@ -76,12 +68,7 @@ describe("Number Layer", () => {
     it("deletes objects when the number range decreases", () => {
         const stored = LayerStorage.fromObjects<NumberProps>({
             ids: ["1,1", "2,2", "3,3", "4,4"],
-            objs: [
-                { point: "1,1", state: "-10" },
-                { point: "2,2", state: "0" },
-                { point: "3,3", state: "5" },
-                { point: "4,4", state: "42" },
-            ],
+            objs: [{ state: "-10" }, { state: "0" }, { state: "5" }, { state: "42" }],
         });
 
         const result = layer64.newSettings({

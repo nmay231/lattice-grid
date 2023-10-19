@@ -53,7 +53,7 @@ export const handleEventsCurrentSetting = <LP extends TwoPointProps>(
     };
 
     layer.handleEvent = (event) => {
-        const { grid, storage, type, tempStorage } = event;
+        const { grid, storage, type, tempStorage, settings } = event;
         if ((type !== "pointerDown" && type !== "pointerMove") || !event.points.length) {
             return {};
         }
@@ -71,12 +71,15 @@ export const handleEventsCurrentSetting = <LP extends TwoPointProps>(
             const id = pair.join(";");
 
             if (tempStorage.targetState === undefined) {
-                const isSame = isEqual(stored.objects.get(id)?.state, layer.settings.selectedState);
+                const isSame = isEqual(stored.getObject(id)?.state, layer.settings.selectedState);
 
                 tempStorage.targetState = isSame ? null : layer.settings.selectedState;
             }
 
-            if (tempStorage.targetState === null && stored.objects.has(id)) {
+            if (
+                tempStorage.targetState === null &&
+                stored.groups.getGroup(settings.editMode).has(id)
+            ) {
                 history.push({
                     id,
                     batchId: tempStorage.batchId,
