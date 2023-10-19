@@ -151,9 +151,11 @@ export class PuzzleManager {
                 // TODO: This assumes that all objects can be checked to be equal using recursive equality. Some objects might have hidden state that is not relevant to answer checking
                 let correct = true;
                 for (const [layerId, expected] of this.answers.entries()) {
-                    const actual = this.storage
-                        .getStored({ layer: { id: layerId }, grid: this.grid })
-                        .getObjectsByGroup("answer").map;
+                    const actual = Object.fromEntries(
+                        this.storage
+                            .getStored({ layer: { id: layerId }, grid: this.grid })
+                            .entries("answer"),
+                    );
 
                     if (!isEqual(expected, actual)) {
                         correct = false;

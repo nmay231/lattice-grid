@@ -57,13 +57,21 @@ export class LayerStorage<LP extends LayerProps = LayerProps> {
         return storage satisfies LayerStorageJSON;
     }
 
-    getObjectsByGroup(group: StorageMode) {
-        const result = new OrderedMap<LP["ObjectState"]>();
-        const groupIds = this.groups.getGroup(group);
-        for (const [id, obj] of this.objects.entries()) {
-            if (groupIds.has(id)) result.set(id, obj);
+    /** Set the objects as [id, object] pairs for the given storage group */
+    setEntries(group: StorageMode, entries: Array<[ObjectId, LP["ObjectState"]]>): void {
+        this.clearGroup(group);
+
+        for (const [id, object] of entries) {
+            this.objects.set(id, object);
+            this.groups.setKey(id, group);
         }
-        return result;
+    }
+
+    /** Get the objects as [id, object] pairs for the given storage group */
+    *entries(group: StorageMode): Generator<[ObjectId, LP["ObjectState"]]> {
+        for (const id of this.groups.getGroup(group)) {
+            yield [id, this.objects.get(id)];
+        }
     }
 
     clearGroup(group: StorageMode) {
