@@ -1,6 +1,7 @@
 import { MantineProvider, MantineThemeOverride } from "@mantine/core";
 import "@mantine/core/styles.css";
 import { Notifications } from "@mantine/notifications";
+import "@mantine/notifications/styles.css";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { AboutPage } from "./pages/AboutPage";
 import { PuzzlePage } from "./pages/PuzzlePage";
