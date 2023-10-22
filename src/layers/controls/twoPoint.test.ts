@@ -1,12 +1,26 @@
 import { vi } from "vitest";
 import { LayerStorage } from "../../LayerStorage";
-import { NeedsUpdating, PartialHistoryAction } from "../../types";
+import { LayerProps, NeedsUpdating, ObjectId, PartialHistoryAction } from "../../types";
+import { zip } from "../../utils/data";
 import { layerEventRunner } from "../../utils/testing/layerEventRunner";
 import {
     MinimalSettings,
     TwoPointProps,
     handleEventsCurrentSetting as twoPointCurrentSetting,
 } from "./twoPoint";
+
+// TODO: Write all new tests with LayerStorage.setEntries()
+const layerStorageFromObjects = <LP extends LayerProps>({
+    ids,
+    objs,
+}: {
+    ids: ObjectId[];
+    objs: LP["ObjectState"][];
+}) => {
+    const stored = new LayerStorage<LP>();
+    stored.setEntries("question", [...zip(ids, objs)]);
+    return stored;
+};
 
 describe("twoPoint.handleEventsCurrentSetting", () => {
     type SecondArg = Parameters<typeof twoPointCurrentSetting>[1];
@@ -116,7 +130,7 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
     it("erases some lines when drawing over existing ones with the same state", () => {
         // Given an existing line
         const layer = getTwoPointLayer();
-        const stored = LayerStorage.fromObjects<TwoPointProps>({
+        const stored = layerStorageFromObjects<TwoPointProps>({
             ids: ["a;b"],
             objs: [{ points: ["a", "b"], state: { x: 42 } }],
         });
@@ -145,7 +159,7 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
     it("overrides some lines when drawing over existing ones with a different state", () => {
         // Given an existing line with a different state
         const layer = getTwoPointLayer();
-        const stored = LayerStorage.fromObjects<TwoPointProps>({
+        const stored = layerStorageFromObjects<TwoPointProps>({
             ids: ["a;b"],
             objs: [{ points: ["a", "b"], state: { different: true } }],
         });
@@ -174,7 +188,7 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
     it("does not erase lines when drawing over similar lines after drawing at all", () => {
         // Given an existing line
         const layer = getTwoPointLayer();
-        const stored = LayerStorage.fromObjects<TwoPointProps>({
+        const stored = layerStorageFromObjects<TwoPointProps>({
             ids: ["1;2"],
             objs: [{ points: ["1", "2"], state: { x: 42 } }],
         });
@@ -216,7 +230,7 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
     it("does not add lines when deleting lines and drawing over nothing", () => {
         // Given an existing line
         const layer = getTwoPointLayer();
-        const stored = LayerStorage.fromObjects<TwoPointProps>({
+        const stored = layerStorageFromObjects<TwoPointProps>({
             ids: ["1;2"],
             objs: [{ points: ["1", "2"], state: { x: 42 } }],
         });

@@ -69,7 +69,7 @@ export const handleEventsCycleStates = <
         if (tempStorage.targetState !== undefined) {
             state = tempStorage.targetState;
         } else {
-            if (stored.groups.getGroup(settings.editMode).has(newPoints[0])) {
+            if (stored.keys(settings.editMode).has(newPoints[0])) {
                 const index = 1 + states.indexOf(stored.getObject(newPoints[0]).state);
                 state = index < states.length ? states[index] : null;
             } else {

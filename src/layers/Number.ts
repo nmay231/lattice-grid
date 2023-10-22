@@ -102,7 +102,7 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
 
     getSVG: INumberLayer["getSVG"] = ({ grid, storage, settings }) => {
         const stored = storage.getStored<NumberProps>({ grid, layer: this });
-        const group = stored.groups.getGroup(settings.editMode);
+        const group = stored.keys(settings.editMode);
 
         const pt = grid.getPointTransformer(settings);
         const [cellMap, cells] = pt.fromPoints("cells", [...group]);

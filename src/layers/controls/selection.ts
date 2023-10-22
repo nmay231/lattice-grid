@@ -92,7 +92,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
         const { grid, storage, tempStorage } = event;
         const internal = storage.getStored<InternalProps>({ grid, layer: { id: layerId } });
         let history: PartialHistoryAction<LP, InternalProps["ObjectState"]>[];
-        const allPoints = internal.groups.getGroup("question");
+        const allPoints = internal.keys("question");
 
         switch (event.type) {
             case "cancelAction": {
@@ -132,7 +132,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
             case "pointerDown":
             case "pointerMove": {
                 internal.permStorage.groupNumber = internal.permStorage.groupNumber || 1;
-                const currentPoints = internal.groups.getGroup("question");
+                const currentPoints = internal.keys("question");
                 const ids = event.points;
 
                 if (event.ctrlKey || event.shiftKey) {
@@ -194,9 +194,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
             case "pointerUp": {
                 if (tempStorage.removeSingle) {
                     return {
-                        history: [
-                            obj({ id: [...internal.groups.getGroup("question")][0], object: null }),
-                        ],
+                        history: [obj({ id: [...internal.keys("question")][0], object: null })],
                     };
                 }
                 return {};
@@ -204,7 +202,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
             case "undoRedo": {
                 const newIds = event.actions.map(({ objectId: id }) => id);
                 // Clear old selection
-                const history = [...internal.groups.getGroup("question")]
+                const history = [...internal.keys("question")]
                     // TODO: This doesn't account for actions that do not apply to external layer. Do I need to fix?
                     .filter((oldId) => newIds.indexOf(oldId) === -1)
                     .map((oldId) => obj({ id: oldId, object: null }));
@@ -231,7 +229,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
     layer.getOverlaySVG = ({ grid, storage, settings }) => {
         // TODO: Selection can be made by multiple layers, but not all layers support the same cells/corners selection. In the future, I need to filter the points by the type of points selectable by the current layer.
         const stored = storage.getStored<InternalProps>({ grid, layer: { id: layerId } });
-        const points = [...stored.groups.getGroup("question")];
+        const points = [...stored.keys("question")];
         const states = points.map((id) => stored.getObject(id).state);
         const pt = grid.getPointTransformer(settings);
 

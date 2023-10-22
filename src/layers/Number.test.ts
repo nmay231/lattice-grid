@@ -32,10 +32,12 @@ describe("Number Layer", () => {
     });
 
     it("deletes some numbers", () => {
-        const stored = LayerStorage.fromObjects<NumberProps>({
-            ids: ["toDelete", "keep", "alsoDelete"],
-            objs: [{ state: "1" }, { state: "5" }, { state: "3" }],
-        });
+        const stored = new LayerStorage<NumberProps>();
+        stored.setEntries("question", [
+            ["toDelete", { state: "1" }],
+            ["keep", { state: "5" }],
+            ["alsoDelete", { state: "3" }],
+        ]);
 
         const result = layer9.handleKeyDown({
             ...layerEventEssentials({ stored }),
@@ -51,10 +53,12 @@ describe("Number Layer", () => {
     });
 
     it("does not delete objects when the number range increases", () => {
-        const stored = LayerStorage.fromObjects<NumberProps>({
-            ids: ["1,1", "2,2", "3,3"],
-            objs: [{ state: "0" }, { state: "5" }, { state: "9" }],
-        });
+        const stored = new LayerStorage<NumberProps>();
+        stored.setEntries("question", [
+            ["1,1", { state: "5" }],
+            ["2,2", { state: "9" }],
+            ["3,3", { state: "0" }],
+        ]);
 
         const result = layer9.newSettings({
             ...layerEventEssentials({ stored }),
@@ -66,10 +70,13 @@ describe("Number Layer", () => {
     });
 
     it("deletes objects when the number range decreases", () => {
-        const stored = LayerStorage.fromObjects<NumberProps>({
-            ids: ["1,1", "2,2", "3,3", "4,4"],
-            objs: [{ state: "-10" }, { state: "0" }, { state: "5" }, { state: "42" }],
-        });
+        const stored = new LayerStorage<NumberProps>();
+        stored.setEntries("question", [
+            ["1,1", { state: "-10" }],
+            ["2,2", { state: "0" }],
+            ["3,3", { state: "5" }],
+            ["4,4", { state: "42" }],
+        ]);
 
         const result = layer64.newSettings({
             ...layerEventEssentials({ stored }),

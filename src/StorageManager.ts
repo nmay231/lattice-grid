@@ -82,7 +82,7 @@ export class StorageManager {
 
         for (const partialAction of actions) {
             const layerId = (partialAction as NeedsUpdating).layerId || defaultLayerId;
-            const storageMode = partialAction.storageMode || currentEditMode;
+            const storageMode = partialAction.storageMode ?? currentEditMode;
             const stored = this.objects[gridId][layerId];
             const history = this.histories[`${gridId}-${storageMode}`];
 
@@ -92,7 +92,7 @@ export class StorageManager {
                 // This relies on NaN !== (anything including NaN)
                 batchId: partialAction.batchId && Number(partialAction.batchId),
                 object: partialAction.object,
-                nextObjectId: stored.objects.getNextKey(partialAction.id),
+                nextObjectId: stored._getPrevId(partialAction.id),
             });
             if (!action) {
                 continue; // One of the reducers chose to ignore this action
@@ -148,17 +148,10 @@ export class StorageManager {
 
         const undoAction: HistoryAction = {
             ...action,
-            object: stored.objects.get(action.objectId) || null,
-            nextObjectId: stored.objects.getNextKey(action.objectId),
+            object: stored.getObject(action.objectId) || null,
+            nextObjectId: stored._getPrevId(action.objectId),
         };
-
-        if (action.object === null) {
-            stored.objects.delete(action.objectId);
-            stored.groups.deleteKey(action.objectId);
-        } else {
-            stored.objects.set(action.objectId, action.object, action.nextObjectId);
-            stored.groups.setKey(action.objectId, storageMode);
-        }
+        stored.setObject(storageMode, action.objectId, action.object, action.nextObjectId);
 
         return undoAction;
     }

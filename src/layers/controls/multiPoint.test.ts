@@ -44,10 +44,8 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
     it("draws a new object when a previous one was selected", () => {
         // Given a grid with an object selected
         const layer = getMultiPointLayer();
-        const stored = LayerStorage.fromObjects<MultiPointLayerProps>({
-            ids: ["a"],
-            objs: [{ points: ["a"], state: null }],
-        });
+        const stored = new LayerStorage<MultiPointLayerProps>();
+        stored.setEntries("question", [["a", { points: ["a"], state: null }]]);
         stored.permStorage = { currentObjectId: "a" }; // Select the existing object
 
         const handler = layerEventRunner({ layer, stored });
@@ -122,10 +120,8 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
     it("removes a point from the current object after a simple click", () => {
         // Given an object with two points
         const layer = getMultiPointLayer();
-        const stored = LayerStorage.fromObjects<MultiPointLayerProps>({
-            ids: ["a;b"],
-            objs: [{ points: ["a", "b"], state: null }],
-        });
+        const stored = new LayerStorage<MultiPointLayerProps>();
+        stored.setEntries("question", [["a;b", { points: ["a", "b"], state: null }]]);
         stored.permStorage = { currentObjectId: "a;b" };
 
         const handler = layerEventRunner({ layer, stored });
@@ -166,10 +162,8 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
     it("does not remove the starting point from an object if points were added/deleted", () => {
         // Given an object with two points
         const layer = getMultiPointLayer();
-        const stored = LayerStorage.fromObjects<MultiPointLayerProps>({
-            ids: ["a;b"],
-            objs: [{ points: ["a", "b"], state: null }],
-        });
+        const stored = new LayerStorage<MultiPointLayerProps>();
+        stored.setEntries("question", [["a;b", { points: ["a", "b"], state: null }]]);
         stored.permStorage = { currentObjectId: "a;b" };
 
         const handler = layerEventRunner({ layer, stored });

@@ -161,7 +161,7 @@ export type Grid = {
         blacklist,
         settings,
     }: {
-        blacklist: Set<string>;
+        blacklist: ReadonlySet<string>;
         settings: Pick<PuzzleManager["settings"], "cellSize">;
     }): SVGGroup[];
 };

@@ -22,10 +22,10 @@ describe("SimpleLine", () => {
     };
 
     it("deletes all objects when changing connection types", () => {
-        const stored = LayerStorage.fromObjects<SimpleLineProps>({
-            ids: ["something"],
-            objs: [{ id: "something", points: [], state: { stroke: "" } }],
-        });
+        const stored = new LayerStorage<SimpleLineProps>();
+        stored.setEntries("question", [
+            ["something", { id: "something", points: [], state: { stroke: "" } }],
+        ]);
 
         const simpleLine = getSimpleLine({
             stored,
@@ -44,10 +44,10 @@ describe("SimpleLine", () => {
     });
 
     it("does not delete any objects when changing anything but connection types", () => {
-        const stored = LayerStorage.fromObjects<SimpleLineProps>({
-            ids: ["something"],
-            objs: [{ id: "something", points: [], state: { stroke: "" } }],
-        });
+        const stored = new LayerStorage<SimpleLineProps>();
+        stored.setEntries("question", [
+            ["something", { id: "something", points: [], state: { stroke: "" } }],
+        ]);
 
         const simpleLine = getSimpleLine({
             stored,

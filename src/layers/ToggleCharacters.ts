@@ -109,7 +109,7 @@ export class ToggleCharactersLayer
             if (newState !== state) {
                 history.push({
                     object: { state: newState },
-                    storageMode: stored.groups.byKey[id],
+                    storageMode: stored.keys("question").has(id) ? "question" : "answer",
                     id,
                 });
             }
@@ -131,9 +131,7 @@ export class ToggleCharactersLayer
         const stored = storage.getStored<ToggleCharactersProps>({ grid, layer: this });
 
         if (keypress === "Delete") {
-            const allIds = new Set(
-                concat(stored.groups.getGroup("answer"), stored.groups.getGroup("question")),
-            );
+            const allIds = new Set(concat(stored.keys("answer"), stored.keys("question")));
             return {
                 history: ids.filter((id) => allIds.has(id)).map((id) => ({ id, object: null })),
             };
@@ -175,9 +173,7 @@ export class ToggleCharactersLayer
         const stored = storage.getStored<ToggleCharactersProps>({ grid, layer: this });
 
         const pt = grid.getPointTransformer(settings);
-        const [cellMap, cells] = pt.fromPoints("cells", [
-            ...stored.groups.getGroup(settings.editMode),
-        ]);
+        const [cellMap, cells] = pt.fromPoints("cells", [...stored.keys(settings.editMode)]);
         const toSVG = cells.toSVGPoints();
         const maxRadius = pt.maxRadius({ type: "cells", shape: "square", size: "lg" });
 

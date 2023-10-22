@@ -114,7 +114,7 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
                 // There's only one point with pointerDown
                 const startPoint = event.points[0];
                 // TODO: Only selecting objects from current editMode. Is that what I want?
-                const overlap = [...stored.groups.getGroup(settings.editMode)].filter(
+                const overlap = [...stored.keys(settings.editMode)].filter(
                     (id) => stored.getObject(id).points.indexOf(startPoint) > -1,
                 );
 
@@ -181,7 +181,7 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
                 }
                 const batchId = tempStorage.batchId;
 
-                const objectCopy = cloneDeep(object);
+                const objectCopy = cloneDeep(object) as LP["ObjectState"];
                 if (tempStorage.removeSingle) {
                     // Remove the one cell that was selected
                     objectCopy.points = objectCopy.points.filter(

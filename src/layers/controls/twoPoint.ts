@@ -76,10 +76,7 @@ export const handleEventsCurrentSetting = <LP extends TwoPointProps>(
                 tempStorage.targetState = isSame ? null : layer.settings.selectedState;
             }
 
-            if (
-                tempStorage.targetState === null &&
-                stored.groups.getGroup(settings.editMode).has(id)
-            ) {
+            if (tempStorage.targetState === null && stored.keys(settings.editMode).has(id)) {
                 history.push({
                     id,
                     batchId: tempStorage.batchId,

@@ -66,9 +66,10 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
         if (this.rawSettings.connections !== newSettings.connections) {
             // Clear stored if the type of connections allowed changes (because that would allow impossible-to-draw lines otherwise).
             const stored = storage.getStored({ grid, layer: this });
-            history = [
-                ...concat(stored.groups.getGroup("question"), stored.groups.getGroup("answer")),
-            ].map((id) => ({ id, object: null }));
+            history = [...concat(stored.keys("question"), stored.keys("answer"))].map((id) => ({
+                id,
+                object: null,
+            }));
         }
 
         this.rawSettings = newSettings;

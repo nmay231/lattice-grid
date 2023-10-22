@@ -1,5 +1,5 @@
 import { proxy } from "valtio";
-import { EditMode, Layer, LayerProps, ObjectId, StorageMode, UnknownObject } from "./types";
+import { Layer, LayerProps, ObjectId, StorageMode, UnknownObject } from "./types";
 import { OrderedMap } from "./utils/OrderedMap";
 
 class DisjointSets<Groups extends string = string> {
@@ -33,31 +33,12 @@ export type LayerStorageJSON = {
 
 export class LayerStorage<LP extends LayerProps = LayerProps> {
     // TODO: Should this be where I wrap it in proxy?
-    /** @deprecated */
-    objects = proxy(new OrderedMap<LP["ObjectState"]>());
-    /** @deprecated */
+    private objects = proxy(new OrderedMap<LP["ObjectState"]>());
+    private groups = new DisjointSets<StorageMode>();
     permStorage: Partial<LP["PermStorage"]> = {};
-    /** @deprecated */
-    groups = new DisjointSets<StorageMode>();
 
-    /** @deprecated Use setEntries() */
-    static fromObjects<LP extends LayerProps>({
-        ids,
-        objs,
-        editMode = "question",
-    }: {
-        ids: ObjectId[];
-        objs: LP["ObjectState"][];
-        editMode?: EditMode;
-    }) {
-        const storage = new LayerStorage<LP>();
-
-        ids.forEach((id, index) => {
-            storage.objects.set(id, objs[index]);
-            storage.groups.setKey(id, editMode);
-        });
-
-        return storage satisfies LayerStorageJSON;
+    keys(group: StorageMode): ReadonlySet<ObjectId> {
+        return this.groups.getGroup(group);
     }
 
     /** Set the objects as [id, object] pairs for the given storage group */
@@ -77,8 +58,32 @@ export class LayerStorage<LP extends LayerProps = LayerProps> {
         }
     }
 
-    getObject(id: ObjectId): LP["ObjectState"] {
+    // TODO: The format of these methods are mixed between low-level "map"-like names and specific names to LayerStorage. Fix that at some point.
+    getObject(id: ObjectId): Readonly<LP["ObjectState"]> {
         return this.objects.get(id);
+    }
+
+    setObject(
+        storageMode: StorageMode,
+        id: ObjectId,
+        object: LP["ObjectState"] | null,
+        nextObjectId: ObjectId | null = null,
+    ): void {
+        if (object === null) {
+            this.objects.delete(id);
+            this.groups.deleteKey(id);
+        } else {
+            this.objects.set(id, object, nextObjectId);
+            this.groups.setKey(id, storageMode);
+        }
+    }
+
+    _getNextId(id: ObjectId): ObjectId | null {
+        return this.objects.getNextKey(id);
+    }
+
+    _getPrevId(id: ObjectId): ObjectId | null {
+        return this.objects.getPrevKey(id);
     }
 
     clearGroup(group: StorageMode) {
