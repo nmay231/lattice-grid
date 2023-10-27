@@ -1,40 +1,55 @@
-import { isEqual } from "lodash";
-import { Layer, LayerProps, Point, PointType, UnknownObject } from "../../types";
+import { Layer, LayerProps, PartialHistoryAction, Point, PointType } from "../../types";
+import { zip } from "../../utils/data";
 import { notify } from "../../utils/notifications";
 import { smartSort } from "../../utils/string";
 
-export interface TwoPointProps extends LayerProps {
-    ObjectState: { points: Point[]; state: unknown };
+type StringRecord = Record<string, string>;
+
+export interface TwoPointProps<State extends StringRecord> extends LayerProps {
+    ObjectState: { points: Point[] } & State;
+    RawSettings: State;
     TempStorage: {
         previousPoint: Point;
         batchId: number;
-        targetState: null | UnknownObject;
+        targetState: null | string;
     };
 }
 
-export type MinimalSettings = { selectedState: UnknownObject };
-
-type Arg = Partial<{
-    directional: boolean;
-    pointTypes: PointType[];
+export type TwoPointCurrentStateParameters<State extends StringRecord> = {
+    directional?: boolean;
+    pointTypes?: PointType[];
+    stateKeys: Array<keyof State>;
     // TODO: This can be inplemented using an if-statement in gatherPoints rather than discontinueInput
     // stopOnFirstPoint: boolean;
     // TODO: Replace deltas with FSM
-    deltas: { dx: number; dy: number }[];
-}>;
+    deltas?: { dx: number; dy: number }[];
+};
 
-export const handleEventsCurrentSetting = <LP extends TwoPointProps>(
-    layer: Layer<LP> & { settings: MinimalSettings },
-    { directional, pointTypes, deltas }: Arg = {},
-) => {
-    if (!pointTypes?.length || !deltas?.length) {
+export const handleEventsCurrentSetting = <
+    LP extends TwoPointProps<State>,
+    State extends StringRecord,
+>({
+    directional,
+    pointTypes,
+    deltas,
+    stateKeys,
+}: TwoPointCurrentStateParameters<State>) => {
+    type TwoPointLayer = Layer<LP> & { settings: State };
+    if (!pointTypes?.length || !deltas?.length || !stateKeys.length) {
         throw notify.error({
             message: "twoPoint currentSetting was not provided required parameters",
             forever: true,
         });
     }
 
-    layer.gatherPoints = ({ grid, tempStorage, cursor, settings }) => {
+    const stateToString = (obj: State) => stateKeys.map((key) => obj[key]).join(";");
+    const stringToState = (str: string) =>
+        Object.fromEntries(zip(stateKeys, str.split(";"))) as State;
+
+    const gatherPoints: TwoPointLayer["gatherPoints"] = function (
+        this: TwoPointLayer,
+        { grid, tempStorage, cursor, settings },
+    ) {
         const newPoints = grid.selectPointsWithCursor({
             settings,
             cursor,
@@ -52,17 +67,17 @@ export const handleEventsCurrentSetting = <LP extends TwoPointProps>(
         return newPoints;
     };
 
-    layer.handleEvent = (event) => {
+    const handleEvent: TwoPointLayer["handleEvent"] = function (this: TwoPointLayer, event) {
         const { grid, storage, type, tempStorage, settings } = event;
         if ((type !== "pointerDown" && type !== "pointerMove") || !event.points.length) {
             return {};
         }
 
-        const stored = storage.getStored<LP>({ grid, layer });
+        const stored = storage.getStored<LP>({ grid, layer: this });
         const newPoints = event.points;
 
         tempStorage.batchId = tempStorage.batchId ?? storage.getNewBatchId();
-        const history = [];
+        const history: PartialHistoryAction<LP>[] = [];
         for (let i = 0; i < newPoints.length - 1; i++) {
             const pair = newPoints.slice(i, i + 2);
             if (!directional) {
@@ -71,9 +86,11 @@ export const handleEventsCurrentSetting = <LP extends TwoPointProps>(
             const id = pair.join(";");
 
             if (tempStorage.targetState === undefined) {
-                const isSame = isEqual(stored.getObject(id)?.state, layer.settings.selectedState);
-
-                tempStorage.targetState = isSame ? null : layer.settings.selectedState;
+                const object = stored.getObject(id);
+                const isSame = object
+                    ? stateToString(object) === stateToString(this.settings)
+                    : false;
+                tempStorage.targetState = isSame ? null : stateToString(this.settings);
             }
 
             if (tempStorage.targetState === null && stored.keys(settings.editMode).has(id)) {
@@ -88,7 +105,7 @@ export const handleEventsCurrentSetting = <LP extends TwoPointProps>(
                     batchId: tempStorage.batchId,
                     object: {
                         points: pair,
-                        state: tempStorage.targetState,
+                        ...stringToState(tempStorage.targetState),
                     },
                 });
             }
@@ -96,4 +113,6 @@ export const handleEventsCurrentSetting = <LP extends TwoPointProps>(
 
         return { history };
     };
+
+    return { stateToString, stringToState, gatherPoints, handleEvent };
 };

@@ -12,10 +12,11 @@ const pointTypes = {
     "Corner to Corner": "corners",
 } as const;
 
-export interface SimpleLineProps extends TwoPointProps {
+type LineState = { stroke: Color };
+export interface SimpleLineProps extends TwoPointProps<LineState> {
     ObjectState: {
         id: ObjectId;
-        state: { stroke: Color };
+        stroke: Color;
         points: Point[];
     };
     RawSettings: {
@@ -25,7 +26,7 @@ export interface SimpleLineProps extends TwoPointProps {
 }
 
 interface ISimpleLineLayer extends Layer<SimpleLineProps> {
-    settings: { pointType: PointType; selectedState: { stroke: Color } };
+    settings: { pointType: PointType; selectedState: `${Color}`; stroke: Color };
 }
 
 export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimpleLineLayer {
@@ -36,7 +37,8 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
 
     settings: ISimpleLineLayer["settings"] = {
         pointType: "cells",
-        selectedState: { stroke: GREEN },
+        selectedState: GREEN,
+        stroke: GREEN,
     };
 
     static create = ((puzzle): SimpleLineLayer => {
@@ -75,12 +77,14 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
         this.rawSettings = newSettings;
         this.settings = {
             pointType: pointTypes[newSettings.connections] || "cells",
-            selectedState: {
-                stroke: newSettings.stroke || GREEN,
-            },
+            selectedState: newSettings.stroke || GREEN,
+            stroke: newSettings.stroke || GREEN,
         };
 
-        handleEventsCurrentSetting<SimpleLineProps>(this, {
+        const { gatherPoints, handleEvent } = handleEventsCurrentSetting<
+            SimpleLineProps,
+            LineState
+        >({
             // TODO: Directional true/false is ambiguous. There are three types: lines and arrows with/without overlap
             directional: false,
             pointTypes: [this.settings.pointType],
@@ -91,9 +95,12 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
                 { dx: 2, dy: 0 },
                 { dx: -2, dy: 0 },
             ],
+            stateKeys: ["stroke"],
         });
+        this.gatherPoints = gatherPoints;
+        this.handleEvent = handleEvent;
 
-        return { history: history || undefined };
+        return { history: history ?? undefined };
     };
 
     getSVG: ISimpleLineLayer["getSVG"] = ({ grid, storage, settings }) => {
@@ -111,14 +118,21 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
         const toSVG = gridPoints.toSVGPoints();
 
         const elements: SVGGroup["elements"] = new Map();
-        for (const [id, { state, points }] of stored.entries(settings.editMode)) {
+        for (const [id, { points, stroke }] of stored.entries(settings.editMode)) {
             const first = toSVG.get(pointMap.get(points[0]));
             const second = toSVG.get(pointMap.get(points[1]));
             if (!first || !second) continue; // TODO?
 
             const [x1, y1] = first;
             const [x2, y2] = second;
-            elements.set(id, { className: styles.simpleLine, ...state, x1, y1, x2, y2 });
+            elements.set(id, {
+                className: styles.simpleLine,
+                stroke,
+                x1,
+                y1,
+                x2,
+                y2,
+            });
         }
 
         return [{ id: "lines", type: "line", elements }];
