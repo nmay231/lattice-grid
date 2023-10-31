@@ -1,4 +1,5 @@
 import {
+    Color,
     FormSchema,
     Layer,
     LayerClass,
@@ -8,13 +9,11 @@ import {
     PointType,
     SVGGroup,
 } from "../types";
+import { DEFAULT_COLORS, isValidColor } from "../utils/colors";
 import { concat } from "../utils/data";
 import { BaseLayer } from "./BaseLayer";
 import { TwoPointProps, handleEventsCurrentSetting } from "./controls/twoPoint";
 import styles from "./layers.module.css";
-
-type Color = string;
-const GREEN: Color = "var(--user-light-green)";
 
 type LineState = { stroke: Color };
 export interface SimpleLineProps extends TwoPointProps<LineState> {
@@ -39,8 +38,8 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
     static displayName = "Line";
     static defaultSettings: SimpleLineProps["Settings"] = {
         pointType: "cells",
-        stroke: GREEN,
-        selectedState: GREEN,
+        stroke: DEFAULT_COLORS.LIGHT_GREEN,
+        selectedState: DEFAULT_COLORS.LIGHT_GREEN,
     };
 
     static create = ((puzzle): SimpleLineLayer => {
@@ -77,8 +76,7 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
         if (key === "pointType") {
             return value === "cells" || value === "corners";
         } else if (key === "stroke") {
-            // TODO: Check if value is in supported colors, or is hsl() or something (for custom colors)
-            return typeof value === "string";
+            return typeof value === "string" && isValidColor(value);
         }
         return false;
     }

@@ -1,11 +1,8 @@
-import { FormSchema, Layer, LayerClass, SVGGroup } from "../types";
+import { Color, FormSchema, Layer, LayerClass, SVGGroup } from "../types";
+import { DEFAULT_COLORS, isValidColor } from "../utils/colors";
 import { BaseLayer } from "./BaseLayer";
 import { OnePointProps, handleEventsCurrentSetting } from "./controls/onePoint";
 import styles from "./layers.module.css";
-
-type Color = string;
-// TODO: Single file exporting all versions of colors?
-const BLUE: Color = "var(--user-light-blue)";
 
 interface BackgroundColorProps extends OnePointProps<Color> {
     Settings: { selectedState: Color };
@@ -20,7 +17,7 @@ export class BackgroundColorLayer
     static ethereal = false;
     static readonly type = "BackgroundColorLayer";
     static displayName = "Background Color";
-    static defaultSettings = { selectedState: BLUE };
+    static defaultSettings = { selectedState: DEFAULT_COLORS.LIGHT_BLUE };
 
     static create = ((puzzle): BackgroundColorLayer => {
         return new BackgroundColorLayer(BackgroundColorLayer, puzzle);
@@ -40,8 +37,7 @@ export class BackgroundColorLayer
         value: unknown,
     ): value is BackgroundColorProps["Settings"][K] {
         if (key === "selectedState") {
-            // TODO: Check if value is in supported colors, or is hsl() or something (for custom colors)
-            return typeof value === "string";
+            return typeof value === "string" && isValidColor(value);
         }
         return false;
     }

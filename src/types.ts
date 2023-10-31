@@ -95,6 +95,7 @@ export type LayerHandlerResult<LP extends LayerProps> = {
 // It helps with changing all of the types if necessary, and also with being explicit with how composite types are used (at least in the definition).
 export type ObjectId = string;
 export type Point = string;
+export type Color = string;
 export type PointType = "cells" | "edges" | "corners";
 export type EditMode = "question" | "answer";
 export type StorageMode = EditMode | "ui";
