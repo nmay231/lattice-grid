@@ -6,19 +6,19 @@ import { SimpleLineLayer, SimpleLineProps } from "./SimpleLine";
 describe("SimpleLine", () => {
     type Arg = {
         stored?: LayerStorage<SimpleLineProps>;
-        settings?: SimpleLineProps["RawSettings"];
+        settings?: SimpleLineProps["Settings"];
     };
     const getSimpleLine = ({ stored, settings }: Arg) => {
-        const simpleLine = SimpleLineLayer.create({ layers: new IndexedOrderedMap() });
-        simpleLine.newSettings({
-            ...layerEventEssentials({ stored }),
-            newSettings: settings || {
-                connections: "Cell to Cell",
-                stroke: "green",
-            },
-        });
+        const layer = SimpleLineLayer.create({ layers: new IndexedOrderedMap() });
+        const essentials = layerEventEssentials({ stored });
+        let oldSettings: typeof settings = undefined;
+        if (settings) {
+            oldSettings = layer.settings;
+            layer.settings = { ...settings };
+        }
+        layer.updateSettings({ ...essentials, puzzleSettings: essentials.settings, oldSettings });
 
-        return simpleLine;
+        return layer;
     };
 
     it("deletes all objects when changing connection types", () => {
@@ -29,15 +29,24 @@ describe("SimpleLine", () => {
 
         const simpleLine = getSimpleLine({
             stored,
-            settings: { connections: "Cell to Cell", stroke: "green" },
+            settings: {
+                pointType: "cells",
+                stroke: "green",
+                selectedState: "green",
+            },
         });
 
-        const result = simpleLine.newSettings({
-            ...layerEventEssentials({ stored }),
-            newSettings: {
-                connections: "Corner to Corner",
-                stroke: "green",
-            },
+        const oldSettings = simpleLine.settings;
+        simpleLine.settings = {
+            pointType: "corners",
+            stroke: "green",
+            selectedState: "green",
+        };
+        const essentials = layerEventEssentials({ stored });
+        const result = simpleLine.updateSettings({
+            ...essentials,
+            puzzleSettings: essentials.settings,
+            oldSettings,
         });
 
         expect(result?.history).toEqual([{ id: "something", object: null }]);
@@ -51,17 +60,26 @@ describe("SimpleLine", () => {
 
         const simpleLine = getSimpleLine({
             stored,
-            settings: { connections: "Cell to Cell", stroke: "green" },
-        });
-
-        const result = simpleLine.newSettings({
-            ...layerEventEssentials({ stored }),
-            newSettings: {
-                connections: "Cell to Cell",
-                stroke: "blue",
+            settings: {
+                pointType: "cells",
+                stroke: "green",
+                selectedState: "green",
             },
         });
 
-        expect(result?.history?.length).toBeFalsy();
+        const oldSettings = simpleLine.settings;
+        simpleLine.settings = {
+            pointType: "cells",
+            stroke: "blue",
+            selectedState: "blue",
+        };
+        const essentials = layerEventEssentials({ stored });
+        const result = simpleLine.updateSettings({
+            ...essentials,
+            puzzleSettings: essentials.settings,
+            oldSettings,
+        });
+
+        expect(result.history ?? []).toEqual([]);
     });
 });

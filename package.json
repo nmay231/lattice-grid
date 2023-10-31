@@ -63,8 +63,8 @@
         "lint": "prettier --ignore-path .gitignore --check . && eslint --ignore-path .gitignore .",
         "lint:fix": "prettier --ignore-path .gitignore --write . && eslint --ignore-path .gitignore --fix .",
         "protobuf": "yarn protobuf:js && yarn protobuf:ts",
-        "protobuf:js": "pbjs -w es6 -t static-module src/encoding/latgrid.proto -o src/encoding/latgrid.js",
-        "protobuf:ts": "pbts src/encoding/latgrid.js -o src/encoding/latgrid.d.ts",
+        "protobuf:js": "pbjs -w es6 -t static-module src/encoding/latgrid.proto -o src/encoding/generated.js",
+        "protobuf:ts": "pbts src/encoding/generated.js -o src/encoding/generated.d.ts",
         "typecheck": "tsc --noEmit"
     },
     "pre-commit": [

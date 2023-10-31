@@ -12,29 +12,32 @@ const randomId = (blacklist: Layer["id"][], suggested: Layer["id"]) => {
     return id;
 };
 
-export abstract class BaseLayer<LP extends LayerProps>
-    implements Omit<Layer<LP>, "newSettings" | "getSVG">
+export class BaseLayer<LP extends LayerProps>
+    implements Omit<Layer<LP>, "updateSettings" | "getSVG">
 {
     static ethereal = true;
     static displayName = "INTERNAL_BASE_LAYER";
     static defaultSettings = {};
 
+    klass: Layer<LP>["klass"];
     readonly type: string;
-    id: Layer["id"];
-    ethereal: Layer["ethereal"];
-    displayName: Layer["displayName"];
-    rawSettings: LP["RawSettings"] = {};
-    controls?: Layer["controls"];
-    constraints?: Layer["constraints"];
+    id: Layer<LP>["id"];
+    ethereal: Layer<LP>["ethereal"];
+    displayName: Layer<LP>["displayName"];
+    controls?: Layer<LP>["controls"];
+    constraints?: Layer<LP>["constraints"];
+
+    settings: LP["Settings"];
 
     constructor(klass: LayerClass<LP>, puzzle: Pick<PuzzleManager, "layers">) {
+        this.klass = klass;
         this.id = randomId(puzzle.layers.keys(), klass.type);
         this.ethereal = klass.ethereal;
         this.type = klass.type;
         this.displayName = klass.displayName;
         this.controls = klass.controls;
         this.constraints = klass.constraints;
-        this.rawSettings = cloneDeep(klass.defaultSettings);
+        this.settings = cloneDeep(klass.defaultSettings);
     }
 
     gatherPoints: Layer<LP>["gatherPoints"] = () => {

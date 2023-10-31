@@ -5,19 +5,27 @@ import { layerEventEssentials } from "../utils/testing/layerEventEssentials";
 import { NumberLayer, NumberProps } from "./Number";
 
 describe("Number Layer", () => {
-    // Layer with numbers 0-9
-    const settings9 = { max: 9, negatives: false };
-    const layer9 = NumberLayer.create({ layers: new IndexedOrderedMap() });
-    layer9.newSettings({ ...layerEventEssentials(), newSettings: settings9 });
+    type Arg = {
+        stored?: LayerStorage<NumberProps>;
+        settings?: NumberProps["Settings"];
+    };
+    const getNumberLayer = ({ stored, settings } = {} as Arg) => {
+        const layer = NumberLayer.create({ layers: new IndexedOrderedMap() });
+        const essentials = layerEventEssentials({ stored });
+        let oldSettings: typeof settings = undefined;
+        if (settings) {
+            oldSettings = layer.settings;
+            layer.settings = { ...settings };
+        }
+        layer.updateSettings({ ...essentials, puzzleSettings: essentials.settings, oldSettings });
 
-    // Layer with numbers -64 to 64
-    const settings64 = { max: 64, negatives: true };
-    const layer64 = NumberLayer.create({ layers: new IndexedOrderedMap() });
-    layer64.newSettings({ ...layerEventEssentials(), newSettings: settings64 });
+        return layer;
+    };
 
     type HistoryType = LayerHandlerResult<NumberProps>["history"];
 
     it("places numbers", () => {
+        const layer9 = getNumberLayer();
         const result = layer9.handleKeyDown({
             ...layerEventEssentials(),
             type: "keyDown",
@@ -33,6 +41,7 @@ describe("Number Layer", () => {
 
     it("deletes some numbers", () => {
         const stored = new LayerStorage<NumberProps>();
+        const layer9 = getNumberLayer({ stored });
         stored.setEntries("question", [
             ["toDelete", { state: "1" }],
             ["keep", { state: "5" }],
@@ -54,23 +63,28 @@ describe("Number Layer", () => {
 
     it("does not delete objects when the number range increases", () => {
         const stored = new LayerStorage<NumberProps>();
+        const layer9 = getNumberLayer({ stored });
         stored.setEntries("question", [
             ["1,1", { state: "5" }],
             ["2,2", { state: "9" }],
             ["3,3", { state: "0" }],
         ]);
 
-        const result = layer9.newSettings({
-            ...layerEventEssentials({ stored }),
-            newSettings: { max: 10, negatives: true },
+        const oldSettings = layer9.settings;
+        layer9.settings = { max: 10, negatives: true };
+        const essentials = layerEventEssentials({ stored });
+        const result = layer9.updateSettings({
+            ...essentials,
+            puzzleSettings: essentials.settings,
+            oldSettings,
         });
-        expect(result.history).toEqual<HistoryType>([]);
 
-        layer9.newSettings({ ...layerEventEssentials(), newSettings: settings9 });
+        expect(result.history).toEqual<HistoryType>([]);
     });
 
     it("deletes objects when the number range decreases", () => {
         const stored = new LayerStorage<NumberProps>();
+        const layer64 = getNumberLayer({ settings: { max: 64, negatives: true }, stored });
         stored.setEntries("question", [
             ["1,1", { state: "-10" }],
             ["2,2", { state: "0" }],
@@ -78,17 +92,19 @@ describe("Number Layer", () => {
             ["4,4", { state: "42" }],
         ]);
 
-        const result = layer64.newSettings({
-            ...layerEventEssentials({ stored }),
-            newSettings: { max: 7, negatives: false },
+        const oldSettings = layer64.settings;
+        layer64.settings = { max: 7, negatives: false };
+        const essentials = layerEventEssentials({ stored });
+        const result = layer64.updateSettings({
+            ...essentials,
+            puzzleSettings: essentials.settings,
+            oldSettings,
         });
 
         expect(result.history).toEqual<HistoryType>([
             { id: "1,1", object: null },
             { id: "4,4", object: null },
         ]);
-
-        layer64.newSettings({ ...layerEventEssentials(), newSettings: settings9 });
     });
 
     // TODO: Not implemented, might never be honestly.

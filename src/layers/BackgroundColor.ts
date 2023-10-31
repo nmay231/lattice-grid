@@ -8,12 +8,10 @@ type Color = string;
 const BLUE: Color = "var(--user-light-blue)";
 
 interface BackgroundColorProps extends OnePointProps<Color> {
-    RawSettings: { selectedState: Color };
+    Settings: { selectedState: Color };
 }
 
-interface IBackgroundColorLayer extends Layer<BackgroundColorProps> {
-    settings: BackgroundColorProps["RawSettings"];
-}
+interface IBackgroundColorLayer extends Layer<BackgroundColorProps> {}
 
 export class BackgroundColorLayer
     extends BaseLayer<BackgroundColorProps>
@@ -24,23 +22,31 @@ export class BackgroundColorLayer
     static displayName = "Background Color";
     static defaultSettings = { selectedState: BLUE };
 
-    settings = this.rawSettings;
-
     static create = ((puzzle): BackgroundColorLayer => {
         return new BackgroundColorLayer(BackgroundColorLayer, puzzle);
     }) satisfies LayerClass<BackgroundColorProps>["create"];
 
     static controls: FormSchema<BackgroundColorProps> = {
-        elements: [{ type: "color", key: "selectedState", label: "Fill color" }],
+        elements: { selectedState: { type: "color", label: "Fill color" } },
     };
     static constraints = undefined;
 
-    newSettings: IBackgroundColorLayer["newSettings"] = ({ newSettings }) => {
-        this.rawSettings = newSettings;
-        this.settings = {
-            selectedState: newSettings.selectedState || BLUE,
-        };
+    static settingsDescription: LayerClass<BackgroundColorProps>["settingsDescription"] = {
+        selectedState: { type: "controls" },
+    };
 
+    static isValidSetting<K extends keyof BackgroundColorProps["Settings"]>(
+        key: K | string,
+        value: unknown,
+    ): value is BackgroundColorProps["Settings"][K] {
+        if (key === "selectedState") {
+            // TODO: Check if value is in supported colors, or is hsl() or something (for custom colors)
+            return typeof value === "string";
+        }
+        return false;
+    }
+
+    updateSettings: IBackgroundColorLayer["updateSettings"] = () => {
         handleEventsCurrentSetting(this, {
             pointTypes: ["cells"],
             // TODO: Replace deltas with FSM

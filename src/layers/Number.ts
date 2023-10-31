@@ -1,4 +1,4 @@
-import { Layer, LayerClass, LayerHandlerResult, SVGGroup } from "../types";
+import { Layer, LayerClass, LayerHandlerResult, PartialHistoryAction, SVGGroup } from "../types";
 import { concat, zip } from "../utils/data";
 import { notify } from "../utils/notifications";
 import { BaseLayer } from "./BaseLayer";
@@ -8,7 +8,7 @@ import styles from "./layers.module.css";
 
 export interface NumberProps extends SelectedProps {
     ObjectState: { state: string };
-    RawSettings: { max: number; negatives: boolean };
+    Settings: { max: number; negatives: boolean };
 }
 
 interface INumberLayer extends Layer<NumberProps>, KeyDownEventHandler<NumberProps> {
@@ -66,37 +66,60 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
         return { history };
     };
 
-    static controls: NumberLayer["controls"] = { elements: [], numpadControls: true };
+    static controls: NumberLayer["controls"] = { elements: {}, numpadControls: true };
     static constraints: NumberLayer["constraints"] = {
-        elements: [
-            { type: "number", key: "max", label: "Max", min: 0 },
-            { type: "boolean", key: "negatives", label: "Allow negatives" },
-        ],
+        elements: {
+            max: { type: "number", label: "Max", min: 0 },
+            negatives: { type: "boolean", label: "Allow negatives" },
+        },
     };
 
-    newSettings: INumberLayer["newSettings"] = ({ newSettings, grid, storage }) => {
-        this.rawSettings = newSettings;
-        this._numberTyper = numberTyper(newSettings);
+    static settingsDescription: LayerClass<NumberProps>["settingsDescription"] = {
+        max: { type: "constraints" },
+        negatives: { type: "constraints" },
+    };
 
-        handleEventsSelection(this, {});
+    static isValidSetting<K extends keyof NumberProps["Settings"]>(
+        key: K | string,
+        value: unknown,
+    ): value is NumberProps["Settings"][K] {
+        if (key === "negatives") {
+            return typeof value === "boolean";
+        } else if (key === "max") {
+            return typeof value === "number";
+        }
+        return false;
+    }
 
-        const stored = storage.getStored<NumberProps>({
-            grid,
-            layer: this,
-        });
-
-        const history = [];
-
-        // Delete numbers that are out of range
-        const min = newSettings.negatives ? -newSettings.max : 0;
-        const max = newSettings.max;
-        for (const [id, object] of concat(stored.entries("answer"), stored.entries("question"))) {
-            const state = parseInt(object.state);
-            if (state < min || state > max) {
-                history.push({ object: null, id });
-            }
+    updateSettings: INumberLayer["updateSettings"] = ({ oldSettings, grid, storage }) => {
+        if (!oldSettings) {
+            handleEventsSelection(this, {});
         }
 
+        let history: PartialHistoryAction<NumberProps>[] | undefined = undefined;
+        if (
+            !oldSettings ||
+            oldSettings.max !== this.settings.max ||
+            oldSettings.negatives !== this.settings.negatives
+        ) {
+            this._numberTyper = numberTyper(this.settings);
+
+            history = [];
+            const stored = storage.getStored<NumberProps>({ grid, layer: this });
+
+            // Delete numbers that are out of range
+            const min = this.settings.negatives ? -this.settings.max : 0;
+            const max = this.settings.max;
+            for (const [id, object] of concat(
+                stored.entries("answer"),
+                stored.entries("question"),
+            )) {
+                const state = parseInt(object.state);
+                if (state < min || state > max) {
+                    history.push({ object: null, id });
+                }
+            }
+        }
         return { history };
     };
 

@@ -7,7 +7,7 @@ type StringRecord = Record<string, string>;
 
 export interface TwoPointProps<State extends StringRecord> extends LayerProps {
     ObjectState: { points: Point[] } & State;
-    RawSettings: State;
+    Settings: State;
     TempStorage: {
         previousPoint: Point;
         batchId: number;
@@ -34,7 +34,7 @@ export const handleEventsCurrentSetting = <
     deltas,
     stateKeys,
 }: TwoPointCurrentStateParameters<State>) => {
-    type TwoPointLayer = Layer<LP> & { settings: State };
+    type TwoPointLayer = Layer<LP>;
     if (!pointTypes?.length || !deltas?.length || !stateKeys.length) {
         throw notify.error({
             message: "twoPoint currentSetting was not provided required parameters",

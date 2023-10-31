@@ -1,8 +1,7 @@
 import { Text } from "@mantine/core";
 import { useProxy } from "valtio/utils";
-import { availableLayers } from "../../../layers";
 import { usePuzzle } from "../../../state/puzzle";
-import { FormSchema, Layer, LayerClass, LayerProps } from "../../../types";
+import { FormSchema, Layer, LayerProps } from "../../../types";
 import { useFocusGroup } from "../../../utils/focusManagement";
 import { LayerForm, layerSettingsRerender } from "../../LayerForm";
 
@@ -18,15 +17,19 @@ const _LayerConstraintSettings = ({ layer, constraints }: InnerProps) => {
             {/* TODO: Hack Mantine's useFocusTrap so it doesn't focus the first element right away */}
             <div data-autofocus></div>
             <LayerForm
-                // Force a new LayerForm to be created whenever settings changes. Mantines's useForm assumes initialValues never changes.
+                // Force a new LayerForm to be created whenever settings changes. `initialValues` are stored in useState.
                 key={rerender.key}
-                initialValues={layer.rawSettings}
+                initialValues={layer.settings}
                 elements={constraints.elements}
                 submitLabel="Save"
                 resetLabel="Cancel"
                 onSubmit={(newSettings) => {
                     rerender.key += 1;
-                    puzzle.changeLayerSettings(layer.id, newSettings);
+                    for (const [key, value] of Object.entries(newSettings)) {
+                        if (layer.settings[key as never] !== value) {
+                            puzzle.changeLayerSetting(layer.id, key, value);
+                        }
+                    }
                     puzzle.renderChange({ type: "draw", layerIds: [layer.id] });
                     unfocus();
                 }}
@@ -49,10 +52,7 @@ export const LayerConstraintSettings = () => {
         );
     }
 
-    const layerType = layer.type;
-    const layerClass = availableLayers[layerType as keyof typeof availableLayers] as LayerClass;
-
-    if (!layerClass.constraints) {
+    if (!layer.klass.constraints) {
         return (
             <Text fs="italic" m="xs">
                 This layer has no settings
@@ -60,5 +60,7 @@ export const LayerConstraintSettings = () => {
         );
     }
 
-    return <_LayerConstraintSettings key={id} layer={layer} constraints={layerClass.constraints} />;
+    return (
+        <_LayerConstraintSettings key={id} layer={layer} constraints={layer.klass.constraints} />
+    );
 };

@@ -1,3 +1,4 @@
+import { LayerClass } from "../types";
 import { BackgroundColorLayer } from "./BackgroundColor";
 import { CellOutlineLayer } from "./CellOutline";
 import { DebugSelectPointsLayer } from "./DebugSelectPoints";
@@ -16,4 +17,4 @@ export const availableLayers = {
     OverlayLayer,
     SimpleLineLayer,
     ToggleCharactersLayer,
-} as const; // TODO: satisfies Record<string, LayerClass>;
+} as const satisfies Record<string, LayerClass<any>>;

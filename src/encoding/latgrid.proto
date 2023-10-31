@@ -34,7 +34,6 @@ message PuzzleDataV1 {
             SimpleLineLayer SimpleLineLayer = 7;
             ToggleCharactersLayer ToggleCharactersLayer = 8;
         }
-        bytes demo = 3;
     }
 }
 

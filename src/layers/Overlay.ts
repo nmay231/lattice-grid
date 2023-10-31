@@ -1,7 +1,9 @@
 import { Layer, LayerClass, LayerProps } from "../types";
 import { BaseLayer } from "./BaseLayer";
 
-interface OverlayProps extends LayerProps {}
+interface OverlayProps extends LayerProps {
+    Settings: Record<string, never>;
+}
 
 interface IOverlayLayer extends Layer<OverlayProps> {}
 
@@ -10,9 +12,9 @@ export class OverlayLayer extends BaseLayer<OverlayProps> implements IOverlayLay
     static ethereal = true;
     static readonly type = "OverlayLayer";
     static displayName = OVERLAY_LAYER_ID;
+    static settingsDescription: LayerClass<OverlayProps>["settingsDescription"] = {};
 
     id = OVERLAY_LAYER_ID;
-    settings = this.rawSettings;
     handleEvent = () => ({});
     gatherPoints = () => [];
 
@@ -25,6 +27,17 @@ export class OverlayLayer extends BaseLayer<OverlayProps> implements IOverlayLay
 
     static controls = undefined;
     static constraints = undefined;
+
+    static isValidSetting<K extends keyof OverlayProps["Settings"]>(
+        key: K | string,
+        value: unknown,
+    ): value is OverlayProps["Settings"][K] {
+        return false;
+    }
+
+    updateSettings() {
+        return {};
+    }
 
     newSettings() {
         return {};

@@ -5,23 +5,23 @@ import { BaseLayer } from "./BaseLayer";
 import { KeyDownEventHandler, SelectedProps, handleEventsSelection } from "./controls/selection";
 import styles from "./layers.module.css";
 
-type RawSettings = {
-    // caseSwap allows upper- and lower-case letters to be used as separate characters but to be merged if there's no ambiguity.
-    caseSwap: Record<string, string>;
+type Settings = {
     characters: string;
     displayStyle: "center" | "topBottom"; // | "circle" | "tapa",
+    // caseSwap allows upper- and lower-case letters to be used as separate characters but to be merged if there's no ambiguity.
+    /** Derived from .characters */
+    caseSwap: Record<string, string>;
 };
 
 interface ToggleCharactersProps extends SelectedProps {
     ObjectState: { state: string };
-    RawSettings: RawSettings;
+    Settings: Settings;
 }
 
 interface IToggleCharactersLayer
     extends Layer<ToggleCharactersProps>,
         KeyDownEventHandler<ToggleCharactersProps> {
-    _newSettings: (arg: RawSettings) => RawSettings;
-    settings: RawSettings;
+    _generateCaseSwap: (chars: string) => Settings["caseSwap"];
 }
 
 export class ToggleCharactersLayer
@@ -31,29 +31,30 @@ export class ToggleCharactersLayer
     static ethereal = false;
     static readonly type = "ToggleCharactersLayer";
     static displayName = "Toggle Characters";
-    static defaultSettings = {
-        caseSwap: Object.fromEntries([..."0123456789"].entries()),
+    static defaultSettings: LayerClass<ToggleCharactersProps>["defaultSettings"] = {
         characters: "0123456789",
-        displayStyle: "center" as const,
+        caseSwap: Object.fromEntries([..."0123456789"].entries()),
+        displayStyle: "center",
     };
-
-    settings = this.rawSettings;
 
     static create = ((puzzle): ToggleCharactersLayer => {
         return new ToggleCharactersLayer(ToggleCharactersLayer, puzzle);
     }) satisfies LayerClass<ToggleCharactersProps>["create"];
 
+    static settingsDescription: LayerClass<ToggleCharactersProps>["settingsDescription"] = {
+        displayStyle: { type: "constraints" },
+        characters: { type: "constraints" },
+        caseSwap: { type: "constraints", derived: true },
+    };
     static controls = undefined;
     static constraints: FormSchema<ToggleCharactersProps> = {
-        elements: [
-            {
+        elements: {
+            characters: {
                 type: "string",
-                key: "characters",
                 label: "Allowed characters",
             },
-            {
+            displayStyle: {
                 type: "dropdown",
-                key: "displayStyle",
                 label: "How values are displayed",
                 pairs: [
                     { label: "Centered", value: "center" }, // Middle across the center
@@ -62,17 +63,60 @@ export class ToggleCharactersLayer
                     // { label: "Tapa", value: "tapa" }, // Morphs into a circle depending on how many chars are placed
                 ],
             },
-        ],
+        },
     };
 
-    _newSettings: IToggleCharactersLayer["_newSettings"] = ({ characters, displayStyle }) => {
-        const caseSwap: Record<string, string> = {};
-        // TODO: This should be done on the input side of things so that users are not confused
-        // Remove duplicates
-        characters = [...characters].filter((char, i) => characters.indexOf(char) === i).join("");
+    static isValidSetting<K extends keyof ToggleCharactersProps["Settings"]>(
+        key: K | string,
+        value: unknown,
+    ): value is ToggleCharactersProps["Settings"][K] {
+        if (key === "displayStyle") {
+            return value === "center" || value === "topBottom";
+        } else if (key === "characters") {
+            return typeof value === "string";
+        }
+        return false;
+    }
 
-        const lower = characters.toLowerCase();
-        for (const c of characters) {
+    updateSettings: IToggleCharactersLayer["updateSettings"] = ({ grid, storage, oldSettings }) => {
+        let history: PartialHistoryAction<ToggleCharactersProps>[] | undefined = undefined;
+        if (oldSettings?.characters !== this.settings.characters) {
+            // Remove duplicates
+            this.settings.characters = [...this.settings.characters]
+                .filter((char, i) => this.settings.characters.indexOf(char) === i)
+                .join("");
+            this.settings.caseSwap = this._generateCaseSwap(this.settings.characters);
+
+            const stored = storage.getStored<ToggleCharactersProps>({ grid, layer: this });
+            history = [];
+
+            // Exclude disallowed characters
+            for (const [id, { state }] of concat(
+                stored.entries("answer"),
+                stored.entries("question"),
+            )) {
+                const newState = [...state]
+                    .filter((char) => this.settings.characters.indexOf(char) > -1)
+                    .join("");
+                if (newState !== state) {
+                    history.push({
+                        object: { state: newState },
+                        storageMode: stored.keys("question").has(id) ? "question" : "answer",
+                        id,
+                    });
+                }
+            }
+        }
+        if (!oldSettings) {
+            handleEventsSelection(this, {});
+        }
+        return { history };
+    };
+
+    _generateCaseSwap: IToggleCharactersLayer["_generateCaseSwap"] = (chars) => {
+        const lower = chars.toLowerCase();
+        const caseSwap: Settings["caseSwap"] = {};
+        for (const c of chars) {
             // If there is no ambiguity between an upper- and lower-case letter (aka, only one is present), map them to the same letter
             if (lower.indexOf(c.toLowerCase()) === lower.lastIndexOf(c.toLowerCase())) {
                 caseSwap[c.toLowerCase()] = c;
@@ -81,41 +125,7 @@ export class ToggleCharactersLayer
                 caseSwap[c] = c;
             }
         }
-        return {
-            caseSwap,
-            characters,
-            displayStyle,
-        };
-    };
-
-    newSettings: IToggleCharactersLayer["newSettings"] = ({ newSettings, grid, storage }) => {
-        this.settings = this._newSettings(newSettings);
-        this.rawSettings = newSettings;
-
-        handleEventsSelection(this, {});
-
-        const stored = storage.getStored<ToggleCharactersProps>({ grid, layer: this });
-
-        const history: PartialHistoryAction<ToggleCharactersProps>[] = [];
-
-        // Exclude disallowed characters
-        for (const [id, { state }] of concat(
-            stored.entries("answer"),
-            stored.entries("question"),
-        )) {
-            const newState = [...state]
-                .filter((char) => this.settings.characters.indexOf(char) > -1)
-                .join("");
-            if (newState !== state) {
-                history.push({
-                    object: { state: newState },
-                    storageMode: stored.keys("question").has(id) ? "question" : "answer",
-                    id,
-                });
-            }
-        }
-
-        return { history };
+        return caseSwap;
     };
 
     handleKeyDown: IToggleCharactersLayer["handleKeyDown"] = ({

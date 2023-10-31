@@ -24,8 +24,16 @@ export class CellOutlineLayer extends BaseLayer<CellOutlineProps> implements ICe
 
     static controls = undefined;
     static constraints = undefined;
+    static settingsDescription: LayerClass<CellOutlineProps>["settingsDescription"] = {};
 
-    newSettings() {
+    static isValidSetting<K extends keyof CellOutlineProps["Settings"]>(
+        key: K | string,
+        value: unknown,
+    ): value is CellOutlineProps["Settings"][K] {
+        return false;
+    }
+
+    updateSettings() {
         handleEventsCycleStates(this, {
             states: [true],
             pointTypes: ["cells"],

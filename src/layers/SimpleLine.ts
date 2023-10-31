@@ -1,4 +1,13 @@
-import { FormSchema, Layer, LayerClass, ObjectId, Point, PointType, SVGGroup } from "../types";
+import {
+    FormSchema,
+    Layer,
+    LayerClass,
+    ObjectId,
+    PartialHistoryAction,
+    Point,
+    PointType,
+    SVGGroup,
+} from "../types";
 import { concat } from "../utils/data";
 import { BaseLayer } from "./BaseLayer";
 import { TwoPointProps, handleEventsCurrentSetting } from "./controls/twoPoint";
@@ -7,11 +16,6 @@ import styles from "./layers.module.css";
 type Color = string;
 const GREEN: Color = "var(--user-light-green)";
 
-const pointTypes = {
-    "Cell to Cell": "cells",
-    "Corner to Corner": "corners",
-} as const;
-
 type LineState = { stroke: Color };
 export interface SimpleLineProps extends TwoPointProps<LineState> {
     ObjectState: {
@@ -19,88 +23,101 @@ export interface SimpleLineProps extends TwoPointProps<LineState> {
         stroke: Color;
         points: Point[];
     };
-    RawSettings: {
-        connections: keyof typeof pointTypes;
+    Settings: {
+        pointType: PointType;
         stroke: Color;
+        /** Derived from stroke, and any future styles */
+        selectedState: `${Color}`;
     };
 }
 
-interface ISimpleLineLayer extends Layer<SimpleLineProps> {
-    settings: { pointType: PointType; selectedState: `${Color}`; stroke: Color };
-}
+interface ISimpleLineLayer extends Layer<SimpleLineProps> {}
 
 export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimpleLineLayer {
     static ethereal = false;
     static readonly type = "SimpleLineLayer";
     static displayName = "Line";
-    static defaultSettings = { stroke: GREEN, connections: "Cell to Cell" as const };
-
-    settings: ISimpleLineLayer["settings"] = {
+    static defaultSettings: SimpleLineProps["Settings"] = {
         pointType: "cells",
-        selectedState: GREEN,
         stroke: GREEN,
+        selectedState: GREEN,
     };
 
     static create = ((puzzle): SimpleLineLayer => {
         return new SimpleLineLayer(SimpleLineLayer, puzzle);
     }) satisfies LayerClass<SimpleLineProps>["create"];
 
-    static constraints: FormSchema<SimpleLineProps> = {
-        elements: [
-            {
-                type: "dropdown",
-                key: "connections",
-                label: "Where to draw lines",
-                // TODO: Change to label, value and get rid of `pointTypes`
-                pairs: Object.keys(pointTypes).map((key) => ({ label: key, value: key })),
-                // pairs: Object.entries(pointTypes).map(([label, value]) => ({ label, value })),
-            },
-        ],
-    };
-
     static controls: FormSchema<SimpleLineProps> = {
-        elements: [{ type: "color", key: "stroke", label: "Stroke color" }],
+        elements: { stroke: { type: "color", label: "Stroke color" } },
     };
 
-    newSettings: ISimpleLineLayer["newSettings"] = ({ newSettings, storage, grid }) => {
-        this.rawSettings = this.rawSettings || {};
-        let history = null;
-        if (this.rawSettings.connections !== newSettings.connections) {
+    static constraints: FormSchema<SimpleLineProps> = {
+        elements: {
+            pointType: {
+                type: "dropdown",
+                label: "Where to draw lines",
+                pairs: [
+                    { label: "Cell to Cell", value: "cells" },
+                    { label: "Corner to Corner", value: "corners" },
+                ],
+            },
+        },
+    };
+
+    static settingsDescription: LayerClass<SimpleLineProps>["settingsDescription"] = {
+        pointType: { type: "constraints" },
+        stroke: { type: "controls" },
+        selectedState: { type: "controls", derived: true },
+    };
+
+    static isValidSetting<K extends keyof SimpleLineProps["Settings"]>(
+        key: K | string,
+        value: unknown,
+    ): value is SimpleLineProps["Settings"][K] {
+        if (key === "pointType") {
+            return value === "cells" || value === "corners";
+        } else if (key === "stroke") {
+            // TODO: Check if value is in supported colors, or is hsl() or something (for custom colors)
+            return typeof value === "string";
+        }
+        return false;
+    }
+
+    updateSettings: ISimpleLineLayer["updateSettings"] = ({ grid, storage, oldSettings }) => {
+        let history: PartialHistoryAction<SimpleLineProps>[] | undefined = undefined;
+        if (oldSettings?.pointType !== this.settings.pointType) {
             // Clear stored if the type of connections allowed changes (because that would allow impossible-to-draw lines otherwise).
             const stored = storage.getStored({ grid, layer: this });
             history = [...concat(stored.keys("question"), stored.keys("answer"))].map((id) => ({
                 id,
                 object: null,
             }));
+
+            const { gatherPoints, handleEvent } = handleEventsCurrentSetting<
+                SimpleLineProps,
+                LineState
+            >({
+                // TODO: Directional true/false is ambiguous. There are three types: lines and arrows with/without overlap (that is, can you draw two arrows on top each other in different directions)
+                directional: false,
+                pointTypes: [this.settings.pointType],
+                // TODO: Replace deltas with FSM
+                deltas: [
+                    { dx: 0, dy: 2 },
+                    { dx: 0, dy: -2 },
+                    { dx: 2, dy: 0 },
+                    { dx: -2, dy: 0 },
+                ],
+                stateKeys: ["stroke"],
+            });
+            this.gatherPoints = gatherPoints;
+            this.handleEvent = handleEvent;
         }
 
-        this.rawSettings = newSettings;
-        this.settings = {
-            pointType: pointTypes[newSettings.connections] || "cells",
-            selectedState: newSettings.stroke || GREEN,
-            stroke: newSettings.stroke || GREEN,
-        };
+        if (oldSettings?.stroke !== this.settings.stroke) {
+            this.settings.selectedState = this.settings.stroke;
+        }
 
-        const { gatherPoints, handleEvent } = handleEventsCurrentSetting<
-            SimpleLineProps,
-            LineState
-        >({
-            // TODO: Directional true/false is ambiguous. There are three types: lines and arrows with/without overlap
-            directional: false,
-            pointTypes: [this.settings.pointType],
-            // TODO: Replace deltas with FSM
-            deltas: [
-                { dx: 0, dy: 2 },
-                { dx: 0, dy: -2 },
-                { dx: 2, dy: 0 },
-                { dx: -2, dy: 0 },
-            ],
-            stateKeys: ["stroke"],
-        });
-        this.gatherPoints = gatherPoints;
-        this.handleEvent = handleEvent;
-
-        return { history: history ?? undefined };
+        return { history };
     };
 
     getSVG: ISimpleLineLayer["getSVG"] = ({ grid, storage, settings }) => {

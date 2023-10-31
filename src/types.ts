@@ -172,45 +172,46 @@ type StringKeyof<T> = keyof T extends infer K ? (K extends string ? K : never) :
 
 export type FormSchema<LP extends LayerProps> = {
     numpadControls?: true;
-    elements: Array<
-        | { type: "color"; key: StringKeyof<LP["RawSettings"]>; label: string }
-        | {
-              type: "dropdown";
-              key: StringKeyof<LP["RawSettings"]>;
-              label: string;
-              pairs: Array<{ label: string; value: string }>;
-          }
-        | {
-              type: "number";
-              key: StringKeyof<LP["RawSettings"]>;
-              label: string;
-              min?: number;
-              max?: number;
-          }
-        | { type: "boolean"; key: StringKeyof<LP["RawSettings"]>; label: string }
-        | { type: "string"; key: StringKeyof<LP["RawSettings"]>; label: string }
-    >;
+    elements: Partial<Record<StringKeyof<LP["Settings"]>, FormSchemaElement>>;
 };
+export type FormSchemaElement =
+    | { type: "color"; label: string }
+    | {
+          type: "dropdown";
+          label: string;
+          // TODO: Rename entries, or something clearer
+          pairs: Array<{ label: string; value: string }>;
+      }
+    | {
+          type: "number";
+          label: string;
+          min?: number;
+          max?: number;
+      }
+    | { type: "boolean"; label: string }
+    | { type: "string"; label: string };
 
 export type LayerProps = {
-    // TODO: Try allowing settings and rawSettings to be optional
-    RawSettings: UnknownObject;
     ObjectState: UnknownObject;
     PermStorage: UnknownObject;
     TempStorage: UnknownObject;
+    Settings: Record<never, never>;
 };
 
 export type Layer<LP extends LayerProps = LayerProps> = {
     readonly type: string;
+    // TODO: Do I need to copy all the other attrs if I have .klass now? Additionally, I wouldn't even need type anymore, except as a key for React rendering.
+    readonly klass: LayerClass<LP>;
     id: string;
     displayName: string;
     ethereal: boolean;
-    rawSettings: LP["RawSettings"];
+    settings: LP["Settings"];
     controls?: FormSchema<LP>;
     constraints?: FormSchema<LP>;
-    newSettings(
-        settingsChange: Omit<LayerEventEssentials<LP>, "tempStorage"> & {
-            newSettings: LP["RawSettings"];
+    updateSettings(
+        settingsChange: Pick<LayerEventEssentials<LP>, "grid" | "storage"> & {
+            puzzleSettings: LayerEventEssentials<LP>["settings"];
+            oldSettings: LP["Settings"] | undefined;
         },
     ): LayerHandlerResult<LP>;
     gatherPoints: (
@@ -232,9 +233,22 @@ export type LayerClass<LP extends LayerProps = LayerProps> = {
     readonly type: string;
     displayName: string;
     ethereal: boolean;
-    defaultSettings: LP["RawSettings"];
+    defaultSettings: LP["Settings"];
     controls?: FormSchema<LP>;
     constraints?: FormSchema<LP>;
+    // TODO: Should I merge controls and constraints into settingsDescription?
+    settingsDescription: {
+        // TODO: Do I need derived if I instead choose to not list it here?
+        [K in keyof LP["Settings"]]: {
+            type: "controls" | "constraints";
+            /** A derived setting should not be encoded or directly changeable by the user */
+            derived?: true;
+        };
+    };
+    isValidSetting<K extends keyof LP["Settings"] = keyof LP["Settings"]>(
+        key: K | string,
+        value: unknown,
+    ): value is LP["Settings"][K];
 };
 // #endregion
 
@@ -283,7 +297,7 @@ export type SVGGroup<Type extends keyof SVGElementTagNameMap = keyof SVGElementT
 
 // #endregion
 
-// #region - Parsing
+// #region - Encoding
 export type LocalStorageData = {
     grid: SquareGridParams;
     layers: {

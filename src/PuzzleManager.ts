@@ -187,11 +187,21 @@ export class PuzzleManager {
     _getParams() {
         // TODO: change localStorage key and what's actually stored/how it's stored
         const data: LocalStorageData = {
-            layers: this.layers.values().map(({ id, type, rawSettings }) => ({
-                id,
-                type: type as NeedsUpdating,
-                rawSettings,
-            })),
+            layers: this.layers.values().map(({ id, type, settings }) => {
+                const rawSettings: UnknownObject = {};
+                for (const [key, description] of Object.entries(
+                    availableLayers[type as keyof typeof availableLayers].settingsDescription,
+                )) {
+                    if (!description.derived) {
+                        rawSettings[key] = settings[key as never];
+                    }
+                }
+                return {
+                    id,
+                    type: type as NeedsUpdating,
+                    rawSettings,
+                };
+            }),
             grid: this.grid.getParams(),
         };
         return data;
@@ -209,9 +219,17 @@ export class PuzzleManager {
 
         // Add the layer to the end, but before the UILayer
         this.layers.set(layer.id, valtioRef(layer), this.UILayer.id);
-
         this.storage.addStorage({ grid: this.grid, layer });
-        this.changeLayerSettings(layer.id, settings || layerClass.defaultSettings);
+
+        const { grid, settings: puzzleSettings, storage } = this;
+        // TODO: I don't like that updateSettings is called multiple times (here and in .changeLayerSetting), or that any possible history from the initial load is ignored here (I don't check the return from the following call)
+        layer.updateSettings({ grid, puzzleSettings, storage, oldSettings: undefined });
+        if (settings) {
+            for (const [key, value] of Object.entries(settings)) {
+                this.changeLayerSetting(layer.id, key, value);
+            }
+        }
+
         this.selectLayer(layer.id);
 
         return layer.id;
@@ -238,13 +256,23 @@ export class PuzzleManager {
         }
     }
 
-    changeLayerSettings(layerId: Layer["id"], newSettings: any) {
+    changeLayerSetting(layerId: Layer["id"], key: string, value: unknown) {
         const layer = this.layers.get(layerId);
-        const { grid, settings, storage } = this;
-        const { history } = layer.newSettings({ grid, settings, storage, newSettings });
+        if (layer.klass.isValidSetting(key, value)) {
+            const oldSettings = { ...layer.settings };
+            layer.settings[key as never] = value; // Sometimes I hate typescript
 
-        if (history?.length) {
-            this.storage.addToHistory({ puzzle: this, layerId: layer.id, actions: history });
+            const { grid, settings, storage } = this;
+            const { history } = layer.updateSettings({
+                grid,
+                puzzleSettings: settings,
+                storage,
+                oldSettings,
+            });
+
+            if (history?.length) {
+                this.storage.addToHistory({ puzzle: this, layerId: layer.id, actions: history });
+            }
         }
     }
 

@@ -1,8 +1,7 @@
 import { Text } from "@mantine/core";
 import { useProxy } from "valtio/utils";
-import { availableLayers } from "../../../layers";
 import { usePuzzle } from "../../../state/puzzle";
-import { FormSchema, Layer, LayerClass, LayerProps } from "../../../types";
+import { FormSchema, Layer, LayerProps } from "../../../types";
 import { useFocusGroup } from "../../../utils/focusManagement";
 import { LayerForm, layerSettingsRerender } from "../../LayerForm";
 import { Numpad } from "./Numpad";
@@ -28,11 +27,11 @@ const _LayerControlSettings = ({ layer, controls }: InnerProps) => {
             )}
             <LayerForm
                 key={rerender.key}
-                initialValues={layer.rawSettings}
+                initialValues={layer.settings}
                 elements={controls.elements}
-                onChange={(newSettings) => {
+                onChange={(key, value) => {
                     rerender.key += 1;
-                    puzzle.changeLayerSettings(layer.id, newSettings);
+                    puzzle.changeLayerSetting(layer.id, key, value);
                     puzzle.renderChange({ type: "draw", layerIds: [layer.id] });
                     unfocus();
                 }}
@@ -55,10 +54,7 @@ export const LayerControlSettings = () => {
         );
     }
 
-    const layerType = layer.type;
-    const layerClass = availableLayers[layerType as keyof typeof availableLayers] as LayerClass;
-
-    if (!layerClass.controls) {
+    if (!layer.klass.controls) {
         return (
             <Text fs="italic" m="xs">
                 This layer has no controls
@@ -66,5 +62,5 @@ export const LayerControlSettings = () => {
         );
     }
 
-    return <_LayerControlSettings key={id} layer={layer} controls={layerClass.controls} />;
+    return <_LayerControlSettings key={id} layer={layer} controls={layer.klass.controls} />;
 };

@@ -24,9 +24,7 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
     static ethereal = false;
     static readonly type = "KillerCagesLayer";
     static displayName = "Killer Cages";
-    static defaultSettings = { selectedState: "blue" };
-
-    settings = this.rawSettings;
+    static defaultSettings: LayerClass<KillerCagesProps>["defaultSettings"] = {};
 
     _numberTyper: IKillerCagesLayer["_numberTyper"] = () => {
         throw notify.error({
@@ -62,10 +60,19 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
         return { history: [{ id, object: { ...object, state } }] };
     };
 
-    static controls: KillerCagesLayer["controls"] = { elements: [], numpadControls: true };
+    static controls: KillerCagesLayer["controls"] = { elements: {}, numpadControls: true };
     static constraints = undefined;
 
-    newSettings: IKillerCagesLayer["newSettings"] = () => {
+    static settingsDescription: LayerClass<KillerCagesProps>["settingsDescription"] = {};
+
+    static isValidSetting<K extends keyof KillerCagesProps["Settings"]>(
+        key: K | string,
+        value: unknown,
+    ): value is KillerCagesProps["Settings"][K] {
+        return false;
+    }
+
+    updateSettings: IKillerCagesLayer["updateSettings"] = () => {
         handleEventsUnorderedSets(this, {
             handleKeyDown: this._handleKeyDown.bind(this) as NeedsUpdating, // Screw you typescript
             pointTypes: ["cells"],
