@@ -8,24 +8,24 @@ import styles from "./layers.module.css";
 
 export interface NumberProps extends SelectedProps {
     ObjectState: { state: string };
-    Settings: { max: number; negatives: boolean };
+    Settings: { max: number; negatives: boolean; _numberTyper: ReturnType<typeof numberTyper> };
 }
 
-interface INumberLayer extends Layer<NumberProps>, KeyDownEventHandler<NumberProps> {
-    _numberTyper: ReturnType<typeof numberTyper>;
-}
+interface INumberLayer extends Layer<NumberProps>, KeyDownEventHandler<NumberProps> {}
 
 export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer {
     static ethereal = false;
     static readonly type = "NumberLayer";
     static displayName = "Number";
-    static defaultSettings = { max: 9, negatives: false };
-
-    _numberTyper: INumberLayer["_numberTyper"] = () => {
-        throw notify.error({
-            message: `${this.type}._numberTyper() called before implementing!`,
-            forever: true,
-        });
+    static defaultSettings: LayerClass<NumberProps>["defaultSettings"] = {
+        max: 9,
+        negatives: false,
+        _numberTyper: () => {
+            throw notify.error({
+                message: `${this.type}._numberTyper() called before implementing!`,
+                forever: true,
+            });
+        },
     };
 
     static create = ((puzzle): NumberLayer => {
@@ -49,7 +49,7 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
             return object?.state ?? null;
         });
 
-        const newStates = this._numberTyper(states, { type, keypress });
+        const newStates = this.settings._numberTyper(states, { type, keypress });
 
         if (newStates === "doNothing") return {};
 
@@ -77,6 +77,7 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
     static settingsDescription: LayerClass<NumberProps>["settingsDescription"] = {
         max: { type: "constraints" },
         negatives: { type: "constraints" },
+        _numberTyper: { type: "constraints", derived: true },
     };
 
     static isValidSetting<K extends keyof NumberProps["Settings"]>(
@@ -102,7 +103,7 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
             oldSettings.max !== this.settings.max ||
             oldSettings.negatives !== this.settings.negatives
         ) {
-            this._numberTyper = numberTyper(this.settings);
+            this.settings._numberTyper = numberTyper(this.settings);
 
             history = [];
             const stored = storage.getStored<NumberProps>({ grid, layer: this });

@@ -13,24 +13,26 @@ import styles from "./layers.module.css";
 
 interface KillerCagesProps extends MultiPointLayerProps {
     ObjectState: MultiPointLayerProps["ObjectState"] & { state: string | null };
+    Settings: {
+        _numberTyper: ReturnType<typeof numberTyper>;
+    };
 }
 
 interface IKillerCagesLayer extends Layer<KillerCagesProps> {
     _handleKeyDown: MultiPointKeyDownHandler<KillerCagesProps>;
-    _numberTyper: ReturnType<typeof numberTyper>;
 }
 
 export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKillerCagesLayer {
     static ethereal = false;
     static readonly type = "KillerCagesLayer";
     static displayName = "Killer Cages";
-    static defaultSettings: LayerClass<KillerCagesProps>["defaultSettings"] = {};
-
-    _numberTyper: IKillerCagesLayer["_numberTyper"] = () => {
-        throw notify.error({
-            message: `${this.type}._numberTyper() called before implementing!`,
-            forever: true,
-        });
+    static defaultSettings: LayerClass<KillerCagesProps>["defaultSettings"] = {
+        _numberTyper: () => {
+            throw notify.error({
+                message: `${this.type}._numberTyper() called before implementing!`,
+                forever: true,
+            });
+        },
     };
 
     static create = ((puzzle): KillerCagesLayer => {
@@ -50,7 +52,7 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
             return { history: [{ id, object: { ...object, state: null } }] };
         }
 
-        const states = this._numberTyper([object.state || null], { type, keypress });
+        const states = this.settings._numberTyper([object.state || null], { type, keypress });
 
         if (states === "doNothing" || states[0] === object.state) {
             return {}; // No change necessary
@@ -63,7 +65,10 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
     static controls: KillerCagesLayer["controls"] = { elements: {}, numpadControls: true };
     static constraints = undefined;
 
-    static settingsDescription: LayerClass<KillerCagesProps>["settingsDescription"] = {};
+    static settingsDescription: LayerClass<KillerCagesProps>["settingsDescription"] = {
+        // Actually, derived is interesting in this case because I don't want it to be serialized, but it's not actually derived from anything (at least yet)
+        _numberTyper: { type: "constraints", derived: true },
+    };
 
     static isValidSetting<K extends keyof KillerCagesProps["Settings"]>(
         key: K | string,
@@ -80,7 +85,7 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
             allowOverlap: true, // TODO: Change to false when properly implemented
             overwriteOthers: false,
         });
-        this._numberTyper = numberTyper({ max: -1, negatives: false });
+        this.settings._numberTyper = numberTyper({ max: -1, negatives: false });
         return {};
     };
 

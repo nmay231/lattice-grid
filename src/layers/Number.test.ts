@@ -7,15 +7,15 @@ import { NumberLayer, NumberProps } from "./Number";
 describe("Number Layer", () => {
     type Arg = {
         stored?: LayerStorage<NumberProps>;
-        settings?: NumberProps["Settings"];
+        settings?: Omit<NumberProps["Settings"], "_numberTyper">;
     };
     const getNumberLayer = ({ stored, settings } = {} as Arg) => {
         const layer = NumberLayer.create({ layers: new IndexedOrderedMap() });
         const essentials = layerEventEssentials({ stored });
-        let oldSettings: typeof settings = undefined;
+        let oldSettings: NumberProps["Settings"] | undefined = undefined;
         if (settings) {
             oldSettings = layer.settings;
-            layer.settings = { ...settings };
+            Object.assign(layer.settings, settings);
         }
         layer.updateSettings({ ...essentials, puzzleSettings: essentials.settings, oldSettings });
 
@@ -70,8 +70,8 @@ describe("Number Layer", () => {
             ["3,3", { state: "0" }],
         ]);
 
-        const oldSettings = layer9.settings;
-        layer9.settings = { max: 10, negatives: true };
+        const oldSettings = { ...layer9.settings };
+        Object.assign(layer9.settings, { max: 10, negatives: true });
         const essentials = layerEventEssentials({ stored });
         const result = layer9.updateSettings({
             ...essentials,
@@ -79,7 +79,7 @@ describe("Number Layer", () => {
             oldSettings,
         });
 
-        expect(result.history).toEqual<HistoryType>([]);
+        expect(result.history ?? []).toEqual<HistoryType>([]);
     });
 
     it("deletes objects when the number range decreases", () => {
@@ -92,8 +92,8 @@ describe("Number Layer", () => {
             ["4,4", { state: "42" }],
         ]);
 
-        const oldSettings = layer64.settings;
-        layer64.settings = { max: 7, negatives: false };
+        const oldSettings = { ...layer64.settings };
+        Object.assign(layer64.settings, { max: 7, negatives: false });
         const essentials = layerEventEssentials({ stored });
         const result = layer64.updateSettings({
             ...essentials,
