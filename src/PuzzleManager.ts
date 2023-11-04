@@ -214,7 +214,7 @@ export class PuzzleManager {
         id: Layer["id"] | null,
         settings?: UnknownObject,
     ): Layer["id"] {
-        const layer = new layerClass(layerClass, this);
+        const layer = layerClass.create(this);
         if (id) layer.id = id;
 
         // Add the layer to the end, but before the UILayer
