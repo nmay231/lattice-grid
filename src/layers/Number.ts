@@ -5,13 +5,26 @@ import { BaseLayer } from "./BaseLayer";
 import { numberTyper } from "./controls/numberTyper";
 import { KeyDownEventHandler, SelectedProps, handleEventsSelection } from "./controls/selection";
 import styles from "./layers.module.css";
+import { CurrentCharacterProps, LayerCurrentCharacter } from "./traits/currentCharacterSetting";
+import { GOOFyProps, GridOrObject, LayerGOOFy } from "./traits/gridOrObjectFirst";
 
-export interface NumberProps extends SelectedProps {
+export interface NumberProps extends GOOFyProps, CurrentCharacterProps, SelectedProps {
     ObjectState: { state: string };
-    Settings: { max: number; negatives: boolean; _numberTyper: ReturnType<typeof numberTyper> };
+    TempStorage: SelectedProps["TempStorage"];
+    Settings: {
+        max: number;
+        negatives: boolean;
+        gridOrObjectFirst: GridOrObject;
+        currentCharacter: string | null;
+        _numberTyper: ReturnType<typeof numberTyper>;
+    };
 }
 
-interface INumberLayer extends Layer<NumberProps>, KeyDownEventHandler<NumberProps> {}
+interface INumberLayer
+    extends Layer<NumberProps>,
+        LayerGOOFy<NumberProps>,
+        KeyDownEventHandler<NumberProps>,
+        LayerCurrentCharacter<NumberProps> {}
 
 export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer {
     static ethereal = false;
@@ -26,19 +39,17 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
                 forever: true,
             });
         },
+        currentCharacter: "1",
+        gridOrObjectFirst: "grid",
     };
 
     static create = ((puzzle): NumberLayer => {
         return new NumberLayer(NumberLayer, puzzle);
     }) satisfies LayerClass<NumberProps>["create"];
 
-    handleKeyDown: INumberLayer["handleKeyDown"] = ({
-        points: ids,
-        type,
-        keypress,
-        storage,
-        grid,
-    }) => {
+    eventPlaceSinglePointObjects: INumberLayer["eventPlaceSinglePointObjects"] = () => ({});
+
+    handleKeyDown: INumberLayer["handleKeyDown"] = ({ points: ids, storage, grid }) => {
         const stored = storage.getStored<NumberProps>({ grid, layer: this });
         if (!ids.length) {
             return {};
@@ -49,7 +60,7 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
             return object?.state ?? null;
         });
 
-        const newStates = this.settings._numberTyper(states, { type, keypress });
+        const newStates = this.settings._numberTyper(states, this.settings.currentCharacter);
 
         if (newStates === "doNothing") return {};
 
@@ -66,7 +77,10 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
         return { history };
     };
 
-    static controls: NumberLayer["controls"] = { elements: {}, numpadControls: true };
+    static controls: NumberLayer["controls"] = {
+        numpadControls: true,
+        elements: {},
+    };
     static constraints: NumberLayer["constraints"] = {
         elements: {
             max: { type: "number", label: "Max", min: 0 },
@@ -78,6 +92,8 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
         max: { type: "constraints" },
         negatives: { type: "constraints" },
         _numberTyper: { type: "constraints", derived: true },
+        gridOrObjectFirst: { type: "controls" },
+        currentCharacter: { type: "controls" },
     };
 
     static isValidSetting<K extends keyof NumberProps["Settings"]>(
@@ -88,18 +104,24 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
             return typeof value === "boolean";
         } else if (key === "max") {
             return typeof value === "number";
+        } else if (key === "gridOrObjectFirst") {
+            return value === "grid" || value === "object";
+        } else if (key === "currentCharacter") {
+            // TODO: Change this when key presses are switched from `ctrl-a` to `ctrl+a`
+            return value === null || (typeof value === "string" && value.length === 1);
         }
         return false;
     }
 
     updateSettings: INumberLayer["updateSettings"] = ({ oldSettings, grid, storage }) => {
-        if (!oldSettings) {
-            const { gatherPoints, handleEvent, getOverlaySVG } = handleEventsSelection<NumberProps>(
-                {},
-            );
+        if (!oldSettings || oldSettings.gridOrObjectFirst !== this.settings.gridOrObjectFirst) {
+            const { gatherPoints, handleEvent, getOverlaySVG, eventPlaceSinglePointObjects } =
+                handleEventsSelection<NumberProps>({});
             this.gatherPoints = gatherPoints;
             this.handleEvent = handleEvent;
-            this.getOverlaySVG = getOverlaySVG;
+            this.getOverlaySVG =
+                this.settings.gridOrObjectFirst === "grid" ? getOverlaySVG : undefined;
+            this.eventPlaceSinglePointObjects = eventPlaceSinglePointObjects;
         }
 
         let history: PartialHistoryAction<NumberProps>[] | undefined = undefined;

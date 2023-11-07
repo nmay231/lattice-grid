@@ -1,6 +1,8 @@
 import { clamp } from "lodash";
 import { proxy } from "valtio";
 import { PuzzleManager } from "./PuzzleManager";
+import { layerIsCurrentCharacterSetting } from "./layers/traits/currentCharacterSetting";
+import { layerIsGOOFy } from "./layers/traits/gridOrObjectFirst";
 import { canvasSizeProxy } from "./state/canvasSize";
 import {
     CleanedDOMEvent,
@@ -401,7 +403,30 @@ export class ControlsManager {
         let layer = this.getCurrentLayer();
         if (!layer) return;
 
-        if (keypress === "Escape") {
+        if (layerIsCurrentCharacterSetting(layer)) {
+            const value = keypress === "Delete" ? null : keypress;
+            if (layer.klass.isValidSetting("currentCharacter", value)) {
+                layer.settings.currentCharacter = value;
+            }
+        }
+
+        if (layerIsGOOFy(layer)) {
+            if (layer.settings.gridOrObjectFirst === "grid") {
+                const { history } = layer.eventPlaceSinglePointObjects({
+                    grid: this.puzzle.grid,
+                    settings: this.puzzle.settings,
+                    storage: this.puzzle.storage,
+                });
+
+                this.puzzle.storage.addToHistory({
+                    puzzle: this.puzzle,
+                    layerId: layer.id,
+                    actions: history,
+                });
+
+                this.puzzle.renderChange({ type: "draw", layerIds: [layer.id] });
+            }
+        } else if (keypress === "Escape") {
             this.applyLayerEvent(layer, { type: "cancelAction" });
         } else if (keypress === "Delete") {
             this.applyLayerEvent(layer, { type: "delete", keypress });

@@ -1,9 +1,11 @@
 import { Text } from "@mantine/core";
 import { useProxy } from "valtio/utils";
+import { layerIsGOOFy } from "../../../layers/traits/gridOrObjectFirst";
 import { usePuzzle } from "../../../state/puzzle";
 import { FormSchema, Layer, LayerProps } from "../../../types";
 import { useFocusGroup } from "../../../utils/focusManagement";
 import { LayerForm, layerSettingsRerender } from "../../LayerForm";
+import { ToggleGridObjectFirst } from "../../LayerForm/ToggleGridObjectFirst";
 import { Numpad } from "./Numpad";
 
 type InnerProps = { layer: Layer; controls: FormSchema<LayerProps> };
@@ -17,6 +19,16 @@ const _LayerControlSettings = ({ layer, controls }: InnerProps) => {
         <div ref={ref} style={{ margin: "auto" }}>
             {/* TODO: Hack Mantine's useFocusTrap so it doesn't focus the first element right away */}
             <div data-autofocus></div>
+            {layerIsGOOFy(layer) && (
+                <ToggleGridObjectFirst
+                    value={layer.settings.gridOrObjectFirst}
+                    onChange={(value) => {
+                        puzzle.changeLayerSetting(layer.id, "gridOrObjectFirst", value);
+                        // TODO: Update keypress indicators (the little thing that shows which keypress/mouse click activates a control).
+                        unfocus();
+                    }}
+                />
+            )}
             {controls.numpadControls && (
                 <Numpad
                     onKeyPress={(keypress) => {

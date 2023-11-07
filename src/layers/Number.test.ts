@@ -7,17 +7,24 @@ import { NumberLayer, NumberProps } from "./Number";
 describe("Number Layer", () => {
     type Arg = {
         stored?: LayerStorage<NumberProps>;
-        settings?: Omit<NumberProps["Settings"], "_numberTyper">;
+        settings?: Partial<Omit<NumberProps["Settings"], "_numberTyper">>;
     };
     const getNumberLayer = ({ stored, settings } = {} as Arg) => {
         const layer = NumberLayer.create({ layers: new IndexedOrderedMap() });
         const essentials = layerEventEssentials({ stored });
+
         let oldSettings: NumberProps["Settings"] | undefined = undefined;
+        layer.updateSettings({ ...essentials, puzzleSettings: essentials.settings, oldSettings });
+
         if (settings) {
             oldSettings = layer.settings;
             Object.assign(layer.settings, settings);
+            layer.updateSettings({
+                ...essentials,
+                puzzleSettings: essentials.settings,
+                oldSettings,
+            });
         }
-        layer.updateSettings({ ...essentials, puzzleSettings: essentials.settings, oldSettings });
 
         return layer;
     };
@@ -25,11 +32,9 @@ describe("Number Layer", () => {
     type HistoryType = LayerHandlerResult<NumberProps>["history"];
 
     it("places numbers", () => {
-        const layer9 = getNumberLayer();
+        const layer9 = getNumberLayer({ settings: { currentCharacter: "1" } });
         const result = layer9.handleKeyDown({
             ...layerEventEssentials(),
-            type: "keyDown",
-            keypress: "1",
             points: ["id1", "id2"],
         });
 
@@ -41,7 +46,7 @@ describe("Number Layer", () => {
 
     it("deletes some numbers", () => {
         const stored = new LayerStorage<NumberProps>();
-        const layer9 = getNumberLayer({ stored });
+        const layer9 = getNumberLayer({ stored, settings: { currentCharacter: null } });
         stored.setEntries("question", [
             ["toDelete", { state: "1" }],
             ["keep", { state: "5" }],
@@ -50,8 +55,6 @@ describe("Number Layer", () => {
 
         const result = layer9.handleKeyDown({
             ...layerEventEssentials({ stored }),
-            type: "delete",
-            keypress: "Delete",
             points: ["toDelete", "alsoDelete"],
         });
 

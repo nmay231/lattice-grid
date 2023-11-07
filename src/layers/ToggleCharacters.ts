@@ -4,8 +4,13 @@ import { notify } from "../utils/notifications";
 import { BaseLayer } from "./BaseLayer";
 import { KeyDownEventHandler, SelectedProps, handleEventsSelection } from "./controls/selection";
 import styles from "./layers.module.css";
+import { CurrentCharacterProps, LayerCurrentCharacter } from "./traits/currentCharacterSetting";
+import { GOOFyProps, LayerGOOFy } from "./traits/gridOrObjectFirst";
 
 type Settings = {
+    currentCharacter: CurrentCharacterProps["Settings"]["currentCharacter"];
+    // TODO: This is currently kinda broken because there is no keyboard for mobile controls yet.
+    gridOrObjectFirst: GOOFyProps["Settings"]["gridOrObjectFirst"];
     characters: string;
     displayStyle: "center" | "topBottom"; // | "circle" | "tapa",
     // caseSwap allows upper- and lower-case letters to be used as separate characters but to be merged if there's no ambiguity.
@@ -13,14 +18,17 @@ type Settings = {
     caseSwap: Record<string, string>;
 };
 
-interface ToggleCharactersProps extends SelectedProps {
+interface ToggleCharactersProps extends SelectedProps, CurrentCharacterProps, GOOFyProps {
     ObjectState: { state: string };
     Settings: Settings;
+    TempStorage: SelectedProps["TempStorage"];
 }
 
 interface IToggleCharactersLayer
     extends Layer<ToggleCharactersProps>,
-        KeyDownEventHandler<ToggleCharactersProps> {
+        KeyDownEventHandler<ToggleCharactersProps>,
+        LayerCurrentCharacter<ToggleCharactersProps>,
+        LayerGOOFy<ToggleCharactersProps> {
     _generateCaseSwap: (chars: string) => Settings["caseSwap"];
 }
 
@@ -32,6 +40,8 @@ export class ToggleCharactersLayer
     static readonly type = "ToggleCharactersLayer";
     static displayName = "Toggle Characters";
     static defaultSettings: LayerClass<ToggleCharactersProps>["defaultSettings"] = {
+        currentCharacter: "1",
+        gridOrObjectFirst: "grid",
         characters: "0123456789",
         caseSwap: Object.fromEntries([..."0123456789"].entries()),
         displayStyle: "center",
@@ -41,12 +51,19 @@ export class ToggleCharactersLayer
         return new ToggleCharactersLayer(ToggleCharactersLayer, puzzle);
     }) satisfies LayerClass<ToggleCharactersProps>["create"];
 
+    eventPlaceSinglePointObjects: IToggleCharactersLayer["eventPlaceSinglePointObjects"] =
+        () => ({});
+
     static settingsDescription: LayerClass<ToggleCharactersProps>["settingsDescription"] = {
+        currentCharacter: { type: "controls" },
+        gridOrObjectFirst: { type: "controls" },
         displayStyle: { type: "constraints" },
         characters: { type: "constraints" },
         caseSwap: { type: "constraints", derived: true },
     };
-    static controls = undefined;
+    // TODO: The grid or object first toggle doesn't show unless controls is not undefined. But I'm gonna leave it as undefined right now since toggle characters is kinda broken on mobile with object first anyways (numpad is not shown, and non-number characters can't be typed at all).
+    // static controls: FormSchema<ToggleCharactersProps> = { elements: {} };
+    static controls?: FormSchema<ToggleCharactersProps> = undefined;
     static constraints: FormSchema<ToggleCharactersProps> = {
         elements: {
             characters: {
@@ -74,6 +91,11 @@ export class ToggleCharactersLayer
             return value === "center" || value === "topBottom";
         } else if (key === "characters") {
             return typeof value === "string";
+        } else if (key === "gridOrObjectFirst") {
+            return value === "grid" || value === "object";
+        } else if (key === "currentCharacter") {
+            // TODO: Change this when key presses are switched from `ctrl-a` to `ctrl+a`
+            return value === null || (typeof value === "string" && value.length === 1);
         }
         return false;
     }
@@ -107,12 +129,14 @@ export class ToggleCharactersLayer
                 }
             }
         }
-        if (!oldSettings) {
-            const { gatherPoints, handleEvent, getOverlaySVG } =
+        if (!oldSettings || oldSettings.gridOrObjectFirst !== this.settings.gridOrObjectFirst) {
+            const { gatherPoints, handleEvent, getOverlaySVG, eventPlaceSinglePointObjects } =
                 handleEventsSelection<ToggleCharactersProps>({});
             this.gatherPoints = gatherPoints;
             this.handleEvent = handleEvent;
-            this.getOverlaySVG = getOverlaySVG;
+            this.getOverlaySVG =
+                this.settings.gridOrObjectFirst === "grid" ? getOverlaySVG : undefined;
+            this.eventPlaceSinglePointObjects = eventPlaceSinglePointObjects;
         }
         return { history };
     };
@@ -132,26 +156,21 @@ export class ToggleCharactersLayer
         return caseSwap;
     };
 
-    handleKeyDown: IToggleCharactersLayer["handleKeyDown"] = ({
-        grid,
-        storage,
-        points,
-        keypress,
-    }) => {
+    handleKeyDown: IToggleCharactersLayer["handleKeyDown"] = ({ grid, storage, points }) => {
         const ids = points;
         if (!ids?.length) {
             return {};
         }
         const stored = storage.getStored<ToggleCharactersProps>({ grid, layer: this });
 
-        if (keypress === "Delete") {
+        if (this.settings.currentCharacter === null) {
             const allIds = new Set(concat(stored.keys("answer"), stored.keys("question")));
             return {
                 history: ids.filter((id) => allIds.has(id)).map((id) => ({ id, object: null })),
             };
         }
 
-        const char = this.settings.caseSwap[keypress];
+        const char = this.settings.caseSwap[this.settings.currentCharacter];
         if (char === undefined) {
             return {};
         }

@@ -1,5 +1,4 @@
 import {
-    Keypress,
     Layer,
     LayerEventEssentials,
     LayerHandlerResult,
@@ -11,6 +10,7 @@ import {
 import { notify } from "../../utils/notifications";
 import { stringifyAnything } from "../../utils/string";
 import styles from "../layers.module.css";
+import { LayerGOOFy, layerIsGOOFy } from "../traits/gridOrObjectFirst";
 
 export interface SelectedProps extends LayerProps {
     TempStorage: {
@@ -28,7 +28,7 @@ export interface InternalProps extends LayerProps {
 
 export type KeyDownEventHandler<LP extends SelectedProps = SelectedProps> = {
     handleKeyDown: (
-        arg: LayerEventEssentials<LP> & Keypress & { points: Point[] },
+        arg: Omit<LayerEventEssentials<LP>, "tempStorage"> & { points: Point[] },
     ) => LayerHandlerResult<LP>;
 };
 
@@ -51,6 +51,7 @@ const obj = <LP extends SelectedProps>({
 export const _selectionObjMaker = obj; // For testing.
 
 export const handleEventsSelection = <LP extends SelectedProps>(
+    // {gridOrObjectFirst}: {gridOrObjectFirst: GridOrObject}
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     arg: any, // TODO
 ) => {
@@ -104,6 +105,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                 history = [...allPoints].map((id) => obj({ id, object: null }));
                 return { history };
             }
+            // TODO: Deprecate in favor of layerGOOFy.eventPlaceSinglePointObjects, and keybinds
             case "delete":
             case "keyDown": {
                 if (event.keypress === "ctrl-a") {
@@ -122,20 +124,20 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                     };
                 }
 
-                const actions = this.handleKeyDown({ ...event, points: [...allPoints] });
-                const batchId = storage.getNewBatchId();
-
-                return {
-                    ...actions,
-                    history: (actions.history || []).map((action) => ({
-                        ...action,
-                        // Batch all of the external layer's actions together
-                        batchId,
-                    })),
-                };
+                throw notify.error({
+                    title: "selection controls",
+                    message: `Keypress events should not be handled in handleEvent layer.id=${this.id}`,
+                    forever: true,
+                });
             }
             case "pointerDown":
             case "pointerMove": {
+                if (layerIsGOOFy(this)) {
+                    if (this.settings.gridOrObjectFirst === "object") {
+                        // TODO: Get the layer to switch to onePoint.handleEventsCurrentSetting but after it can handle a generic settings key ("currentCharacter" instead of "selectedState"). I do that instead of adapting selection to do it because other layers will decide between one of the two onePoint handlers.
+                        return this.handleKeyDown(event);
+                    }
+                }
                 internal.permStorage.groupNumber = internal.permStorage.groupNumber || 1;
                 const currentPoints = internal.keys("question");
                 const ids = event.points;
@@ -257,5 +259,24 @@ export const handleEventsSelection = <LP extends SelectedProps>(
         return [{ id: "selection", type: "polygon", elements }];
     };
 
-    return { gatherPoints, handleEvent, getOverlaySVG };
+    type GOOFySelectedLayer = SelectedLayer & LayerGOOFy<LP>;
+    const eventPlaceSinglePointObjects: GOOFySelectedLayer["eventPlaceSinglePointObjects"] =
+        function (this: GOOFySelectedLayer, event) {
+            const { storage, grid } = event;
+            const internal = storage.getStored<InternalProps>({ grid, layer: { id: layerId } });
+            const allPoints = internal.keys("question");
+            const actions = this.handleKeyDown({ ...event, points: [...allPoints] });
+            const batchId = storage.getNewBatchId();
+
+            return {
+                ...actions,
+                history: (actions.history || []).map((action) => ({
+                    ...action,
+                    // Batch all of the external layer's actions together
+                    batchId,
+                })),
+            };
+        };
+
+    return { gatherPoints, handleEvent, getOverlaySVG, eventPlaceSinglePointObjects };
 };
