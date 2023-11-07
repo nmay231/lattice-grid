@@ -51,11 +51,16 @@ const obj = <LP extends SelectedProps>({
 export const _selectionObjMaker = obj; // For testing.
 
 export const handleEventsSelection = <LP extends SelectedProps>(
-    layer: Layer<LP> & KeyDownEventHandler<LP>,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     arg: any, // TODO
 ) => {
-    layer.gatherPoints = ({ grid, settings, cursor, tempStorage }) => {
+    type SelectedLayer = Layer<LP> & KeyDownEventHandler<LP>;
+    const gatherPoints: SelectedLayer["gatherPoints"] = function ({
+        grid,
+        settings,
+        cursor,
+        tempStorage,
+    }) {
         let newPoints = grid.selectPointsWithCursor({
             settings,
             cursor,
@@ -88,7 +93,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
         return newPoints;
     };
 
-    layer.handleEvent = (event) => {
+    const handleEvent: SelectedLayer["handleEvent"] = function (this: SelectedLayer, event) {
         const { grid, storage, tempStorage } = event;
         const internal = storage.getStored<InternalProps>({ grid, layer: { id: layerId } });
         let history: PartialHistoryAction<LP, InternalProps["ObjectState"]>[];
@@ -117,7 +122,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                     };
                 }
 
-                const actions = layer.handleKeyDown({ ...event, points: [...allPoints] });
+                const actions = this.handleKeyDown({ ...event, points: [...allPoints] });
                 const batchId = storage.getNewBatchId();
 
                 return {
@@ -218,7 +223,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
             default: {
                 throw notify.error({
                     message: `Unknown event in selected layer ${
-                        layer.displayName
+                        this.displayName
                     }: ${stringifyAnything(event)}`,
                     forever: true,
                 });
@@ -226,7 +231,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
         }
     };
 
-    layer.getOverlaySVG = ({ grid, storage, settings }) => {
+    const getOverlaySVG: SelectedLayer["getOverlaySVG"] = function ({ grid, storage, settings }) {
         // TODO: Selection can be made by multiple layers, but not all layers support the same cells/corners selection. In the future, I need to filter the points by the type of points selectable by the current layer.
         const stored = storage.getStored<InternalProps>({ grid, layer: { id: layerId } });
         const points = [...stored.keys("question")];
@@ -251,4 +256,6 @@ export const handleEventsSelection = <LP extends SelectedProps>(
         }
         return [{ id: "selection", type: "polygon", elements }];
     };
+
+    return { gatherPoints, handleEvent, getOverlaySVG };
 };

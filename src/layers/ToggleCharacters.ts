@@ -108,7 +108,11 @@ export class ToggleCharactersLayer
             }
         }
         if (!oldSettings) {
-            handleEventsSelection(this, {});
+            const { gatherPoints, handleEvent, getOverlaySVG } =
+                handleEventsSelection<ToggleCharactersProps>({});
+            this.gatherPoints = gatherPoints;
+            this.handleEvent = handleEvent;
+            this.getOverlaySVG = getOverlaySVG;
         }
         return { history };
     };
@@ -237,4 +241,6 @@ export class ToggleCharactersLayer
 
         return [{ id: "toggleCharacters", type: "text", elements }];
     };
+
+    getOverlaySVG: IToggleCharactersLayer["getOverlaySVG"];
 }

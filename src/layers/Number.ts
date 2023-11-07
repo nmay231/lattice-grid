@@ -94,7 +94,12 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
 
     updateSettings: INumberLayer["updateSettings"] = ({ oldSettings, grid, storage }) => {
         if (!oldSettings) {
-            handleEventsSelection(this, {});
+            const { gatherPoints, handleEvent, getOverlaySVG } = handleEventsSelection<NumberProps>(
+                {},
+            );
+            this.gatherPoints = gatherPoints;
+            this.handleEvent = handleEvent;
+            this.getOverlaySVG = getOverlaySVG;
         }
 
         let history: PartialHistoryAction<NumberProps>[] | undefined = undefined;
@@ -150,4 +155,6 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
 
         return [{ id: "number", type: "text", elements }];
     };
+
+    getOverlaySVG: INumberLayer["getOverlaySVG"];
 }

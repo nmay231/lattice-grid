@@ -11,7 +11,10 @@ import {
 
 const getFreshSelectedLayer = () => {
     const layer = { id: "DummyLayer" } as NeedsUpdating;
-    handleEventsSelection(layer, {});
+    const { gatherPoints, handleEvent, getOverlaySVG } = handleEventsSelection({});
+    layer.gatherPoints = gatherPoints;
+    layer.handleEvent = handleEvent;
+    layer.getOverlaySVG = getOverlaySVG;
     return layer;
 };
 
