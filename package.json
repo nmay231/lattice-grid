@@ -58,6 +58,7 @@
         "build": "yarn protobuf && vite build",
         "checkdeps": "yarn outdated; depcheck --ignores 'pre-commit,@emotion/react,prettier-plugin-organize-imports'",
         "precommit": "yarn typecheck; yarn test:once; yarn lint",
+        "precommit:keep-exit-codes": "E=0; yarn typecheck || E=$?; yarn test:once || E=$?; yarn lint || E=$?; exit $E",
         "test": "vitest watch",
         "test:once": "vitest run --changed",
         "lint": "prettier --ignore-path .gitignore --check . && eslint --ignore-path .gitignore .",
@@ -68,9 +69,7 @@
         "typecheck": "tsc --noEmit"
     },
     "pre-commit": [
-        "typecheck",
-        "test:once",
-        "lint"
+        "precommit:keep-exit-codes"
     ],
     "browserslist": {
         "production": [
