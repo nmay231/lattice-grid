@@ -200,15 +200,10 @@ export type LayerProps = {
 };
 
 export type Layer<LP extends LayerProps = LayerProps> = {
-    readonly type: string;
-    // TODO: Do I need to copy all the other attrs if I have .klass now? Additionally, I wouldn't even need type anymore, except as a key for React rendering.
     readonly klass: LayerClass<LP>;
     id: string;
     displayName: string;
-    ethereal: boolean;
     settings: LP["Settings"];
-    controls?: FormSchema<LP>;
-    constraints?: FormSchema<LP>;
     updateSettings(
         settingsChange: Pick<LayerEventEssentials<LP>, "grid" | "storage"> & {
             puzzleSettings: LayerEventEssentials<LP>["settings"];

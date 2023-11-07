@@ -31,7 +31,7 @@ import { LatestTimeout } from "./utils/primitiveWrappers";
 import { stringifyAnything } from "./utils/string";
 
 export class PuzzleManager {
-    layers = proxy(new IndexedOrderedMap<ValtioRef<Layer>>((layer) => !layer.ethereal));
+    layers = proxy(new IndexedOrderedMap<ValtioRef<Layer>>((layer) => !layer.klass.ethereal));
     UILayer = availableLayers["OverlayLayer"].create(this);
     CellOutlineLayer = availableLayers["CellOutlineLayer"].create(this);
     SVGGroups = proxy({} as Record<Layer["id"], ValtioRef<SVGGroup[]>>);
@@ -187,7 +187,7 @@ export class PuzzleManager {
     _getParams() {
         // TODO: change localStorage key and what's actually stored/how it's stored
         const data: LocalStorageData = {
-            layers: this.layers.values().map(({ id, type, settings }) => {
+            layers: this.layers.values().map(({ id, klass: { type }, settings }) => {
                 const rawSettings: UnknownObject = {};
                 for (const [key, description] of Object.entries(
                     availableLayers[type as keyof typeof availableLayers].settingsDescription,

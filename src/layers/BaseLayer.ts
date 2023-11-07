@@ -20,36 +20,28 @@ export class BaseLayer<LP extends LayerProps>
     static defaultSettings = {};
 
     klass: Layer<LP>["klass"];
-    readonly type: string;
     id: Layer<LP>["id"];
-    ethereal: Layer<LP>["ethereal"];
     displayName: Layer<LP>["displayName"];
-    controls?: Layer<LP>["controls"];
-    constraints?: Layer<LP>["constraints"];
 
     settings: LP["Settings"];
 
     constructor(klass: LayerClass<LP>, puzzle: Pick<PuzzleManager, "layers">) {
         this.klass = klass;
         this.id = randomId(puzzle.layers.keys(), klass.type);
-        this.ethereal = klass.ethereal;
-        this.type = klass.type;
         this.displayName = klass.displayName;
-        this.controls = klass.controls;
-        this.constraints = klass.constraints;
         this.settings = cloneDeep(klass.defaultSettings);
     }
 
     gatherPoints: Layer<LP>["gatherPoints"] = () => {
         throw notify.error({
-            message: `${this.type}.gatherPoints() called before implementing!`,
+            message: `${this.klass.type}.gatherPoints() called before implementing!`,
             forever: true,
         });
     };
 
     handleEvent: Layer<LP>["handleEvent"] = () => {
         throw notify.error({
-            message: `${this.type}.handleEvent() called before implementing!`,
+            message: `${this.klass.type}.handleEvent() called before implementing!`,
             forever: true,
         });
     };

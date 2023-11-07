@@ -436,7 +436,7 @@ export class ControlsManager {
                 this.puzzle.settings.debugging = nowDebugging;
                 this.puzzle.layers.selectable = nowDebugging
                     ? () => true
-                    : (layer) => !layer.ethereal;
+                    : (layer) => !layer.klass.ethereal;
             }
         } else if (keypress === "ctrl-z" || keypress === "ctrl-y") {
             const { storage } = this.puzzle;

@@ -48,7 +48,7 @@ export const ImportExportModal = React.memo(function ImportExportModal() {
     const { copied, copy, error: copyError } = useClipboard({ timeout: 3000 });
     const normalLayerIds = puzzle.layers
         .entries()
-        .filter(([, layer]) => !layer.ethereal)
+        .filter(([, layer]) => !layer.klass.ethereal)
         .map(([id]) => id);
     const [answerCheck, setAnswerCheck] = useState<Layer["id"][]>([]);
 

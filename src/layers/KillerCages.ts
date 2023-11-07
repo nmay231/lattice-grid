@@ -62,7 +62,10 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
         return { history: [{ id, object: { ...object, state } }] };
     };
 
-    static controls: KillerCagesLayer["controls"] = { elements: {}, numpadControls: true };
+    static controls: LayerClass<KillerCagesProps>["controls"] = {
+        elements: {},
+        numpadControls: true,
+    };
     static constraints = undefined;
 
     static settingsDescription: LayerClass<KillerCagesProps>["settingsDescription"] = {

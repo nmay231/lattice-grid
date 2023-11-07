@@ -40,7 +40,10 @@ export const LayerList = () => {
         >
             <div ref={ref}>
                 {layers.order.map((id) => {
-                    const { ethereal, displayName } = layers.map[id];
+                    const {
+                        klass: { ethereal },
+                        displayName,
+                    } = layers.map[id];
                     return (
                         (debug || !ethereal) && (
                             <LayerItem

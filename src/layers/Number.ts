@@ -77,11 +77,11 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
         return { history };
     };
 
-    static controls: NumberLayer["controls"] = {
+    static controls: LayerClass<NumberProps>["controls"] = {
         numpadControls: true,
         elements: {},
     };
-    static constraints: NumberLayer["constraints"] = {
+    static constraints: LayerClass<NumberProps>["constraints"] = {
         elements: {
             max: { type: "number", label: "Max", min: 0 },
             negatives: { type: "boolean", label: "Allow negatives" },
