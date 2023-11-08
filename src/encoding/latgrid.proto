@@ -1,0 +1,83 @@
+syntax = "proto3";
+package latgrid;
+
+message PuzzleData {
+    oneof data {
+        PuzzleDataV1 uncompressedV1 = 1;
+        // TODO: the field that is set determines how the bytes are interpreted. For the near future, that means which compression algorithm is used before extracting the real data from the bytes with the PuzzleData message.
+        // bytes huffman_encoding = 2;
+
+        // And some strategies might be tailored to popular variants like sudoku. But they will always have a high field number to give more general encoding strategies preference. 127 is the lowest varint expressible with one byte, so we start at 128.
+        // bytes VanillaSudoku = 128;
+    }
+}
+
+message PuzzleDataV1 {
+    Params params = 1;
+    repeated Layer layers = 2;
+
+    // Assumes a square grid
+    message Params {
+        uint32 width = 1;
+        uint32 height = 2;
+        sint32 minX = 3;
+        sint32 minY = 4;
+    }
+    message Layer {
+        oneof data {
+            BackgroundColorLayer BackgroundColorLayer = 1;
+            CellOutlineLayer CellOutlineLayer = 2;
+            DebugSelectPointsLayer DebugSelectPointsLayer = 3;
+            KillerCagesLayer KillerCagesLayer = 4;
+            NumberLayer NumberLayer = 5;
+            OverlayLayer OverlayLayer = 6;
+            SimpleLineLayer SimpleLineLayer = 7;
+            ToggleCharactersLayer ToggleCharactersLayer = 8;
+        }
+    }
+}
+
+enum Color {
+    UNSET = 0;
+    LIGHT_GREEN = 1;
+    LIGHT_BLUE = 2;
+    LIGHT_YELLOWORANGE = 3;
+    LIGHT_RED = 4;
+    LIGHT_PURPLE = 5;
+    LIGHT_GRAY = 6;
+    LIGHT_WHITE = 7;
+    DARK_GREEN = 8;
+    DARK_BLUE = 9;
+    DARK_YELLOWORANGE = 10;
+    DARK_RED = 11;
+    DARK_PURPLE = 12;
+    DARK_GRAY = 13;
+    DARK_WHITE = 14;
+}
+
+message BackgroundColorLayer {
+    bool params = 1; // TODO
+    repeated Color colors = 2;
+    // "Cathode-ray tube" position encoding
+    // Simple because I might have a version that allows a multiplier for similar adjacent encodings: On that thought, it's useless to a have x2 multiple because you could just do 2 of those things manually. Perhaps x3 and x5 works best. Or I don't do x5 yet... Also this multiplicative encoding should be available to everything, like backgroundColor.colors since those can repeat too. I need to keep in mind how much do I really benefit over standard compression (the issue with that is standard compression always has a larger encoded size than custom encoding since it assumes the data uses "all the bits" of a number, so to speak, while I know I only use a small portion for the most part). I need to decide if I'm going to agonize over this at all, or just get an example that works. I need to do the latter, and worry about details later. But make sure I write the decoding process in a way that changing the encoding is easy
+    repeated uint32 simpleCRTOffsets = 3;
+}
+
+message CellOutlineLayer {}
+message DebugSelectPointsLayer {}
+message KillerCagesLayer {}
+message NumberLayer {}
+message OverlayLayer {}
+message SimpleLineLayer {}
+message ToggleCharactersLayer {}
+
+// enum LayerType {
+//     BackgroundColorLayer = 1;
+//     CellOutlineLayer = 2;
+//     DebugSelectPointsLayer = 3;
+//     KillerCagesLayer = 4;
+//     NumberLayer = 5;
+//     OverlayLayer = 6;
+//     SimpleLineLayer = 7;
+//     ToggleCharactersLayer = 8;
+// }

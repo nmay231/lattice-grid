@@ -58,3 +58,10 @@ export function* zip<T>(...arrays: Array<List<T>>) {
         yield arrays.map((arr) => arr[index]);
     }
 }
+
+/** Concatenate multiple iterables into one chained iterable */
+export function* concat<T>(...iters: Array<Iterable<T>>) {
+    for (const iter of iters) {
+        yield* iter;
+    }
+}

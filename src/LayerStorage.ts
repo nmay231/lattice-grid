@@ -1,5 +1,5 @@
 import { proxy } from "valtio";
-import { EditMode, Layer, LayerProps, ObjectId, StorageMode, UnknownObject } from "./types";
+import { Layer, LayerProps, ObjectId, StorageMode, UnknownObject } from "./types";
 import { OrderedMap } from "./utils/OrderedMap";
 
 class DisjointSets<Groups extends string = string> {
@@ -33,37 +33,57 @@ export type LayerStorageJSON = {
 
 export class LayerStorage<LP extends LayerProps = LayerProps> {
     // TODO: Should this be where I wrap it in proxy?
-    objects = proxy(new OrderedMap<LP["ObjectState"]>());
+    private objects = proxy(new OrderedMap<LP["ObjectState"]>());
+    private groups = new DisjointSets<StorageMode>();
     permStorage: Partial<LP["PermStorage"]> = {};
-    groups = new DisjointSets<StorageMode>();
 
-    /** Was mostly used for testing, should probably be updated to be more convenient and general */
-    static fromObjects<LP extends LayerProps>({
-        ids,
-        objs,
-        editMode = "question",
-    }: {
-        ids: ObjectId[];
-        objs: LP["ObjectState"][];
-        editMode?: EditMode;
-    }) {
-        const storage = new LayerStorage<LP>();
-
-        ids.forEach((id, index) => {
-            storage.objects.set(id, objs[index]);
-            storage.groups.setKey(id, editMode);
-        });
-
-        return storage satisfies LayerStorageJSON;
+    keys(group: StorageMode): ReadonlySet<ObjectId> {
+        return this.groups.getGroup(group);
     }
 
-    getObjectsByGroup(group: StorageMode) {
-        const result = new OrderedMap<LP["ObjectState"]>();
-        const groupIds = this.groups.getGroup(group);
-        for (const [id, obj] of this.objects.entries()) {
-            if (groupIds.has(id)) result.set(id, obj);
+    /** Set the objects as [id, object] pairs for the given storage group */
+    setEntries(group: StorageMode, entries: Array<[ObjectId, LP["ObjectState"]]>): void {
+        this.clearGroup(group);
+
+        for (const [id, object] of entries) {
+            this.objects.set(id, object);
+            this.groups.setKey(id, group);
         }
-        return result;
+    }
+
+    /** Get the objects as [id, object] pairs for the given storage group */
+    *entries(group: StorageMode): Generator<[ObjectId, LP["ObjectState"]]> {
+        for (const id of this.groups.getGroup(group)) {
+            yield [id, this.objects.get(id)];
+        }
+    }
+
+    // TODO: The format of these methods are mixed between low-level "map"-like names and specific names to LayerStorage. Fix that at some point.
+    getObject(id: ObjectId): Readonly<LP["ObjectState"]> {
+        return this.objects.get(id);
+    }
+
+    setObject(
+        storageMode: StorageMode,
+        id: ObjectId,
+        object: LP["ObjectState"] | null,
+        nextObjectId: ObjectId | null = null,
+    ): void {
+        if (object === null) {
+            this.objects.delete(id);
+            this.groups.deleteKey(id);
+        } else {
+            this.objects.set(id, object, nextObjectId);
+            this.groups.setKey(id, storageMode);
+        }
+    }
+
+    _getNextId(id: ObjectId): ObjectId | null {
+        return this.objects.getNextKey(id);
+    }
+
+    _getPrevId(id: ObjectId): ObjectId | null {
+        return this.objects.getPrevKey(id);
     }
 
     clearGroup(group: StorageMode) {
@@ -73,6 +93,7 @@ export class LayerStorage<LP extends LayerProps = LayerProps> {
         }
     }
 
+    /** Serialization to cache */
     toJSON(): LayerStorageJSON {
         return {
             objects: { map: this.objects.map, order: this.objects.order },
@@ -80,6 +101,7 @@ export class LayerStorage<LP extends LayerProps = LayerProps> {
         };
     }
 
+    /** Deserialization from cache */
     static fromJSON<LP extends LayerProps = LayerProps>(json: LayerStorageJSON): LayerStorage<LP> {
         const storage = new LayerStorage<LP>();
         Object.assign(storage.objects, json.objects);

@@ -1,5 +1,4 @@
 import {
-    Keypress,
     Layer,
     LayerEventEssentials,
     LayerHandlerResult,
@@ -11,6 +10,7 @@ import {
 import { notify } from "../../utils/notifications";
 import { stringifyAnything } from "../../utils/string";
 import styles from "../layers.module.css";
+import { LayerGOOFy, layerIsGOOFy } from "../traits/gridOrObjectFirst";
 
 export interface SelectedProps extends LayerProps {
     TempStorage: {
@@ -28,7 +28,7 @@ export interface InternalProps extends LayerProps {
 
 export type KeyDownEventHandler<LP extends SelectedProps = SelectedProps> = {
     handleKeyDown: (
-        arg: LayerEventEssentials<LP> & Keypress & { points: Point[] },
+        arg: Omit<LayerEventEssentials<LP>, "tempStorage"> & { points: Point[] },
     ) => LayerHandlerResult<LP>;
 };
 
@@ -51,11 +51,17 @@ const obj = <LP extends SelectedProps>({
 export const _selectionObjMaker = obj; // For testing.
 
 export const handleEventsSelection = <LP extends SelectedProps>(
-    layer: Layer<LP> & KeyDownEventHandler<LP>,
+    // {gridOrObjectFirst}: {gridOrObjectFirst: GridOrObject}
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     arg: any, // TODO
 ) => {
-    layer.gatherPoints = ({ grid, settings, cursor, tempStorage }) => {
+    type SelectedLayer = Layer<LP> & KeyDownEventHandler<LP>;
+    const gatherPoints: SelectedLayer["gatherPoints"] = function ({
+        grid,
+        settings,
+        cursor,
+        tempStorage,
+    }) {
         let newPoints = grid.selectPointsWithCursor({
             settings,
             cursor,
@@ -88,16 +94,18 @@ export const handleEventsSelection = <LP extends SelectedProps>(
         return newPoints;
     };
 
-    layer.handleEvent = (event) => {
+    const handleEvent: SelectedLayer["handleEvent"] = function (this: SelectedLayer, event) {
         const { grid, storage, tempStorage } = event;
         const internal = storage.getStored<InternalProps>({ grid, layer: { id: layerId } });
         let history: PartialHistoryAction<LP, InternalProps["ObjectState"]>[];
+        const allPoints = internal.keys("question");
 
         switch (event.type) {
             case "cancelAction": {
-                history = internal.objects.keys().map((id) => obj({ id, object: null }));
+                history = [...allPoints].map((id) => obj({ id, object: null }));
                 return { history };
             }
+            // TODO: Deprecate in favor of layerGOOFy.eventPlaceSinglePointObjects, and keybinds
             case "delete":
             case "keyDown": {
                 if (event.keypress === "ctrl-a") {
@@ -110,36 +118,35 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                 } else if (event.keypress === "ctrl-i") {
                     history = grid
                         .getAllPoints("cells")
-                        .map((id) =>
-                            obj({ id, object: internal.objects.has(id) ? null : { state: 1 } }),
-                        );
+                        .map((id) => obj({ id, object: allPoints.has(id) ? null : { state: 1 } }));
                     return {
                         history,
                     };
                 }
 
-                const actions = layer.handleKeyDown({ ...event, points: internal.objects.keys() });
-                const batchId = storage.getNewBatchId();
-
-                return {
-                    ...actions,
-                    history: (actions.history || []).map((action) => ({
-                        ...action,
-                        // Batch all of the external layer's actions together
-                        batchId,
-                    })),
-                };
+                throw notify.error({
+                    title: "selection controls",
+                    message: `Keypress events should not be handled in handleEvent layer.id=${this.id}`,
+                    forever: true,
+                });
             }
             case "pointerDown":
             case "pointerMove": {
+                if (layerIsGOOFy(this)) {
+                    if (this.settings.gridOrObjectFirst === "object") {
+                        // TODO: Get the layer to switch to onePoint.handleEventsCurrentSetting but after it can handle a generic settings key ("currentCharacter" instead of "selectedState"). I do that instead of adapting selection to do it because other layers will decide between one of the two onePoint handlers.
+                        return this.handleKeyDown(event);
+                    }
+                }
                 internal.permStorage.groupNumber = internal.permStorage.groupNumber || 1;
+                const currentPoints = internal.keys("question");
                 const ids = event.points;
 
                 if (event.ctrlKey || event.shiftKey) {
                     if (tempStorage.targetState === undefined) {
                         // If targetState is undefined, there can only be one id
                         const id = ids[0];
-                        if (internal.objects.has(id)) {
+                        if (currentPoints.has(id)) {
                             tempStorage.targetState = null;
                             history = [obj({ id, object: null })];
                         } else {
@@ -151,20 +158,18 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                         }
                     } else if (tempStorage.targetState === null) {
                         history = ids
-                            .filter((id) => internal.objects.has(id))
+                            .filter((id) => currentPoints.has(id))
                             .map((id) => obj({ id, object: null }));
                     } else {
                         const groupsToMerge = new Set(
-                            ids.map((id) => internal.objects.get(id)?.state),
+                            ids.map((id) => internal.getObject(id)?.state),
                         );
                         const allIds = ids
-                            .filter((id) => !internal.objects.has(id))
+                            .filter((id) => !currentPoints.has(id))
                             .concat(
-                                internal.objects
-                                    .keys()
-                                    .filter((id) =>
-                                        groupsToMerge.has(internal.objects.get(id).state),
-                                    ),
+                                [...currentPoints].filter((id) =>
+                                    groupsToMerge.has(internal.getObject(id).state),
+                                ),
                             );
                         const state = tempStorage.targetState;
                         history = allIds.map((id) => obj({ id, object: { state } }));
@@ -177,7 +182,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                     history = [];
 
                     if (removeOld) {
-                        const oldIds = internal.objects.keys();
+                        const oldIds = [...currentPoints];
                         history = oldIds
                             .filter((toDelete) => ids.indexOf(toDelete) === -1)
                             .map((toDelete) => obj({ id: toDelete, object: null }));
@@ -196,7 +201,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
             case "pointerUp": {
                 if (tempStorage.removeSingle) {
                     return {
-                        history: [obj({ id: internal.objects.keys()[0], object: null })],
+                        history: [obj({ id: [...internal.keys("question")][0], object: null })],
                     };
                 }
                 return {};
@@ -204,8 +209,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
             case "undoRedo": {
                 const newIds = event.actions.map(({ objectId: id }) => id);
                 // Clear old selection
-                const history: PartialHistoryAction[] = internal.objects
-                    .keys()
+                const history = [...internal.keys("question")]
                     // TODO: This doesn't account for actions that do not apply to external layer. Do I need to fix?
                     .filter((oldId) => newIds.indexOf(oldId) === -1)
                     .map((oldId) => obj({ id: oldId, object: null }));
@@ -221,7 +225,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
             default: {
                 throw notify.error({
                     message: `Unknown event in selected layer ${
-                        layer.displayName
+                        this.displayName
                     }: ${stringifyAnything(event)}`,
                     forever: true,
                 });
@@ -229,11 +233,11 @@ export const handleEventsSelection = <LP extends SelectedProps>(
         }
     };
 
-    layer.getOverlaySVG = ({ grid, storage, settings }) => {
+    const getOverlaySVG: SelectedLayer["getOverlaySVG"] = function ({ grid, storage, settings }) {
         // TODO: Selection can be made by multiple layers, but not all layers support the same cells/corners selection. In the future, I need to filter the points by the type of points selectable by the current layer.
         const stored = storage.getStored<InternalProps>({ grid, layer: { id: layerId } });
-        const points = stored.objects.keys().filter((key) => stored.objects.get(key).state);
-        const states = points.map((id) => stored.objects.get(id).state);
+        const points = [...stored.keys("question")];
+        const states = points.map((id) => stored.getObject(id).state);
         const pt = grid.getPointTransformer(settings);
 
         const elements: SVGGroup["elements"] = new Map();
@@ -254,4 +258,25 @@ export const handleEventsSelection = <LP extends SelectedProps>(
         }
         return [{ id: "selection", type: "polygon", elements }];
     };
+
+    type GOOFySelectedLayer = SelectedLayer & LayerGOOFy<LP>;
+    const eventPlaceSinglePointObjects: GOOFySelectedLayer["eventPlaceSinglePointObjects"] =
+        function (this: GOOFySelectedLayer, event) {
+            const { storage, grid } = event;
+            const internal = storage.getStored<InternalProps>({ grid, layer: { id: layerId } });
+            const allPoints = internal.keys("question");
+            const actions = this.handleKeyDown({ ...event, points: [...allPoints] });
+            const batchId = storage.getNewBatchId();
+
+            return {
+                ...actions,
+                history: (actions.history || []).map((action) => ({
+                    ...action,
+                    // Batch all of the external layer's actions together
+                    batchId,
+                })),
+            };
+        };
+
+    return { gatherPoints, handleEvent, getOverlaySVG, eventPlaceSinglePointObjects };
 };

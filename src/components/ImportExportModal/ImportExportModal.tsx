@@ -10,7 +10,7 @@ import {
     Textarea,
 } from "@mantine/core";
 import { useClipboard } from "@mantine/hooks";
-import { useCallback, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LayerStorageJSON } from "../../LayerStorage";
 import { usePuzzle } from "../../state/puzzle";
 import { Layer } from "../../types";
@@ -38,7 +38,7 @@ export const ImportExportButton = () => {
     );
 };
 
-export const ImportExportModal = () => {
+export const ImportExportModal = React.memo(function ImportExportModal() {
     const puzzle = usePuzzle();
     const [importAttempted, setImportAttempted] = useState(false);
     const textRef = useRef<HTMLTextAreaElement>(null);
@@ -46,7 +46,16 @@ export const ImportExportModal = () => {
     const { opened, close } = useModal("import-export");
 
     const { copied, copy, error: copyError } = useClipboard({ timeout: 3000 });
+    const normalLayerIds = puzzle.layers
+        .entries()
+        .filter(([, layer]) => !layer.klass.ethereal)
+        .map(([id]) => id);
     const [answerCheck, setAnswerCheck] = useState<Layer["id"][]>([]);
+
+    useEffect(() => {
+        setAnswerCheck(normalLayerIds);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [opened]);
 
     const puzzleWithoutAnswerCheck = useMemo(() => {
         if (opened) {
@@ -127,10 +136,9 @@ export const ImportExportModal = () => {
                 <Textarea autosize readOnly minRows={1} maxRows={6} mb="md" value={puzzleString} />
 
                 <Text size="sm">Which layers are answer checked?</Text>
-                {puzzle.layers
-                    .entries()
-                    .filter(([, layer]) => !layer.ethereal)
-                    .map(([layerId, layer]) => (
+                {normalLayerIds.map((layerId) => {
+                    const layer = puzzle.layers.get(layerId);
+                    return (
                         <Checkbox
                             key={layerId}
                             label={layer.displayName}
@@ -143,7 +151,8 @@ export const ImportExportModal = () => {
                                 }
                             }}
                         />
-                    ))}
+                    );
+                })}
 
                 <Text size="sm" fs="italic" fw="bold" ta="center" mt="md" mb="md" c="red">
                     This only exports solving URLs. Feature complete edit-mode URLs are in the
@@ -190,4 +199,4 @@ export const ImportExportModal = () => {
             </Box>
         </Modal>
     );
-};
+});

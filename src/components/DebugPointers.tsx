@@ -1,4 +1,5 @@
 import { Affix, Box } from "@mantine/core";
+import React from "react";
 import { useProxy } from "valtio/utils";
 import { usePuzzle, useSettings } from "../state/puzzle";
 
@@ -40,9 +41,9 @@ const _DebugPointers = () => {
     );
 };
 
-export const DebugPointers = () => {
+export const DebugPointers = React.memo(function DebugPointers() {
     const { debugging } = useSettings();
     if (!debugging) return <></>;
 
     return <_DebugPointers />;
-};
+});

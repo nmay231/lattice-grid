@@ -95,6 +95,7 @@ export type LayerHandlerResult<LP extends LayerProps> = {
 // It helps with changing all of the types if necessary, and also with being explicit with how composite types are used (at least in the definition).
 export type ObjectId = string;
 export type Point = string;
+export type Color = string;
 export type PointType = "cells" | "edges" | "corners";
 export type EditMode = "question" | "answer";
 export type StorageMode = EditMode | "ui";
@@ -108,11 +109,7 @@ type _TupleOf<T, N extends number, R extends unknown[]> = R["length"] extends N
     ? R
     : _TupleOf<T, N, [T, ...R]>;
 
-export type Tuple<T, N extends number> = N extends N
-    ? number extends N
-        ? T[]
-        : _TupleOf<T, N, []>
-    : never;
+export type Tuple<T, N extends number> = number extends N ? T[] : _TupleOf<T, N, []>;
 
 export type Delta = { dx: number; dy: number };
 
@@ -165,7 +162,7 @@ export type Grid = {
         blacklist,
         settings,
     }: {
-        blacklist: Set<string>;
+        blacklist: ReadonlySet<string>;
         settings: Pick<PuzzleManager["settings"], "cellSize">;
     }): SVGGroup[];
 };
@@ -176,45 +173,41 @@ type StringKeyof<T> = keyof T extends infer K ? (K extends string ? K : never) :
 
 export type FormSchema<LP extends LayerProps> = {
     numpadControls?: true;
-    elements: Array<
-        | { type: "color"; key: StringKeyof<LP["RawSettings"]>; label: string }
-        | {
-              type: "dropdown";
-              key: StringKeyof<LP["RawSettings"]>;
-              label: string;
-              pairs: Array<{ label: string; value: string }>;
-          }
-        | {
-              type: "number";
-              key: StringKeyof<LP["RawSettings"]>;
-              label: string;
-              min?: number;
-              max?: number;
-          }
-        | { type: "boolean"; key: StringKeyof<LP["RawSettings"]>; label: string }
-        | { type: "string"; key: StringKeyof<LP["RawSettings"]>; label: string }
-    >;
+    elements: Partial<Record<StringKeyof<LP["Settings"]>, FormSchemaElement>>;
 };
+export type FormSchemaElement =
+    | { type: "color"; label: string }
+    | {
+          type: "dropdown";
+          label: string;
+          // TODO: Rename entries, or something clearer
+          pairs: Array<{ label: string; value: string }>;
+      }
+    | {
+          type: "number";
+          label: string;
+          min?: number;
+          max?: number;
+      }
+    | { type: "boolean"; label: string }
+    | { type: "string"; label: string };
 
 export type LayerProps = {
-    // TODO: Try allowing settings and rawSettings to be optional
-    RawSettings: UnknownObject;
     ObjectState: UnknownObject;
     PermStorage: UnknownObject;
     TempStorage: UnknownObject;
+    Settings: Record<never, never>;
 };
 
 export type Layer<LP extends LayerProps = LayerProps> = {
-    readonly type: string;
+    readonly klass: LayerClass<LP>;
     id: string;
     displayName: string;
-    ethereal: boolean;
-    rawSettings: LP["RawSettings"];
-    controls?: FormSchema<LP>;
-    constraints?: FormSchema<LP>;
-    newSettings(
-        settingsChange: Omit<LayerEventEssentials<LP>, "tempStorage"> & {
-            newSettings: LP["RawSettings"];
+    settings: LP["Settings"];
+    updateSettings(
+        settingsChange: Pick<LayerEventEssentials<LP>, "grid" | "storage"> & {
+            puzzleSettings: LayerEventEssentials<LP>["settings"];
+            oldSettings: LP["Settings"] | undefined;
         },
     ): LayerHandlerResult<LP>;
     gatherPoints: (
@@ -236,9 +229,22 @@ export type LayerClass<LP extends LayerProps = LayerProps> = {
     readonly type: string;
     displayName: string;
     ethereal: boolean;
-    defaultSettings: LP["RawSettings"];
+    defaultSettings: LP["Settings"];
     controls?: FormSchema<LP>;
     constraints?: FormSchema<LP>;
+    // TODO: Should I merge controls and constraints into settingsDescription?
+    settingsDescription: {
+        // TODO: Do I need derived if I instead choose to not list it here?
+        [K in keyof LP["Settings"]]: {
+            type: "controls" | "constraints";
+            /** A derived setting should not be encoded or directly changeable by the user */
+            derived?: true;
+        };
+    };
+    isValidSetting<K extends keyof LP["Settings"] = keyof LP["Settings"]>(
+        key: K | string,
+        value: unknown,
+    ): value is LP["Settings"][K];
 };
 // #endregion
 
@@ -287,7 +293,7 @@ export type SVGGroup<Type extends keyof SVGElementTagNameMap = keyof SVGElementT
 
 // #endregion
 
-// #region - Parsing
+// #region - Encoding
 export type LocalStorageData = {
     grid: SquareGridParams;
     layers: {

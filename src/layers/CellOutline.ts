@@ -24,8 +24,16 @@ export class CellOutlineLayer extends BaseLayer<CellOutlineProps> implements ICe
 
     static controls = undefined;
     static constraints = undefined;
+    static settingsDescription: LayerClass<CellOutlineProps>["settingsDescription"] = {};
 
-    newSettings() {
+    static isValidSetting<K extends keyof CellOutlineProps["Settings"]>(
+        key: K | string,
+        value: unknown,
+    ): value is CellOutlineProps["Settings"][K] {
+        return false;
+    }
+
+    updateSettings() {
         handleEventsCycleStates(this, {
             states: [true],
             pointTypes: ["cells"],
@@ -55,7 +63,7 @@ export class CellOutlineLayer extends BaseLayer<CellOutlineProps> implements ICe
     getSVG: ICellOutlineLayer["getSVG"] = ({ settings, storage, grid }) => {
         const stored = storage.getStored<CellOutlineProps>({ grid, layer: this });
 
-        const blacklist = stored.groups.getGroup("question");
+        const blacklist = stored.keys("question");
         if (settings.editMode === "answer") return [];
         return grid._getSVG({ blacklist, settings });
     };

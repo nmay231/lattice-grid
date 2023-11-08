@@ -38,7 +38,7 @@ export const layerEventRunner = <LP extends LayerProps>(arg: LayerEventRunnerArg
         handleHistory: (history?: PartialHistoryAction[]) => {
             if (!history?.length) return;
             for (const action of history) {
-                _stored.objects.set(action.id, action.object);
+                _stored.setObject("question", action.id, action.object);
             }
         },
         gatherPoints: ({

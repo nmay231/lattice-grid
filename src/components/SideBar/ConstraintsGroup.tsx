@@ -1,7 +1,8 @@
+import React from "react";
 import { BlocklyModalButton } from "../Blockly/BlocklyModal";
 import { Group } from "./Group";
 
-export const CodeGroup = () => {
+export const CodeGroup = React.memo(function CodeGroup() {
     return (
         <Group name="Constraints" expanded>
             <div
@@ -16,4 +17,4 @@ export const CodeGroup = () => {
             </div>
         </Group>
     );
-};
+});

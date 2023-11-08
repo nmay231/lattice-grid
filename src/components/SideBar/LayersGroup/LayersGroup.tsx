@@ -1,10 +1,11 @@
+import React from "react";
 import { useSettings } from "../../../state/puzzle";
 import { Group } from "../Group";
 import { AddNewLayerButton } from "./AddNewLayerButton";
 import { LayerConstraintSettings } from "./LayerConstraintSettings";
 import { LayerList } from "./LayerList";
 
-export const LayersGroup = () => {
+export const LayersGroup = React.memo(function LayersGroup() {
     const { pageMode } = useSettings();
     const editing = pageMode === "edit";
 
@@ -16,4 +17,4 @@ export const LayersGroup = () => {
             {editing && <LayerConstraintSettings />}
         </Group>
     );
-};
+});

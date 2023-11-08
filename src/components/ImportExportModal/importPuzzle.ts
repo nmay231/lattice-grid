@@ -43,7 +43,7 @@ export const importPuzzle = (puzzle: PuzzleManager, text: string) => {
             gridObjects[layerId] = storage;
 
             if (puzzleData.answerCheck.includes(layerId)) {
-                puzzle.answers.set(layerId, storage.getObjectsByGroup("answer").map);
+                puzzle.answers.set(layerId, Object.fromEntries(storage.entries("answer")));
             }
 
             storage.clearGroup("answer");

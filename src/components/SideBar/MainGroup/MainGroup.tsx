@@ -1,4 +1,5 @@
 import { Button, Center, Group, Stack } from "@mantine/core";
+import React from "react";
 import { Link } from "react-router-dom";
 import { usePuzzle, useSettings } from "../../../state/puzzle";
 import { useFocusElementHandler } from "../../../utils/focusManagement";
@@ -7,7 +8,7 @@ import { Group as Collapse } from "../Group";
 import { PuzzleModeToggle } from "./PuzzleModeToggle";
 import { ResizeGridButton } from "./ResizeModal";
 
-export const MainGroup = () => {
+export const MainGroup = React.memo(function MainGroup() {
     const puzzle = usePuzzle();
     const { pageMode } = useSettings();
     const { ref, unfocus } = useFocusElementHandler();
@@ -39,4 +40,4 @@ export const MainGroup = () => {
             </Center>
         </Collapse>
     );
-};
+});

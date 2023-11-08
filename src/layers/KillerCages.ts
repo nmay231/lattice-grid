@@ -13,26 +13,26 @@ import styles from "./layers.module.css";
 
 interface KillerCagesProps extends MultiPointLayerProps {
     ObjectState: MultiPointLayerProps["ObjectState"] & { state: string | null };
+    Settings: {
+        _numberTyper: ReturnType<typeof numberTyper>;
+    };
 }
 
 interface IKillerCagesLayer extends Layer<KillerCagesProps> {
     _handleKeyDown: MultiPointKeyDownHandler<KillerCagesProps>;
-    _numberTyper: ReturnType<typeof numberTyper>;
 }
 
 export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKillerCagesLayer {
     static ethereal = false;
     static readonly type = "KillerCagesLayer";
     static displayName = "Killer Cages";
-    static defaultSettings = { selectedState: "blue" };
-
-    settings = this.rawSettings;
-
-    _numberTyper: IKillerCagesLayer["_numberTyper"] = () => {
-        throw notify.error({
-            message: `${this.type}._numberTyper() called before implementing!`,
-            forever: true,
-        });
+    static defaultSettings: LayerClass<KillerCagesProps>["defaultSettings"] = {
+        _numberTyper: () => {
+            throw notify.error({
+                message: `${this.type}._numberTyper() called before implementing!`,
+                forever: true,
+            });
+        },
     };
 
     static create = ((puzzle): KillerCagesLayer => {
@@ -45,14 +45,14 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
         if (!stored.permStorage.currentObjectId) return {};
 
         const id = stored.permStorage.currentObjectId;
-        const object = stored.objects.get(id);
+        const object = stored.getObject(id);
 
         if (type === "delete") {
             if (object.state === null) return {};
             return { history: [{ id, object: { ...object, state: null } }] };
         }
 
-        const states = this._numberTyper([object.state || null], { type, keypress });
+        const states = this.settings._numberTyper([object.state || null], { type, keypress });
 
         if (states === "doNothing" || states[0] === object.state) {
             return {}; // No change necessary
@@ -62,10 +62,25 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
         return { history: [{ id, object: { ...object, state } }] };
     };
 
-    static controls: KillerCagesLayer["controls"] = { elements: [], numpadControls: true };
+    static controls: LayerClass<KillerCagesProps>["controls"] = {
+        elements: {},
+        numpadControls: true,
+    };
     static constraints = undefined;
 
-    newSettings: IKillerCagesLayer["newSettings"] = () => {
+    static settingsDescription: LayerClass<KillerCagesProps>["settingsDescription"] = {
+        // Actually, derived is interesting in this case because I don't want it to be serialized, but it's not actually derived from anything (at least yet)
+        _numberTyper: { type: "constraints", derived: true },
+    };
+
+    static isValidSetting<K extends keyof KillerCagesProps["Settings"]>(
+        key: K | string,
+        value: unknown,
+    ): value is KillerCagesProps["Settings"][K] {
+        return false;
+    }
+
+    updateSettings: IKillerCagesLayer["updateSettings"] = () => {
         handleEventsUnorderedSets(this, {
             handleKeyDown: this._handleKeyDown.bind(this) as NeedsUpdating, // Screw you typescript
             pointTypes: ["cells"],
@@ -73,22 +88,19 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
             allowOverlap: true, // TODO: Change to false when properly implemented
             overwriteOthers: false,
         });
-        this._numberTyper = numberTyper({ max: -1, negatives: false });
+        this.settings._numberTyper = numberTyper({ max: -1, negatives: false });
         return {};
     };
 
     getSVG: IKillerCagesLayer["getSVG"] = ({ grid, storage, settings }) => {
         const stored = storage.getStored<KillerCagesProps>({ grid, layer: this });
-        const group = stored.groups.getGroup(settings.editMode);
-        const renderOrder = stored.objects.keys().filter((id) => group.has(id));
         const pt = grid.getPointTransformer(settings);
 
         const cageElements: SVGGroup["elements"] = new Map();
         const numberElements: SVGGroup["elements"] = new Map();
         const textStyles = [styles.textTop, styles.textLeft].join(" ");
 
-        for (const id of renderOrder) {
-            const object = stored.objects.get(id);
+        for (const [id, object] of stored.entries(settings.editMode)) {
             const [, cells] = pt.fromPoints("cells", object.points);
             const shrinkwrap = pt.shrinkwrap(cells, { inset: 5 });
 

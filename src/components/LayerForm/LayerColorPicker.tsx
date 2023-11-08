@@ -22,9 +22,11 @@ const theOnlyColorsThatExistOnThePlanet = [
     "var(--user-light-white)",
 ];
 
-interface Arg1 extends Pick<ReturnType<GetInputProps<any>>, "value" | "onChange"> {
+type Arg1 = {
+    value: string;
+    onChange?: (color: string) => void;
     label: string;
-}
+};
 export const LayerColorPicker = ({ label, value, onChange }: Arg1) => {
     return (
         <Box m="auto">

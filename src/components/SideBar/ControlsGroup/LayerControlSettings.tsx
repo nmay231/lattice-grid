@@ -1,10 +1,11 @@
 import { Text } from "@mantine/core";
 import { useProxy } from "valtio/utils";
-import { availableLayers } from "../../../layers";
+import { layerIsGOOFy } from "../../../layers/traits/gridOrObjectFirst";
 import { usePuzzle } from "../../../state/puzzle";
-import { FormSchema, Layer, LayerClass, LayerProps } from "../../../types";
+import { FormSchema, Layer, LayerProps } from "../../../types";
 import { useFocusGroup } from "../../../utils/focusManagement";
 import { LayerForm, layerSettingsRerender } from "../../LayerForm";
+import { ToggleGridObjectFirst } from "../../LayerForm/ToggleGridObjectFirst";
 import { Numpad } from "./Numpad";
 
 type InnerProps = { layer: Layer; controls: FormSchema<LayerProps> };
@@ -18,6 +19,16 @@ const _LayerControlSettings = ({ layer, controls }: InnerProps) => {
         <div ref={ref} style={{ margin: "auto" }}>
             {/* TODO: Hack Mantine's useFocusTrap so it doesn't focus the first element right away */}
             <div data-autofocus></div>
+            {layerIsGOOFy(layer) && (
+                <ToggleGridObjectFirst
+                    value={layer.settings.gridOrObjectFirst}
+                    onChange={(value) => {
+                        puzzle.changeLayerSetting(layer.id, "gridOrObjectFirst", value);
+                        // TODO: Update keypress indicators (the little thing that shows which keypress/mouse click activates a control).
+                        unfocus();
+                    }}
+                />
+            )}
             {controls.numpadControls && (
                 <Numpad
                     onKeyPress={(keypress) => {
@@ -28,11 +39,11 @@ const _LayerControlSettings = ({ layer, controls }: InnerProps) => {
             )}
             <LayerForm
                 key={rerender.key}
-                initialValues={layer.rawSettings}
+                initialValues={layer.settings}
                 elements={controls.elements}
-                onChange={(newSettings) => {
+                onChange={(key, value) => {
                     rerender.key += 1;
-                    puzzle.changeLayerSettings(layer.id, newSettings);
+                    puzzle.changeLayerSetting(layer.id, key, value);
                     puzzle.renderChange({ type: "draw", layerIds: [layer.id] });
                     unfocus();
                 }}
@@ -55,10 +66,7 @@ export const LayerControlSettings = () => {
         );
     }
 
-    const layerType = layer.type;
-    const layerClass = availableLayers[layerType as keyof typeof availableLayers] as LayerClass;
-
-    if (!layerClass.controls) {
+    if (!layer.klass.controls) {
         return (
             <Text fs="italic" m="xs">
                 This layer has no controls
@@ -66,5 +74,5 @@ export const LayerControlSettings = () => {
         );
     }
 
-    return <_LayerControlSettings key={id} layer={layer} controls={layerClass.controls} />;
+    return <_LayerControlSettings key={id} layer={layer} controls={layer.klass.controls} />;
 };

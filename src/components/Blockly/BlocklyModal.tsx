@@ -1,6 +1,6 @@
 import { Button, Drawer, Grid, Text } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
-import { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { usePuzzle } from "../../state/puzzle";
 import { ComputeManager } from "../../userComputation/ComputeManager";
 import { blocklyToolbox } from "../../userComputation/codeBlocks";
@@ -29,7 +29,7 @@ export const BlocklyModalButton = ({ children }: { children: string }) => {
     );
 };
 
-export const BlocklyModal = () => {
+export const BlocklyModal = React.memo(function BlocklyModal() {
     const { opened, close } = useModal("blockly");
     const [rendered, setRendered] = useState(false);
     const [blocks, setBlocks] = useLocalStorage<any>({
@@ -58,8 +58,8 @@ export const BlocklyModal = () => {
         } as any);
 
         workspace.addChangeListener((event: any) => {
-            // eslint-disable-next-line no-constant-condition
-            if (false) {
+            // TODO: Kept for future posterity
+            if (!event) {
                 console.log(event.type);
                 if (["move"].includes(event.type)) console.log(event);
             }
@@ -124,4 +124,4 @@ export const BlocklyModal = () => {
             </Grid>
         </Drawer>
     );
-};
+});

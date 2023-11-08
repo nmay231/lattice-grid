@@ -60,7 +60,7 @@ export const handleEventsCycleStates = <
             return {};
         }
 
-        const { grid, storage, tempStorage } = event;
+        const { grid, storage, tempStorage, settings } = event;
 
         const stored = storage.getStored<OnePointProps<ObjectState>>({ grid, layer });
         const newPoints = event.points;
@@ -69,8 +69,8 @@ export const handleEventsCycleStates = <
         if (tempStorage.targetState !== undefined) {
             state = tempStorage.targetState;
         } else {
-            if (stored.objects.has(newPoints[0])) {
-                const index = 1 + states.indexOf(stored.objects.get(newPoints[0]).state);
+            if (stored.keys(settings.editMode).has(newPoints[0])) {
+                const index = 1 + states.indexOf(stored.getObject(newPoints[0]).state);
                 state = index < states.length ? states[index] : null;
             } else {
                 state = states[0];
@@ -115,7 +115,8 @@ export const handleEventsCurrentSetting = <
         const newPoints = event.points;
 
         if (tempStorage.targetState === undefined) {
-            const isSame = stored.objects.get(newPoints[0])?.state === layer.settings.selectedState;
+            const object = stored.getObject(newPoints[0]);
+            const isSame = object?.state === layer.settings.selectedState;
             tempStorage.targetState = isSame ? null : layer.settings.selectedState;
         }
 

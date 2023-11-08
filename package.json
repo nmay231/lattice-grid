@@ -20,6 +20,8 @@
         "lodash": "^4.17.21",
         "node-inspect-extracted": "^3.0.0",
         "pako": "^2.0.4",
+        "protobufjs": "~7.2.5",
+        "protobufjs-cli": "~1.1.2",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
         "react-icons": "^4.11.0",
@@ -53,19 +55,21 @@
     },
     "scripts": {
         "dev": "vite",
-        "build": "vite build",
+        "build": "yarn protobuf && vite build",
         "checkdeps": "yarn outdated; depcheck --ignores 'pre-commit,@emotion/react,prettier-plugin-organize-imports'",
         "precommit": "yarn typecheck; yarn test:once; yarn lint",
+        "precommit:keep-exit-codes": "E=0; yarn typecheck || E=$?; yarn test:once || E=$?; yarn lint || E=$?; exit $E",
         "test": "vitest watch",
         "test:once": "vitest run --changed",
         "lint": "prettier --ignore-path .gitignore --check . && eslint --ignore-path .gitignore .",
         "lint:fix": "prettier --ignore-path .gitignore --write . && eslint --ignore-path .gitignore --fix .",
+        "protobuf": "yarn protobuf:js && yarn protobuf:ts",
+        "protobuf:js": "pbjs -w es6 -t static-module src/encoding/latgrid.proto -o src/encoding/generated.js",
+        "protobuf:ts": "pbts src/encoding/generated.js -o src/encoding/generated.d.ts",
         "typecheck": "tsc --noEmit"
     },
     "pre-commit": [
-        "typecheck",
-        "test:once",
-        "lint"
+        "precommit:keep-exit-codes"
     ],
     "browserslist": {
         "production": [

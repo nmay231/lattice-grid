@@ -77,14 +77,14 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
     // TODO: Should I allow multiple current objects? (so I can do `ctrl-a, del` and things like that)
     // TODO: Handle moving objects with long presses (?)
     layer.handleEvent = (event): LayerHandlerResult<LP> => {
-        const { grid, storage, type, tempStorage } = event;
+        const { grid, storage, type, tempStorage, settings } = event;
 
         const stored = storage.getStored<LP>({ layer, grid });
         const currentObjectId = stored.permStorage.currentObjectId || "";
         if (!currentObjectId && type !== "pointerDown" && type !== "undoRedo") {
             return {}; // Other events only matter if there is an object selected
         }
-        const object = stored.objects.get(currentObjectId);
+        const object = stored.getObject(currentObjectId);
 
         switch (type) {
             case "keyDown": {
@@ -113,9 +113,10 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
                 const batchId = tempStorage.batchId;
                 // There's only one point with pointerDown
                 const startPoint = event.points[0];
-                const overlap = stored.objects
-                    .keys()
-                    .filter((id) => stored.objects.get(id).points.indexOf(startPoint) > -1);
+                // TODO: Only selecting objects from current editMode. Is that what I want?
+                const overlap = [...stored.keys(settings.editMode)].filter(
+                    (id) => stored.getObject(id).points.indexOf(startPoint) > -1,
+                );
 
                 if (overlap.length) {
                     // Select the topmost existing object
@@ -128,7 +129,7 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
 
                     // Force a rerender without polluting history
                     return {
-                        history: [{ id, object: stored.objects.get(id), batchId }],
+                        history: [{ id, object: stored.getObject(id), batchId }],
                     };
                 }
 
@@ -180,7 +181,7 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
                 }
                 const batchId = tempStorage.batchId;
 
-                const objectCopy = cloneDeep(object);
+                const objectCopy = cloneDeep(object) as LP["ObjectState"];
                 if (tempStorage.removeSingle) {
                     // Remove the one cell that was selected
                     objectCopy.points = objectCopy.points.filter(

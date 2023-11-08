@@ -1,6 +1,6 @@
 import fc from "fast-check";
 import { zip as lodashZip, range } from "lodash";
-import { zip as ourZip, parseIntBase, reduceTo } from "./data";
+import { concat, zip as ourZip, parseIntBase, reduceTo } from "./data";
 import { FCNormalFloat, FCRepeat, given } from "./testing/fcArbitraries";
 
 describe("reduceTo", () => {
@@ -57,5 +57,15 @@ describe("zip with better types", () => {
         ]).assertProperty((arrays) => {
             expect(Array.from(ourZip(...arrays))).toEqual(lodashZip(...arrays));
         });
+    });
+});
+
+describe("concat for iterables", () => {
+    it("concatenates iterables and arrays", () => {
+        function* iterable() {
+            yield 1;
+            yield 2;
+        }
+        expect([...concat(iterable(), [42], iterable())]).toEqual([1, 2, 42, 1, 2]);
     });
 });

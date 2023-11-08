@@ -1,23 +1,35 @@
 import { vi } from "vitest";
 import { LayerStorage } from "../../LayerStorage";
-import { NeedsUpdating, PartialHistoryAction } from "../../types";
+import { LayerProps, ObjectId, PartialHistoryAction } from "../../types";
+import { zip } from "../../utils/data";
 import { layerEventRunner } from "../../utils/testing/layerEventRunner";
 import {
-    MinimalSettings,
+    TwoPointCurrentStateParameters,
     TwoPointProps,
     handleEventsCurrentSetting as twoPointCurrentSetting,
 } from "./twoPoint";
 
+// TODO: Write all new tests with LayerStorage.setEntries()
+const layerStorageFromObjects = <LP extends LayerProps>({
+    ids,
+    objs,
+}: {
+    ids: ObjectId[];
+    objs: LP["ObjectState"][];
+}) => {
+    const stored = new LayerStorage<LP>();
+    stored.setEntries("question", [...zip(ids, objs)]);
+    return stored;
+};
+
 describe("twoPoint.handleEventsCurrentSetting", () => {
-    type SecondArg = Parameters<typeof twoPointCurrentSetting>[1];
+    type State = { x: string };
     const getTwoPointLayer = (
-        { settings, ...arg } = {} as SecondArg & { settings?: MinimalSettings },
+        { settings = { x: "default" }, ...arg } = {} as { settings?: State } & Partial<
+            TwoPointCurrentStateParameters<State>
+        >,
     ) => {
-        const layer = {
-            id: "DummyLayer",
-            settings: settings || { selectedState: { x: 42 } },
-        } as NeedsUpdating;
-        twoPointCurrentSetting(layer, {
+        const { gatherPoints, handleEvent } = twoPointCurrentSetting({
             pointTypes: ["cells"],
             deltas: [
                 { dx: 0, dy: 2 },
@@ -25,12 +37,19 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
                 { dx: 2, dy: 0 },
                 { dx: -2, dy: 0 },
             ],
+            stateKeys: Object.keys(settings),
             ...arg,
         });
-        return layer;
+
+        return {
+            id: "DummyLayer",
+            settings,
+            gatherPoints,
+            handleEvent,
+        };
     };
 
-    type HistoryType = PartialHistoryAction<TwoPointProps>[];
+    type HistoryType = PartialHistoryAction<TwoPointProps<State>>[];
 
     // TODO: we have to call layer.gatherPoints each time because it's not a pure function. We might not have to if modified appropriately.
 
@@ -38,16 +57,15 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
         vi.resetAllMocks();
     });
 
-    it("only adds/changes particular properties", () => {
-        const settings = { selectedState: { asdf: "yolo" } };
-        expect(getTwoPointLayer({ settings })).toEqual({
-            // Required
-            id: "DummyLayer",
-            settings,
-            // Added
-            gatherPoints: expect.any(Function),
-            handleEvent: expect.any(Function),
+    it("converts states with multiple keys back and forth with nothing lost", () => {
+        const { stateToString, stringToState } = twoPointCurrentSetting({
+            pointTypes: ["cells"],
+            deltas: [{ dx: 420, dy: 69 }],
+            stateKeys: ["a", "c", "b"],
         });
+
+        const state = { a: "1", b: "2", c: "3" };
+        expect(state).toEqual(stringToState(stateToString(state)));
     });
 
     it("selects one line", () => {
@@ -66,7 +84,11 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
 
         // Then one line will be created
         expect(pointerMove.history).toEqual<HistoryType>([
-            { batchId: 13, id: "a;b", object: { points: ["a", "b"], state: { x: 42 } } },
+            {
+                batchId: 13,
+                id: "a;b",
+                object: { points: ["a", "b"], x: "default" },
+            },
         ]);
 
         // Ensure clean result
@@ -91,8 +113,16 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
 
         // Then two lines will be created
         expect(pointerMove1.history).toEqual<HistoryType>([
-            { batchId: 13, id: "a;c", object: { points: ["a", "c"], state: { x: 42 } } },
-            { batchId: 13, id: "b;c", object: { points: ["b", "c"], state: { x: 42 } } },
+            {
+                batchId: 13,
+                id: "a;c",
+                object: { points: ["a", "c"], x: "default" },
+            },
+            {
+                batchId: 13,
+                id: "b;c",
+                object: { points: ["b", "c"], x: "default" },
+            },
         ]);
 
         // When two more points are selected
@@ -103,8 +133,16 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
 
         // Then two more lines will be created
         expect(pointerMove2.history).toEqual<HistoryType>([
-            { batchId: 13, id: "b;d", object: { points: ["b", "d"], state: { x: 42 } } },
-            { batchId: 13, id: "d;e", object: { points: ["d", "e"], state: { x: 42 } } },
+            {
+                batchId: 13,
+                id: "b;d",
+                object: { points: ["b", "d"], x: "default" },
+            },
+            {
+                batchId: 13,
+                id: "d;e",
+                object: { points: ["d", "e"], x: "default" },
+            },
         ]);
 
         // Ensure clean result
@@ -116,9 +154,9 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
     it("erases some lines when drawing over existing ones with the same state", () => {
         // Given an existing line
         const layer = getTwoPointLayer();
-        const stored = LayerStorage.fromObjects<TwoPointProps>({
+        const stored = layerStorageFromObjects<TwoPointProps<State>>({
             ids: ["a;b"],
-            objs: [{ points: ["a", "b"], state: { x: 42 } }],
+            objs: [{ points: ["a", "b"], x: "default" }],
         });
         const handler = layerEventRunner({ layer, stored });
         handler.storage.getNewBatchId.mockReturnValueOnce(13);
@@ -145,9 +183,9 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
     it("overrides some lines when drawing over existing ones with a different state", () => {
         // Given an existing line with a different state
         const layer = getTwoPointLayer();
-        const stored = LayerStorage.fromObjects<TwoPointProps>({
+        const stored = layerStorageFromObjects<TwoPointProps<State>>({
             ids: ["a;b"],
-            objs: [{ points: ["a", "b"], state: { different: true } }],
+            objs: [{ points: ["a", "b"], x: "different" }],
         });
         const handler = layerEventRunner({ layer, stored });
         handler.storage.getNewBatchId.mockReturnValueOnce(13);
@@ -162,7 +200,11 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
 
         // Then its state will be changed to the current state
         expect(pointerMove.history).toEqual<HistoryType>([
-            { batchId: 13, id: "a;b", object: { points: ["a", "b"], state: { x: 42 } } },
+            {
+                batchId: 13,
+                id: "a;b",
+                object: { points: ["a", "b"], x: "default" },
+            },
         ]);
 
         // Ensure clean result
@@ -174,9 +216,9 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
     it("does not erase lines when drawing over similar lines after drawing at all", () => {
         // Given an existing line
         const layer = getTwoPointLayer();
-        const stored = LayerStorage.fromObjects<TwoPointProps>({
+        const stored = layerStorageFromObjects<TwoPointProps<State>>({
             ids: ["1;2"],
-            objs: [{ points: ["1", "2"], state: { x: 42 } }],
+            objs: [{ points: ["1", "2"], x: "default" }],
         });
         const handler = layerEventRunner({ layer, stored });
         handler.storage.getNewBatchId.mockReturnValueOnce(13);
@@ -191,7 +233,11 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
 
         // Then the new line is created
         expect(pointerMove1.history).toEqual<HistoryType>([
-            { batchId: 13, id: "2;3", object: { points: ["2", "3"], state: { x: 42 } } },
+            {
+                batchId: 13,
+                id: "2;3",
+                object: { points: ["2", "3"], x: "default" },
+            },
         ]);
 
         // When the existing line is drawn over
@@ -204,7 +250,11 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
         expect(pointerMove2.history).toEqual<HistoryType>([
             // This action is technically unnecessary since the object "1;2" already exists, but the main point is that it doesn't get deleted (or that the state changes)
             // TODO: it should not pollute history by adding lines that already exist
-            { batchId: 13, id: "1;2", object: { points: ["1", "2"], state: { x: 42 } } },
+            {
+                batchId: 13,
+                id: "1;2",
+                object: { points: ["1", "2"], x: "default" },
+            },
         ]);
 
         // Ensure clean result
@@ -216,9 +266,9 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
     it("does not add lines when deleting lines and drawing over nothing", () => {
         // Given an existing line
         const layer = getTwoPointLayer();
-        const stored = LayerStorage.fromObjects<TwoPointProps>({
+        const stored = layerStorageFromObjects<TwoPointProps<State>>({
             ids: ["1;2"],
-            objs: [{ points: ["1", "2"], state: { x: 42 } }],
+            objs: [{ points: ["1", "2"], x: "default" }],
         });
         const handler = layerEventRunner({ layer, stored });
         handler.storage.getNewBatchId.mockReturnValueOnce(13);

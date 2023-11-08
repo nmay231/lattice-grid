@@ -31,7 +31,7 @@ import { LatestTimeout } from "./utils/primitiveWrappers";
 import { stringifyAnything } from "./utils/string";
 
 export class PuzzleManager {
-    layers = proxy(new IndexedOrderedMap<ValtioRef<Layer>>((layer) => !layer.ethereal));
+    layers = proxy(new IndexedOrderedMap<ValtioRef<Layer>>((layer) => !layer.klass.ethereal));
     UILayer = availableLayers["OverlayLayer"].create(this);
     CellOutlineLayer = availableLayers["CellOutlineLayer"].create(this);
     SVGGroups = proxy({} as Record<Layer["id"], ValtioRef<SVGGroup[]>>);
@@ -151,9 +151,11 @@ export class PuzzleManager {
                 // TODO: This assumes that all objects can be checked to be equal using recursive equality. Some objects might have hidden state that is not relevant to answer checking
                 let correct = true;
                 for (const [layerId, expected] of this.answers.entries()) {
-                    const actual = this.storage
-                        .getStored({ layer: { id: layerId }, grid: this.grid })
-                        .getObjectsByGroup("answer").map;
+                    const actual = Object.fromEntries(
+                        this.storage
+                            .getStored({ layer: { id: layerId }, grid: this.grid })
+                            .entries("answer"),
+                    );
 
                     if (!isEqual(expected, actual)) {
                         correct = false;
@@ -185,11 +187,21 @@ export class PuzzleManager {
     _getParams() {
         // TODO: change localStorage key and what's actually stored/how it's stored
         const data: LocalStorageData = {
-            layers: this.layers.values().map(({ id, type, rawSettings }) => ({
-                id,
-                type: type as NeedsUpdating,
-                rawSettings,
-            })),
+            layers: this.layers.values().map(({ id, klass: { type }, settings }) => {
+                const rawSettings: UnknownObject = {};
+                for (const [key, description] of Object.entries(
+                    availableLayers[type as keyof typeof availableLayers].settingsDescription,
+                )) {
+                    if (!description.derived) {
+                        rawSettings[key] = settings[key as never];
+                    }
+                }
+                return {
+                    id,
+                    type: type as NeedsUpdating,
+                    rawSettings,
+                };
+            }),
             grid: this.grid.getParams(),
         };
         return data;
@@ -202,14 +214,22 @@ export class PuzzleManager {
         id: Layer["id"] | null,
         settings?: UnknownObject,
     ): Layer["id"] {
-        const layer = new layerClass(layerClass, this);
+        const layer = layerClass.create(this);
         if (id) layer.id = id;
 
         // Add the layer to the end, but before the UILayer
         this.layers.set(layer.id, valtioRef(layer), this.UILayer.id);
-
         this.storage.addStorage({ grid: this.grid, layer });
-        this.changeLayerSettings(layer.id, settings || layerClass.defaultSettings);
+
+        const { grid, settings: puzzleSettings, storage } = this;
+        // TODO: I don't like that updateSettings is called multiple times (here and in .changeLayerSetting), or that any possible history from the initial load is ignored here (I don't check the return from the following call)
+        layer.updateSettings({ grid, puzzleSettings, storage, oldSettings: undefined });
+        if (settings) {
+            for (const [key, value] of Object.entries(settings)) {
+                this.changeLayerSetting(layer.id, key, value);
+            }
+        }
+
         this.selectLayer(layer.id);
 
         return layer.id;
@@ -236,13 +256,23 @@ export class PuzzleManager {
         }
     }
 
-    changeLayerSettings(layerId: Layer["id"], newSettings: any) {
+    changeLayerSetting(layerId: Layer["id"], key: string, value: unknown) {
         const layer = this.layers.get(layerId);
-        const { grid, settings, storage } = this;
-        const { history } = layer.newSettings({ grid, settings, storage, newSettings });
+        if (layer.klass.isValidSetting(key, value)) {
+            const oldSettings = { ...layer.settings };
+            layer.settings[key as never] = value; // Sometimes I hate typescript
 
-        if (history?.length) {
-            this.storage.addToHistory({ puzzle: this, layerId: layer.id, actions: history });
+            const { grid, settings, storage } = this;
+            const { history } = layer.updateSettings({
+                grid,
+                puzzleSettings: settings,
+                storage,
+                oldSettings,
+            });
+
+            if (history?.length) {
+                this.storage.addToHistory({ puzzle: this, layerId: layer.id, actions: history });
+            }
         }
     }
 

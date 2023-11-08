@@ -5,46 +5,56 @@ import { layerEventEssentials } from "../utils/testing/layerEventEssentials";
 import { NumberLayer, NumberProps } from "./Number";
 
 describe("Number Layer", () => {
-    // Layer with numbers 0-9
-    const settings9 = { max: 9, negatives: false };
-    const layer9 = NumberLayer.create({ layers: new IndexedOrderedMap() });
-    layer9.newSettings({ ...layerEventEssentials(), newSettings: settings9 });
+    type Arg = {
+        stored?: LayerStorage<NumberProps>;
+        settings?: Partial<Omit<NumberProps["Settings"], "_numberTyper">>;
+    };
+    const getNumberLayer = ({ stored, settings } = {} as Arg) => {
+        const layer = NumberLayer.create({ layers: new IndexedOrderedMap() });
+        const essentials = layerEventEssentials({ stored });
 
-    // Layer with numbers -64 to 64
-    const settings64 = { max: 64, negatives: true };
-    const layer64 = NumberLayer.create({ layers: new IndexedOrderedMap() });
-    layer64.newSettings({ ...layerEventEssentials(), newSettings: settings64 });
+        let oldSettings: NumberProps["Settings"] | undefined = undefined;
+        layer.updateSettings({ ...essentials, puzzleSettings: essentials.settings, oldSettings });
+
+        if (settings) {
+            oldSettings = layer.settings;
+            Object.assign(layer.settings, settings);
+            layer.updateSettings({
+                ...essentials,
+                puzzleSettings: essentials.settings,
+                oldSettings,
+            });
+        }
+
+        return layer;
+    };
 
     type HistoryType = LayerHandlerResult<NumberProps>["history"];
 
     it("places numbers", () => {
+        const layer9 = getNumberLayer({ settings: { currentCharacter: "1" } });
         const result = layer9.handleKeyDown({
             ...layerEventEssentials(),
-            type: "keyDown",
-            keypress: "1",
             points: ["id1", "id2"],
         });
 
         expect(result.history).toEqual<HistoryType>([
-            { id: "id1", object: { point: "id1", state: "1" } },
-            { id: "id2", object: { point: "id2", state: "1" } },
+            { id: "id1", object: { state: "1" } },
+            { id: "id2", object: { state: "1" } },
         ]);
     });
 
     it("deletes some numbers", () => {
-        const stored = LayerStorage.fromObjects<NumberProps>({
-            ids: ["toDelete", "keep", "alsoDelete"],
-            objs: [
-                { point: "toDelete", state: "1" },
-                { point: "keep", state: "5" },
-                { point: "alsoDelete", state: "3" },
-            ],
-        });
+        const stored = new LayerStorage<NumberProps>();
+        const layer9 = getNumberLayer({ stored, settings: { currentCharacter: null } });
+        stored.setEntries("question", [
+            ["toDelete", { state: "1" }],
+            ["keep", { state: "5" }],
+            ["alsoDelete", { state: "3" }],
+        ]);
 
         const result = layer9.handleKeyDown({
             ...layerEventEssentials({ stored }),
-            type: "delete",
-            keypress: "Delete",
             points: ["toDelete", "alsoDelete"],
         });
 
@@ -55,46 +65,49 @@ describe("Number Layer", () => {
     });
 
     it("does not delete objects when the number range increases", () => {
-        const stored = LayerStorage.fromObjects<NumberProps>({
-            ids: ["1,1", "2,2", "3,3"],
-            objs: [
-                { point: "1,1", state: "0" },
-                { point: "2,2", state: "5" },
-                { point: "3,3", state: "9" },
-            ],
+        const stored = new LayerStorage<NumberProps>();
+        const layer9 = getNumberLayer({ stored });
+        stored.setEntries("question", [
+            ["1,1", { state: "5" }],
+            ["2,2", { state: "9" }],
+            ["3,3", { state: "0" }],
+        ]);
+
+        const oldSettings = { ...layer9.settings };
+        Object.assign(layer9.settings, { max: 10, negatives: true });
+        const essentials = layerEventEssentials({ stored });
+        const result = layer9.updateSettings({
+            ...essentials,
+            puzzleSettings: essentials.settings,
+            oldSettings,
         });
 
-        const result = layer9.newSettings({
-            ...layerEventEssentials({ stored }),
-            newSettings: { max: 10, negatives: true },
-        });
-        expect(result.history).toEqual<HistoryType>([]);
-
-        layer9.newSettings({ ...layerEventEssentials(), newSettings: settings9 });
+        expect(result.history ?? []).toEqual<HistoryType>([]);
     });
 
     it("deletes objects when the number range decreases", () => {
-        const stored = LayerStorage.fromObjects<NumberProps>({
-            ids: ["1,1", "2,2", "3,3", "4,4"],
-            objs: [
-                { point: "1,1", state: "-10" },
-                { point: "2,2", state: "0" },
-                { point: "3,3", state: "5" },
-                { point: "4,4", state: "42" },
-            ],
-        });
+        const stored = new LayerStorage<NumberProps>();
+        const layer64 = getNumberLayer({ settings: { max: 64, negatives: true }, stored });
+        stored.setEntries("question", [
+            ["1,1", { state: "-10" }],
+            ["2,2", { state: "0" }],
+            ["3,3", { state: "5" }],
+            ["4,4", { state: "42" }],
+        ]);
 
-        const result = layer64.newSettings({
-            ...layerEventEssentials({ stored }),
-            newSettings: { max: 7, negatives: false },
+        const oldSettings = { ...layer64.settings };
+        Object.assign(layer64.settings, { max: 7, negatives: false });
+        const essentials = layerEventEssentials({ stored });
+        const result = layer64.updateSettings({
+            ...essentials,
+            puzzleSettings: essentials.settings,
+            oldSettings,
         });
 
         expect(result.history).toEqual<HistoryType>([
             { id: "1,1", object: null },
             { id: "4,4", object: null },
         ]);
-
-        layer64.newSettings({ ...layerEventEssentials(), newSettings: settings9 });
     });
 
     // TODO: Not implemented, might never be honestly.

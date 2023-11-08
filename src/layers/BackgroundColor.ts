@@ -1,19 +1,14 @@
-import { FormSchema, Layer, LayerClass, SVGGroup } from "../types";
+import { Color, FormSchema, Layer, LayerClass, SVGGroup } from "../types";
+import { DEFAULT_COLORS, isValidColor } from "../utils/colors";
 import { BaseLayer } from "./BaseLayer";
 import { OnePointProps, handleEventsCurrentSetting } from "./controls/onePoint";
 import styles from "./layers.module.css";
 
-type Color = string;
-// TODO: Single file exporting all versions of colors?
-const BLUE: Color = "var(--user-light-blue)";
-
 interface BackgroundColorProps extends OnePointProps<Color> {
-    RawSettings: { selectedState: Color };
+    Settings: { selectedState: Color };
 }
 
-interface IBackgroundColorLayer extends Layer<BackgroundColorProps> {
-    settings: BackgroundColorProps["RawSettings"];
-}
+interface IBackgroundColorLayer extends Layer<BackgroundColorProps> {}
 
 export class BackgroundColorLayer
     extends BaseLayer<BackgroundColorProps>
@@ -22,25 +17,32 @@ export class BackgroundColorLayer
     static ethereal = false;
     static readonly type = "BackgroundColorLayer";
     static displayName = "Background Color";
-    static defaultSettings = { selectedState: BLUE };
-
-    settings = this.rawSettings;
+    static defaultSettings = { selectedState: DEFAULT_COLORS.LIGHT_BLUE };
 
     static create = ((puzzle): BackgroundColorLayer => {
         return new BackgroundColorLayer(BackgroundColorLayer, puzzle);
     }) satisfies LayerClass<BackgroundColorProps>["create"];
 
     static controls: FormSchema<BackgroundColorProps> = {
-        elements: [{ type: "color", key: "selectedState", label: "Fill color" }],
+        elements: { selectedState: { type: "color", label: "Fill color" } },
     };
     static constraints = undefined;
 
-    newSettings: IBackgroundColorLayer["newSettings"] = ({ newSettings }) => {
-        this.rawSettings = newSettings;
-        this.settings = {
-            selectedState: newSettings.selectedState || BLUE,
-        };
+    static settingsDescription: LayerClass<BackgroundColorProps>["settingsDescription"] = {
+        selectedState: { type: "controls" },
+    };
 
+    static isValidSetting<K extends keyof BackgroundColorProps["Settings"]>(
+        key: K | string,
+        value: unknown,
+    ): value is BackgroundColorProps["Settings"][K] {
+        if (key === "selectedState") {
+            return typeof value === "string" && isValidColor(value);
+        }
+        return false;
+    }
+
+    updateSettings: IBackgroundColorLayer["updateSettings"] = () => {
         handleEventsCurrentSetting(this, {
             pointTypes: ["cells"],
             // TODO: Replace deltas with FSM
@@ -57,16 +59,13 @@ export class BackgroundColorLayer
 
     getSVG: IBackgroundColorLayer["getSVG"] = ({ grid, storage, settings }) => {
         const stored = storage.getStored<BackgroundColorProps>({ grid, layer: this });
-        const group = stored.groups.getGroup(settings.editMode);
-        const renderOrder = stored.objects.keys().filter((id) => group.has(id));
 
         const pt = grid.getPointTransformer(settings);
-        const [cellMap, cells] = pt.fromPoints("cells", renderOrder);
+        const [cellMap, cells] = pt.fromPoints("cells", [...stored.keys(settings.editMode)]);
         const [outlineMap] = pt.svgOutline(cells);
 
         const elements: SVGGroup["elements"] = new Map();
-        for (const id of renderOrder) {
-            const { state: color } = stored.objects.get(id);
+        for (const [id, { state: color }] of stored.entries(settings.editMode)) {
             const outline = outlineMap.get(cellMap.get(id));
             if (!outline) continue; // TODO?
 

@@ -13,18 +13,32 @@ body {
 }
 
 :root {
-    --user-light-green: oklch(67% 0.21 141);
-    --user-light-blue: oklch(67% 0.17 265);
-    --user-light-yelloworange: oklch(90% 0.18 101);
-    --user-light-red: oklch(60% 0.2459 29);
-    --user-light-purple: oklch(67% 0.26 354);
-    --user-light-gray: oklch(67% 0% 0);
-    --user-light-white: oklch(100% 0% 0);
-    --user-dark-green: oklch(38% 0.12 141);
-    --user-dark-blue: oklch(38% 0.25 265);
-    --user-dark-yelloworange: oklch(69.12% 0.16 61.3);
-    --user-dark-red: oklch(38% 0.15 29);
-    --user-dark-purple: oklch(38% 0.21 330);
-    --user-dark-gray: oklch(38% 0% 0);
-    --user-dark-white: oklch(0% 0% 0);
+    /* --user-light-green: oklch(67% 0.21 141); */
+    --user-light-green: rgb(52, 178, 27);
+    /* --user-light-blue: oklch(67% 0.17 265); */
+    --user-light-blue: rgb(97, 143, 253);
+    /* --user-light-yelloworange: oklch(90% 0.18 101); */
+    --user-light-yelloworange: rgb(248, 224, 41);
+    /* --user-light-red: oklch(60% 0.2459 29); */
+    --user-light-red: rgb(240, 0, 4);
+    /* --user-light-purple: oklch(66% 0.26 354); */
+    --user-light-purple: rgb(254, 31, 157);
+    /* --user-light-gray: oklch(67% 0% 0); */
+    --user-light-gray: rgb(149, 149, 149);
+    /* --user-light-white: oklch(100% 0% 0); */
+    --user-light-white: rgb(255, 255, 255);
+    /* --user-dark-green: oklch(38% 0.12 141); */
+    --user-dark-green: rgb(18, 81, 5);
+    /* --user-dark-blue: oklch(38% 0.25 265); */
+    --user-dark-blue: rgb(7, 16, 196);
+    /* --user-dark-yelloworange: oklch(69.12% 0.16 61.3); */
+    --user-dark-yelloworange: rgb(225, 128, 0);
+    /* --user-dark-red: oklch(38% 0.15 29); */
+    --user-dark-red: rgb(128, 8, 5);
+    /* --user-dark-purple: oklch(37.5% 0.17 330); */
+    --user-dark-purple: rgb(110, 1, 106);
+    /* --user-dark-gray: oklch(38% 0% 0); */
+    --user-dark-gray: rgb(66, 66, 66);
+    /* --user-dark-white: oklch(0% 0% 0); */
+    --user-dark-white: rgb(0, 0, 0);
 }

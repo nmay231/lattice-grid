@@ -1,4 +1,5 @@
 import { ActionIcon, ActionIconProps, Box, Burger, Center, Select, Tooltip } from "@mantine/core";
+import React from "react";
 import { IoMdArrowDropleft, IoMdArrowDropright, IoMdRedo, IoMdUndo } from "react-icons/io";
 import { useProxy } from "valtio/utils";
 import { usePuzzle, useSettings } from "../../state/puzzle";
@@ -9,7 +10,7 @@ import { sidebarProxy } from "../SideBar/sidebarProxy";
 import styles from "./mobileControls.module.css";
 import { mobileControlsProxy } from "./mobileControlsProxy";
 
-export const MobileControlsMetaControls = () => {
+export const MobileControlsMetaControls = React.memo(function MobileControlsMetaControls() {
     const puzzle = usePuzzle();
     const layersProxy = puzzle.layers;
     const currentLayerId = useProxy(layersProxy).currentKey;
@@ -50,25 +51,7 @@ export const MobileControlsMetaControls = () => {
                 </Box>
                 <div className={styles.row}>
                     {pageMode === "edit" && <PuzzleModeToggle />}
-                    <IconButton
-                        ml="sm"
-                        label="Undo"
-                        className={styles.icon}
-                        onClick={() => {
-                            puzzle.controls.handleKeyPress("ctrl-z");
-                        }}
-                    >
-                        <IoMdUndo />
-                    </IconButton>
-                    <IconButton
-                        label="Redo"
-                        className={styles.icon}
-                        onClick={() => {
-                            puzzle.controls.handleKeyPress("ctrl-y");
-                        }}
-                    >
-                        <IoMdRedo />
-                    </IconButton>
+                    <UndoRedo />
                 </div>
             </div>
 
@@ -123,7 +106,7 @@ export const MobileControlsMetaControls = () => {
             </div>
         </div>
     );
-};
+});
 
 type Arg2 = ActionIconProps & { label: string; onClick: () => void };
 const IconButton = ({ label, onClick, ...rest }: Arg2) => {
@@ -146,10 +129,44 @@ const IconButton = ({ label, onClick, ...rest }: Arg2) => {
     );
 };
 
-export const MobileControlsActual = () => {
+export const MobileControlsActual = React.memo(function MobileControlsActual() {
     return (
         <Center>
             <LayerControlSettings />
         </Center>
     );
-};
+});
+
+const UndoRedo = React.memo(function UndoRedo() {
+    const puzzle = usePuzzle();
+    useProxy(puzzle.SVGGroups);
+    useSettings().editMode; // Rerender when switching between solving/setting
+
+    // TODO: It's gonna be really annoying to rerender in all the right places... I should probably have StorageManager just update a proxy attribute as part of undo/redo or maybe _applyHistoryAction()
+
+    return (
+        <>
+            <IconButton
+                ml="sm"
+                label="Undo"
+                className={styles.icon}
+                disabled={!puzzle.storage.canUndo(puzzle)}
+                onClick={() => {
+                    puzzle.controls.handleKeyPress("ctrl-z");
+                }}
+            >
+                <IoMdUndo />
+            </IconButton>
+            <IconButton
+                label="Redo"
+                className={styles.icon}
+                disabled={!puzzle.storage.canRedo(puzzle)}
+                onClick={() => {
+                    puzzle.controls.handleKeyPress("ctrl-y");
+                }}
+            >
+                <IoMdRedo />
+            </IconButton>
+        </>
+    );
+});

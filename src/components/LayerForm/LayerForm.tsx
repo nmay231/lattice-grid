@@ -1,89 +1,104 @@
 import { Box, Button, Checkbox, NumberInput, Select, SimpleGrid, TextInput } from "@mantine/core";
-import { useForm } from "@mantine/form";
-import { FormSchema, LayerProps } from "../../types";
+import { isEqual } from "lodash";
+import { useCallback, useState } from "react";
+import { FormSchema, FormSchemaElement, LayerProps } from "../../types";
 import { notify } from "../../utils/notifications";
 import { LayerColorPicker } from "./LayerColorPicker";
 
 export interface LayerFormArgs<LP extends LayerProps> extends FormSchema<LP> {
-    initialValues: LP["RawSettings"];
-    onSubmit?: (values: LP["RawSettings"]) => void;
-    onChange?: (values: LP["RawSettings"]) => void;
+    initialValues: LP["Settings"];
+    onSubmit?: (newSettings: LP["Settings"]) => void;
+    onChange?: (key: string, value: unknown) => void;
     submitLabel?: string;
     resetLabel?: string;
 }
 
 export const LayerForm = <LP extends LayerProps = LayerProps>({
     elements,
-    initialValues,
+    initialValues: initialData,
     onChange,
     onSubmit,
     submitLabel,
     resetLabel,
 }: LayerFormArgs<LP>) => {
-    const form = useForm({
-        initialValues,
-        validate(values) {
-            onChange?.(values);
-            // TODO: Layers might actually have validation in the future, but might as well do this for onChange for now
-            return {};
+    const [data, setData] = useState(initialData);
+    const [dirty, setDirty] = useState(false);
+
+    const handleChange = useCallback(
+        (key: string, value: unknown) => {
+            onChange?.(key, value);
+            const newData = { ...data, [key]: value };
+            setData(newData);
+            setDirty(!isEqual(newData, initialData));
         },
-        validateInputOnChange: !!onChange,
-    });
+        [data, initialData, onChange],
+    );
 
     return (
-        <form onSubmit={onSubmit && form.onSubmit(onSubmit)}>
-            {elements.map((element) => {
+        <form
+            onSubmit={(event) => {
+                event.preventDefault();
+                onSubmit?.(data);
+            }}
+        >
+            {Object.entries(elements).map(([key, element_]) => {
+                const element = element_ as FormSchemaElement;
                 switch (element.type) {
                     case "boolean": {
                         return (
                             <Checkbox
-                                key={element.key}
+                                key={key}
                                 mb={5}
                                 label={element.label}
-                                {...form.getInputProps(element.key, { type: "checkbox" })}
+                                checked={data[key as never]}
+                                onChange={(event) => handleChange(key, event.target.checked)}
                             />
                         );
                     }
                     case "number": {
                         return (
                             <NumberInput
-                                key={element.key}
+                                key={key}
                                 mb={5}
                                 label={element.label}
                                 min={element.min}
                                 max={element.max}
-                                {...form.getInputProps(element.key)}
+                                value={data[key as never]}
+                                onChange={(value) => handleChange(key, +value)}
                             />
                         );
                     }
                     case "string": {
                         return (
                             <TextInput
-                                key={element.key}
+                                key={key}
                                 mb={5}
                                 label={element.label}
-                                {...form.getInputProps(element.key)}
+                                value={data[key as never]}
+                                onChange={(event) => handleChange(key, event.target.value)}
                             />
                         );
                     }
                     case "dropdown": {
                         return (
                             <Select
-                                key={element.key}
+                                key={key}
                                 mb={5}
                                 label={element.label}
                                 data={element.pairs}
                                 allowDeselect={false}
-                                {...form.getInputProps(element.key)}
+                                value={data[key as never]}
+                                onChange={(value) => handleChange(key, value)}
                             />
                         );
                     }
                     case "color": {
                         return (
-                            <Box key={element.key} mb={5}>
+                            <Box key={key} mb={5}>
                                 <LayerColorPicker
                                     label={element.label}
-                                    {...form.getInputProps(element.key)}
+                                    value={data[key as never]}
+                                    onChange={(color) => handleChange(key, color)}
                                 />
                             </Box>
                         );
@@ -96,10 +111,16 @@ export const LayerForm = <LP extends LayerProps = LayerProps>({
             })}
             {onSubmit && (
                 <SimpleGrid cols={2} m="sm">
-                    <Button type="submit" disabled={!form.isDirty()}>
+                    <Button type="submit" disabled={!dirty}>
                         {submitLabel ?? "Submit"}
                     </Button>
-                    <Button type="reset" disabled={!form.isDirty()} onClick={form.reset}>
+                    <Button
+                        type="reset"
+                        disabled={!dirty}
+                        onClick={() => {
+                            setData(initialData);
+                        }}
+                    >
                         {resetLabel ?? "Reset"}
                     </Button>
                 </SimpleGrid>

@@ -7,14 +7,10 @@ import styles from "./layers.module.css";
 interface DebugSelectPointsProps extends LayerProps {
     TempStorage: { previousPoint: Point; start: Vec; end: Vec };
     ObjectState: { points: Point[]; start: Vec; end: Vec };
-    RawSettings: { straight: boolean; diagonal: boolean; knight: boolean };
+    Settings: { straight: boolean; diagonal: boolean; knight: boolean; deltas: Delta[] };
 }
 
-interface IDebugSelectPointsLayer extends Layer<DebugSelectPointsProps> {
-    settings: {
-        deltas: Delta[];
-    };
-}
+interface IDebugSelectPointsLayer extends Layer<DebugSelectPointsProps> {}
 
 // Object ids (there is only one copy of each at a time)
 const LINE_ID = "line";
@@ -31,25 +27,40 @@ export class DebugSelectPointsLayer
 
     static controls = undefined;
     static constraints: FormSchema<DebugSelectPointsProps> = {
-        elements: [
-            { type: "boolean", key: "straight", label: "Straight" },
-            { type: "boolean", key: "diagonal", label: "Diagonal" },
-            { type: "boolean", key: "knight", label: "Knight" },
-        ],
+        elements: {
+            straight: { type: "boolean", label: "Straight" },
+            diagonal: { type: "boolean", label: "Diagonal" },
+            knight: { type: "boolean", label: "Knight" },
+        },
     };
 
-    static defaultSettings: IDebugSelectPointsLayer["rawSettings"] = {
+    static settingsDescription: LayerClass<DebugSelectPointsProps>["settingsDescription"] = {
+        straight: { type: "controls" },
+        diagonal: { type: "controls" },
+        knight: { type: "controls" },
+        deltas: { type: "controls", derived: true },
+    };
+
+    static defaultSettings: IDebugSelectPointsLayer["settings"] = {
         straight: true,
         diagonal: false,
         knight: false,
+        deltas: [], // Initialized in updateSettings
     };
-    settings: IDebugSelectPointsLayer["settings"] = { deltas: [] };
 
-    newSettings: IDebugSelectPointsLayer["newSettings"] = ({ newSettings }) => {
-        this.rawSettings = newSettings;
-        this.settings = { deltas: [] };
+    static isValidSetting<K extends keyof DebugSelectPointsProps["Settings"]>(
+        key: K | string,
+        value: unknown,
+    ): value is DebugSelectPointsProps["Settings"][K] {
+        if (key === "straight" || key === "diagonal" || key === "knight") {
+            return typeof value === "boolean";
+        }
+        return false;
+    }
 
-        if (newSettings.straight) {
+    updateSettings: IDebugSelectPointsLayer["updateSettings"] = () => {
+        this.settings.deltas = [];
+        if (this.settings.straight) {
             this.settings.deltas.push(
                 { dx: 0, dy: 2 },
                 { dx: 0, dy: -2 },
@@ -57,7 +68,7 @@ export class DebugSelectPointsLayer
                 { dx: -2, dy: 0 },
             );
         }
-        if (newSettings.diagonal) {
+        if (this.settings.diagonal) {
             this.settings.deltas.push(
                 { dx: 2, dy: 2 },
                 { dx: 2, dy: -2 },
@@ -65,7 +76,7 @@ export class DebugSelectPointsLayer
                 { dx: -2, dy: -2 },
             );
         }
-        if (newSettings.knight) {
+        if (this.settings.knight) {
             this.settings.deltas.push(
                 { dx: 2, dy: 4 },
                 { dx: 2, dy: -4 },
@@ -136,7 +147,7 @@ export class DebugSelectPointsLayer
     getOverlaySVG: IDebugSelectPointsLayer["getOverlaySVG"] = ({ grid, storage, settings }) => {
         const object = storage
             .getStored<DebugSelectPointsProps>({ grid, layer: this })
-            .objects.get(LINE_ID);
+            .getObject(LINE_ID);
 
         if (!object?.points.length) {
             return [];
