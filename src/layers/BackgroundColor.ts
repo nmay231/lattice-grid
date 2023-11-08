@@ -6,6 +6,7 @@ import styles from "./layers.module.css";
 
 interface BackgroundColorProps extends OnePointProps<Color> {
     Settings: { selectedState: Color };
+    ObjectState: { state: Color };
 }
 
 interface IBackgroundColorLayer extends Layer<BackgroundColorProps> {}
@@ -43,7 +44,11 @@ export class BackgroundColorLayer
     }
 
     updateSettings: IBackgroundColorLayer["updateSettings"] = () => {
-        handleEventsCurrentSetting(this, {
+        const { gatherPoints, handleEvent } = handleEventsCurrentSetting<
+            BackgroundColorProps,
+            Color,
+            "selectedState"
+        >({
             pointTypes: ["cells"],
             // TODO: Replace deltas with FSM
             deltas: [
@@ -52,7 +57,11 @@ export class BackgroundColorLayer
                 { dx: 2, dy: 0 },
                 { dx: -2, dy: 0 },
             ],
+            settingsKey: "selectedState",
         });
+
+        this.gatherPoints = gatherPoints;
+        this.handleEvent = handleEvent;
 
         return {};
     };

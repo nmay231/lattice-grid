@@ -88,13 +88,21 @@ export const handleEventsCycleStates = <
     };
 };
 
+type OnePointCurrentSettingLayer<
+    LP extends OnePointProps<ObjectState>,
+    K extends keyof LP["Settings"] = never,
+    ObjectState = unknown,
+> = Layer<LP> & { settings: { [Key in K]: ObjectState } };
+
 export const handleEventsCurrentSetting = <
     LP extends OnePointProps<ObjectState>,
     ObjectState = unknown,
->(
-    layer: Layer<LP> & { settings: { selectedState: ObjectState } },
-    { pointTypes, deltas }: CommonArgs,
-) => {
+    K extends keyof LP["Settings"] = never,
+>({
+    pointTypes,
+    deltas,
+    settingsKey,
+}: CommonArgs & { settingsKey: K }) => {
     if (!pointTypes?.length || !deltas?.length) {
         throw notify.error({
             message: "onePoint currentSetting was not provided required parameters",
@@ -102,22 +110,34 @@ export const handleEventsCurrentSetting = <
         });
     }
 
-    layer.gatherPoints = pointGatherer({ pointTypes, deltas });
+    const gatherPoints = pointGatherer<ObjectState>({ pointTypes, deltas });
 
-    layer.handleEvent = (event): LayerHandlerResult<LP> => {
+    type OnePointLayer = OnePointCurrentSettingLayer<LP, typeof settingsKey, ObjectState>;
+
+    const handleEvent: OnePointLayer["handleEvent"] = function (
+        this: OnePointLayer,
+        event,
+    ): LayerHandlerResult<LP> {
         if (event.type !== "pointerDown" && event.type !== "pointerMove") {
             return {};
         }
 
+        // if (layerIsGOOFy(this)) {
+        //     if (this.settings.gridOrObjectFirst === "object") {
+        //         // TODO: Get the layer to switch to onePoint.handleEventsCurrentSetting but after it can handle a generic settings key ("currentCharacter" instead of "selectedState"). I do that instead of adapting selection to do it because other layers will decide between one of the two onePoint handlers.
+        //         return this.eventPlaceSinglePointObjects(event);
+        //     }
+        // }
+
         const { grid, storage, tempStorage } = event;
 
-        const stored = storage.getStored<OnePointProps<ObjectState>>({ grid, layer });
+        const stored = storage.getStored<OnePointProps<ObjectState>>({ grid, layer: this });
         const newPoints = event.points;
 
         if (tempStorage.targetState === undefined) {
             const object = stored.getObject(newPoints[0]);
-            const isSame = object?.state === layer.settings.selectedState;
-            tempStorage.targetState = isSame ? null : layer.settings.selectedState;
+            const isSame = object?.state === this.settings[settingsKey];
+            tempStorage.targetState = isSame ? null : this.settings[settingsKey];
         }
 
         tempStorage.batchId = tempStorage.batchId ?? storage.getNewBatchId();
@@ -129,4 +149,8 @@ export const handleEventsCurrentSetting = <
         }));
         return { history };
     };
+
+    const eventPlaceSinglePointObjects = function () {};
+
+    return { gatherPoints, handleEvent, eventPlaceSinglePointObjects };
 };

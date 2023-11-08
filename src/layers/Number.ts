@@ -3,14 +3,20 @@ import { concat, zip } from "../utils/data";
 import { notify } from "../utils/notifications";
 import { BaseLayer } from "./BaseLayer";
 import { numberTyper } from "./controls/numberTyper";
+import { OnePointProps, handleEventsCurrentSetting } from "./controls/onePoint";
 import { KeyDownEventHandler, SelectedProps, handleEventsSelection } from "./controls/selection";
 import styles from "./layers.module.css";
 import { CurrentCharacterProps, LayerCurrentCharacter } from "./traits/currentCharacterSetting";
 import { GOOFyProps, GridOrObject, LayerGOOFy } from "./traits/gridOrObjectFirst";
 
-export interface NumberProps extends GOOFyProps, CurrentCharacterProps, SelectedProps {
+export interface NumberProps
+    extends GOOFyProps,
+        CurrentCharacterProps,
+        SelectedProps,
+        OnePointProps<string> {
     ObjectState: { state: string };
-    TempStorage: SelectedProps["TempStorage"];
+    // TODO: TempStorage should never be set between when settings are changed, but maybe I need a check for that in ControlsManager?
+    TempStorage: SelectedProps["TempStorage"] & OnePointProps<string>["TempStorage"];
     Settings: {
         max: number;
         negatives: boolean;
@@ -115,13 +121,35 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
 
     updateSettings: INumberLayer["updateSettings"] = ({ oldSettings, grid, storage }) => {
         if (!oldSettings || oldSettings.gridOrObjectFirst !== this.settings.gridOrObjectFirst) {
-            const { gatherPoints, handleEvent, getOverlaySVG, eventPlaceSinglePointObjects } =
-                handleEventsSelection<NumberProps>({});
-            this.gatherPoints = gatherPoints;
-            this.handleEvent = handleEvent;
-            this.getOverlaySVG =
-                this.settings.gridOrObjectFirst === "grid" ? getOverlaySVG : undefined;
-            this.eventPlaceSinglePointObjects = eventPlaceSinglePointObjects;
+            if (this.settings.gridOrObjectFirst === "grid") {
+                const { gatherPoints, handleEvent, getOverlaySVG, eventPlaceSinglePointObjects } =
+                    handleEventsSelection<NumberProps>({});
+                this.gatherPoints = gatherPoints;
+                this.handleEvent = handleEvent;
+                this.getOverlaySVG = getOverlaySVG;
+                this.eventPlaceSinglePointObjects = eventPlaceSinglePointObjects;
+            } else if (this.settings.gridOrObjectFirst === "object") {
+                // TODO: This only works if I can get currentCharacter to be the whole multi-digit number and not just the current keypress. Otherwise, it's just as good as using selection layer directly.
+                const { gatherPoints, handleEvent } = handleEventsCurrentSetting<
+                    NumberProps,
+                    NumberProps["ObjectState"]["state"],
+                    "currentCharacter"
+                >({
+                    pointTypes: ["cells"],
+                    // TODO: Replace deltas with FSM
+                    deltas: [
+                        { dx: 0, dy: 2 },
+                        { dx: 0, dy: -2 },
+                        { dx: 2, dy: 0 },
+                        { dx: -2, dy: 0 },
+                    ],
+                    settingsKey: "currentCharacter",
+                });
+                this.gatherPoints = gatherPoints;
+                this.handleEvent = handleEvent;
+                this.getOverlaySVG = undefined;
+                this.eventPlaceSinglePointObjects = () => ({});
+            }
         }
 
         let history: PartialHistoryAction<NumberProps>[] | undefined = undefined;
