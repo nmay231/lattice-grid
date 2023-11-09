@@ -79,7 +79,7 @@ export class StorageManager {
             const layerId = partialAction.layerId ?? defaultLayerId;
             const storageMode = partialAction.storageMode ?? currentEditMode;
             if (storageMode === "ui") {
-                if (partialAction.batchId === "ignore") {
+                if (partialAction.batchId !== "ignore") {
                     notify.error({
                         message: `Forgot to explicitly ignore UI input ${layerId}}`,
                         forever: true,
