@@ -403,34 +403,7 @@ export class ControlsManager {
         let layer = this.getCurrentLayer();
         if (!layer) return;
 
-        if (layerIsCurrentCharacterSetting(layer)) {
-            const value = keypress === "Delete" ? null : keypress;
-            if (layer.klass.isValidSetting("currentCharacter", value)) {
-                layer.settings.currentCharacter = value;
-            }
-        }
-
-        if (layerIsGOOFy(layer)) {
-            if (layer.settings.gridOrObjectFirst === "grid") {
-                const { history } = layer.eventPlaceSinglePointObjects({
-                    grid: this.puzzle.grid,
-                    settings: this.puzzle.settings,
-                    storage: this.puzzle.storage,
-                });
-
-                this.puzzle.storage.addToHistory({
-                    puzzle: this.puzzle,
-                    layerId: layer.id,
-                    actions: history,
-                });
-
-                this.puzzle.renderChange({ type: "draw", layerIds: [layer.id] });
-            }
-        } else if (keypress === "Escape") {
-            this.applyLayerEvent(layer, { type: "cancelAction" });
-        } else if (keypress === "Delete") {
-            this.applyLayerEvent(layer, { type: "delete", keypress });
-        } else if (keypress === "ctrl-`") {
+        if (keypress === "ctrl-`") {
             if (this.puzzle.settings.pageMode === "edit") {
                 const nowDebugging = !this.puzzle.settings.debugging;
                 this.puzzle.settings.debugging = nowDebugging;
@@ -456,6 +429,37 @@ export class ControlsManager {
                         actions: appliedActions,
                     });
             }
+        } else if (layerIsGOOFy(layer)) {
+            if (layerIsCurrentCharacterSetting(layer)) {
+                const value = keypress === "Delete" ? null : keypress;
+                if (layer.klass.isValidSetting("currentCharacter", value)) {
+                    layer.settings.currentCharacter = value;
+                }
+            } else {
+                return;
+            }
+
+            if (layer.settings.gridOrObjectFirst === "grid") {
+                const { history } = layer.eventPlaceSinglePointObjects({
+                    grid: this.puzzle.grid,
+                    settings: this.puzzle.settings,
+                    storage: this.puzzle.storage,
+                });
+
+                this.puzzle.storage.addToHistory({
+                    puzzle: this.puzzle,
+                    layerId: layer.id,
+                    actions: history,
+                });
+
+                this.puzzle.renderChange({ type: "draw", layerIds: [layer.id] });
+            }
+
+            // TODO: Migrate the following to use the replacements for handleEvent
+        } else if (keypress === "Escape") {
+            this.applyLayerEvent(layer, { type: "cancelAction" });
+        } else if (keypress === "Delete") {
+            this.applyLayerEvent(layer, { type: "delete", keypress });
         } else {
             this.applyLayerEvent(layer, { type: "keyDown", keypress });
         }
