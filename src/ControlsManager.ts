@@ -419,8 +419,9 @@ export class ControlsManager {
                     : storage.redoHistory(this.puzzle);
 
             if (appliedActions.length) {
-                const newLayerId = appliedActions[appliedActions.length - 1].layerId;
-                this.puzzle.selectLayer(newLayerId);
+                const lastAction = appliedActions[appliedActions.length - 1];
+                this.puzzle.selectLayer(lastAction.layerId);
+                this.puzzle.settings.editMode = lastAction.storageMode;
 
                 layer = this.getCurrentLayer();
                 if (layer)

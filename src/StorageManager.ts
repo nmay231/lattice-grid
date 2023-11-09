@@ -5,10 +5,8 @@ import {
     HistoryAction,
     Layer,
     LayerProps,
-    NeedsUpdating,
     PartialHistoryAction,
     PuzzleForStorage,
-    StorageMode,
     StorageReducer,
 } from "./types";
 import { notify } from "./utils/notifications";
@@ -28,13 +26,10 @@ export class StorageManager {
         this.objects[grid.id] = this.objects[grid.id] ?? {};
         this.objects[grid.id][layer.id] = new LayerStorage();
 
-        // TODO: I just need to implement that data structure that handles this automatically because StorageModes might eventually be dynamic (think multiple answers)
-        (["question", "answer", "ui"] satisfies StorageMode[]).forEach((mode) => {
-            this.histories[`${grid.id}-${mode}`] = this.histories[`${grid.id}-${mode}`] || {
-                actions: [],
-                index: 0,
-            };
-        });
+        this.histories[grid.id] = this.histories[grid.id] || {
+            actions: [],
+            index: 0,
+        };
     }
 
     removeStorage({ grid, layer }: GridAndLayer) {
@@ -81,36 +76,39 @@ export class StorageManager {
         const currentEditMode = puzzle.settings.editMode;
 
         for (const partialAction of actions) {
-            const layerId = (partialAction as NeedsUpdating).layerId || defaultLayerId;
+            const layerId = partialAction.layerId ?? defaultLayerId;
             const storageMode = partialAction.storageMode ?? currentEditMode;
+            if (storageMode === "ui") {
+                if (partialAction.batchId === "ignore") {
+                    notify.error({
+                        message: `Forgot to explicitly ignore UI input ${layerId}}`,
+                        forever: true,
+                    });
+                }
+                continue; // Do not include in history
+            }
+
             const stored = this.objects[gridId][layerId];
-            const history = this.histories[`${gridId}-${storageMode}`];
+            const history = this.histories[gridId];
 
             const action = this.masterReducer(puzzle, {
                 objectId: partialAction.id,
                 layerId,
-                // This relies on NaN !== (anything including NaN)
-                batchId: partialAction.batchId && Number(partialAction.batchId),
+                batchId:
+                    typeof partialAction.batchId === "number" ? partialAction.batchId : undefined,
                 object: partialAction.object,
                 nextObjectId: stored._getPrevId(partialAction.id),
+                storageMode,
             });
+
             if (!action) {
                 continue; // One of the reducers chose to ignore this action
             }
 
-            const undoAction = this._applyHistoryAction({ storageMode, stored, action });
+            const undoAction = this._applyHistoryAction({ stored, action });
 
             if (partialAction.batchId === "ignore") {
                 continue; // Do not include in history
-            }
-
-            // TODO: I temporarily filter ui actions from history to prevent any unintended bugs.
-            if (storageMode === "ui") {
-                notify.error({
-                    message: `Forgot to explicitly ignore UI input ${layerId}}`,
-                    forever: true,
-                });
-                continue;
             }
 
             const lastAction = history.actions[history.index - 1];
@@ -139,29 +137,22 @@ export class StorageManager {
         }
     }
 
-    _applyHistoryAction(arg: {
-        stored: LayerStorage;
-        storageMode: StorageMode;
-        action: HistoryAction;
-    }) {
-        const { action, storageMode, stored } = arg;
+    _applyHistoryAction(arg: { stored: LayerStorage; action: HistoryAction }) {
+        const { action, stored } = arg;
 
         const undoAction: HistoryAction = {
             ...action,
             object: stored.getObject(action.objectId) || null,
             nextObjectId: stored._getPrevId(action.objectId),
         };
-        stored.setObject(storageMode, action.objectId, action.object, action.nextObjectId);
+        stored.setObject(action.storageMode, action.objectId, action.object, action.nextObjectId);
 
         return undoAction;
     }
 
     undoHistory(puzzle: PuzzleForStorage) {
-        const {
-            grid: { id: gridId },
-            settings: { editMode: storageMode },
-        } = puzzle;
-        const history = this.histories[`${gridId}-${storageMode}`];
+        const gridId = puzzle.grid.id;
+        const history = this.histories[gridId];
         if (history.index <= 0) {
             return [];
         }
@@ -173,7 +164,7 @@ export class StorageManager {
             action = history.actions[history.index];
             const stored = this.objects[gridId][action.layerId];
 
-            const redo = this._applyHistoryAction({ stored, action, storageMode });
+            const redo = this._applyHistoryAction({ stored, action });
             // Replace the action with its opposite
             history.actions.splice(history.index, 1, redo);
 
@@ -184,11 +175,8 @@ export class StorageManager {
     }
 
     redoHistory(puzzle: PuzzleForStorage) {
-        const {
-            grid: { id: gridId },
-            settings: { editMode: storageMode },
-        } = puzzle;
-        const history = this.histories[`${gridId}-${storageMode}`];
+        const gridId = puzzle.grid.id;
+        const history = this.histories[gridId];
         if (history.index >= history.actions.length) {
             return [];
         }
@@ -199,7 +187,7 @@ export class StorageManager {
             action = history.actions[history.index];
             const stored = this.objects[gridId][action.layerId];
 
-            const undo = this._applyHistoryAction({ stored, action, storageMode });
+            const undo = this._applyHistoryAction({ stored, action });
             // Replace the action with its opposite
             history.actions.splice(history.index, 1, undo);
             history.index++;
@@ -211,20 +199,12 @@ export class StorageManager {
     }
 
     canUndo(puzzle: PuzzleForStorage): boolean {
-        const {
-            grid: { id: gridId },
-            settings: { editMode: storageMode },
-        } = puzzle;
-        const history = this.histories[`${gridId}-${storageMode}`];
+        const history = this.histories[puzzle.grid.id];
         return history && history.index > 0;
     }
 
     canRedo(puzzle: PuzzleForStorage): boolean {
-        const {
-            grid: { id: gridId },
-            settings: { editMode: storageMode },
-        } = puzzle;
-        const history = this.histories[`${gridId}-${storageMode}`];
+        const history = this.histories[puzzle.grid.id];
         return history && history.index < history.actions.length;
     }
 

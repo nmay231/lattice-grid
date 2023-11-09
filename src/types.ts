@@ -255,15 +255,19 @@ export type PartialHistoryAction<LP extends LayerProps = LayerProps, OtherState 
     storageMode?: StorageMode;
 } & (
     | { layerId: Layer["id"] | undefined; object: OtherState }
-    | { object: LP["ObjectState"] | null }
+    | { layerId?: never; object: LP["ObjectState"] | null }
 );
 
 export type HistoryAction<LP extends LayerProps = LayerProps> = {
     objectId: ObjectId;
     layerId: Layer["id"];
+    /** Actions with the same batchId (if defined) will be un-/re-done at the same time */
     batchId?: number;
     object: LP["ObjectState"] | null;
+    /** For when render order matters */
     nextObjectId: ObjectId | null;
+    /** Which storage group is this action applied to ("question" | "answer", for now) */
+    storageMode: EditMode;
 };
 
 export type History = {
