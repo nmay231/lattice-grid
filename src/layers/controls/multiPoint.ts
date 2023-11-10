@@ -20,26 +20,29 @@ export interface MultiPointLayerProps extends LayerProps {
         batchId: number;
         removeSingle: boolean;
     };
+    HandlesKeyDown: boolean;
 }
 
-export type MultiPointKeyDownHandler<LP extends MultiPointLayerProps> = (
+export interface MultiPointLayer<LP extends MultiPointLayerProps> extends Layer<LP> {
+    handleKeyDown: LP["HandlesKeyDown"] extends true
+        ? (arg: LayerEventEssentials<LP> & Keypress & { points: Point[] }) => LayerHandlerResult<LP>
+        : undefined;
+}
+
+export type MultiPointKeyDownHandler<LP extends LayerProps> = (
     arg: LayerEventEssentials<LP> & Keypress & { points: Point[] },
 ) => LayerHandlerResult<LP>;
 
-export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
-    layer: Layer<LP>,
-    {
-        // TODO: In user settings, rename allowOverlap to "Allow partial overlap"
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        allowOverlap = false,
-        handleKeyDown = null as null | MultiPointKeyDownHandler<LP>,
-        pointTypes = [] as PointType[],
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        overwriteOthers = false,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        ensureConnected = true,
-    },
-) => {
+export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>({
+    // TODO: In user settings, rename allowOverlap to "Allow partial overlap"
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    allowOverlap = false,
+    pointTypes = [] as PointType[],
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    overwriteOthers = false,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    ensureConnected = true,
+}) => {
     if (!pointTypes?.length) {
         throw notify.error({
             message: "Multipoint handler was not provided required parameters",
@@ -55,7 +58,7 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
         { dx: -2, dy: 0 },
     ];
 
-    layer.gatherPoints = (event) => {
+    const gatherPoints: MultiPointLayer<LP>["gatherPoints"] = (event) => {
         const { grid, tempStorage } = event;
         const newPoints = grid.selectPointsWithCursor({
             settings: event.settings,
@@ -76,10 +79,13 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
 
     // TODO: Should I allow multiple current objects? (so I can do `ctrl-a, del` and things like that)
     // TODO: Handle moving objects with long presses (?)
-    layer.handleEvent = (event): LayerHandlerResult<LP> => {
+    const handleEvent: MultiPointLayer<LP>["handleEvent"] = function (
+        this: MultiPointLayer<LP>,
+        event,
+    ) {
         const { grid, storage, type, tempStorage, settings } = event;
 
-        const stored = storage.getStored<LP>({ layer, grid });
+        const stored = storage.getStored<LP>({ layer: this, grid });
         const currentObjectId = stored.permStorage.currentObjectId || "";
         if (!currentObjectId && type !== "pointerDown" && type !== "undoRedo") {
             return {}; // Other events only matter if there is an object selected
@@ -88,10 +94,10 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
 
         switch (type) {
             case "keyDown": {
-                return handleKeyDown?.({ ...event, points: [] }) || {};
+                return this.handleKeyDown?.({ ...event, points: [] }) || {};
             }
             case "delete": {
-                const result = handleKeyDown?.({ ...event, points: [] });
+                const result = this.handleKeyDown?.({ ...event, points: [] });
                 if (result?.history?.length) {
                     // Allow the layer to delete its state before deleting the object itself.
                     return result;
@@ -232,4 +238,6 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
             }
         }
     };
+
+    return { gatherPoints, handleEvent };
 };

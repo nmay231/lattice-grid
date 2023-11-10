@@ -1,10 +1,10 @@
-import { Layer, LayerClass, NeedsUpdating, SVGGroup } from "../types";
+import { LayerClass, SVGGroup } from "../types";
 import { reduceTo } from "../utils/data";
 import { Vec } from "../utils/math";
 import { notify } from "../utils/notifications";
 import { BaseLayer } from "./BaseLayer";
 import {
-    MultiPointKeyDownHandler,
+    MultiPointLayer,
     MultiPointLayerProps,
     handleEventsUnorderedSets,
 } from "./controls/multiPoint";
@@ -16,11 +16,10 @@ interface KillerCagesProps extends MultiPointLayerProps {
     Settings: {
         _numberTyper: ReturnType<typeof numberTyper>;
     };
+    HandlesKeyDown: true;
 }
 
-interface IKillerCagesLayer extends Layer<KillerCagesProps> {
-    _handleKeyDown: MultiPointKeyDownHandler<KillerCagesProps>;
-}
+interface IKillerCagesLayer extends MultiPointLayer<KillerCagesProps> {}
 
 export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKillerCagesLayer {
     static ethereal = false;
@@ -39,7 +38,7 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
         return new KillerCagesLayer(KillerCagesLayer, puzzle);
     }) satisfies LayerClass<KillerCagesProps>["create"];
 
-    _handleKeyDown: IKillerCagesLayer["_handleKeyDown"] = ({ type, keypress, grid, storage }) => {
+    handleKeyDown: IKillerCagesLayer["handleKeyDown"] = ({ type, keypress, grid, storage }) => {
         const stored = storage.getStored<KillerCagesProps>({ grid, layer: this });
 
         if (!stored.permStorage.currentObjectId) return {};
@@ -81,13 +80,15 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
     }
 
     updateSettings: IKillerCagesLayer["updateSettings"] = () => {
-        handleEventsUnorderedSets(this, {
-            handleKeyDown: this._handleKeyDown.bind(this) as NeedsUpdating, // Screw you typescript
+        const { gatherPoints, handleEvent } = handleEventsUnorderedSets<KillerCagesProps>({
             pointTypes: ["cells"],
             ensureConnected: false, // TODO: Change to true when properly implemented
             allowOverlap: true, // TODO: Change to false when properly implemented
             overwriteOthers: false,
         });
+        this.gatherPoints = gatherPoints;
+        this.handleEvent = handleEvent;
+
         this.settings._numberTyper = numberTyper({ max: -1, negatives: false });
         return {};
     };

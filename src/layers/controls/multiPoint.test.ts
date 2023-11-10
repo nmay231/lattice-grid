@@ -5,10 +5,15 @@ import { layerEventRunner } from "../../utils/testing/layerEventRunner";
 import { MultiPointLayerProps, handleEventsUnorderedSets } from "./multiPoint";
 
 describe("multiPoint.handleEventsUnorderedSets", () => {
-    type SecondArg = Parameters<typeof handleEventsUnorderedSets>[1];
+    type SecondArg = Parameters<typeof handleEventsUnorderedSets>[0];
     const getMultiPointLayer = (arg = {} as SecondArg) => {
         const layer = { id: "DummyLayer" } as NeedsUpdating;
-        handleEventsUnorderedSets(layer, { pointTypes: ["cells"], ...arg });
+        const { gatherPoints, handleEvent } = handleEventsUnorderedSets({
+            pointTypes: ["cells"],
+            ...arg,
+        });
+        layer.gatherPoints = gatherPoints;
+        layer.handleEvent = handleEvent;
         return layer;
     };
 
