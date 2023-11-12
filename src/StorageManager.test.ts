@@ -6,11 +6,12 @@ import {
     History,
     Layer,
     LayerProps,
-    PuzzleForStorage,
+    StorageFilter,
     HistoryAction as UntypedHistoryAction,
     PartialHistoryAction as UntypedPartialHistoryAction,
 } from "./types";
 import { notify } from "./utils/notifications";
+import { layerEventEssentials } from "./utils/testing/layerEventEssentials";
 
 interface FakeLayerProps extends LayerProps {
     ObjectState: { asdf: string };
@@ -33,10 +34,12 @@ const getNormalStorage = () => {
     return normalStorage;
 };
 
-const fakePuzzle = (grid: Grid["id"], editMode: EditMode): PuzzleForStorage => ({
-    grid: { id: grid },
-    settings: { editMode },
-});
+const fakePuzzle = (gridId: Grid["id"], editMode: EditMode): Parameters<StorageFilter>[0] => {
+    const result = layerEventEssentials({});
+    result.grid.id = gridId;
+    result.settings.editMode = editMode;
+    return result;
+};
 
 const gridLayer = (grid: Grid["id"], layer: Layer["id"]) => ({
     grid: { id: grid },

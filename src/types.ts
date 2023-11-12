@@ -85,9 +85,15 @@ export type LayerEventEssentials<LP extends LayerProps> = {
 
 export type LayerEvent<LP extends LayerProps> = CleanedDOMEvent & LayerEventEssentials<LP>;
 
-// TODO: Adding OtherState makes sense for IncompleteHistoryAction, but not for LayerHandlerResult. Should this somehow be another property on LayerProps?
+// TODO: Adding OtherState makes sense for PartialHistoryAction, but not for LayerHandlerResult. Should this somehow be another property on LayerProps?
 export type LayerHandlerResult<LP extends LayerProps> = {
     history?: PartialHistoryAction<LP>[];
+};
+export type LayerUpdateSettings<LP extends LayerProps> = {
+    /** @deprecated */
+    history?: PartialHistoryAction<LP>[];
+    filters?: Array<{ filter: StorageFilter; layerIds?: Layer["id"][] }>;
+    removeFilters?: Array<StorageFilter>;
 };
 // #endregion
 
@@ -209,7 +215,7 @@ export type Layer<LP extends LayerProps = LayerProps> = {
             puzzleSettings: LayerEventEssentials<LP>["settings"];
             oldSettings: LP["Settings"] | undefined;
         },
-    ): LayerHandlerResult<LP>;
+    ): LayerUpdateSettings<LP>;
     gatherPoints: (
         layerEvent: Omit<PointerMoveOrDown, "points"> & LayerEventEssentials<LP>,
     ) => Point[];
@@ -279,7 +285,17 @@ export type PuzzleForStorage = {
     grid: Pick<PuzzleManager["grid"], "id">;
     settings: Pick<PuzzleManager["settings"], "editMode">;
 };
-export type StorageReducer<Type> = (puzzle: PuzzleForStorage, arg: Type) => Type;
+export type StorageFilter = (
+    puzzle: {
+        grid: Pick<
+            Grid,
+            "id" | "getAllPoints" | "selectPointsWithCursor" | "getPointTransformer" | "_getSVG"
+        >;
+        storage: StorageManager;
+        settings: PuzzleManager["settings"];
+    },
+    arg: HistoryAction,
+) => HistoryAction | null;
 // #endregion
 
 // #region - Rendering

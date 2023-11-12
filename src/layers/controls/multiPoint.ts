@@ -1,5 +1,6 @@
 import { cloneDeep } from "lodash";
 import {
+    HistoryAction,
     Keypress,
     Layer,
     LayerEventEssentials,
@@ -8,6 +9,7 @@ import {
     ObjectId,
     Point,
     PointType,
+    StorageFilter,
 } from "../../types";
 import { notify } from "../../utils/notifications";
 import { smartSort } from "../../utils/string";
@@ -33,16 +35,19 @@ export type MultiPointKeyDownHandler<LP extends LayerProps> = (
     arg: LayerEventEssentials<LP> & Keypress & { points: Point[] },
 ) => LayerHandlerResult<LP>;
 
+export type HandleEventsUnorderedSetsArg = {
+    preventOverlap: boolean;
+    ensureConnected: boolean;
+    pointTypes: PointType[];
+    overwriteOthers: boolean;
+};
 export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>({
-    // TODO: In user settings, rename allowOverlap to "Allow partial overlap"
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    allowOverlap = false,
-    pointTypes = [] as PointType[],
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    overwriteOthers = false,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    ensureConnected = true,
-}) => {
+    preventOverlap,
+    ensureConnected,
+    pointTypes,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- requires storage occlusion tests to be implemented
+    overwriteOthers,
+}: HandleEventsUnorderedSetsArg) => {
     if (!pointTypes?.length) {
         throw notify.error({
             message: "Multipoint handler was not provided required parameters",
@@ -239,5 +244,43 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>({
         }
     };
 
-    return { gatherPoints, handleEvent };
+    const isThisLayersAction = (
+        layer: MultiPointLayer<LP>,
+        action: HistoryAction,
+    ): action is HistoryAction<MultiPointLayerProps> => {
+        return action.layerId === layer.id;
+    };
+
+    const filter = function (this: MultiPointLayer<LP>, { grid, settings, storage }, action) {
+        if (!isThisLayersAction(this, action) || action.object === null) return action;
+
+        if (ensureConnected) {
+            const pt = grid.getPointTransformer(settings);
+            const [, cells] = pt.fromPoints("cells", action.object.points);
+            // TODO: Doesn't work as expected because a loop of cells will have two shrinkwraps (inside and outside)
+            const shrinkwrap = pt.shrinkwrap(cells); // TODO: Implement pt.adjacencyTree() or pt.isConnected()
+            if (shrinkwrap.length !== 1) {
+                return null;
+            }
+        }
+
+        if (preventOverlap) {
+            const stored = storage.getStored<MultiPointLayerProps>({ grid, layer: this });
+            const points = new Set(action.object.points);
+
+            // TODO: Assumes objects are only in one storageMode
+            for (const [id, { points: existingPoints }] of stored.entries(action.storageMode)) {
+                if (id === action.objectId) continue;
+                for (const point of existingPoints) {
+                    if (points.has(point)) {
+                        return null;
+                    }
+                }
+            }
+        }
+
+        return action;
+    } satisfies StorageFilter;
+
+    return { gatherPoints, handleEvent, filter };
 };

@@ -207,8 +207,6 @@ export class PuzzleManager {
         return data;
     }
 
-    // TODO: I might need to not selectLayer in .addLayer() anymore. But let me figure out the issue right now.
-
     addLayer(
         layerClass: LayerClass<any>,
         id: Layer["id"] | null,
@@ -222,14 +220,54 @@ export class PuzzleManager {
         this.storage.addStorage({ grid: this.grid, layer });
 
         const { grid, settings: puzzleSettings, storage } = this;
-        // TODO: I don't like that updateSettings is called multiple times (here and in .changeLayerSetting), or that any possible history from the initial load is ignored here (I don't check the return from the following call)
-        layer.updateSettings({ grid, puzzleSettings, storage, oldSettings: undefined });
+
+        // TODO: Why do I have to call updateSettings twice again? I should have layers be complete on initialization, not after updateSettings({oldSettings: undefined}).
+        const { filters } = layer.updateSettings({
+            grid,
+            puzzleSettings,
+            storage,
+            oldSettings: undefined,
+        });
+        if (filters) {
+            this.storage.addStorageFilters(filters, layer.id);
+        }
+
         if (settings) {
+            let oldSettings = undefined as undefined | UnknownObject;
             for (const [key, value] of Object.entries(settings)) {
-                this.changeLayerSetting(layer.id, key, value);
+                if (layer.klass.isValidSetting(key, value)) {
+                    oldSettings = oldSettings ?? { ...layer.settings };
+                    layer.settings[key] = value;
+                }
+            }
+
+            if (oldSettings) {
+                const { history, filters, removeFilters } = layer.updateSettings({
+                    grid: this.grid,
+                    puzzleSettings: this.settings,
+                    storage: this.storage,
+                    oldSettings,
+                });
+
+                if (removeFilters) {
+                    this.storage.removeStorageFilters(removeFilters);
+                }
+                if (filters) {
+                    this.storage.addStorageFilters(filters, layer.id);
+                }
+
+                // TODO: History is deprecated because filters will now manage removing invalid objects
+                if (history?.length) {
+                    this.storage.addToHistory({
+                        puzzle: this,
+                        layerId: layer.id,
+                        actions: history,
+                    });
+                }
             }
         }
 
+        // TODO: I might need to not selectLayer in .addLayer() anymore. (I think I only need it on initial add, but I'm not certain).
         this.selectLayer(layer.id);
 
         return layer.id;
@@ -263,12 +301,19 @@ export class PuzzleManager {
             layer.settings[key as never] = value; // Sometimes I hate typescript
 
             const { grid, settings, storage } = this;
-            const { history } = layer.updateSettings({
+            const { history, filters, removeFilters } = layer.updateSettings({
                 grid,
                 puzzleSettings: settings,
                 storage,
                 oldSettings,
             });
+
+            if (removeFilters) {
+                this.storage.removeStorageFilters(removeFilters);
+            }
+            if (filters) {
+                this.storage.addStorageFilters(filters, layer.id);
+            }
 
             if (history?.length) {
                 this.storage.addToHistory({ puzzle: this, layerId: layer.id, actions: history });

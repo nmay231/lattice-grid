@@ -1,4 +1,4 @@
-import { LayerClass, SVGGroup } from "../types";
+import { LayerClass, SVGGroup, StorageFilter } from "../types";
 import { reduceTo } from "../utils/data";
 import { Vec } from "../utils/math";
 import { notify } from "../utils/notifications";
@@ -15,6 +15,7 @@ interface KillerCagesProps extends MultiPointLayerProps {
     ObjectState: MultiPointLayerProps["ObjectState"] & { state: string | null };
     Settings: {
         _numberTyper: ReturnType<typeof numberTyper>;
+        storageFilter: StorageFilter;
     };
     HandlesKeyDown: true;
 }
@@ -28,7 +29,13 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
     static defaultSettings: LayerClass<KillerCagesProps>["defaultSettings"] = {
         _numberTyper: () => {
             throw notify.error({
-                message: `${this.type}._numberTyper() called before implementing!`,
+                message: `${this.type}.settings._numberTyper() called before implementing!`,
+                forever: true,
+            });
+        },
+        storageFilter: () => {
+            throw notify.error({
+                message: `${this.type}.settings.storageFilter() called before implementing!`,
                 forever: true,
             });
         },
@@ -68,8 +75,9 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
     static constraints = undefined;
 
     static settingsDescription: LayerClass<KillerCagesProps>["settingsDescription"] = {
-        // Actually, derived is interesting in this case because I don't want it to be serialized, but it's not actually derived from anything (at least yet)
+        // Actually, `derived` is interesting in this case because I don't want it to be serialized, but it's not actually derived from anything (at least yet)
         _numberTyper: { type: "constraints", derived: true },
+        storageFilter: { type: "constraints", derived: true },
     };
 
     static isValidSetting<K extends keyof KillerCagesProps["Settings"]>(
@@ -80,17 +88,25 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
     }
 
     updateSettings: IKillerCagesLayer["updateSettings"] = () => {
-        const { gatherPoints, handleEvent } = handleEventsUnorderedSets<KillerCagesProps>({
+        const { gatherPoints, handleEvent, filter } = handleEventsUnorderedSets<KillerCagesProps>({
             pointTypes: ["cells"],
-            ensureConnected: false, // TODO: Change to true when properly implemented
-            allowOverlap: true, // TODO: Change to false when properly implemented
-            overwriteOthers: false,
+            ensureConnected: true,
+            preventOverlap: true,
+            overwriteOthers: false, // TODO: Add an option for this in global settings?
         });
         this.gatherPoints = gatherPoints;
         this.handleEvent = handleEvent;
 
+        // TODO: Layers should not have to manage StorageFilter (de)registration. It should be transparently passed through from handlers, but that requires handlers to be conscience of layer life cycles.
+        // TODO: I have an idea to store which type the filter is as attributes on the filter itself, but let's do that after this initial version
+        if (this.settings.storageFilter === this.klass.defaultSettings.storageFilter) {
+            this.settings.storageFilter = filter.bind(this); // TODO: How to typecheck this, or do it in a more intuitive manner? I need access to `this` to check for overlapping objects
+        }
+
         this.settings._numberTyper = numberTyper({ max: -1, negatives: false });
-        return {};
+        return {
+            filters: [{ filter: this.settings.storageFilter }],
+        };
     };
 
     getSVG: IKillerCagesLayer["getSVG"] = ({ grid, storage, settings }) => {

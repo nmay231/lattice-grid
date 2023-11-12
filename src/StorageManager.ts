@@ -7,7 +7,7 @@ import {
     LayerProps,
     PartialHistoryAction,
     PuzzleForStorage,
-    StorageReducer,
+    StorageFilter,
 } from "./types";
 import { notify } from "./utils/notifications";
 import { stringifyAnything } from "./utils/string";
@@ -18,9 +18,6 @@ export class StorageManager {
     objects: Record<Grid["id"], Record<Layer["id"], LayerStorage>> = {};
 
     histories: Record<Grid["id"], History> = {};
-
-    masterReducer: StorageReducer<HistoryAction | null> = (puzzle, action) => action;
-    storageReducers: Array<typeof this.masterReducer> = [];
 
     addStorage({ grid, layer }: GridAndLayer) {
         this.objects[grid.id] = this.objects[grid.id] ?? {};
@@ -40,30 +37,70 @@ export class StorageManager {
         return this.objects[grid.id][layer.id] as LayerStorage<LP>;
     }
 
-    // TODO: Have storageReducers subscribe to the layers they need, allow controlling the order they run, etc.
-    addStorageReducer(reducer: typeof this.masterReducer) {
-        this.storageReducers.push(reducer);
-        this.masterReducer = (puzzle, action) =>
-            this.storageReducers.reduce((prev, reduce) => reduce(puzzle, prev), action);
-    }
+    layersByFilters: Map<StorageFilter, { layerIds: Layer["id"][] }> = new Map();
+    filtersByLayer: Record<Layer["id"], StorageFilter[]> = {};
 
-    removeStorageReducer(reducer: typeof this.masterReducer) {
-        const index = this.storageReducers.indexOf(reducer);
-        if (index > -1) {
-            this.storageReducers.splice(index, 1);
-            this.masterReducer = (puzzle, action) =>
-                this.storageReducers.reduce((prev, reduce) => reduce(puzzle, prev), action);
-        } else {
-            notify.error({
-                message: `Storage: Failed to remove a reducer ${stringifyAnything(
-                    reducer,
-                )}. Reducer was never added or already removed!`,
-            });
+    addStorageFilters(
+        filters: Array<{ filter: StorageFilter; layerIds?: Layer["id"][] }>,
+        defaultLayer: Layer["id"],
+    ) {
+        if (!filters.length) return;
+        for (const { filter, layerIds } of filters) {
+            const ids = layerIds ?? [defaultLayer];
+            if (this.layersByFilters.has(filter)) {
+                return;
+            }
+            this.layersByFilters.set(filter, { layerIds: ids });
+            for (const id of ids) {
+                this.filtersByLayer[id] = this.filtersByLayer[id] ?? [];
+                this.filtersByLayer[id].push(filter);
+            }
         }
     }
 
+    removeStorageFilters(filters: StorageFilter[]) {
+        if (!filters.length) return;
+        for (const filter of filters) {
+            const result = this.layersByFilters.get(filter);
+            if (!result) {
+                throw notify.error({
+                    message: `Storage: Failed to remove a filter ${stringifyAnything(
+                        filter,
+                    )}. Reducer was never added or already removed!`,
+                    forever: true,
+                });
+            }
+            this.layersByFilters.delete(filter);
+
+            for (const id of result.layerIds) {
+                this.filtersByLayer[id].push(filter);
+                const index = this.filtersByLayer[id].indexOf(filter);
+                if (index > -1) {
+                    this.filtersByLayer[id].splice(index, 1);
+                } else {
+                    throw notify.error({
+                        title: "removeStorageReducer",
+                        message: `layer ${id} was not subscribed to a filter it was supposed to be to`,
+                        forever: true,
+                    });
+                }
+            }
+        }
+    }
+
+    masterHistoryActionFilter: StorageFilter = (puzzle, firstAction) => {
+        let action: HistoryAction | null = firstAction;
+        if (!(action.layerId in this.filtersByLayer)) {
+            return action;
+        }
+        for (const reducer of this.filtersByLayer[action.layerId]) {
+            action = action && reducer(puzzle, action);
+        }
+        return action;
+    };
+
     addToHistory(arg: {
-        puzzle: PuzzleForStorage;
+        puzzle: Parameters<StorageFilter>[0];
         layerId: Layer["id"];
         actions?: PartialHistoryAction[];
     }) {
@@ -91,7 +128,7 @@ export class StorageManager {
             const stored = this.objects[gridId][layerId];
             const history = this.histories[gridId];
 
-            const action = this.masterReducer(puzzle, {
+            const action = this.masterHistoryActionFilter(puzzle, {
                 objectId: partialAction.id,
                 layerId,
                 batchId:
