@@ -12,6 +12,7 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
             preventOverlap: false,
             ensureConnected: false,
             overwriteOthers: false,
+            previousFilter: null,
         },
     ) => {
         const layer = { id: "DummyLayer" } as NeedsUpdating;

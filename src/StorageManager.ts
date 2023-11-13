@@ -48,7 +48,7 @@ export class StorageManager {
         for (const { filter, layerIds } of filters) {
             const ids = layerIds ?? [defaultLayer];
             if (this.layersByFilters.has(filter)) {
-                return;
+                continue;
             }
             this.layersByFilters.set(filter, { layerIds: ids });
             for (const id of ids) {

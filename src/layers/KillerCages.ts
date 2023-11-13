@@ -1,4 +1,4 @@
-import { LayerClass, SVGGroup, StorageFilter } from "../types";
+import { LayerClass, SVGGroup } from "../types";
 import { reduceTo } from "../utils/data";
 import { Vec } from "../utils/math";
 import { notify } from "../utils/notifications";
@@ -6,6 +6,7 @@ import { BaseLayer } from "./BaseLayer";
 import {
     MultiPointLayer,
     MultiPointLayerProps,
+    MultiPointStorageFilter,
     handleEventsUnorderedSets,
 } from "./controls/multiPoint";
 import { numberTyper } from "./controls/numberTyper";
@@ -15,7 +16,7 @@ interface KillerCagesProps extends MultiPointLayerProps {
     ObjectState: MultiPointLayerProps["ObjectState"] & { state: string | null };
     Settings: {
         _numberTyper: ReturnType<typeof numberTyper>;
-        storageFilter: StorageFilter;
+        storageFilter: MultiPointStorageFilter<KillerCagesProps>;
     };
     HandlesKeyDown: true;
 }
@@ -33,12 +34,7 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
                 forever: true,
             });
         },
-        storageFilter: () => {
-            throw notify.error({
-                message: `${this.type}.settings.storageFilter() called before implementing!`,
-                forever: true,
-            });
-        },
+        storageFilter: null!,
     };
 
     static create = ((puzzle): KillerCagesLayer => {
@@ -88,21 +84,19 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
     }
 
     updateSettings: IKillerCagesLayer["updateSettings"] = () => {
-        const { gatherPoints, handleEvent, filter } = handleEventsUnorderedSets<KillerCagesProps>({
-            pointTypes: ["cells"],
-            ensureConnected: true,
-            preventOverlap: true,
-            overwriteOthers: false, // TODO: Add an option for this in global settings?
-        });
+        const { gatherPoints, handleEvent, unboundFilter } =
+            handleEventsUnorderedSets<KillerCagesProps>({
+                pointTypes: ["cells"],
+                ensureConnected: true,
+                preventOverlap: true,
+                // TODO: Add an option for this in global settings?
+                overwriteOthers: false,
+                previousFilter: this.settings.storageFilter,
+            });
         this.gatherPoints = gatherPoints;
         this.handleEvent = handleEvent;
 
-        // TODO: Layers should not have to manage StorageFilter (de)registration. It should be transparently passed through from handlers, but that requires handlers to be conscience of layer life cycles.
-        // TODO: I have an idea to store which type the filter is as attributes on the filter itself, but let's do that after this initial version
-        if (this.settings.storageFilter === this.klass.defaultSettings.storageFilter) {
-            this.settings.storageFilter = filter.bind(this); // TODO: How to typecheck this, or do it in a more intuitive manner? I need access to `this` to check for overlapping objects
-        }
-
+        this.settings.storageFilter = unboundFilter.bind(this);
         this.settings._numberTyper = numberTyper({ max: -1, negatives: false });
         return {
             filters: [{ filter: this.settings.storageFilter }],

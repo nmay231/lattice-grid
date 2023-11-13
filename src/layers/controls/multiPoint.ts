@@ -35,19 +35,27 @@ export type MultiPointKeyDownHandler<LP extends LayerProps> = (
     arg: LayerEventEssentials<LP> & Keypress & { points: Point[] },
 ) => LayerHandlerResult<LP>;
 
-export type HandleEventsUnorderedSetsArg = {
+export type MultiPointStorageFilter<LP extends MultiPointLayerProps> = Pick<
+    HandleEventsUnorderedSetsArg<LP>,
+    "ensureConnected" | "preventOverlap"
+> &
+    ((this: MultiPointLayer<LP>, ...args: Parameters<StorageFilter>) => ReturnType<StorageFilter>);
+
+export type HandleEventsUnorderedSetsArg<LP extends MultiPointLayerProps> = {
     preventOverlap: boolean;
     ensureConnected: boolean;
-    pointTypes: PointType[];
     overwriteOthers: boolean;
+    pointTypes: PointType[];
+    previousFilter: null | MultiPointStorageFilter<LP>;
 };
 export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>({
+    pointTypes,
     preventOverlap,
     ensureConnected,
-    pointTypes,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- requires storage occlusion tests to be implemented
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     overwriteOthers,
-}: HandleEventsUnorderedSetsArg) => {
+    previousFilter,
+}: HandleEventsUnorderedSetsArg<LP>) => {
     if (!pointTypes?.length) {
         throw notify.error({
             message: "Multipoint handler was not provided required parameters",
@@ -244,41 +252,59 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>({
         }
     };
 
-    const isThisLayersAction = (
-        layer: MultiPointLayer<LP>,
-        action: HistoryAction,
-    ): action is HistoryAction<MultiPointLayerProps> => {
-        return action.layerId === layer.id;
-    };
+    // TODO: This is a bit complicated, and I have some better ideas, but I just want to get this done for now.
+    let unboundFilter: { bind: (layer: MultiPointLayer<LP>) => MultiPointStorageFilter<LP> };
+    if (
+        previousFilter &&
+        previousFilter.ensureConnected === ensureConnected &&
+        previousFilter.preventOverlap === preventOverlap
+    ) {
+        unboundFilter = { bind: () => previousFilter };
+    } else {
+        const isThisLayersAction = (
+            layer: MultiPointLayer<LP>,
+            action: HistoryAction,
+        ): action is HistoryAction<MultiPointLayerProps> => {
+            return action.layerId === layer.id;
+        };
 
-    const filter = function (this: MultiPointLayer<LP>, { grid, settings, storage }, action) {
-        if (!isThisLayersAction(this, action) || action.object === null) return action;
+        const filter = function (this: MultiPointLayer<LP>, { grid, settings, storage }, action) {
+            if (!isThisLayersAction(this, action) || action.object === null) return action;
 
-        if (ensureConnected) {
-            const pt = grid.getPointTransformer(settings);
-            const [cellMap] = pt.fromPoints("cells", action.object.points);
-            if (!pt.isFullyConnected(cellMap)) {
-                return null;
+            if (ensureConnected) {
+                const pt = grid.getPointTransformer(settings);
+                const [cellMap] = pt.fromPoints("cells", action.object.points);
+                if (!pt.isFullyConnected(cellMap)) {
+                    return null;
+                }
             }
-        }
 
-        if (preventOverlap) {
-            const stored = storage.getStored<MultiPointLayerProps>({ grid, layer: this });
-            const points = new Set(action.object.points);
+            if (preventOverlap) {
+                const stored = storage.getStored<MultiPointLayerProps>({ grid, layer: this });
+                const points = new Set(action.object.points);
 
-            // TODO: Assumes objects are only in one storageMode
-            for (const [id, { points: existingPoints }] of stored.entries(action.storageMode)) {
-                if (id === action.objectId) continue;
-                for (const point of existingPoints) {
-                    if (points.has(point)) {
-                        return null;
+                // TODO: Assumes objects are only in one storageMode
+                for (const [id, { points: existingPoints }] of stored.entries(action.storageMode)) {
+                    if (id === action.objectId) continue;
+                    for (const point of existingPoints) {
+                        if (points.has(point)) {
+                            return null;
+                        }
                     }
                 }
             }
-        }
 
-        return action;
-    } satisfies StorageFilter;
+            return action;
+        } satisfies StorageFilter;
 
-    return { gatherPoints, handleEvent, filter };
+        unboundFilter = {
+            bind: (layer) =>
+                Object.assign(filter.bind(layer), {
+                    ensureConnected,
+                    preventOverlap,
+                }),
+        };
+    }
+
+    return { gatherPoints, handleEvent, unboundFilter };
 };
