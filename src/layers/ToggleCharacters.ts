@@ -253,7 +253,6 @@ export class ToggleCharactersLayer
         } else {
             notify.error({
                 message: `Unknown displayStyle in ToggleCharacters ${this.settings.displayStyle}`,
-                forever: true,
             });
             return [];
         }

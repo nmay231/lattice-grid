@@ -36,7 +36,6 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
         _numberTyper: () => {
             throw notify.error({
                 message: `${this.type}._numberTyper() called before implementing!`,
-                forever: true,
             });
         },
         currentCharacter: "1",

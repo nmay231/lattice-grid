@@ -49,7 +49,6 @@ export const handleEventsCycleStates = <
     if (!states?.length || !pointTypes?.length) {
         throw notify.error({
             message: "onePoint cycleStates was not provided required parameters",
-            forever: true,
         });
     }
 
@@ -98,7 +97,6 @@ export const handleEventsCurrentSetting = <
     if (!pointTypes?.length || !deltas?.length) {
         throw notify.error({
             message: "onePoint currentSetting was not provided required parameters",
-            forever: true,
         });
     }
 

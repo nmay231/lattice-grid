@@ -491,7 +491,7 @@ export class SquareGrid implements Grid {
             }
             return arr;
         } else {
-            throw notify.error({ message: `Unrecognized point type=${type}`, forever: true });
+            throw notify.error({ message: `Unrecognized point type=${type}` });
         }
     }
 

@@ -31,7 +31,6 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
         _numberTyper: () => {
             throw notify.error({
                 message: `${this.type}.settings._numberTyper() called before implementing!`,
-                forever: true,
             });
         },
         storageFilter: null!,

@@ -167,7 +167,7 @@ export class PuzzleManager {
                     notify.info({
                         title: "Yay! You solved it",
                         message: "your answer matches the setter's answer",
-                        forever: true,
+                        timeout: 0,
                     });
                     // Clear to reset checking and only display one notification
                     this.answers = new Map();
@@ -176,6 +176,7 @@ export class PuzzleManager {
         } else {
             throw notify.error({
                 message: `Failed to render to canvas: ${stringifyAnything(change)}`,
+                timeout: 4000,
             });
         }
 
@@ -328,6 +329,7 @@ export class PuzzleManager {
         if (from === -1 || to === -1) {
             throw notify.error({
                 message: `shuffleLayerOnto: One of ${beingMoved} => ${target} not in ${layers.keys()}`,
+                timeout: 4000,
             });
         }
 

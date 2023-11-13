@@ -494,7 +494,6 @@ export class ControlsManager {
             throw notify.error({
                 title: "Submit a bug report if you get this error.",
                 message: `TODO: I need to handle WheelEvent.deltaMode=${rawEvent.deltaMode}`,
-                forever: true,
             });
         }
 

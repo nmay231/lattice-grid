@@ -38,7 +38,6 @@ export const handleEventsCurrentSetting = <
     if (!pointTypes?.length || !deltas?.length || !stateKeys.length) {
         throw notify.error({
             message: "twoPoint currentSetting was not provided required parameters",
-            forever: true,
         });
     }
 

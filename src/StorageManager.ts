@@ -67,7 +67,6 @@ export class StorageManager {
                     message: `Storage: Failed to remove a filter ${stringifyAnything(
                         filter,
                     )}. Reducer was never added or already removed!`,
-                    forever: true,
                 });
             }
             this.layersByFilters.delete(filter);
@@ -81,7 +80,6 @@ export class StorageManager {
                     throw notify.error({
                         title: "removeStorageReducer",
                         message: `layer ${id} was not subscribed to a filter it was supposed to be to`,
-                        forever: true,
                     });
                 }
             }
@@ -117,10 +115,7 @@ export class StorageManager {
             const storageMode = partialAction.storageMode ?? currentEditMode;
             if (storageMode === "ui") {
                 if (partialAction.batchId !== "ignore") {
-                    notify.error({
-                        message: `Forgot to explicitly ignore UI input ${layerId}}`,
-                        forever: true,
-                    });
+                    notify.error({ message: `Forgot to explicitly ignore UI input ${layerId}}` });
                 }
                 continue; // Do not include in history
             }

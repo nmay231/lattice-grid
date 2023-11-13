@@ -35,14 +35,12 @@ export class BaseLayer<LP extends LayerProps>
     gatherPoints: Layer<LP>["gatherPoints"] = () => {
         throw notify.error({
             message: `${this.klass.type}.gatherPoints() called before implementing!`,
-            forever: true,
         });
     };
 
     handleEvent: Layer<LP>["handleEvent"] = () => {
         throw notify.error({
             message: `${this.klass.type}.handleEvent() called before implementing!`,
-            forever: true,
         });
     };
 }

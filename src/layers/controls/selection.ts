@@ -127,7 +127,6 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                 throw notify.error({
                     title: "selection controls",
                     message: `Keypress events should not be handled in handleEvent layer.id=${this.id}`,
-                    forever: true,
                 });
             }
             case "pointerDown":
@@ -227,7 +226,6 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                     message: `Unknown event in selected layer ${
                         this.displayName
                     }: ${stringifyAnything(event)}`,
-                    forever: true,
                 });
             }
         }

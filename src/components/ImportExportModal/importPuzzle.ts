@@ -22,14 +22,15 @@ export const importPuzzle = (puzzle: PuzzleManager, text: string) => {
             return notify.error({
                 title: "Failed to parse",
                 message: "malformed puzzle string",
+                timeout: 4000,
             });
         else if (puzzleData.version !== currentEncodingVersion) {
             return notify.error({
-                forever: true,
                 title: "Old puzzle string",
                 message:
                     `The puzzle string is incompatible with the current version (${puzzleData.version} < ${currentEncodingVersion}).` +
                     " Backwards compatibility is not a concern until this software leaves alpha (sorry)",
+                timeout: 8000,
             });
         }
         puzzle.storage = new StorageManager();
@@ -55,6 +56,7 @@ export const importPuzzle = (puzzle: PuzzleManager, text: string) => {
             error: error as NeedsUpdating,
             title: "Failed to parse",
             message: "Bad puzzle data or unknown error",
+            timeout: 4000,
         });
     }
 };

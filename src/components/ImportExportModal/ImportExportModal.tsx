@@ -119,6 +119,7 @@ export const ImportExportModal = React.memo(function ImportExportModal() {
                     title: "Failed to paste",
                     message:
                         "You have prevented us from pasting using this button. You can still manually paste into the text field above and click Load.",
+                    timeout: 5000,
                 });
             });
     };
