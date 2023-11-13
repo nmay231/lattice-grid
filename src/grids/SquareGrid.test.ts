@@ -245,6 +245,45 @@ describe("SquareGridTransformer", () => {
             { x: -10, y: 8 },
         ]);
     });
+
+    it("checks for fully connected cells", () => {
+        const pt = pointTransformer();
+        given([
+            fc.array(
+                fc.constantFrom(
+                    Vec.from([0, 2]),
+                    Vec.from([2, 0]),
+                    Vec.from([0, -2]),
+                    Vec.from([-2, 0]),
+                ),
+            ),
+            FCRepeat(2, fc.integer({ max: 500 })),
+        ]).assertProperty((path, start) => {
+            // Ensure the start is a cell (both odd numbers)
+            let current = Vec.from(start).scale(2).plus([1, 1]);
+            const points = new Set([current.xy.join(",")]);
+
+            for (const step of path) {
+                current = current.plus(step);
+                points.add(current.xy.join(","));
+            }
+
+            const [cellMap] = pt.fromPoints("cells", [...points]);
+            expect(pt.isFullyConnected(cellMap)).toBe(true);
+        });
+    });
+
+    it.each([
+        { points: ["1,1", "3,3"] },
+        { points: ["1,3", "3,1"] },
+        { points: ["1,1", "1,5"] },
+        { points: ["1,1", "1,5"] },
+        { points: ["1,1", "1,3", "5,1", "5,3"] },
+    ])("doesn't count disconnected cells as connected", ({ points }) => {
+        const pt = pointTransformer();
+        const [cellMap] = pt.fromPoints("cells", points);
+        expect(pt.isFullyConnected(cellMap)).toBe(false);
+    });
 });
 
 describe("SquareGridTransformer.shrinkwrap", () => {

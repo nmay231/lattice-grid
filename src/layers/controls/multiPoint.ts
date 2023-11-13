@@ -256,10 +256,8 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>({
 
         if (ensureConnected) {
             const pt = grid.getPointTransformer(settings);
-            const [, cells] = pt.fromPoints("cells", action.object.points);
-            // TODO: Doesn't work as expected because a loop of cells will have two shrinkwraps (inside and outside)
-            const shrinkwrap = pt.shrinkwrap(cells); // TODO: Implement pt.adjacencyTree() or pt.isConnected()
-            if (shrinkwrap.length !== 1) {
+            const [cellMap] = pt.fromPoints("cells", action.object.points);
+            if (!pt.isFullyConnected(cellMap)) {
                 return null;
             }
         }
