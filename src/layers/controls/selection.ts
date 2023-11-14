@@ -95,7 +95,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
     };
 
     const handleEvent: SelectedLayer["handleEvent"] = function (this: SelectedLayer, event) {
-        const { grid, storage, tempStorage } = event;
+        const { grid, storage, tempStorage, settings } = event;
         const internal = storage.getStored<InternalProps>({ grid, layer: { id: layerId } });
         let history: PartialHistoryAction<LP, InternalProps["ObjectState"]>[];
         const allPoints = internal.keys("question");
@@ -118,7 +118,9 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                 } else if (event.keypress === "ctrl-i") {
                     history = grid
                         .getAllPoints("cells")
-                        .map((id) => obj({ id, object: allPoints.has(id) ? null : { state: 1 } }));
+                        .map((id) =>
+                            obj({ id, object: allPoints.includes(id) ? null : { state: 1 } }),
+                        );
                     return {
                         history,
                     };
@@ -145,7 +147,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                     if (tempStorage.targetState === undefined) {
                         // If targetState is undefined, there can only be one id
                         const id = ids[0];
-                        if (currentPoints.has(id)) {
+                        if (currentPoints.includes(id)) {
                             tempStorage.targetState = null;
                             history = [obj({ id, object: null })];
                         } else {
@@ -157,17 +159,19 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                         }
                     } else if (tempStorage.targetState === null) {
                         history = ids
-                            .filter((id) => currentPoints.has(id))
+                            .filter((id) => currentPoints.includes(id))
                             .map((id) => obj({ id, object: null }));
                     } else {
                         const groupsToMerge = new Set(
-                            ids.map((id) => internal.getObject(id)?.state),
+                            ids.map((id) => internal.getObject(settings.editMode, id)?.state),
                         );
                         const allIds = ids
-                            .filter((id) => !currentPoints.has(id))
+                            .filter((id) => !currentPoints.includes(id))
                             .concat(
                                 [...currentPoints].filter((id) =>
-                                    groupsToMerge.has(internal.getObject(id).state),
+                                    groupsToMerge.has(
+                                        internal.getObject(settings.editMode, id).state,
+                                    ),
                                 ),
                             );
                         const state = tempStorage.targetState;
@@ -234,8 +238,8 @@ export const handleEventsSelection = <LP extends SelectedProps>(
     const getOverlaySVG: SelectedLayer["getOverlaySVG"] = function ({ grid, storage, settings }) {
         // TODO: Selection can be made by multiple layers, but not all layers support the same cells/corners selection. In the future, I need to filter the points by the type of points selectable by the current layer.
         const stored = storage.getStored<InternalProps>({ grid, layer: { id: layerId } });
-        const points = [...stored.keys("question")];
-        const states = points.map((id) => stored.getObject(id).state);
+        const points = stored.keys("question");
+        const states = points.map((id) => stored.getObject(settings.editMode, id).state);
         const pt = grid.getPointTransformer(settings);
 
         const elements: SVGGroup["elements"] = new Map();

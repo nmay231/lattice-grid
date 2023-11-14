@@ -173,11 +173,14 @@ export class StorageManager {
     _applyHistoryAction(arg: { stored: LayerStorage; action: HistoryAction }) {
         const { action, stored } = arg;
 
-        const object = stored.getObject(action.objectId) || null;
+        const object = stored.getObject(action.storageMode, action.objectId) || null;
         const undoAction: HistoryAction = {
             ...action,
             object,
-            prevObjectId: object === null ? PUT_AT_END : stored.prevObjectId(action.objectId),
+            prevObjectId:
+                object === null
+                    ? PUT_AT_END
+                    : stored.prevObjectId(action.storageMode, action.objectId),
         };
         stored.setObject(action.storageMode, action.objectId, action.object, action.prevObjectId);
 

@@ -147,7 +147,7 @@ export class DebugSelectPointsLayer
     getOverlaySVG: IDebugSelectPointsLayer["getOverlaySVG"] = ({ grid, storage, settings }) => {
         const object = storage
             .getStored<DebugSelectPointsProps>({ grid, layer: this })
-            .getObject(LINE_ID);
+            .getObject("ui", LINE_ID);
 
         if (!object?.points.length) {
             return [];

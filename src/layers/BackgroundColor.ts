@@ -61,7 +61,7 @@ export class BackgroundColorLayer
         const stored = storage.getStored<BackgroundColorProps>({ grid, layer: this });
 
         const pt = grid.getPointTransformer(settings);
-        const [cellMap, cells] = pt.fromPoints("cells", [...stored.keys(settings.editMode)]);
+        const [cellMap, cells] = pt.fromPoints("cells", stored.keys(settings.editMode));
         const [outlineMap] = pt.svgOutline(cells);
 
         const elements: SVGGroup["elements"] = new Map();

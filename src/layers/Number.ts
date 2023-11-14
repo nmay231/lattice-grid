@@ -48,14 +48,14 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
 
     eventPlaceSinglePointObjects: INumberLayer["eventPlaceSinglePointObjects"] = () => ({});
 
-    handleKeyDown: INumberLayer["handleKeyDown"] = ({ points: ids, storage, grid }) => {
+    handleKeyDown: INumberLayer["handleKeyDown"] = ({ points: ids, storage, grid, settings }) => {
         const stored = storage.getStored<NumberProps>({ grid, layer: this });
         if (!ids.length) {
             return {};
         }
 
         const states: Array<string | null> = ids.map((id) => {
-            const object = stored.getObject(id);
+            const object = stored.getObject(settings.editMode, id);
             return object?.state ?? null;
         });
 

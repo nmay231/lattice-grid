@@ -46,7 +46,7 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
         if (!stored.permStorage.currentObjectId) return {};
 
         const id = stored.permStorage.currentObjectId;
-        const object = stored.getObject(id);
+        const object = stored.getObject("question", id);
 
         if (type === "delete") {
             if (object.state === null) return {};

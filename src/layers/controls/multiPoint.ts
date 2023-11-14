@@ -100,7 +100,7 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>({
         if (!currentObjectId && type !== "pointerDown" && type !== "undoRedo") {
             return {}; // Other events only matter if there is an object selected
         }
-        const object = stored.getObject(currentObjectId);
+        const object = stored.getObject(settings.editMode, currentObjectId);
 
         switch (type) {
             case "keyDown": {
@@ -130,9 +130,12 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>({
                 // There's only one point with pointerDown
                 const startPoint = event.points[0];
                 // TODO: Only selecting objects from current editMode. Is that what I want?
-                const overlap = [...stored.keys(settings.editMode)].filter(
-                    (id) => stored.getObject(id).points.indexOf(startPoint) > -1,
-                );
+                const overlap = stored
+                    .keys(settings.editMode)
+                    .filter(
+                        (id) =>
+                            stored.getObject(settings.editMode, id).points.indexOf(startPoint) > -1,
+                    );
 
                 if (overlap.length) {
                     // Select the topmost existing object
@@ -145,7 +148,7 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>({
 
                     // Force a rerender without polluting history
                     return {
-                        history: [{ id, object: stored.getObject(id), batchId }],
+                        history: [{ id, object: stored.getObject(settings.editMode, id), batchId }],
                     };
                 }
 

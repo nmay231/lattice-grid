@@ -85,14 +85,14 @@ export const handleEventsCurrentSetting = <
             const id = pair.join(";");
 
             if (tempStorage.targetState === undefined) {
-                const object = stored.getObject(id);
+                const object = stored.getObject(settings.editMode, id);
                 const isSame = object
                     ? stateToString(object) === stateToString(this.settings)
                     : false;
                 tempStorage.targetState = isSame ? null : stateToString(this.settings);
             }
 
-            if (tempStorage.targetState === null && stored.keys(settings.editMode).has(id)) {
+            if (tempStorage.targetState === null && stored.keys(settings.editMode).includes(id)) {
                 history.push({
                     id,
                     batchId: tempStorage.batchId,

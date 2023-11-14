@@ -123,7 +123,7 @@ export class ToggleCharactersLayer
                 if (newState !== state) {
                     history.push({
                         object: { state: newState },
-                        storageMode: stored.keys("question").has(id) ? "question" : "answer",
+                        storageMode: stored.keys("question").includes(id) ? "question" : "answer",
                         id,
                     });
                 }
@@ -156,7 +156,12 @@ export class ToggleCharactersLayer
         return caseSwap;
     };
 
-    handleKeyDown: IToggleCharactersLayer["handleKeyDown"] = ({ grid, storage, points }) => {
+    handleKeyDown: IToggleCharactersLayer["handleKeyDown"] = ({
+        grid,
+        storage,
+        points,
+        settings,
+    }) => {
         const ids = points;
         if (!ids?.length) {
             return {};
@@ -176,7 +181,7 @@ export class ToggleCharactersLayer
         }
 
         const states = ids.map((id) => {
-            const object = stored.getObject(id);
+            const object = stored.getObject(settings.editMode, id);
             return object?.state || "";
         });
         const allIncluded = states.reduce((prev, next) => prev && next.indexOf(char) > -1, true);
@@ -206,7 +211,7 @@ export class ToggleCharactersLayer
         const stored = storage.getStored<ToggleCharactersProps>({ grid, layer: this });
 
         const pt = grid.getPointTransformer(settings);
-        const [cellMap, cells] = pt.fromPoints("cells", [...stored.keys(settings.editMode)]);
+        const [cellMap, cells] = pt.fromPoints("cells", stored.keys(settings.editMode));
         const toSVG = cells.toSVGPoints();
         const maxRadius = pt.maxRadius({ type: "cells", shape: "square", size: "lg" });
 

@@ -102,7 +102,7 @@ class _SquareGridPoints<PT extends PointType = PointType> {
 export class _SquareGridTransformer {
     constructor(public settings: Settings) {}
 
-    fromPoints<PT extends PointType = PointType>(type: PT, points: Point[]) {
+    fromPoints<PT extends PointType = PointType>(type: PT, points: readonly Point[]) {
         const gp = new _SquareGridPoints<PT>(type, this.settings);
         const map = new Map<string, Vec>();
         for (const point of points) {
