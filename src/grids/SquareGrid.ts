@@ -435,7 +435,8 @@ export class SquareGrid implements Grid {
             targets,
         });
 
-        return points;
+        // TODO: Temporary hack to prevent selecting points outside the grid.
+        return points.filter((point) => !this._outOfBounds(this._stringToGridPoint(point)));
     };
 
     getPointTransformer(settings: Settings) {
