@@ -1,6 +1,6 @@
 import { proxy } from "valtio";
 import { Layer, LayerProps, ObjectId, StorageMode, UnknownObject } from "./types";
-import { OrderedMap } from "./utils/OrderedMap";
+import { OrderedMap, PutAtEnd } from "./utils/OrderedMap";
 
 class DisjointSets<Groups extends string = string> {
     byKey: Record<string, Groups> = {};
@@ -67,22 +67,18 @@ export class LayerStorage<LP extends LayerProps = LayerProps> {
         storageMode: StorageMode,
         id: ObjectId,
         object: LP["ObjectState"] | null,
-        nextObjectId: ObjectId | null = null,
+        prevKey: ObjectId | null | PutAtEnd,
     ): void {
         if (object === null) {
             this.objects.delete(id);
             this.groups.deleteKey(id);
         } else {
-            this.objects.set(id, object, nextObjectId);
+            this.objects.set(id, object, prevKey);
             this.groups.setKey(id, storageMode);
         }
     }
 
-    _getNextId(id: ObjectId): ObjectId | null {
-        return this.objects.getNextKey(id);
-    }
-
-    _getPrevId(id: ObjectId): ObjectId | null {
+    prevObjectId(id: ObjectId): ObjectId | null {
         return this.objects.getPrevKey(id);
     }
 

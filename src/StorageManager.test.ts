@@ -10,6 +10,7 @@ import {
     HistoryAction as UntypedHistoryAction,
     PartialHistoryAction as UntypedPartialHistoryAction,
 } from "./types";
+import { PUT_AT_END } from "./utils/OrderedMap";
 import { notify } from "./utils/notifications";
 import { layerEventEssentials } from "./utils/testing/layerEventEssentials";
 
@@ -54,7 +55,7 @@ describe("StorageManager", () => {
             objectId: "objectId",
             layerId: "layer1",
             object: { asdf: "something" },
-            nextObjectId: null,
+            prevObjectId: null,
             storageMode: "question",
         };
         storage._applyHistoryAction({ stored, action });
@@ -71,7 +72,7 @@ describe("StorageManager", () => {
             objectId: "objectId",
             layerId: "layer1",
             object: null,
-            nextObjectId: null,
+            prevObjectId: null,
             storageMode: "question",
         };
         storage._applyHistoryAction({ stored, action });
@@ -88,7 +89,7 @@ describe("StorageManager", () => {
             objectId: "objectId",
             layerId: "layer1",
             object: { asdf: "something" },
-            nextObjectId: null,
+            prevObjectId: null,
             storageMode: "question",
         };
         storage._applyHistoryAction({ stored, action });
@@ -106,7 +107,7 @@ describe("StorageManager", () => {
             objectId: "objectId",
             layerId: "layer1",
             object: null,
-            nextObjectId: null,
+            prevObjectId: null,
             storageMode: "question",
         };
         storage._applyHistoryAction({ stored, action });
@@ -124,7 +125,7 @@ describe("StorageManager", () => {
             objectId: "objectId",
             layerId: "layer1",
             object: { asdf: "something" },
-            nextObjectId: null,
+            prevObjectId: null,
             storageMode: "question",
         };
         const inverse = storage._applyHistoryAction({ stored, action });
@@ -132,7 +133,7 @@ describe("StorageManager", () => {
             objectId: "objectId",
             layerId: "layer1",
             object: null,
-            nextObjectId: null,
+            prevObjectId: PUT_AT_END,
             storageMode: "question",
         });
 
@@ -265,24 +266,24 @@ describe("StorageManager", () => {
         expect(storage.canUndo(puzzle)).toBe(true);
         expect(storage.canRedo(puzzle)).toBe(false);
 
-        const afterRedo: StorageManager["histories"][0] = {
+        const afterRedo: StorageManager["histories"][number] = {
             actions: [
                 {
                     objectId: "id1",
                     layerId: "layer1",
-                    nextObjectId: null,
+                    prevObjectId: PUT_AT_END,
                     object: null,
                     storageMode: "question",
                 },
             ] satisfies HistoryAction[],
             index: 1,
         };
-        const afterUndo: StorageManager["histories"][0] = {
+        const afterUndo: StorageManager["histories"][number] = {
             actions: [
                 {
                     objectId: "id1",
                     layerId: "layer1",
-                    nextObjectId: null,
+                    prevObjectId: null,
                     object: { asdf: "something1" },
                     storageMode: "question",
                 },
@@ -292,27 +293,27 @@ describe("StorageManager", () => {
         expect(storage.histories["grid"]).toEqual<History>(afterRedo);
 
         storage.undoHistory(puzzle);
-        expect(storage.objects).toMatchObject(objectsBeforeAction);
+        expect(storage.objects).toEqual(objectsBeforeAction);
         expect(storage.histories["grid"]).toEqual<History>(afterUndo);
         expect(storage.canUndo(puzzle)).toBe(false);
         expect(storage.canRedo(puzzle)).toBe(true);
 
         // A second undo should not change anything
         storage.undoHistory(puzzle);
-        expect(storage.objects).toMatchObject(objectsBeforeAction);
+        expect(storage.objects).toEqual(objectsBeforeAction);
         expect(storage.histories["grid"]).toEqual<History>(afterUndo);
         expect(storage.canUndo(puzzle)).toBe(false);
         expect(storage.canRedo(puzzle)).toBe(true);
 
         storage.redoHistory(puzzle);
-        expect(storage.objects).toMatchObject(objectsAfterAction);
+        expect(storage.objects).toEqual(objectsAfterAction);
         expect(storage.histories["grid"]).toEqual<History>(afterRedo);
         expect(storage.canUndo(puzzle)).toBe(true);
         expect(storage.canRedo(puzzle)).toBe(false);
 
         // A second redo should not change anything
         storage.redoHistory(puzzle);
-        expect(storage.objects).toMatchObject(objectsAfterAction);
+        expect(storage.objects).toEqual(objectsAfterAction);
         expect(storage.histories["grid"]).toEqual<History>(afterRedo);
         expect(storage.canUndo(puzzle)).toBe(true);
         expect(storage.canRedo(puzzle)).toBe(false);
@@ -402,23 +403,25 @@ describe("StorageManager", () => {
         let result: UntypedHistoryAction[];
 
         result = storage.undoHistory(puzzle);
-        expect(result).toMatchObject<HistoryAction[]>([
+        expect(result).toEqual<HistoryAction[]>([
             {
+                batchId: undefined,
                 objectId: "id2",
                 layerId: "layer2",
                 object: null,
-                nextObjectId: null,
+                prevObjectId: PUT_AT_END,
                 storageMode: "question",
             },
         ]);
 
         result = storage.undoHistory(puzzle);
-        expect(result).toMatchObject<HistoryAction[]>([
+        expect(result).toEqual<HistoryAction[]>([
             {
+                batchId: undefined,
                 objectId: "id1",
                 layerId: "layer1",
                 object: null,
-                nextObjectId: null,
+                prevObjectId: PUT_AT_END,
                 storageMode: "question",
             },
         ]);
@@ -427,23 +430,25 @@ describe("StorageManager", () => {
         expect(result).toEqual<HistoryAction[]>([]);
 
         result = storage.redoHistory(puzzle);
-        expect(result).toMatchObject<HistoryAction[]>([
+        expect(result).toEqual<HistoryAction[]>([
             {
+                batchId: undefined,
                 objectId: "id1",
                 layerId: "layer1",
                 object: { asdf: "something1" },
-                nextObjectId: null,
+                prevObjectId: null,
                 storageMode: "question",
             },
         ]);
 
         result = storage.redoHistory(puzzle);
-        expect(result).toMatchObject<HistoryAction[]>([
+        expect(result).toEqual<HistoryAction[]>([
             {
+                batchId: undefined,
                 objectId: "id2",
                 layerId: "layer2",
                 object: { asdf: "something2" },
-                nextObjectId: null,
+                prevObjectId: null,
                 storageMode: "question",
             },
         ]);

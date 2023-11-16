@@ -279,6 +279,7 @@ describe("selection controls", () => {
     });
 
     // TODO: I need a much better strategy for "mocking" layer event handling than layerEventRunner. Perhaps I don't mock anything in the future, but use the real deal for controls, etc. and just provide fake events to the raw event handlers.
+    // eslint-disable-next-line vitest/no-disabled-tests
     it.skip("batches together storingLayer actions", () => {
         // Given two selected points
         const layer = getFreshSelectedLayer();
@@ -325,14 +326,14 @@ describe("selection controls", () => {
                     layerId: layer.id,
                     object: {},
                     storageMode: "question",
-                    nextObjectId: null,
+                    prevObjectId: null,
                 },
                 {
                     objectId: "toSelect",
                     layerId: layer.id,
                     object: {},
                     storageMode: "question",
-                    nextObjectId: null,
+                    prevObjectId: null,
                 },
             ],
         });

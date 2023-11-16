@@ -5,6 +5,7 @@ import type { StorageManager } from "./StorageManager";
 import type { SquareGridParams, _SquareGridTransformer } from "./grids/SquareGrid";
 import type { availableLayers } from "./layers";
 import type { UserCodeJSON } from "./userComputation/codeBlocks";
+import type { PutAtEnd } from "./utils/OrderedMap";
 
 // #region - Compilation
 export type PuzzleError = {
@@ -271,7 +272,7 @@ export type HistoryAction<LP extends LayerProps = LayerProps> = {
     batchId?: number;
     object: LP["ObjectState"] | null;
     /** For when render order matters */
-    nextObjectId: ObjectId | null;
+    prevObjectId: PutAtEnd | ObjectId | null;
     /** Which storage group is this action applied to ("question" | "answer", for now) */
     storageMode: EditMode;
 };

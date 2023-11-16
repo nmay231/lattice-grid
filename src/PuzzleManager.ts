@@ -217,7 +217,7 @@ export class PuzzleManager {
         if (id) layer.id = id;
 
         // Add the layer to the end, but before the UILayer
-        this.layers.set(layer.id, valtioRef(layer), this.UILayer.id);
+        this.layers.set(layer.id, valtioRef(layer), this.layers.getPrevKey(this.UILayer.id));
         this.storage.addStorage({ grid: this.grid, layer });
 
         const { grid, settings: puzzleSettings, storage } = this;

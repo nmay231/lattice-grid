@@ -9,6 +9,7 @@ import {
     PuzzleForStorage,
     StorageFilter,
 } from "./types";
+import { PUT_AT_END } from "./utils/OrderedMap";
 import { notify } from "./utils/notifications";
 import { stringifyAnything } from "./utils/string";
 
@@ -129,7 +130,7 @@ export class StorageManager {
                 batchId:
                     typeof partialAction.batchId === "number" ? partialAction.batchId : undefined,
                 object: partialAction.object,
-                nextObjectId: stored._getPrevId(partialAction.id),
+                prevObjectId: PUT_AT_END,
                 storageMode,
             });
 
@@ -172,12 +173,13 @@ export class StorageManager {
     _applyHistoryAction(arg: { stored: LayerStorage; action: HistoryAction }) {
         const { action, stored } = arg;
 
+        const object = stored.getObject(action.objectId) || null;
         const undoAction: HistoryAction = {
             ...action,
-            object: stored.getObject(action.objectId) || null,
-            nextObjectId: stored._getPrevId(action.objectId),
+            object,
+            prevObjectId: object === null ? PUT_AT_END : stored.prevObjectId(action.objectId),
         };
-        stored.setObject(action.storageMode, action.objectId, action.object, action.nextObjectId);
+        stored.setObject(action.storageMode, action.objectId, action.object, action.prevObjectId);
 
         return undoAction;
     }
