@@ -188,21 +188,24 @@ export class PuzzleManager {
     _getParams() {
         // TODO: change localStorage key and what's actually stored/how it's stored
         const data: LocalStorageData = {
-            layers: this.layers.values().map(({ id, klass: { type }, settings }) => {
-                const rawSettings: UnknownObject = {};
-                for (const [key, description] of Object.entries(
-                    availableLayers[type as keyof typeof availableLayers].settingsDescription,
-                )) {
-                    if (!description.derived) {
-                        rawSettings[key] = settings[key as never];
+            layers: this.layers
+                .values()
+                .filter(({ id }) => id !== "CellOutlineLayer" && id !== "OverlayLayer")
+                .map(({ id, klass: { type }, settings }) => {
+                    const rawSettings: UnknownObject = {};
+                    for (const [key, description] of Object.entries(
+                        availableLayers[type as keyof typeof availableLayers].settingsDescription,
+                    )) {
+                        if (!description.derived) {
+                            rawSettings[key] = settings[key as never];
+                        }
                     }
-                }
-                return {
-                    id,
-                    type: type as NeedsUpdating,
-                    rawSettings,
-                };
-            }),
+                    return {
+                        id,
+                        type: type as NeedsUpdating,
+                        rawSettings,
+                    };
+                }),
             grid: this.grid.getParams(),
         };
         return data;
