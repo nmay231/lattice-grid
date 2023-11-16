@@ -90,12 +90,16 @@ export class StorageManager {
     masterHistoryActionFilter: StorageFilter = (puzzle, firstAction) => {
         let action: HistoryAction | null = firstAction;
         if (!(action.layerId in this.filtersByLayer)) {
-            return action;
+            return [action];
         }
+        const extraActions: HistoryAction[] = [];
+        let tmp: HistoryAction[];
         for (const reducer of this.filtersByLayer[action.layerId]) {
-            action = action && reducer(puzzle, action);
+            if (!action) continue;
+            [action, ...tmp] = reducer(puzzle, action);
+            extraActions.push(...tmp);
         }
-        return action;
+        return [action, ...extraActions];
     };
 
     addToHistory(arg: {
@@ -124,7 +128,7 @@ export class StorageManager {
             const stored = this.objects[gridId][layerId];
             const history = this.histories[gridId];
 
-            const action = this.masterHistoryActionFilter(puzzle, {
+            const actions = this.masterHistoryActionFilter(puzzle, {
                 objectId: partialAction.id,
                 layerId,
                 batchId:
@@ -132,40 +136,42 @@ export class StorageManager {
                 object: partialAction.object,
                 prevObjectId: PUT_AT_END,
                 storageMode,
-            });
-
-            if (!action) {
-                continue; // One of the reducers chose to ignore this action
-            }
-
-            const undoAction = this._applyHistoryAction({ stored, action });
+            }).filter(Boolean);
 
             if (partialAction.batchId === "ignore") {
-                continue; // Do not include in history
+                // TODO: Do I really want to not track any extra actions provided by filters in history? I can't think of a valid instance where a filter needs to keep actions when the original one is ignored, I guess...
+                for (const action of actions) {
+                    this._applyHistoryAction({ stored, action });
+                }
+                continue;
             }
 
-            const lastAction = history.actions[history.index - 1];
+            for (const action of actions) {
+                const undoAction = this._applyHistoryAction({ stored, action });
 
-            // Merge two actions if they are batched and affecting the same object
-            if (
-                lastAction?.batchId &&
-                lastAction.layerId === layerId &&
-                lastAction.objectId === partialAction.id &&
-                lastAction.batchId === partialAction.batchId
-            ) {
-                // By not pushing actions to history, the actions are merged
+                const lastAction = history.actions[history.index - 1];
 
-                if (action.object === null && lastAction.object === null) {
-                    // We can remove the last action since it is a no-op
-                    history.actions.splice(history.index - 1, 1);
-                    history.index--;
+                // Merge two actions if they are batched and affecting the same object
+                if (
+                    lastAction?.batchId &&
+                    lastAction.layerId === layerId &&
+                    lastAction.objectId === action.objectId &&
+                    lastAction.batchId === action.batchId
+                ) {
+                    // By not pushing actions to history, the actions are merged
+
+                    if (action.object === null && lastAction.object === null) {
+                        // We can remove the last action since it is a no-op
+                        history.actions.splice(history.index - 1, 1);
+                        history.index--;
+                    }
+                } else {
+                    // Prune redo actions placed after the current index, if there are any.
+                    history.actions.splice(history.index);
+
+                    history.actions.push(undoAction);
+                    history.index++;
                 }
-            } else {
-                // Prune redo actions placed after the current index, if there are any.
-                history.actions.splice(history.index);
-
-                history.actions.push(undoAction);
-                history.index++;
             }
         }
     }

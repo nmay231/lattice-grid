@@ -296,7 +296,7 @@ export type StorageFilter = (
         settings: PuzzleManager["settings"];
     },
     arg: HistoryAction,
-) => HistoryAction | null;
+) => [HistoryAction | null, ...HistoryAction[]];
 // #endregion
 
 // #region - Rendering
