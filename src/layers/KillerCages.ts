@@ -93,7 +93,17 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
                 previousFilter: this.settings.storageFilter,
             });
         this.gatherPoints = gatherPoints;
-        this.handleEvent = handleEvent;
+
+        // TODO: I can handle this using filters, but that requires updating multiPoint to understand tempStorage is not always valid. It needs to be done eventually, but not right now
+        // this.handleEvent = handleEvent;
+        const _handleEvent = handleEvent.bind(this);
+        this.handleEvent = (arg) => {
+            // TODO: Killer cages should not be placed in answer mode.
+            if (arg.settings.editMode === "answer") {
+                return {};
+            }
+            return _handleEvent(arg);
+        };
 
         this.settings.storageFilter = unboundFilter.bind(this);
         this.settings._numberTyper = numberTyper({ max: -1, negatives: false });
