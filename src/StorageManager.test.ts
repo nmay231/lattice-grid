@@ -488,6 +488,71 @@ describe("StorageManager", () => {
         vi.clearAllMocks();
     });
 
+    // TODO: Doesn't work because layer storage objects are not ordered (for now)
+    it("keeps object insertion order when un-/re-done", () => {
+        const puzzle = fakePuzzle("grid", "question");
+        const storage = getNormalStorage();
+        storage.addToHistory({
+            puzzle,
+            layerId: "layer1",
+            actions: [
+                { id: "id1", object: { asdf: "on the bottom" } },
+                { id: "id2", object: { asdf: "on the top" } },
+                { id: "id3", object: { asdf: "I am the captain now" } },
+            ] satisfies PartialHistoryAction[],
+        });
+
+        // TODO: Shouldn't LayerStorage allow getting ordered ids without using .entries()?
+        const objectOrder = () =>
+            [...storage.objects["grid"]["layer1"].entries("question")].map(([id]) => id);
+
+        const firstOrder = ["id1", "id2", "id3"];
+        expect(objectOrder()).toEqual(firstOrder);
+
+        storage.addToHistory({
+            puzzle,
+            layerId: "layer1",
+            actions: [
+                { id: "id1", object: { asdf: "moved to the top from the bottom" } },
+            ] satisfies PartialHistoryAction[],
+        });
+        const secondOrder = ["id2", "id3", "id1"];
+        expect(objectOrder()).toEqual(secondOrder);
+
+        storage.addToHistory({
+            puzzle,
+            layerId: "layer1",
+            actions: [
+                { id: "id3", object: { asdf: "moved to the top from the middle" } },
+            ] satisfies PartialHistoryAction[],
+        });
+        const thirdOrder = ["id2", "id1", "id3"];
+        expect(objectOrder()).toEqual(thirdOrder);
+
+        // Undo
+        storage.undoHistory(puzzle);
+        expect(objectOrder()).toEqual(secondOrder);
+        storage.undoHistory(puzzle);
+        expect(objectOrder()).toEqual(firstOrder);
+
+        // Redo
+        storage.redoHistory(puzzle);
+        expect(objectOrder()).toEqual(secondOrder);
+        storage.redoHistory(puzzle);
+        expect(objectOrder()).toEqual(thirdOrder);
+
+        // Rinse, lather, repeat
+        storage.undoHistory(puzzle);
+        expect(objectOrder()).toEqual(secondOrder);
+        storage.undoHistory(puzzle);
+        expect(objectOrder()).toEqual(firstOrder);
+
+        storage.redoHistory(puzzle);
+        expect(objectOrder()).toEqual(secondOrder);
+        storage.redoHistory(puzzle);
+        expect(objectOrder()).toEqual(thirdOrder);
+    });
+
     // TODO: If I'm gonna even use storageReducers...
     it.todo("should add some tests related to storageReducers");
 });
