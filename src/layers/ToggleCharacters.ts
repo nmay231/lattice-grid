@@ -18,7 +18,7 @@ type Settings = {
     caseSwap: Record<string, string>;
 };
 
-interface ToggleCharactersProps extends SelectedProps, CurrentCharacterProps, GOOFyProps {
+export interface ToggleCharactersProps extends SelectedProps, CurrentCharacterProps, GOOFyProps {
     ObjectState: { state: string };
     Settings: Settings;
     TempStorage: SelectedProps["TempStorage"];
@@ -32,12 +32,24 @@ interface IToggleCharactersLayer
     _generateCaseSwap: (chars: string) => Settings["caseSwap"];
 }
 
+const obj = <LP extends ToggleCharactersProps>({
+    id,
+    object,
+}: {
+    id: string;
+    object: LP["ObjectState"] | null;
+}): PartialHistoryAction<LP> => ({
+    id,
+    object,
+    storageMode: "answer",
+});
+
 export class ToggleCharactersLayer
     extends BaseLayer<ToggleCharactersProps>
     implements IToggleCharactersLayer
 {
-    static ethereal = false;
-    static readonly type = "ToggleCharactersLayer";
+    static ethereal = true; // TODO: Temporary until I replace PencilMarks
+    static type = "ToggleCharactersLayer";
     static displayName = "Toggle Characters";
     static defaultSettings: LayerClass<ToggleCharactersProps>["defaultSettings"] = {
         currentCharacter: "1",
@@ -64,7 +76,7 @@ export class ToggleCharactersLayer
     // TODO: The grid or object first toggle doesn't show unless controls is not undefined. But I'm gonna leave it as undefined right now since toggle characters is kinda broken on mobile with object first anyways (numpad is not shown, and non-number characters can't be typed at all).
     // static controls: FormSchema<ToggleCharactersProps> = { elements: {} };
     static controls?: FormSchema<ToggleCharactersProps> = undefined;
-    static constraints: FormSchema<ToggleCharactersProps> = {
+    static constraints?: FormSchema<ToggleCharactersProps> = {
         elements: {
             characters: {
                 type: "string",
@@ -121,11 +133,7 @@ export class ToggleCharactersLayer
                     .filter((char) => this.settings.characters.indexOf(char) > -1)
                     .join("");
                 if (newState !== state) {
-                    history.push({
-                        object: { state: newState },
-                        storageMode: stored.keys("question").includes(id) ? "question" : "answer",
-                        id,
-                    });
+                    history.push(obj({ id, object: { state: newState } }));
                 }
             }
         }
@@ -156,12 +164,7 @@ export class ToggleCharactersLayer
         return caseSwap;
     };
 
-    handleKeyDown: IToggleCharactersLayer["handleKeyDown"] = ({
-        grid,
-        storage,
-        points,
-        settings,
-    }) => {
+    handleKeyDown: IToggleCharactersLayer["handleKeyDown"] = ({ grid, storage, points }) => {
         const ids = points;
         if (!ids?.length) {
             return {};
@@ -169,9 +172,9 @@ export class ToggleCharactersLayer
         const stored = storage.getStored<ToggleCharactersProps>({ grid, layer: this });
 
         if (this.settings.currentCharacter === null) {
-            const allIds = new Set(concat(stored.keys("answer"), stored.keys("question")));
+            const allIds = new Set(stored.keys("answer"));
             return {
-                history: ids.filter((id) => allIds.has(id)).map((id) => ({ id, object: null })),
+                history: ids.filter((id) => allIds.has(id)).map((id) => obj({ id, object: null })),
             };
         }
 
@@ -181,7 +184,7 @@ export class ToggleCharactersLayer
         }
 
         const states = ids.map((id) => {
-            const object = stored.getObject(settings.editMode, id);
+            const object = stored.getObject("answer", id);
             return object?.state || "";
         });
         const allIncluded = states.reduce((prev, next) => prev && next.indexOf(char) > -1, true);
@@ -200,10 +203,12 @@ export class ToggleCharactersLayer
         }
 
         return {
-            history: ids.map((id, index) => ({
-                id,
-                object: !newStates[index] ? null : { id, point: id, state: newStates[index] },
-            })),
+            history: ids.map((id, index) =>
+                obj({
+                    id,
+                    object: !newStates[index] ? null : { state: newStates[index] },
+                }),
+            ),
         };
     };
 

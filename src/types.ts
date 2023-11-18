@@ -233,7 +233,7 @@ export type Layer<LP extends LayerProps = LayerProps> = {
 export type LayerClass<LP extends LayerProps = LayerProps> = {
     new (klass: LayerClass<LP>, puzzle: PuzzleManager): Layer<LP>;
     create: (puzzle: Pick<PuzzleManager, "layers">) => Layer<LP>;
-    readonly type: string;
+    type: string;
     displayName: string;
     ethereal: boolean;
     defaultSettings: LP["Settings"];
