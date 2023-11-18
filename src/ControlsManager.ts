@@ -435,6 +435,8 @@ export class ControlsManager {
                 const value = keypress === "Delete" ? null : keypress;
                 if (layer.klass.isValidSetting("currentCharacter", value)) {
                     layer.settings.currentCharacter = value;
+                } else {
+                    return;
                 }
             } else {
                 return;
