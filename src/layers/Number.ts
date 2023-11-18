@@ -1,4 +1,12 @@
-import { Layer, LayerClass, LayerHandlerResult, PartialHistoryAction, SVGGroup } from "../types";
+import {
+    Layer,
+    LayerClass,
+    LayerHandlerResult,
+    PartialHistoryAction,
+    SVGGroup,
+    StorageFilter,
+} from "../types";
+import { PUT_AT_END } from "../utils/OrderedMap";
 import { concat, zip } from "../utils/data";
 import { notify } from "../utils/notifications";
 import { BaseLayer } from "./BaseLayer";
@@ -147,7 +155,35 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
                 }
             }
         }
-        return { history };
+        return { history, filters: [{ filter: this.filterOverlappingObjects }] };
+    };
+
+    filterOverlappingObjects: StorageFilter = ({ storage, grid }, action) => {
+        const stored = storage.getStored<NumberProps>({ grid, layer: this });
+
+        // given digits can override answer ones, but not the other way around
+        if (action.storageMode === "answer" && stored.getObject("question", action.objectId)) {
+            return [null];
+        } else if (
+            action.storageMode === "question" &&
+            stored.getObject("answer", action.objectId)
+        ) {
+            const batchId = action.batchId ?? storage.getNewBatchId();
+            action.batchId = batchId;
+            return [
+                action,
+                {
+                    layerId: this.id,
+                    batchId,
+                    objectId: action.objectId,
+                    object: null,
+                    storageMode: "answer",
+                    prevObjectId: PUT_AT_END,
+                },
+            ];
+        } else {
+            return [action];
+        }
     };
 
     getSVG: INumberLayer["getSVG"] = ({ grid, storage, settings }) => {

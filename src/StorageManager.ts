@@ -107,15 +107,15 @@ export class StorageManager {
         layerId: Layer["id"];
         actions?: PartialHistoryAction[];
     }) {
-        const { puzzle, layerId: defaultLayerId, actions } = arg;
+        const { puzzle, layerId: defaultLayerId, actions: partialActions } = arg;
 
-        if (!actions?.length) {
+        if (!partialActions?.length) {
             return;
         }
         const gridId = puzzle.grid.id;
         const currentEditMode = puzzle.settings.editMode;
 
-        for (const partialAction of actions) {
+        for (const partialAction of partialActions) {
             const layerId = partialAction.layerId ?? defaultLayerId;
             const storageMode = partialAction.storageMode ?? currentEditMode;
             if (storageMode === "ui") {
@@ -154,14 +154,15 @@ export class StorageManager {
                 // Merge two actions if they are batched and affecting the same object
                 if (
                     lastAction?.batchId &&
-                    lastAction.layerId === layerId &&
                     lastAction.objectId === action.objectId &&
+                    lastAction.layerId === action.layerId &&
+                    lastAction.storageMode === action.storageMode &&
                     lastAction.batchId === action.batchId
                 ) {
-                    // By not pushing actions to history, the actions are merged
+                    // By not pushing the undo action to history, the actions are merged
 
                     if (action.object === null && lastAction.object === null) {
-                        // We can remove the last action since it is a no-op
+                        // We can even remove the last action since it is a no-op
                         history.actions.splice(history.index - 1, 1);
                         history.index--;
                     }

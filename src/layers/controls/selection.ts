@@ -239,7 +239,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
         // TODO: Selection can be made by multiple layers, but not all layers support the same cells/corners selection. In the future, I need to filter the points by the type of points selectable by the current layer.
         const stored = storage.getStored<InternalProps>({ grid, layer: { id: layerId } });
         const points = stored.keys("question");
-        const states = points.map((id) => stored.getObject(settings.editMode, id).state);
+        const states = points.map((id) => stored.getObject("question", id).state);
         const pt = grid.getPointTransformer(settings);
 
         const elements: SVGGroup["elements"] = new Map();
