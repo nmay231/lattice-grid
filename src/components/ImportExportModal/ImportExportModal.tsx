@@ -46,14 +46,21 @@ export const ImportExportModal = React.memo(function ImportExportModal() {
     const { opened, close } = useModal("import-export");
 
     const { copied, copy, error: copyError } = useClipboard({ timeout: 3000 });
-    const normalLayerIds = puzzle.layers
-        .entries()
-        .filter(([, layer]) => !layer.klass.ethereal)
-        .map(([id]) => id);
     const [answerCheck, setAnswerCheck] = useState<Layer["id"][]>([]);
 
     useEffect(() => {
-        setAnswerCheck(normalLayerIds);
+        setAnswerCheck(
+            puzzle.layers
+                .entries()
+                .filter(
+                    ([, layer]) =>
+                        !layer.klass.ethereal &&
+                        layer.klass.type !== "CenterMarksLayer" &&
+                        layer.klass.type !== "TopBottomMarksLayer" &&
+                        layer.klass.type !== "ToggleCharactersLayer",
+                )
+                .map(([id]) => id),
+        );
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [opened]);
 
@@ -137,23 +144,25 @@ export const ImportExportModal = React.memo(function ImportExportModal() {
                 <Textarea autosize readOnly minRows={1} maxRows={6} mb="md" value={puzzleString} />
 
                 <Text size="sm">Which layers are answer checked?</Text>
-                {normalLayerIds.map((layerId) => {
-                    const layer = puzzle.layers.get(layerId);
-                    return (
-                        <Checkbox
-                            key={layerId}
-                            label={layer.displayName}
-                            checked={answerCheck.includes(layerId)}
-                            onChange={() => {
-                                if (answerCheck.includes(layerId)) {
-                                    setAnswerCheck(answerCheck.filter((id) => id !== layerId));
-                                } else {
-                                    setAnswerCheck([...answerCheck, layerId]);
-                                }
-                            }}
-                        />
-                    );
-                })}
+                {puzzle.layers
+                    .entries()
+                    .filter(([, layer]) => !layer.klass.ethereal)
+                    .map(([id, layer]) => {
+                        return (
+                            <Checkbox
+                                key={id}
+                                label={layer.displayName}
+                                checked={answerCheck.includes(id)}
+                                onChange={() => {
+                                    if (answerCheck.includes(id)) {
+                                        setAnswerCheck(answerCheck.filter((id) => id !== id));
+                                    } else {
+                                        setAnswerCheck([...answerCheck, id]);
+                                    }
+                                }}
+                            />
+                        );
+                    })}
 
                 <Text size="sm" fs="italic" fw="bold" ta="center" mt="md" mb="md" c="red">
                     This only exports solving URLs. Feature complete edit-mode URLs are in the
