@@ -286,6 +286,7 @@ export type PuzzleForStorage = {
     grid: Pick<PuzzleManager["grid"], "id">;
     settings: Pick<PuzzleManager["settings"], "editMode">;
 };
+
 export type StorageFilter = (
     puzzle: {
         grid: Pick<
@@ -295,8 +296,8 @@ export type StorageFilter = (
         storage: StorageManager;
         settings: PuzzleManager["settings"];
     },
-    arg: HistoryAction,
-) => [HistoryAction | null, ...HistoryAction[]];
+    action: Readonly<HistoryAction>,
+) => { keep: boolean; validOnlyWithExtraActions?: boolean; extraActions?: HistoryAction[] };
 // #endregion
 
 // #region - Rendering

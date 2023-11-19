@@ -266,13 +266,13 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>({
         };
 
         const filter = function (this: MultiPointLayer<LP>, { grid, settings, storage }, action) {
-            if (!isThisLayersAction(this, action) || action.object === null) return [action];
+            if (!isThisLayersAction(this, action) || action.object === null) return { keep: true };
 
             if (ensureConnected) {
                 const pt = grid.getPointTransformer(settings);
                 const [cellMap] = pt.fromPoints("cells", action.object.points);
                 if (!pt.isFullyConnected(cellMap)) {
-                    return [null];
+                    return { keep: false };
                 }
             }
 
@@ -285,15 +285,16 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>({
                     if (id === action.objectId) continue;
                     for (const point of existingPoints) {
                         if (points.has(point)) {
-                            return [null];
+                            return { keep: false };
                         }
                     }
                 }
             }
 
+            // TODO: validOnlyWithExtraActions: true
             // TODO: if (overwriteOthers) { ... }
 
-            return [action];
+            return { keep: true };
         } satisfies StorageFilter;
 
         unboundFilter = {

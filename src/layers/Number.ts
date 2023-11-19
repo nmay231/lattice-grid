@@ -163,26 +163,27 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
 
         // given digits can override answer ones, but not the other way around
         if (action.storageMode === "answer" && stored.getObject("question", action.objectId)) {
-            return [null];
+            return { keep: false };
         } else if (
             action.storageMode === "question" &&
             stored.getObject("answer", action.objectId)
         ) {
-            const batchId = action.batchId ?? storage.getNewBatchId();
-            action.batchId = batchId;
-            return [
-                action,
-                {
-                    layerId: this.id,
-                    batchId,
-                    objectId: action.objectId,
-                    object: null,
-                    storageMode: "answer",
-                    prevObjectId: PUT_AT_END,
-                },
-            ];
+            return {
+                keep: true,
+                validOnlyWithExtraActions: true,
+                extraActions: [
+                    {
+                        layerId: this.id,
+                        batchId: action.batchId,
+                        objectId: action.objectId,
+                        object: null,
+                        storageMode: "answer",
+                        prevObjectId: PUT_AT_END,
+                    },
+                ],
+            };
         } else {
-            return [action];
+            return { keep: true };
         }
     };
 

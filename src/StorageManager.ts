@@ -87,19 +87,19 @@ export class StorageManager {
         }
     }
 
-    masterHistoryActionFilter: StorageFilter = (puzzle, firstAction) => {
-        let action: HistoryAction | null = firstAction;
+    masterHistoryActionFilter: StorageFilter = (puzzle, action) => {
         if (!(action.layerId in this.filtersByLayer)) {
-            return [action];
+            return { keep: true };
         }
-        const extraActions: HistoryAction[] = [];
-        let tmp: HistoryAction[];
+        const extras: HistoryAction[] = [];
         for (const reducer of this.filtersByLayer[action.layerId]) {
             if (!action) continue;
-            [action, ...tmp] = reducer(puzzle, action);
-            extraActions.push(...tmp);
+            const { keep, extraActions } = reducer(puzzle, action);
+            if (!keep) return { keep: false };
+
+            if (extraActions) extras.push(...extraActions);
         }
-        return [action, ...extraActions];
+        return { keep: true, extraActions: extras };
     };
 
     addToHistory(arg: {
@@ -128,7 +128,7 @@ export class StorageManager {
             const stored = this.objects[gridId][layerId];
             const history = this.histories[gridId];
 
-            const actions = this.masterHistoryActionFilter(puzzle, {
+            const constructedAction: HistoryAction = {
                 objectId: partialAction.id,
                 layerId,
                 batchId:
@@ -136,7 +136,14 @@ export class StorageManager {
                 object: partialAction.object,
                 prevObjectId: PUT_AT_END,
                 storageMode,
-            }).filter(Boolean);
+            };
+
+            const { keep, extraActions } = this.masterHistoryActionFilter(
+                puzzle,
+                constructedAction,
+            );
+            const actions = extraActions ?? [];
+            if (keep) actions.unshift(constructedAction);
 
             if (partialAction.batchId === "ignore") {
                 // TODO: Do I really want to not track any extra actions provided by filters in history? I can't think of a valid instance where a filter needs to keep actions when the original one is ignored, I guess...
