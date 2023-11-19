@@ -31,7 +31,7 @@ export const LayerList = () => {
 
     return (
         <SortableList
-            items={[...layers.order]}
+            items={layers.order.toReversed()}
             handleDragEnd={({ active, over }) => {
                 if (over?.id && active.id !== over.id) {
                     puzzle.shuffleLayerOnto(active.id, over.id);
@@ -39,7 +39,7 @@ export const LayerList = () => {
             }}
         >
             <div ref={ref}>
-                {layers.order.map((id) => {
+                {layers.order.toReversed().map((id) => {
                     const {
                         klass: { ethereal },
                         displayName,
