@@ -81,11 +81,11 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
         return false;
     }
 
-    updateSettings: ISimpleLineLayer["updateSettings"] = ({ grid, storage, oldSettings }) => {
+    updateSettings: ISimpleLineLayer["updateSettings"] = ({ storage, oldSettings }) => {
         let history: PartialHistoryAction<SimpleLineProps>[] | undefined = undefined;
         if (oldSettings?.pointType !== this.settings.pointType) {
             // Clear stored if the type of connections allowed changes (because that would allow impossible-to-draw lines otherwise).
-            const stored = storage.getStored({ grid, layer: this });
+            const stored = storage.getObjects(this.id);
             history = [...concat(stored.keys("question"), stored.keys("answer"))].map((id) => ({
                 id,
                 object: null,
@@ -119,10 +119,7 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
     };
 
     getSVG: ISimpleLineLayer["getSVG"] = ({ grid, storage, settings }) => {
-        const stored = storage.getStored<SimpleLineProps>({
-            grid,
-            layer: this,
-        });
+        const stored = storage.getObjects<SimpleLineProps>(this.id);
         let allPoints = [...stored.entries(settings.editMode)].flatMap(
             ([, object]) => object.points,
         );

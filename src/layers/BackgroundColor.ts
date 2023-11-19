@@ -58,7 +58,7 @@ export class BackgroundColorLayer
     };
 
     getSVG: IBackgroundColorLayer["getSVG"] = ({ grid, storage, settings }) => {
-        const stored = storage.getStored<BackgroundColorProps>({ grid, layer: this });
+        const stored = storage.getObjects<BackgroundColorProps>(this.id);
 
         const pt = grid.getPointTransformer(settings);
         const [cellMap, cells] = pt.fromPoints("cells", stored.keys(settings.editMode));

@@ -67,12 +67,12 @@ export const handleEventsCurrentSetting = <
     };
 
     const handleEvent: TwoPointLayer["handleEvent"] = function (this: TwoPointLayer, event) {
-        const { grid, storage, type, tempStorage, settings } = event;
+        const { storage, type, tempStorage, settings } = event;
         if ((type !== "pointerDown" && type !== "pointerMove") || !event.points.length) {
             return {};
         }
 
-        const stored = storage.getStored<LP>({ grid, layer: this });
+        const stored = storage.getObjects<LP>(this.id);
         const newPoints = event.points;
 
         tempStorage.batchId = tempStorage.batchId ?? storage.getNewBatchId();

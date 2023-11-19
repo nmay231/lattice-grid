@@ -59,9 +59,9 @@ export const handleEventsCycleStates = <
             return {};
         }
 
-        const { grid, storage, tempStorage, settings } = event;
+        const { storage, tempStorage, settings } = event;
 
-        const stored = storage.getStored<OnePointProps<ObjectState>>({ grid, layer });
+        const stored = storage.getObjects<OnePointProps<ObjectState>>(layer.id);
         const newPoints = event.points;
 
         let state: ObjectState | null;
@@ -108,9 +108,9 @@ export const handleEventsCurrentSetting = <
             return {};
         }
 
-        const { grid, storage, tempStorage, settings } = event;
+        const { storage, tempStorage, settings } = event;
 
-        const stored = storage.getStored<OnePointProps<ObjectState>>({ grid, layer });
+        const stored = storage.getObjects<OnePointProps<ObjectState>>(layer.id);
         const newPoints = event.points;
 
         if (tempStorage.targetState === undefined) {

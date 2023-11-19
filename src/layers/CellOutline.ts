@@ -61,7 +61,7 @@ export class CellOutlineLayer extends BaseLayer<CellOutlineProps> implements ICe
     }
 
     getSVG: ICellOutlineLayer["getSVG"] = ({ settings, storage, grid }) => {
-        const stored = storage.getStored<CellOutlineProps>({ grid, layer: this });
+        const stored = storage.getObjects<CellOutlineProps>(this.id);
 
         if (settings.editMode === "answer") return [];
         return grid._getSVG({ blacklist: new Set(stored.keys("question")), settings });

@@ -56,8 +56,8 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
 
     eventPlaceSinglePointObjects: INumberLayer["eventPlaceSinglePointObjects"] = () => ({});
 
-    handleKeyDown: INumberLayer["handleKeyDown"] = ({ points: ids, storage, grid, settings }) => {
-        const stored = storage.getStored<NumberProps>({ grid, layer: this });
+    handleKeyDown: INumberLayer["handleKeyDown"] = ({ points: ids, storage, settings }) => {
+        const stored = storage.getObjects<NumberProps>(this.id);
         if (!ids.length) {
             return {};
         }
@@ -120,7 +120,7 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
         return false;
     }
 
-    updateSettings: INumberLayer["updateSettings"] = ({ oldSettings, grid, storage }) => {
+    updateSettings: INumberLayer["updateSettings"] = ({ oldSettings, storage }) => {
         if (!oldSettings || oldSettings.gridOrObjectFirst !== this.settings.gridOrObjectFirst) {
             const { gatherPoints, handleEvent, getOverlaySVG, eventPlaceSinglePointObjects } =
                 handleEventsSelection<NumberProps>({});
@@ -140,7 +140,7 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
             this.settings._numberTyper = numberTyper(this.settings);
 
             history = [];
-            const stored = storage.getStored<NumberProps>({ grid, layer: this });
+            const stored = storage.getObjects<NumberProps>(this.id);
 
             // Delete numbers that are out of range
             const min = this.settings.negatives ? -this.settings.max : 0;
@@ -158,8 +158,8 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
         return { history, filters: [{ filter: this.filterOverlappingObjects }] };
     };
 
-    filterOverlappingObjects: StorageFilter = ({ storage, grid }, action) => {
-        const stored = storage.getStored<NumberProps>({ grid, layer: this });
+    filterOverlappingObjects: StorageFilter = ({ storage }, action) => {
+        const stored = storage.getObjects<NumberProps>(this.id);
 
         // given digits can override answer ones, but not the other way around
         if (action.storageMode === "answer" && stored.getObject("question", action.objectId)) {
@@ -188,7 +188,7 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
     };
 
     getSVG: INumberLayer["getSVG"] = ({ grid, storage, settings }) => {
-        const stored = storage.getStored<NumberProps>({ grid, layer: this });
+        const stored = storage.getObjects<NumberProps>(this.id);
         const group = stored.keys(settings.editMode);
 
         const pt = grid.getPointTransformer(settings);

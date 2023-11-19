@@ -37,7 +37,7 @@ export const importPuzzle = (puzzle: PuzzleManager, text: string) => {
         puzzle.resetLayers();
         puzzle._loadPuzzle(puzzleData.params);
         puzzle.resizeCanvas();
-        const gridObjects = puzzle.storage.objects[puzzle.grid.id];
+        const gridObjects = puzzle.storage.objects;
         for (const layerId of puzzle.layers.keys()) {
             if (!(layerId in puzzleData.objects)) continue;
             const storage = LayerStorage.fromJSON(puzzleData.objects[layerId]);

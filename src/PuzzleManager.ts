@@ -37,6 +37,7 @@ export class PuzzleManager {
     SVGGroups = proxy({} as Record<Layer["id"], ValtioRef<SVGGroup[]>>);
 
     grid: Grid = new SquareGrid();
+    // TODO: stratify storage by the different grids. I guess it's the same problem of multiple grids.
     storage = new StorageManager();
     controls = new ControlsManager(this);
     answers = new Map<Layer["id"], Record<ObjectId, UnknownObject>>();
@@ -58,7 +59,7 @@ export class PuzzleManager {
     resetLayers() {
         this.layers.clear();
         this.storage = new StorageManager();
-        this.storage.addStorage({ grid: this.grid, layer: { id: SELECTION_ID } });
+        this.storage.addStorage(SELECTION_ID);
 
         // Guarantee that these layers will be present even if the saved puzzle fails to add them
         this.addLayer(OverlayLayer, null);
@@ -152,9 +153,7 @@ export class PuzzleManager {
                 let correct = true;
                 for (const [layerId, expected] of this.answers.entries()) {
                     const actual = Object.fromEntries(
-                        this.storage
-                            .getStored({ layer: { id: layerId }, grid: this.grid })
-                            .entries("answer"),
+                        this.storage.getObjects(layerId).entries("answer"),
                     );
 
                     if (!isEqual(expected, actual)) {
@@ -221,7 +220,7 @@ export class PuzzleManager {
 
         // Add the layer to the end, but before the UILayer
         this.layers.set(layer.id, valtioRef(layer), this.layers.getPrevKey(this.UILayer.id));
-        this.storage.addStorage({ grid: this.grid, layer });
+        this.storage.addStorage(layer.id);
 
         const { grid, settings: puzzleSettings, storage } = this;
 
@@ -293,7 +292,7 @@ export class PuzzleManager {
             }
         }
         if (this.layers.delete(id)) {
-            this.storage.removeStorage({ grid: this.grid, layer: { id } });
+            this.storage.removeStorage(id);
             this.renderChange({ type: "delete", layerId: id });
         }
     }

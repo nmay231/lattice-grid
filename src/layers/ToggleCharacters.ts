@@ -112,7 +112,7 @@ export class ToggleCharactersLayer
         return false;
     }
 
-    updateSettings: IToggleCharactersLayer["updateSettings"] = ({ grid, storage, oldSettings }) => {
+    updateSettings: IToggleCharactersLayer["updateSettings"] = ({ storage, oldSettings }) => {
         let history: PartialHistoryAction<ToggleCharactersProps>[] | undefined = undefined;
         if (oldSettings?.characters !== this.settings.characters) {
             // Remove duplicates
@@ -121,7 +121,7 @@ export class ToggleCharactersLayer
                 .join("");
             this.settings.caseSwap = this._generateCaseSwap(this.settings.characters);
 
-            const stored = storage.getStored<ToggleCharactersProps>({ grid, layer: this });
+            const stored = storage.getObjects<ToggleCharactersProps>(this.id);
             history = [];
 
             // Exclude disallowed characters
@@ -164,12 +164,12 @@ export class ToggleCharactersLayer
         return caseSwap;
     };
 
-    handleKeyDown: IToggleCharactersLayer["handleKeyDown"] = ({ grid, storage, points }) => {
+    handleKeyDown: IToggleCharactersLayer["handleKeyDown"] = ({ storage, points }) => {
         const ids = points;
         if (!ids?.length) {
             return {};
         }
-        const stored = storage.getStored<ToggleCharactersProps>({ grid, layer: this });
+        const stored = storage.getObjects<ToggleCharactersProps>(this.id);
 
         if (this.settings.currentCharacter === null) {
             const allIds = new Set(stored.keys("answer"));
@@ -213,7 +213,7 @@ export class ToggleCharactersLayer
     };
 
     getSVG: IToggleCharactersLayer["getSVG"] = ({ grid, storage, settings }) => {
-        const stored = storage.getStored<ToggleCharactersProps>({ grid, layer: this });
+        const stored = storage.getObjects<ToggleCharactersProps>(this.id);
 
         const pt = grid.getPointTransformer(settings);
         const [cellMap, cells] = pt.fromPoints("cells", stored.keys(settings.editMode));

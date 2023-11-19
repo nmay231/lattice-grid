@@ -414,9 +414,7 @@ export class ControlsManager {
         } else if (keypress === "ctrl-z" || keypress === "ctrl-y") {
             const { storage } = this.puzzle;
             const appliedActions =
-                keypress === "ctrl-z"
-                    ? storage.undoHistory(this.puzzle)
-                    : storage.redoHistory(this.puzzle);
+                keypress === "ctrl-z" ? storage.undoHistory() : storage.redoHistory();
 
             if (appliedActions.length) {
                 const lastAction = appliedActions[appliedActions.length - 1];

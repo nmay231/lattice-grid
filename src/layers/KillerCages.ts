@@ -40,8 +40,8 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
         return new KillerCagesLayer(KillerCagesLayer, puzzle);
     }) satisfies LayerClass<KillerCagesProps>["create"];
 
-    handleKeyDown: IKillerCagesLayer["handleKeyDown"] = ({ type, keypress, grid, storage }) => {
-        const stored = storage.getStored<KillerCagesProps>({ grid, layer: this });
+    handleKeyDown: IKillerCagesLayer["handleKeyDown"] = ({ type, keypress, storage }) => {
+        const stored = storage.getObjects<KillerCagesProps>(this.id);
 
         if (!stored.permStorage.currentObjectId) return {};
 
@@ -113,7 +113,7 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
     };
 
     getSVG: IKillerCagesLayer["getSVG"] = ({ grid, storage, settings }) => {
-        const stored = storage.getStored<KillerCagesProps>({ grid, layer: this });
+        const stored = storage.getObjects<KillerCagesProps>(this.id);
         const pt = grid.getPointTransformer(settings);
 
         const cageElements: SVGGroup["elements"] = new Map();

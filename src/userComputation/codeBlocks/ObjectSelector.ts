@@ -44,12 +44,7 @@ export class ObjectSelector implements ICodeBlock<IObjectSelector> {
     getValue() {
         // TODO: Temporary fix from old expectations. All of this is likely to be scrapped anyways
         return [
-            ...this.compute.puzzle.storage
-                .getStored({
-                    grid: this.grid,
-                    layer: this.compute.puzzle.layers.get(this.json.layerId),
-                })
-                .entries("question"),
+            ...this.compute.puzzle.storage.getObjects(this.json.layerId).entries("question"),
         ].map(([, object]) => object);
     }
 }

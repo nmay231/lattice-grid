@@ -34,7 +34,7 @@ export const AddNewLayerButton = () => {
         const arr = Object.values(availableLayers)
             .filter(({ ethereal }) => debugging || !ethereal)
             .sort((a, b) => smartSort(a.displayName, b.displayName))
-            .map(({ type, displayName }) => ({ label: displayName, value: type as string }));
+            .map(({ type, displayName }) => ({ label: displayName, value: type }));
         arr.unshift({ value: DEFAULT_VALUE, label: DEFAULT_VALUE });
         return arr;
     }, [debugging]);

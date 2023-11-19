@@ -93,9 +93,9 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>({
         this: MultiPointLayer<LP>,
         event,
     ) {
-        const { grid, storage, type, tempStorage, settings } = event;
+        const { storage, type, tempStorage, settings } = event;
 
-        const stored = storage.getStored<LP>({ layer: this, grid });
+        const stored = storage.getObjects<LP>(this.id);
         const currentObjectId = stored.permStorage.currentObjectId || "";
         if (!currentObjectId && type !== "pointerDown" && type !== "undoRedo") {
             return {}; // Other events only matter if there is an object selected
@@ -277,7 +277,7 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>({
             }
 
             if (preventOverlap) {
-                const stored = storage.getStored<MultiPointLayerProps>({ grid, layer: this });
+                const stored = storage.getObjects<MultiPointLayerProps>(this.id);
                 const points = new Set(action.object.points);
 
                 // TODO: Assumes objects are only in one storageMode

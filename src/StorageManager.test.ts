@@ -4,7 +4,6 @@ import {
     EditMode,
     Grid,
     History,
-    Layer,
     LayerProps,
     StorageFilter,
     HistoryAction as UntypedHistoryAction,
@@ -23,14 +22,8 @@ type PartialHistoryAction = UntypedPartialHistoryAction<FakeLayerProps>;
 
 const getNormalStorage = () => {
     const normalStorage = new StorageManager();
-    normalStorage.addStorage({
-        grid: { id: "grid" },
-        layer: { id: "layer1" },
-    });
-    normalStorage.addStorage({
-        grid: { id: "grid" },
-        layer: { id: "layer2" },
-    });
+    normalStorage.addStorage("layer1");
+    normalStorage.addStorage("layer2");
 
     return normalStorage;
 };
@@ -42,15 +35,10 @@ const fakePuzzle = (gridId: Grid["id"], editMode: EditMode): Parameters<StorageF
     return result;
 };
 
-const gridLayer = (grid: Grid["id"], layer: Layer["id"]) => ({
-    grid: { id: grid },
-    layer: { id: layer },
-});
-
 describe("StorageManager", () => {
     it("adds a new object correctly", () => {
         const storage = getNormalStorage();
-        const stored = storage.getStored(gridLayer("grid", "layer1"));
+        const stored = storage.getObjects("layer1");
         const action: HistoryAction = {
             objectId: "objectId",
             layerId: "layer1",
@@ -60,14 +48,14 @@ describe("StorageManager", () => {
         };
         storage._applyHistoryAction({ stored, action });
 
-        expect([...storage.objects["grid"]["layer1"].entries("question")]).toEqual<HistoryEntries>([
+        expect([...storage.objects["layer1"].entries("question")]).toEqual<HistoryEntries>([
             ["objectId", { asdf: "something" }],
         ]);
     });
 
     it("deletes an object correctly", () => {
         const storage = getNormalStorage();
-        const stored = storage.getStored(gridLayer("grid", "layer1"));
+        const stored = storage.getObjects("layer1");
         const action: HistoryAction = {
             objectId: "objectId",
             layerId: "layer1",
@@ -77,14 +65,12 @@ describe("StorageManager", () => {
         };
         storage._applyHistoryAction({ stored, action });
 
-        expect([...storage.objects["grid"]["layer1"].entries("question")]).toEqual<HistoryEntries>(
-            [],
-        );
+        expect([...storage.objects["layer1"].entries("question")]).toEqual<HistoryEntries>([]);
     });
 
     it("object placement should be idempotent", () => {
         const storage = getNormalStorage();
-        const stored = storage.getStored(gridLayer("grid", "layer1"));
+        const stored = storage.getObjects("layer1");
         const action: HistoryAction = {
             objectId: "objectId",
             layerId: "layer1",
@@ -95,14 +81,14 @@ describe("StorageManager", () => {
         storage._applyHistoryAction({ stored, action });
         storage._applyHistoryAction({ stored, action });
 
-        expect([...storage.objects["grid"]["layer1"].entries("question")]).toEqual<HistoryEntries>([
+        expect([...storage.objects["layer1"].entries("question")]).toEqual<HistoryEntries>([
             ["objectId", { asdf: "something" }],
         ]);
     });
 
     it("object deletion should be idempotent", () => {
         const storage = getNormalStorage();
-        const stored = storage.getStored(gridLayer("grid", "layer1"));
+        const stored = storage.getObjects("layer1");
         const action: HistoryAction = {
             objectId: "objectId",
             layerId: "layer1",
@@ -113,14 +99,12 @@ describe("StorageManager", () => {
         storage._applyHistoryAction({ stored, action });
         storage._applyHistoryAction({ stored, action });
 
-        expect([...storage.objects["grid"]["layer1"].entries("question")]).toEqual<HistoryEntries>(
-            [],
-        );
+        expect([...storage.objects["layer1"].entries("question")]).toEqual<HistoryEntries>([]);
     });
 
     it("returns the same object when inverted twice", () => {
         const storage = getNormalStorage();
-        const stored = storage.getStored(gridLayer("grid", "layer1"));
+        const stored = storage.getObjects("layer1");
         const action: HistoryAction = {
             objectId: "objectId",
             layerId: "layer1",
@@ -155,23 +139,23 @@ describe("StorageManager", () => {
             ] satisfies PartialHistoryAction[],
         });
 
-        storage.undoHistory(puzzle);
+        storage.undoHistory();
         // An non-batched undo should not affect the batched actions
-        expect([...storage.objects["grid"]["layer1"].entries("question")]).toEqual<HistoryEntries>([
+        expect([...storage.objects["layer1"].entries("question")]).toEqual<HistoryEntries>([
             ["id1", { asdf: "something1" }],
             ["id2", { asdf: "something2" }],
             ["id3", { asdf: "something3" }],
         ]);
 
-        storage.undoHistory(puzzle);
+        storage.undoHistory();
         // Undo a batch of actions
-        expect([...storage.objects["grid"]["layer1"].entries("question")]).toEqual<HistoryEntries>([
+        expect([...storage.objects["layer1"].entries("question")]).toEqual<HistoryEntries>([
             ["id1", { asdf: "something1" }],
         ]);
 
-        storage.redoHistory(puzzle);
+        storage.redoHistory();
         // Undo a batch of actions
-        expect([...storage.objects["grid"]["layer1"].entries("question")]).toEqual<HistoryEntries>([
+        expect([...storage.objects["layer1"].entries("question")]).toEqual<HistoryEntries>([
             ["id1", { asdf: "something1" }],
             ["id2", { asdf: "something2" }],
             ["id3", { asdf: "something3" }],
@@ -193,8 +177,8 @@ describe("StorageManager", () => {
             ] satisfies PartialHistoryAction[],
         });
 
-        expect(storage.histories["grid"].actions).toHaveLength(3);
-        expect(storage.histories["grid"].index).toBe(3);
+        expect(storage.history.actions).toHaveLength(3);
+        expect(storage.history.index).toBe(3);
     });
 
     it("removes batched actions affecting the same object that are no-ops", () => {
@@ -213,8 +197,8 @@ describe("StorageManager", () => {
             ] satisfies PartialHistoryAction[],
         });
 
-        expect(storage.histories["grid"].actions).toHaveLength(2);
-        expect(storage.histories["grid"].index).toBe(2);
+        expect(storage.history.actions).toHaveLength(2);
+        expect(storage.history.index).toBe(2);
     });
 
     it("gives truthy batchIds", () => {
@@ -226,15 +210,16 @@ describe("StorageManager", () => {
     });
 
     it("does not undo or redo with an empty history", () => {
-        const puzzle = fakePuzzle("grid", "question");
         const storage = getNormalStorage();
-        storage.undoHistory(puzzle);
-        expect(storage.histories).toEqual<StorageManager["histories"]>({
-            grid: { actions: [] satisfies PartialHistoryAction[], index: 0 },
+        storage.undoHistory();
+        expect(storage.history).toEqual<StorageManager["history"]>({
+            actions: [] satisfies PartialHistoryAction[],
+            index: 0,
         });
-        storage.redoHistory(puzzle);
-        expect(storage.histories).toEqual<StorageManager["histories"]>({
-            grid: { actions: [] satisfies PartialHistoryAction[], index: 0 },
+        storage.redoHistory();
+        expect(storage.history).toEqual<StorageManager["history"]>({
+            actions: [] satisfies PartialHistoryAction[],
+            index: 0,
         });
     });
 
@@ -242,8 +227,8 @@ describe("StorageManager", () => {
         const puzzle = fakePuzzle("grid", "question");
         const storage = getNormalStorage();
 
-        expect(storage.canUndo(puzzle)).toBe(false);
-        expect(storage.canRedo(puzzle)).toBe(false);
+        expect(storage.canUndo()).toBe(false);
+        expect(storage.canRedo()).toBe(false);
 
         const objectsBeforeAction = cloneDeep(storage.objects);
         storage.addToHistory({
@@ -256,17 +241,15 @@ describe("StorageManager", () => {
         const objectsAfterAction = cloneDeep(storage.objects);
 
         // Ensure the initial states are good
-        expect([
-            ...objectsBeforeAction["grid"]["layer1"].entries("question"),
-        ]).toEqual<HistoryEntries>([]);
-        expect([
-            ...objectsAfterAction["grid"]["layer1"].entries("question"),
-        ]).toEqual<HistoryEntries>([["id1", { asdf: "something1" }]]);
+        expect([...objectsBeforeAction["layer1"].entries("question")]).toEqual<HistoryEntries>([]);
+        expect([...objectsAfterAction["layer1"].entries("question")]).toEqual<HistoryEntries>([
+            ["id1", { asdf: "something1" }],
+        ]);
 
-        expect(storage.canUndo(puzzle)).toBe(true);
-        expect(storage.canRedo(puzzle)).toBe(false);
+        expect(storage.canUndo()).toBe(true);
+        expect(storage.canRedo()).toBe(false);
 
-        const afterRedo: StorageManager["histories"][number] = {
+        const afterRedo: StorageManager["history"] = {
             actions: [
                 {
                     objectId: "id1",
@@ -278,7 +261,7 @@ describe("StorageManager", () => {
             ] satisfies HistoryAction[],
             index: 1,
         };
-        const afterUndo: StorageManager["histories"][number] = {
+        const afterUndo: StorageManager["history"] = {
             actions: [
                 {
                     objectId: "id1",
@@ -290,33 +273,33 @@ describe("StorageManager", () => {
             ] satisfies HistoryAction[],
             index: 0,
         };
-        expect(storage.histories["grid"]).toEqual<History>(afterRedo);
+        expect(storage.history).toEqual<History>(afterRedo);
 
-        storage.undoHistory(puzzle);
+        storage.undoHistory();
         expect(storage.objects).toEqual(objectsBeforeAction);
-        expect(storage.histories["grid"]).toEqual<History>(afterUndo);
-        expect(storage.canUndo(puzzle)).toBe(false);
-        expect(storage.canRedo(puzzle)).toBe(true);
+        expect(storage.history).toEqual<History>(afterUndo);
+        expect(storage.canUndo()).toBe(false);
+        expect(storage.canRedo()).toBe(true);
 
         // A second undo should not change anything
-        storage.undoHistory(puzzle);
+        storage.undoHistory();
         expect(storage.objects).toEqual(objectsBeforeAction);
-        expect(storage.histories["grid"]).toEqual<History>(afterUndo);
-        expect(storage.canUndo(puzzle)).toBe(false);
-        expect(storage.canRedo(puzzle)).toBe(true);
+        expect(storage.history).toEqual<History>(afterUndo);
+        expect(storage.canUndo()).toBe(false);
+        expect(storage.canRedo()).toBe(true);
 
-        storage.redoHistory(puzzle);
+        storage.redoHistory();
         expect(storage.objects).toEqual(objectsAfterAction);
-        expect(storage.histories["grid"]).toEqual<History>(afterRedo);
-        expect(storage.canUndo(puzzle)).toBe(true);
-        expect(storage.canRedo(puzzle)).toBe(false);
+        expect(storage.history).toEqual<History>(afterRedo);
+        expect(storage.canUndo()).toBe(true);
+        expect(storage.canRedo()).toBe(false);
 
         // A second redo should not change anything
-        storage.redoHistory(puzzle);
+        storage.redoHistory();
         expect(storage.objects).toEqual(objectsAfterAction);
-        expect(storage.histories["grid"]).toEqual<History>(afterRedo);
-        expect(storage.canUndo(puzzle)).toBe(true);
-        expect(storage.canRedo(puzzle)).toBe(false);
+        expect(storage.history).toEqual<History>(afterRedo);
+        expect(storage.canUndo()).toBe(true);
+        expect(storage.canRedo()).toBe(false);
     });
 
     it("does not batch actions if the batchId's are both undefined", () => {
@@ -331,13 +314,13 @@ describe("StorageManager", () => {
             ] satisfies PartialHistoryAction[],
         });
 
-        expect(storage.histories["grid"].index).toBe(2);
-        storage.undoHistory(puzzle);
-        expect(storage.histories["grid"].index).toBe(1);
-        storage.undoHistory(puzzle);
-        expect(storage.histories["grid"].index).toBe(0);
-        storage.redoHistory(puzzle);
-        expect(storage.histories["grid"].index).toBe(1);
+        expect(storage.history.index).toBe(2);
+        storage.undoHistory();
+        expect(storage.history.index).toBe(1);
+        storage.undoHistory();
+        expect(storage.history.index).toBe(0);
+        storage.redoHistory();
+        expect(storage.history.index).toBe(1);
     });
 
     it("does not batch actions if one batchId is undefined", () => {
@@ -352,13 +335,13 @@ describe("StorageManager", () => {
             ] satisfies PartialHistoryAction[],
         });
 
-        expect(storage.histories["grid"].index).toBe(2);
-        storage.undoHistory(puzzle);
-        expect(storage.histories["grid"].index).toBe(1);
-        storage.undoHistory(puzzle);
-        expect(storage.histories["grid"].index).toBe(0);
-        storage.redoHistory(puzzle);
-        expect(storage.histories["grid"].index).toBe(1);
+        expect(storage.history.index).toBe(2);
+        storage.undoHistory();
+        expect(storage.history.index).toBe(1);
+        storage.undoHistory();
+        expect(storage.history.index).toBe(0);
+        storage.redoHistory();
+        expect(storage.history.index).toBe(1);
     });
 
     it("does not batch actions if both batchId's are defined but not equal", () => {
@@ -373,13 +356,13 @@ describe("StorageManager", () => {
             ] satisfies PartialHistoryAction[],
         });
 
-        expect(storage.histories["grid"].index).toBe(2);
-        storage.undoHistory(puzzle);
-        expect(storage.histories["grid"].index).toBe(1);
-        storage.undoHistory(puzzle);
-        expect(storage.histories["grid"].index).toBe(0);
-        storage.redoHistory(puzzle);
-        expect(storage.histories["grid"].index).toBe(1);
+        expect(storage.history.index).toBe(2);
+        storage.undoHistory();
+        expect(storage.history.index).toBe(1);
+        storage.undoHistory();
+        expect(storage.history.index).toBe(0);
+        storage.redoHistory();
+        expect(storage.history.index).toBe(1);
     });
 
     it("returns the actions applied when undoing/redoing", () => {
@@ -402,7 +385,7 @@ describe("StorageManager", () => {
 
         let result: UntypedHistoryAction[];
 
-        result = storage.undoHistory(puzzle);
+        result = storage.undoHistory();
         expect(result).toEqual<HistoryAction[]>([
             {
                 batchId: undefined,
@@ -414,7 +397,7 @@ describe("StorageManager", () => {
             },
         ]);
 
-        result = storage.undoHistory(puzzle);
+        result = storage.undoHistory();
         expect(result).toEqual<HistoryAction[]>([
             {
                 batchId: undefined,
@@ -426,10 +409,10 @@ describe("StorageManager", () => {
             },
         ]);
 
-        result = storage.undoHistory(puzzle);
+        result = storage.undoHistory();
         expect(result).toEqual<HistoryAction[]>([]);
 
-        result = storage.redoHistory(puzzle);
+        result = storage.redoHistory();
         expect(result).toEqual<HistoryAction[]>([
             {
                 batchId: undefined,
@@ -441,7 +424,7 @@ describe("StorageManager", () => {
             },
         ]);
 
-        result = storage.redoHistory(puzzle);
+        result = storage.redoHistory();
         expect(result).toEqual<HistoryAction[]>([
             {
                 batchId: undefined,
@@ -453,7 +436,7 @@ describe("StorageManager", () => {
             },
         ]);
 
-        result = storage.redoHistory(puzzle);
+        result = storage.redoHistory();
         expect(result).toEqual<HistoryAction[]>([]);
     });
 
@@ -470,7 +453,7 @@ describe("StorageManager", () => {
                 { id: "id1", object: { asdf: "something2" }, batchId: 2 },
             ] satisfies PartialHistoryAction[],
         });
-        storage.undoHistory(puzzle);
+        storage.undoHistory();
 
         storage.addToHistory({
             puzzle,
@@ -480,7 +463,7 @@ describe("StorageManager", () => {
                 { id: "id1", object: { asdf: "something2" }, storageMode: "ui" },
             ] satisfies PartialHistoryAction[],
         });
-        expect(storage.histories["grid"].actions).toHaveLength(2);
+        expect(storage.history.actions).toHaveLength(2);
 
         // Because actions with storageMode=="ui" should have set batchId=="ignore"
         expect(notifySpy).toBeCalledTimes(1);
@@ -504,7 +487,7 @@ describe("StorageManager", () => {
 
         // TODO: Shouldn't LayerStorage allow getting ordered ids without using .entries()?
         const objectOrder = () =>
-            [...storage.objects["grid"]["layer1"].entries("question")].map(([id]) => id);
+            [...storage.objects["layer1"].entries("question")].map(([id]) => id);
 
         const firstOrder = ["id1", "id2", "id3"];
         expect(objectOrder()).toEqual(firstOrder);
@@ -530,26 +513,26 @@ describe("StorageManager", () => {
         expect(objectOrder()).toEqual(thirdOrder);
 
         // Undo
-        storage.undoHistory(puzzle);
+        storage.undoHistory();
         expect(objectOrder()).toEqual(secondOrder);
-        storage.undoHistory(puzzle);
+        storage.undoHistory();
         expect(objectOrder()).toEqual(firstOrder);
 
         // Redo
-        storage.redoHistory(puzzle);
+        storage.redoHistory();
         expect(objectOrder()).toEqual(secondOrder);
-        storage.redoHistory(puzzle);
+        storage.redoHistory();
         expect(objectOrder()).toEqual(thirdOrder);
 
         // Rinse, lather, repeat
-        storage.undoHistory(puzzle);
+        storage.undoHistory();
         expect(objectOrder()).toEqual(secondOrder);
-        storage.undoHistory(puzzle);
+        storage.undoHistory();
         expect(objectOrder()).toEqual(firstOrder);
 
-        storage.redoHistory(puzzle);
+        storage.redoHistory();
         expect(objectOrder()).toEqual(secondOrder);
-        storage.redoHistory(puzzle);
+        storage.redoHistory();
         expect(objectOrder()).toEqual(thirdOrder);
     });
 

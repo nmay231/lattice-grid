@@ -25,9 +25,9 @@ export const layerEventEssentials = <LP extends LayerProps = LayerProps>(
         grid,
         _stored,
         storage: Object.assign(new StorageManager(), {
-            getStored: vi.fn(() => _stored),
+            getObjects: vi.fn(() => _stored as LayerStorage<any>),
             getNewBatchId: vi.fn(),
-        }),
+        } satisfies Partial<StorageManager>),
         tempStorage,
         settings: partialMock<PuzzleManager["settings"]>({
             editMode: "question",

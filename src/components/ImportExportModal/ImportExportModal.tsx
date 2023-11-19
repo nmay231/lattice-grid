@@ -66,8 +66,8 @@ export const ImportExportModal = React.memo(function ImportExportModal() {
 
     const puzzleWithoutAnswerCheck = useMemo(() => {
         if (opened) {
-            // Assume only one grid
-            const currentObjects = puzzle.storage.objects[puzzle.grid.id];
+            // TODO: Assume only one grid
+            const currentObjects = puzzle.storage.objects;
             const objects: Record<Layer["id"], LayerStorageJSON> = {};
             for (const layerId of puzzle.layers.keys()) {
                 // Ignore UI Information

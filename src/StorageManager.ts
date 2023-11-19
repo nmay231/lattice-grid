@@ -1,41 +1,33 @@
 import { LayerStorage } from "./LayerStorage";
 import {
-    Grid,
     History,
     HistoryAction,
     Layer,
     LayerProps,
     PartialHistoryAction,
-    PuzzleForStorage,
     StorageFilter,
 } from "./types";
 import { PUT_AT_END } from "./utils/OrderedMap";
 import { notify } from "./utils/notifications";
 import { stringifyAnything } from "./utils/string";
 
-type GridAndLayer = { grid: Pick<Grid, "id">; layer: Pick<Layer, "id"> };
-
 export class StorageManager {
-    objects: Record<Grid["id"], Record<Layer["id"], LayerStorage>> = {};
+    objects: Record<Layer["id"], LayerStorage> = {};
 
-    histories: Record<Grid["id"], History> = {};
+    history: History = { actions: [], index: 0 };
 
-    addStorage({ grid, layer }: GridAndLayer) {
-        this.objects[grid.id] = this.objects[grid.id] ?? {};
-        this.objects[grid.id][layer.id] = new LayerStorage();
-
-        this.histories[grid.id] = this.histories[grid.id] || {
-            actions: [],
-            index: 0,
-        };
+    addStorage(layerId: Layer["id"]) {
+        this.objects[layerId] = new LayerStorage();
     }
 
-    removeStorage({ grid, layer }: GridAndLayer) {
-        delete this.objects[grid.id][layer.id];
+    removeStorage(layerId: Layer["id"]) {
+        delete this.objects[layerId];
+
+        this.removeStorageFilters([...this.filtersByLayer[layerId]]);
     }
 
-    getStored<LP extends LayerProps>({ grid, layer }: GridAndLayer) {
-        return this.objects[grid.id][layer.id] as LayerStorage<LP>;
+    getObjects<LP extends LayerProps>(id: Layer["id"]) {
+        return this.objects[id] as LayerStorage<LP>;
     }
 
     layersByFilters: Map<StorageFilter, { layerIds: Layer["id"][] }> = new Map();
@@ -112,7 +104,6 @@ export class StorageManager {
         if (!partialActions?.length) {
             return;
         }
-        const gridId = puzzle.grid.id;
         const currentEditMode = puzzle.settings.editMode;
 
         for (const partialAction of partialActions) {
@@ -125,8 +116,7 @@ export class StorageManager {
                 continue; // Do not include in history
             }
 
-            const stored = this.objects[gridId][layerId];
-            const history = this.histories[gridId];
+            const stored = this.getObjects(layerId);
 
             const constructedAction: HistoryAction = {
                 objectId: partialAction.id,
@@ -156,7 +146,7 @@ export class StorageManager {
             for (const action of actions) {
                 const undoAction = this._applyHistoryAction({ stored, action });
 
-                const lastAction = history.actions[history.index - 1];
+                const lastAction = this.history.actions[this.history.index - 1];
 
                 // Merge two actions if they are batched and affecting the same object
                 if (
@@ -170,15 +160,15 @@ export class StorageManager {
 
                     if (action.object === null && lastAction.object === null) {
                         // We can even remove the last action since it is a no-op
-                        history.actions.splice(history.index - 1, 1);
-                        history.index--;
+                        this.history.actions.splice(this.history.index - 1, 1);
+                        this.history.index--;
                     }
                 } else {
                     // Prune redo actions placed after the current index, if there are any.
-                    history.actions.splice(history.index);
+                    this.history.actions.splice(this.history.index);
 
-                    history.actions.push(undoAction);
-                    history.index++;
+                    this.history.actions.push(undoAction);
+                    this.history.index++;
                 }
             }
         }
@@ -201,9 +191,8 @@ export class StorageManager {
         return undoAction;
     }
 
-    undoHistory(puzzle: PuzzleForStorage) {
-        const gridId = puzzle.grid.id;
-        const history = this.histories[gridId];
+    undoHistory() {
+        const history = this.history;
         if (history.index <= 0) {
             return [];
         }
@@ -213,7 +202,7 @@ export class StorageManager {
         do {
             history.index--;
             action = history.actions[history.index];
-            const stored = this.objects[gridId][action.layerId];
+            const stored = this.objects[action.layerId];
 
             const redo = this._applyHistoryAction({ stored, action });
             // Replace the action with its opposite
@@ -225,9 +214,8 @@ export class StorageManager {
         return returnedActions;
     }
 
-    redoHistory(puzzle: PuzzleForStorage) {
-        const gridId = puzzle.grid.id;
-        const history = this.histories[gridId];
+    redoHistory() {
+        const history = this.history;
         if (history.index >= history.actions.length) {
             return [];
         }
@@ -236,7 +224,7 @@ export class StorageManager {
         const returnedActions: HistoryAction[] = [];
         do {
             action = history.actions[history.index];
-            const stored = this.objects[gridId][action.layerId];
+            const stored = this.objects[action.layerId];
 
             const undo = this._applyHistoryAction({ stored, action });
             // Replace the action with its opposite
@@ -249,14 +237,12 @@ export class StorageManager {
         return returnedActions;
     }
 
-    canUndo(puzzle: PuzzleForStorage): boolean {
-        const history = this.histories[puzzle.grid.id];
-        return history && history.index > 0;
+    canUndo(): boolean {
+        return this.history.index > 0;
     }
 
-    canRedo(puzzle: PuzzleForStorage): boolean {
-        const history = this.histories[puzzle.grid.id];
-        return history && history.index < history.actions.length;
+    canRedo(): boolean {
+        return this.history.index < this.history.actions.length;
     }
 
     _batchId = 1;
