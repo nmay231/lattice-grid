@@ -1,12 +1,5 @@
 import { LayerStorage } from "./LayerStorage";
-import {
-    History,
-    HistoryAction,
-    Layer,
-    LayerProps,
-    PartialHistoryAction,
-    StorageFilter,
-} from "./types";
+import { HistoryAction, Layer, LayerProps, PartialHistoryAction, StorageFilter } from "./types";
 import { PUT_AT_END } from "./utils/OrderedMap";
 import { reversed } from "./utils/data";
 import { notify } from "./utils/notifications";
@@ -15,7 +8,8 @@ import { stringifyAnything } from "./utils/string";
 export class StorageManager {
     objects: Record<Layer["id"], LayerStorage> = {};
 
-    history: History = { actions: [], index: 0 };
+    history: HistoryAction[] = [];
+    index = 0;
 
     addStorage(layerId: Layer["id"]) {
         this.objects[layerId] = new LayerStorage();
@@ -39,8 +33,6 @@ export class StorageManager {
         filters: Array<{ filter: StorageFilter; layerIds?: Layer["id"][] }>,
         defaultLayer: Layer["id"],
     ) {
-        if (!filters.length) return;
-
         const newFiltersByLayer: typeof this.filtersByLayer = {};
 
         for (const { filter, layerIds } of filters) {
@@ -58,11 +50,11 @@ export class StorageManager {
             }
         }
 
-        if (!this.history.actions.length) return;
+        if (!Object.keys(newFiltersByLayer).length || !this.history.length) return;
 
-        const filtered = [] as typeof this.history.actions;
+        const filtered = [] as typeof this.history;
         // Scrub history going right-to-left since it's better to keep the latest version if valid rather than only allowing what was valid in the past.
-        for (const undo of reversed(this.history.actions)) {
+        for (const undo of reversed(this.history)) {
             const stored = this.getObjects(undo.layerId);
             const redo = this._applyHistoryAction({ stored, action: undo });
 
@@ -85,8 +77,8 @@ export class StorageManager {
         }
 
         filtered.reverse();
-        this.history.actions = filtered;
-        this.history.index = 0;
+        this.history = filtered;
+        this.index = 0;
 
         while (this.redoHistory().length);
     }
@@ -187,7 +179,7 @@ export class StorageManager {
                     action,
                 });
 
-                const lastAction = this.history.actions[this.history.index - 1];
+                const lastAction = this.history[this.index - 1];
 
                 // Merge two actions if they are batched and affecting the same object
                 if (
@@ -201,15 +193,15 @@ export class StorageManager {
 
                     if (action.object === null && lastAction.object === null) {
                         // We can even remove the last action since it is a no-op
-                        this.history.actions.splice(this.history.index - 1, 1);
-                        this.history.index--;
+                        this.history.splice(this.index - 1, 1);
+                        this.index--;
                     }
                 } else {
                     // Prune redo actions placed after the current index, if there are any.
-                    this.history.actions.splice(this.history.index);
+                    this.history.splice(this.index);
 
-                    this.history.actions.push(undoAction);
-                    this.history.index++;
+                    this.history.push(undoAction);
+                    this.index++;
                 }
             }
         }
@@ -233,57 +225,55 @@ export class StorageManager {
     }
 
     undoHistory() {
-        const history = this.history;
-        if (history.index <= 0) {
+        if (this.index <= 0) {
             return [];
         }
 
         let action: HistoryAction;
         const returnedActions: HistoryAction[] = [];
         do {
-            history.index--;
-            action = history.actions[history.index];
+            this.index--;
+            action = this.history[this.index];
             const stored = this.objects[action.layerId];
 
             const redo = this._applyHistoryAction({ stored, action });
             // Replace the action with its opposite
-            history.actions.splice(history.index, 1, redo);
+            this.history.splice(this.index, 1, redo);
 
             returnedActions.push(action);
-        } while (action.batchId && action.batchId === history.actions[history.index - 1]?.batchId);
+        } while (action.batchId && action.batchId === this.history[this.index - 1]?.batchId);
 
         return returnedActions;
     }
 
     redoHistory() {
-        const history = this.history;
-        if (history.index >= history.actions.length) {
+        if (this.index >= this.history.length) {
             return [];
         }
 
         let action: HistoryAction;
         const returnedActions: HistoryAction[] = [];
         do {
-            action = history.actions[history.index];
+            action = this.history[this.index];
             const stored = this.objects[action.layerId];
 
             const undo = this._applyHistoryAction({ stored, action });
             // Replace the action with its opposite
-            history.actions.splice(history.index, 1, undo);
-            history.index++;
+            this.history.splice(this.index, 1, undo);
+            this.index++;
 
             returnedActions.push(action);
-        } while (action.batchId && action.batchId === history.actions[history.index]?.batchId);
+        } while (action.batchId && action.batchId === this.history[this.index]?.batchId);
 
         return returnedActions;
     }
 
     canUndo(): boolean {
-        return this.history.index > 0;
+        return this.index > 0;
     }
 
     canRedo(): boolean {
-        return this.history.index < this.history.actions.length;
+        return this.index < this.history.length;
     }
 
     _batchId = 1;

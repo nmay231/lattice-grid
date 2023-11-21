@@ -277,11 +277,6 @@ export type HistoryAction<LP extends LayerProps = LayerProps> = {
     storageMode: EditMode;
 };
 
-export type History = {
-    actions: HistoryAction[];
-    index: number;
-};
-
 export type PuzzleForStorage = {
     grid: Pick<PuzzleManager["grid"], "id">;
     settings: Pick<PuzzleManager["settings"], "editMode">;

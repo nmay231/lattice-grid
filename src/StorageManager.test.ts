@@ -3,7 +3,6 @@ import { StorageManager } from "./StorageManager";
 import {
     EditMode,
     Grid,
-    History,
     LayerProps,
     StorageFilter,
     HistoryAction as UntypedHistoryAction,
@@ -34,6 +33,11 @@ const fakePuzzle = (gridId: Grid["id"], editMode: EditMode): Parameters<StorageF
     result.settings.editMode = editMode;
     return result;
 };
+
+const historyOf = ({ history, index }: StorageManager) =>
+    ({ history, index }) satisfies Partial<StorageManager>;
+
+type StorageHistory = ReturnType<typeof historyOf>;
 
 describe("StorageManager", () => {
     it("adds a new object correctly", () => {
@@ -177,8 +181,8 @@ describe("StorageManager", () => {
             ] satisfies PartialHistoryAction[],
         });
 
-        expect(storage.history.actions).toHaveLength(3);
-        expect(storage.history.index).toBe(3);
+        expect(storage.history).toHaveLength(3);
+        expect(storage.index).toBe(3);
     });
 
     it("removes batched actions affecting the same object that are no-ops", () => {
@@ -197,8 +201,8 @@ describe("StorageManager", () => {
             ] satisfies PartialHistoryAction[],
         });
 
-        expect(storage.history.actions).toHaveLength(2);
-        expect(storage.history.index).toBe(2);
+        expect(storage.history).toHaveLength(2);
+        expect(storage.index).toBe(2);
     });
 
     it("gives truthy batchIds", () => {
@@ -212,13 +216,13 @@ describe("StorageManager", () => {
     it("does not undo or redo with an empty history", () => {
         const storage = getNormalStorage();
         storage.undoHistory();
-        expect(storage.history).toEqual<StorageManager["history"]>({
-            actions: [] satisfies PartialHistoryAction[],
+        expect(historyOf(storage)).toEqual<StorageHistory>({
+            history: [] satisfies PartialHistoryAction[],
             index: 0,
         });
         storage.redoHistory();
-        expect(storage.history).toEqual<StorageManager["history"]>({
-            actions: [] satisfies PartialHistoryAction[],
+        expect(historyOf(storage)).toEqual<StorageHistory>({
+            history: [] satisfies PartialHistoryAction[],
             index: 0,
         });
     });
@@ -249,8 +253,8 @@ describe("StorageManager", () => {
         expect(storage.canUndo()).toBe(true);
         expect(storage.canRedo()).toBe(false);
 
-        const afterRedo: StorageManager["history"] = {
-            actions: [
+        const afterRedo: StorageHistory = {
+            history: [
                 {
                     objectId: "id1",
                     layerId: "layer1",
@@ -261,8 +265,8 @@ describe("StorageManager", () => {
             ] satisfies HistoryAction[],
             index: 1,
         };
-        const afterUndo: StorageManager["history"] = {
-            actions: [
+        const afterUndo: StorageHistory = {
+            history: [
                 {
                     objectId: "id1",
                     layerId: "layer1",
@@ -273,31 +277,31 @@ describe("StorageManager", () => {
             ] satisfies HistoryAction[],
             index: 0,
         };
-        expect(storage.history).toEqual<History>(afterRedo);
+        expect(historyOf(storage)).toEqual<StorageHistory>(afterRedo);
 
         storage.undoHistory();
         expect(storage.objects).toEqual(objectsBeforeAction);
-        expect(storage.history).toEqual<History>(afterUndo);
+        expect(historyOf(storage)).toEqual<StorageHistory>(afterUndo);
         expect(storage.canUndo()).toBe(false);
         expect(storage.canRedo()).toBe(true);
 
         // A second undo should not change anything
         storage.undoHistory();
         expect(storage.objects).toEqual(objectsBeforeAction);
-        expect(storage.history).toEqual<History>(afterUndo);
+        expect(historyOf(storage)).toEqual<StorageHistory>(afterUndo);
         expect(storage.canUndo()).toBe(false);
         expect(storage.canRedo()).toBe(true);
 
         storage.redoHistory();
         expect(storage.objects).toEqual(objectsAfterAction);
-        expect(storage.history).toEqual<History>(afterRedo);
+        expect(historyOf(storage)).toEqual<StorageHistory>(afterRedo);
         expect(storage.canUndo()).toBe(true);
         expect(storage.canRedo()).toBe(false);
 
         // A second redo should not change anything
         storage.redoHistory();
         expect(storage.objects).toEqual(objectsAfterAction);
-        expect(storage.history).toEqual<History>(afterRedo);
+        expect(historyOf(storage)).toEqual<StorageHistory>(afterRedo);
         expect(storage.canUndo()).toBe(true);
         expect(storage.canRedo()).toBe(false);
     });
@@ -314,13 +318,13 @@ describe("StorageManager", () => {
             ] satisfies PartialHistoryAction[],
         });
 
-        expect(storage.history.index).toBe(2);
+        expect(storage.index).toBe(2);
         storage.undoHistory();
-        expect(storage.history.index).toBe(1);
+        expect(storage.index).toBe(1);
         storage.undoHistory();
-        expect(storage.history.index).toBe(0);
+        expect(storage.index).toBe(0);
         storage.redoHistory();
-        expect(storage.history.index).toBe(1);
+        expect(storage.index).toBe(1);
     });
 
     it("does not batch actions if one batchId is undefined", () => {
@@ -335,13 +339,13 @@ describe("StorageManager", () => {
             ] satisfies PartialHistoryAction[],
         });
 
-        expect(storage.history.index).toBe(2);
+        expect(storage.index).toBe(2);
         storage.undoHistory();
-        expect(storage.history.index).toBe(1);
+        expect(storage.index).toBe(1);
         storage.undoHistory();
-        expect(storage.history.index).toBe(0);
+        expect(storage.index).toBe(0);
         storage.redoHistory();
-        expect(storage.history.index).toBe(1);
+        expect(storage.index).toBe(1);
     });
 
     it("does not batch actions if both batchId's are defined but not equal", () => {
@@ -356,13 +360,13 @@ describe("StorageManager", () => {
             ] satisfies PartialHistoryAction[],
         });
 
-        expect(storage.history.index).toBe(2);
+        expect(storage.index).toBe(2);
         storage.undoHistory();
-        expect(storage.history.index).toBe(1);
+        expect(storage.index).toBe(1);
         storage.undoHistory();
-        expect(storage.history.index).toBe(0);
+        expect(storage.index).toBe(0);
         storage.redoHistory();
-        expect(storage.history.index).toBe(1);
+        expect(storage.index).toBe(1);
     });
 
     it("returns the actions applied when undoing/redoing", () => {
@@ -463,7 +467,7 @@ describe("StorageManager", () => {
                 { id: "id1", object: { asdf: "something2" }, storageMode: "ui" },
             ] satisfies PartialHistoryAction[],
         });
-        expect(storage.history.actions).toHaveLength(2);
+        expect(storage.history).toHaveLength(2);
 
         // Because actions with storageMode=="ui" should have set batchId=="ignore"
         expect(notifySpy).toBeCalledTimes(1);
@@ -597,7 +601,7 @@ describe("StorageManager StorageFilters", () => {
 
         // Then no actions are filtered
         expect(identity).toBeCalledTimes(6);
-        expect(storage.history.actions).toHaveLength(6);
+        expect(storage.history).toHaveLength(6);
 
         // ... and no objects deleted
         expect(storage.objects["layer1"].entries("question")).toEqual<HistoryEntries>([
@@ -634,9 +638,7 @@ describe("StorageManager StorageFilters", () => {
 
         // Then only the starting actions are filtered
         expect(filter).toBeCalledTimes(6);
-        expect(
-            storage.history.actions.map(({ objectId, object }) => ({ objectId, object })),
-        ).toEqual([
+        expect(storage.history.map(({ objectId, object }) => ({ objectId, object }))).toEqual([
             { objectId: "1", object: null },
             { objectId: "2", object: null },
             { objectId: "3", object: null },
@@ -683,9 +685,7 @@ describe("StorageManager StorageFilters", () => {
 
         // Then only those actions are filtered
         expect(filter).toBeCalledTimes(6);
-        expect(
-            storage.history.actions.map(({ objectId, object }) => ({ objectId, object })),
-        ).toEqual([
+        expect(storage.history.map(({ objectId, object }) => ({ objectId, object }))).toEqual([
             { objectId: "1", object: null },
             { objectId: "2", object: null },
             { objectId: "3", object: null },
@@ -759,7 +759,7 @@ describe("StorageManager StorageFilters", () => {
 
         // Then the extra actions are added only once
         expect(
-            storage.history.actions.map(({ objectId, layerId, object }) => ({
+            storage.history.map(({ objectId, layerId, object }) => ({
                 objectId,
                 layerId,
                 object,
@@ -818,9 +818,7 @@ describe("StorageManager StorageFilters", () => {
         });
 
         // Then only the original action is processed and the extra action(s) are applied without checks
-        expect(
-            storage.history.actions.map(({ objectId, object }) => ({ objectId, object })),
-        ).toEqual([
+        expect(storage.history.map(({ objectId, object }) => ({ objectId, object }))).toEqual([
             { objectId: "processed_once", object: null },
             { objectId: "processed_once_dup", object: null },
         ] satisfies Partial<HistoryAction>[]);
