@@ -1,13 +1,13 @@
 import {
+    HistoryAction,
     Layer,
     LayerClass,
     LayerHandlerResult,
-    PartialHistoryAction,
     SVGGroup,
     StorageFilter,
 } from "../types";
 import { PUT_AT_END } from "../utils/OrderedMap";
-import { concat, zip } from "../utils/data";
+import { zip } from "../utils/data";
 import { notify } from "../utils/notifications";
 import { BaseLayer } from "./BaseLayer";
 import { numberTyper } from "./controls/numberTyper";
@@ -120,7 +120,7 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
         return false;
     }
 
-    updateSettings: INumberLayer["updateSettings"] = ({ oldSettings, storage }) => {
+    updateSettings: INumberLayer["updateSettings"] = ({ oldSettings }) => {
         if (!oldSettings || oldSettings.gridOrObjectFirst !== this.settings.gridOrObjectFirst) {
             const { gatherPoints, handleEvent, getOverlaySVG, eventPlaceSinglePointObjects } =
                 handleEventsSelection<NumberProps>({});
@@ -131,31 +131,24 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
             this.eventPlaceSinglePointObjects = eventPlaceSinglePointObjects;
         }
 
-        let history: PartialHistoryAction<NumberProps>[] | undefined = undefined;
+        const removeFilters = [] as StorageFilter[];
         if (
             !oldSettings ||
             oldSettings.max !== this.settings.max ||
             oldSettings.negatives !== this.settings.negatives
         ) {
             this.settings._numberTyper = numberTyper(this.settings);
-
-            history = [];
-            const stored = storage.getObjects<NumberProps>(this.id);
-
-            // Delete numbers that are out of range
-            const min = this.settings.negatives ? -this.settings.max : 0;
-            const max = this.settings.max;
-            for (const [id, object] of concat(
-                stored.entries("answer"),
-                stored.entries("question"),
-            )) {
-                const state = parseInt(object.state);
-                if (state < min || state > max) {
-                    history.push({ object: null, id });
-                }
-            }
+            // TODO: Is this a pattern I want to support? Removing a filter only to add it again to scrub history?
+            removeFilters.push(this.filterNumbersOutOfRange);
         }
-        return { history, filters: [{ filter: this.filterOverlappingObjects }] };
+
+        return {
+            removeFilters,
+            filters: [
+                { filter: this.filterOverlappingObjects },
+                { filter: this.filterNumbersOutOfRange },
+            ],
+        };
     };
 
     filterOverlappingObjects: StorageFilter = ({ storage }, action) => {
@@ -184,6 +177,19 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
         } else {
             return { keep: true };
         }
+    };
+
+    _isNumberLayerAction(action: HistoryAction): action is HistoryAction<NumberProps> {
+        return action.layerId === this.id;
+    }
+
+    filterNumbersOutOfRange: StorageFilter = (_, action) => {
+        if (action.object === null || !this._isNumberLayerAction(action)) return { keep: true };
+
+        const min = this.settings.negatives ? -this.settings.max : 0;
+        const max = this.settings.max;
+        const num = parseInt(action.object.state);
+        return { keep: min <= num && num <= max };
     };
 
     getSVG: INumberLayer["getSVG"] = ({ grid, storage, settings }) => {

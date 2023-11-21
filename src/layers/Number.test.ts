@@ -1,5 +1,5 @@
 import { LayerStorage } from "../LayerStorage";
-import { LayerHandlerResult } from "../types";
+import { HistoryAction, LayerHandlerResult, StorageFilter } from "../types";
 import { IndexedOrderedMap } from "../utils/OrderedMap";
 import { layerEventEssentials } from "../utils/testing/layerEventEssentials";
 import { NumberLayer, NumberProps } from "./Number";
@@ -76,13 +76,27 @@ describe("Number Layer", () => {
         const oldSettings = { ...layer9.settings };
         Object.assign(layer9.settings, { max: 10, negatives: true });
         const essentials = layerEventEssentials({ stored });
-        const result = layer9.updateSettings({
+        layer9.updateSettings({
             ...essentials,
             puzzleSettings: essentials.settings,
             oldSettings,
         });
 
-        expect(result.history ?? []).toEqual<HistoryType>([]);
+        const actions = stored.entries("question").map(
+            ([objectId, object]) =>
+                ({
+                    layerId: layer9.id,
+                    objectId,
+                    object,
+                    prevObjectId: null,
+                    storageMode: "question",
+                }) satisfies HistoryAction<NumberProps>,
+        );
+
+        const puzzle = layerEventEssentials();
+        expect(actions.map((action) => layer9.filterNumbersOutOfRange(puzzle, action))).toEqual<
+            ReturnType<StorageFilter>[]
+        >([{ keep: true }, { keep: true }, { keep: true }]);
     });
 
     it("deletes objects when the number range decreases", () => {
@@ -98,16 +112,27 @@ describe("Number Layer", () => {
         const oldSettings = { ...layer64.settings };
         Object.assign(layer64.settings, { max: 7, negatives: false });
         const essentials = layerEventEssentials({ stored });
-        const result = layer64.updateSettings({
+        layer64.updateSettings({
             ...essentials,
             puzzleSettings: essentials.settings,
             oldSettings,
         });
 
-        expect(result.history).toEqual<HistoryType>([
-            { id: "1,1", object: null },
-            { id: "4,4", object: null },
-        ]);
+        const actions = stored.entries("question").map(
+            ([objectId, object]) =>
+                ({
+                    layerId: layer64.id,
+                    objectId,
+                    object,
+                    prevObjectId: null,
+                    storageMode: "question",
+                }) satisfies HistoryAction<NumberProps>,
+        );
+
+        const puzzle = layerEventEssentials();
+        expect(actions.map((action) => layer64.filterNumbersOutOfRange(puzzle, action))).toEqual<
+            ReturnType<StorageFilter>[]
+        >([{ keep: false }, { keep: true }, { keep: true }, { keep: false }]);
     });
 
     // TODO: Not implemented, might never be honestly.
