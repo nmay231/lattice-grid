@@ -463,14 +463,21 @@ describe("StorageManager", () => {
             puzzle,
             layerId: "layer1",
             actions: [
-                { id: "id1", object: { asdf: "something1" }, batchId: "ignore" },
-                { id: "id1", object: { asdf: "something2" }, storageMode: "ui" },
+                { id: "id1", object: { asdf: "something3" }, batchId: "ignore" },
+                { id: "id1", object: { asdf: "ui something" }, storageMode: "ui" },
             ] satisfies PartialHistoryAction[],
         });
         expect(storage.history).toHaveLength(2);
 
         // Because actions with storageMode=="ui" should have set batchId=="ignore"
         expect(notifySpy).toBeCalledTimes(1);
+
+        expect(storage.getObjects("layer1").entries("question")).toEqual([
+            ["id1", { asdf: "something3" }],
+        ]);
+        expect(storage.getObjects("layer1").entries("ui")).toEqual([
+            ["id1", { asdf: "ui something" }],
+        ]);
 
         vi.clearAllMocks();
     });

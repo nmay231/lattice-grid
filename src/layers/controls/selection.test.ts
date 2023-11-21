@@ -27,7 +27,7 @@ const layerStorageFromObjects = <LP extends LayerProps>({
     objs: LP["ObjectState"][];
 }) => {
     const stored = new LayerStorage<LP>();
-    stored.setEntries("question", [...zip(ids, objs)]);
+    stored.setEntries("ui", [...zip(ids, objs)]);
     return stored;
 };
 
@@ -37,14 +37,14 @@ describe("selection controls", () => {
     it("has a working obj() helper function", () => {
         expect(obj({ id: "asdfasdf", object: null })).toEqual<HistoryType[number]>({
             batchId: "ignore",
-            storageMode: "question",
+            storageMode: "ui",
             id: "asdfasdf",
             layerId: "Selection",
             object: null,
         });
         expect(obj({ id: "asdfasdf", object: { state: 2 } })).toEqual<HistoryType[number]>({
             batchId: "ignore",
-            storageMode: "question",
+            storageMode: "ui",
             id: "asdfasdf",
             layerId: "Selection",
             object: { state: 2 },
@@ -65,7 +65,7 @@ describe("selection controls", () => {
                 id: "point1",
                 layerId: SELECTION_ID,
                 batchId: "ignore",
-                storageMode: "question",
+                storageMode: "ui",
                 object: { state: 2 },
             },
         ]);
@@ -94,7 +94,7 @@ describe("selection controls", () => {
                 id: "point1",
                 layerId: SELECTION_ID,
                 batchId: "ignore",
-                storageMode: "question",
+                storageMode: "ui",
                 object: null,
             },
         ]);
@@ -123,14 +123,14 @@ describe("selection controls", () => {
                 id: "point2",
                 layerId: SELECTION_ID,
                 batchId: "ignore",
-                storageMode: "question",
+                storageMode: "ui",
                 object: null,
             },
             {
                 id: "point1",
                 layerId: SELECTION_ID,
                 batchId: "ignore",
-                storageMode: "question",
+                storageMode: "ui",
                 object: { state: 2 },
             },
         ]);
@@ -159,14 +159,14 @@ describe("selection controls", () => {
                 id: "point1",
                 layerId: SELECTION_ID,
                 batchId: "ignore",
-                storageMode: "question",
+                storageMode: "ui",
                 object: null,
             },
             {
                 id: "point2",
                 layerId: SELECTION_ID,
                 batchId: "ignore",
-                storageMode: "question",
+                storageMode: "ui",
                 object: { state: 2 },
             },
         ]);
@@ -193,7 +193,7 @@ describe("selection controls", () => {
         expect(pointerDown.history).toEqual<HistoryType>([
             {
                 batchId: "ignore",
-                storageMode: "question",
+                storageMode: "ui",
                 id: "point4",
                 layerId: SELECTION_ID,
                 object: { state: 2 },
@@ -210,14 +210,14 @@ describe("selection controls", () => {
         expect(pointerMove.history).toEqual<HistoryType>([
             {
                 batchId: "ignore",
-                storageMode: "question",
+                storageMode: "ui",
                 id: "point5",
                 layerId: SELECTION_ID,
                 object: { state: 2 },
             },
             {
                 batchId: "ignore",
-                storageMode: "question",
+                storageMode: "ui",
                 id: "point6",
                 layerId: SELECTION_ID,
                 object: { state: 2 },
@@ -245,7 +245,7 @@ describe("selection controls", () => {
         expect(pointerDown.history).toEqual<HistoryType>([
             {
                 batchId: "ignore",
-                storageMode: "question",
+                storageMode: "ui",
                 id: "point3",
                 layerId: SELECTION_ID,
                 object: { state: 2 },
@@ -259,14 +259,14 @@ describe("selection controls", () => {
         expect(pointerMove.history).toEqual<HistoryType>([
             {
                 batchId: "ignore",
-                storageMode: "question",
+                storageMode: "ui",
                 id: "point1",
                 layerId: SELECTION_ID,
                 object: { state: 2 },
             },
             {
                 batchId: "ignore",
-                storageMode: "question",
+                storageMode: "ui",
                 id: "point2",
                 layerId: SELECTION_ID,
                 object: { state: 2 },
@@ -325,14 +325,14 @@ describe("selection controls", () => {
                     objectId: "toKeep",
                     layerId: layer.id,
                     object: {},
-                    storageMode: "question",
+                    storageMode: "ui",
                     prevObjectId: null,
                 },
                 {
                     objectId: "toSelect",
                     layerId: layer.id,
                     object: {},
-                    storageMode: "question",
+                    storageMode: "ui",
                     prevObjectId: null,
                 },
             ],
@@ -342,21 +342,21 @@ describe("selection controls", () => {
         expect(result.history).toEqual<HistoryType>([
             {
                 batchId: "ignore",
-                storageMode: "question",
+                storageMode: "ui",
                 id: "toDeselect",
                 layerId: SELECTION_ID,
                 object: null,
             },
             {
                 batchId: "ignore",
-                storageMode: "question",
+                storageMode: "ui",
                 id: "toKeep",
                 layerId: SELECTION_ID,
                 object: { state: 2 },
             },
             {
                 batchId: "ignore",
-                storageMode: "question",
+                storageMode: "ui",
                 id: "toSelect",
                 layerId: SELECTION_ID,
                 object: { state: 2 },

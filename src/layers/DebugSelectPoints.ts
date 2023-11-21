@@ -89,7 +89,7 @@ export class DebugSelectPointsLayer
             );
         }
 
-        return { history: [{ object: null, id: LINE_ID }] };
+        return {};
     };
 
     static create = ((puzzle): DebugSelectPointsLayer => {

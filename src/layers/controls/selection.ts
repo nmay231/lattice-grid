@@ -46,7 +46,7 @@ const obj = <LP extends SelectedProps>({
     layerId,
     object,
     batchId: "ignore",
-    storageMode: "question",
+    storageMode: "ui",
 });
 export const _selectionObjMaker = obj; // For testing.
 
@@ -95,10 +95,10 @@ export const handleEventsSelection = <LP extends SelectedProps>(
     };
 
     const handleEvent: SelectedLayer["handleEvent"] = function (this: SelectedLayer, event) {
-        const { grid, storage, tempStorage, settings } = event;
+        const { grid, storage, tempStorage } = event;
         const internal = storage.getObjects<InternalProps>(layerId);
         let history: PartialHistoryAction<LP, InternalProps["ObjectState"]>[];
-        const allPoints = internal.keys("question");
+        const allPoints = internal.keys("ui");
 
         switch (event.type) {
             case "cancelAction": {
@@ -140,7 +140,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                     }
                 }
                 internal.permStorage.groupNumber = internal.permStorage.groupNumber || 1;
-                const currentPoints = internal.keys("question");
+                const currentPoints = internal.keys("ui");
                 const ids = event.points;
 
                 if (event.ctrlKey || event.shiftKey) {
@@ -163,15 +163,13 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                             .map((id) => obj({ id, object: null }));
                     } else {
                         const groupsToMerge = new Set(
-                            ids.map((id) => internal.getObject(settings.editMode, id)?.state),
+                            ids.map((id) => internal.getObject("ui", id)?.state),
                         );
                         const allIds = ids
                             .filter((id) => !currentPoints.includes(id))
                             .concat(
                                 [...currentPoints].filter((id) =>
-                                    groupsToMerge.has(
-                                        internal.getObject(settings.editMode, id).state,
-                                    ),
+                                    groupsToMerge.has(internal.getObject("ui", id).state),
                                 ),
                             );
                         const state = tempStorage.targetState;
@@ -204,7 +202,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
             case "pointerUp": {
                 if (tempStorage.removeSingle) {
                     return {
-                        history: [obj({ id: [...internal.keys("question")][0], object: null })],
+                        history: [obj({ id: [...internal.keys("ui")][0], object: null })],
                     };
                 }
                 return {};
@@ -212,7 +210,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
             case "undoRedo": {
                 const newIds = event.actions.map(({ objectId: id }) => id);
                 // Clear old selection
-                const history = [...internal.keys("question")]
+                const history = [...internal.keys("ui")]
                     // TODO: This doesn't account for actions that do not apply to external layer. Do I need to fix?
                     .filter((oldId) => newIds.indexOf(oldId) === -1)
                     .map((oldId) => obj({ id: oldId, object: null }));
@@ -238,8 +236,8 @@ export const handleEventsSelection = <LP extends SelectedProps>(
     const getOverlaySVG: SelectedLayer["getOverlaySVG"] = function ({ grid, storage, settings }) {
         // TODO: Selection can be made by multiple layers, but not all layers support the same cells/corners selection. In the future, I need to filter the points by the type of points selectable by the current layer.
         const stored = storage.getObjects<InternalProps>(layerId);
-        const points = stored.keys("question");
-        const states = points.map((id) => stored.getObject("question", id).state);
+        const points = stored.keys("ui");
+        const states = points.map((id) => stored.getObject("ui", id).state);
         const pt = grid.getPointTransformer(settings);
 
         const elements: SVGGroup["elements"] = new Map();
@@ -265,7 +263,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
     const eventPlaceSinglePointObjects: GOOFySelectedLayer["eventPlaceSinglePointObjects"] =
         function (this: GOOFySelectedLayer, event) {
             const internal = event.storage.getObjects<InternalProps>(layerId);
-            const allPoints = internal.keys("question");
+            const allPoints = internal.keys("ui");
             const actions = this.handleKeyDown({ ...event, points: [...allPoints] });
             const batchId = event.storage.getNewBatchId();
 

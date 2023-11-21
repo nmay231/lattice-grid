@@ -273,8 +273,8 @@ export type HistoryAction<LP extends LayerProps = LayerProps> = {
     object: LP["ObjectState"] | null;
     /** For when render order matters */
     prevObjectId: PutAtEnd | ObjectId | null;
-    /** Which storage group is this action applied to ("question" | "answer", for now) */
-    storageMode: EditMode;
+    /** Which storage group is this action applied to */
+    storageMode: StorageMode;
 };
 
 export type PuzzleForStorage = {

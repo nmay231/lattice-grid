@@ -419,7 +419,9 @@ export class ControlsManager {
             if (appliedActions.length) {
                 const lastAction = appliedActions[appliedActions.length - 1];
                 this.puzzle.selectLayer(lastAction.layerId);
-                this.puzzle.settings.editMode = lastAction.storageMode;
+                if (lastAction.storageMode !== "ui") {
+                    this.puzzle.settings.editMode = lastAction.storageMode;
+                }
 
                 layer = this.getCurrentLayer();
                 if (layer)

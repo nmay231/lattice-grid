@@ -21,8 +21,8 @@ export class StorageManager {
         this.removeStorageFilters([...this.filtersByLayer[layerId]]);
     }
 
-    getObjects<LP extends LayerProps>(id: Layer["id"]) {
-        return this.objects[id] as LayerStorage<LP>;
+    getObjects<LP extends LayerProps>(layerId: Layer["id"]) {
+        return this.objects[layerId] as LayerStorage<LP>;
     }
 
     layersByFilters: Map<StorageFilter, { layerIds: Layer["id"][] }> = new Map();
@@ -141,12 +141,6 @@ export class StorageManager {
         for (const partialAction of partialActions) {
             const layerId = partialAction.layerId ?? defaultLayerId;
             const storageMode = partialAction.storageMode ?? currentEditMode;
-            if (storageMode === "ui") {
-                if (partialAction.batchId !== "ignore") {
-                    notify.error({ message: `Forgot to explicitly ignore UI input ${layerId}}` });
-                }
-                continue; // Do not include in history
-            }
 
             const constructedAction: HistoryAction = {
                 objectId: partialAction.id,
@@ -157,6 +151,17 @@ export class StorageManager {
                 prevObjectId: PUT_AT_END,
                 storageMode,
             };
+
+            if (storageMode === "ui") {
+                if (partialAction.batchId !== "ignore") {
+                    notify.error({ message: `Forgot to explicitly ignore UI input ${layerId}}` });
+                }
+                this._applyHistoryAction({
+                    stored: this.getObjects(layerId),
+                    action: constructedAction,
+                });
+                continue; // Do not include in history or filters
+            }
 
             const { keep, extraActions } = this.masterHistoryActionFilter(
                 puzzle,
