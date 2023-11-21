@@ -170,7 +170,6 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
         ) {
             return {
                 keep: true,
-                validOnlyWithExtraActions: true,
                 extraActions: [
                     {
                         layerId: this.id,

@@ -535,7 +535,303 @@ describe("StorageManager", () => {
         storage.redoHistory();
         expect(objectOrder()).toEqual(thirdOrder);
     });
+});
 
-    // TODO: If I'm gonna even use storageReducers...
-    it.todo("should add some tests related to storageReducers");
+describe("StorageManager StorageFilters", () => {
+    it("registers filters with explicit layerId(s) the same as with default layerId", () => {
+        // Given an empty StorageManager
+        const storage = getNormalStorage();
+        const puzzle = fakePuzzle("grid", "question");
+
+        const filter1: StorageFilter = () => ({ keep: true });
+        const filter2: StorageFilter = () => ({ keep: true });
+
+        // When a filter is registered using default layer
+        storage.addStorageFilters(puzzle, [{ filter: filter1 }], "layer1");
+        // ... and a filter registered using explicit layerIds
+        storage.addStorageFilters(puzzle, [{ filter: filter2, layerIds: ["layer1"] }], "layer2");
+
+        // Then they are both registered to the same layer
+        expect(storage.filtersByLayer).toEqual({
+            layer1: [filter1, filter2],
+        });
+    });
+
+    it("registers filters once", () => {
+        // Given an empty StorageManager
+        const storage = getNormalStorage();
+        const puzzle = fakePuzzle("grid", "question");
+
+        const filter: StorageFilter = () => ({ keep: true });
+        // When a filter is registered multiple times
+        storage.addStorageFilters(puzzle, [{ filter }], "layer1");
+        storage.addStorageFilters(puzzle, [{ filter }], "layer1");
+        storage.addStorageFilters(puzzle, [{ filter }], "layer1");
+
+        // Then it's only added once
+        expect(storage.filtersByLayer).toEqual({
+            layer1: [filter],
+        });
+    });
+
+    it("registers simple filters that keeps new and updated valid actions", () => {
+        // Given a StorageManager with lots of examples
+        const storage = getNormalStorage();
+        const puzzle = fakePuzzle("grid", "question");
+        storage.addToHistory({
+            puzzle,
+            layerId: "layer1",
+            actions: [
+                { id: "1", object: { asdf: "constant" } },
+                { id: "2", object: { asdf: "starting state" } },
+                { id: "2", object: { asdf: "ending state" } },
+                { id: "3", object: { asdf: "starting state" } },
+                { id: "3", object: { asdf: "It's just a phase mom!" } },
+                { id: "3", object: { asdf: "ending state" } },
+            ] satisfies PartialHistoryAction[],
+        });
+
+        // When a filter that doesn't change any of those objects is registered
+        const identity = vi.fn((() => ({ keep: true })) satisfies StorageFilter);
+        storage.addStorageFilters(puzzle, [{ filter: identity }], "layer1");
+
+        // Then no actions are filtered
+        expect(identity).toBeCalledTimes(6);
+        expect(storage.history.actions).toHaveLength(6);
+
+        // ... and no objects deleted
+        expect(storage.objects["layer1"].entries("question")).toEqual<HistoryEntries>([
+            ["1", { asdf: "constant" }],
+            ["2", { asdf: "ending state" }],
+            ["3", { asdf: "ending state" }],
+        ]);
+    });
+
+    it("registers simple filters that removes new invalid objects", () => {
+        // Given a StorageManager with lots of examples
+        const storage = getNormalStorage();
+        const puzzle = fakePuzzle("grid", "question");
+        storage.addToHistory({
+            puzzle,
+            layerId: "layer1",
+            actions: [
+                { id: "1", object: { asdf: "constant" } },
+                { id: "2", object: { asdf: "starting state" } },
+                { id: "2", object: { asdf: "ending state" } },
+                { id: "3", object: { asdf: "starting state" } },
+                { id: "3", object: { asdf: "It's just a phase mom!" } },
+                { id: "3", object: { asdf: "ending state" } },
+            ] satisfies PartialHistoryAction[],
+        });
+
+        // When a filter is registered that doesn't allow for phrases to begin with "starting" are added
+        const filter = vi.fn(((_puzzle, action) => ({
+            keep:
+                !action.object ||
+                !(action.object as FakeLayerProps["ObjectState"]).asdf.startsWith("starting"),
+        })) satisfies StorageFilter);
+        storage.addStorageFilters(puzzle, [{ filter }], "layer1");
+
+        // Then only the starting actions are filtered
+        expect(filter).toBeCalledTimes(6);
+        expect(
+            storage.history.actions.map(({ objectId, object }) => ({ objectId, object })),
+        ).toEqual([
+            { objectId: "1", object: null },
+            { objectId: "2", object: null },
+            { objectId: "3", object: null },
+            { objectId: "3", object: { asdf: "It's just a phase mom!" } },
+        ] satisfies Partial<HistoryAction>[]);
+
+        // ... and no objects deleted
+        expect(storage.objects["layer1"].entries("question")).toEqual<HistoryEntries>([
+            ["1", { asdf: "constant" }],
+            ["2", { asdf: "ending state" }],
+            ["3", { asdf: "ending state" }],
+        ]);
+    });
+
+    it("registers simple filters that removes updated invalid objects", () => {
+        // Given a StorageManager with lots of examples
+        const storage = getNormalStorage();
+        const puzzle = fakePuzzle("grid", "question");
+        storage.addToHistory({
+            puzzle,
+            layerId: "layer1",
+            actions: [
+                { id: "1", object: { asdf: "constant" } },
+                { id: "2", object: { asdf: "starting state" } },
+                { id: "2", object: { asdf: "ending state" } },
+                { id: "3", object: { asdf: "starting state" } },
+                { id: "3", object: { asdf: "It's just a phase mom!" } },
+                { id: "3", object: { asdf: "ending state" } },
+            ] satisfies PartialHistoryAction[],
+        });
+
+        // When a filter is registered that removes the last action for id=2 and the middle action for id=3
+        const filter = vi.fn(((_puzzle, action) => {
+            if (action.object === null) return { keep: true };
+
+            if (action.objectId === "2" && action.object.asdf === "ending state") {
+                return { keep: false };
+            }
+            if (action.object.asdf === "It's just a phase mom!") return { keep: false };
+
+            return { keep: true };
+        }) satisfies StorageFilter);
+        storage.addStorageFilters(puzzle, [{ filter }], "layer1");
+
+        // Then only those actions are filtered
+        expect(filter).toBeCalledTimes(6);
+        expect(
+            storage.history.actions.map(({ objectId, object }) => ({ objectId, object })),
+        ).toEqual([
+            { objectId: "1", object: null },
+            { objectId: "2", object: null },
+            { objectId: "3", object: null },
+            { objectId: "3", object: { asdf: "starting state" } },
+        ] satisfies Partial<HistoryAction>[]);
+
+        // ... and no objects deleted
+        expect(storage.objects["layer1"].entries("question")).toEqual<HistoryEntries>([
+            ["1", { asdf: "constant" }],
+            ["2", { asdf: "starting state" }],
+            ["3", { asdf: "ending state" }],
+        ]);
+    });
+
+    it("processes extra actions when changes are made to the grid normally", () => {
+        // Given an empty StorageManager
+        const storage = getNormalStorage();
+        const puzzle = fakePuzzle("grid", "question");
+
+        // When a filter that gives extra actions is registered
+        const copyToLayer2 = vi.fn(((_puzzle, action) => ({
+            keep: true,
+            extraActions: [{ ...action, layerId: "layer2" }],
+        })) satisfies StorageFilter);
+        storage.addStorageFilters(puzzle, [{ filter: copyToLayer2 }], "layer1");
+        expect(copyToLayer2).toBeCalledTimes(0);
+
+        // ... and some actions are added
+        storage.addToHistory({
+            puzzle,
+            layerId: "layer1",
+            actions: [
+                { id: "1", object: { asdf: "a" } },
+                { id: "2", object: { asdf: "b" } },
+                { id: "3", object: { asdf: "c" } },
+            ] satisfies PartialHistoryAction[],
+        });
+
+        // Then the extra actions are processed
+        expect(copyToLayer2).toBeCalledTimes(3);
+        const result = [
+            ["1", { asdf: "a" }],
+            ["2", { asdf: "b" }],
+            ["3", { asdf: "c" }],
+        ] satisfies HistoryEntries;
+        expect(storage.getObjects("layer1").entries("question")).toEqual(result);
+        expect(storage.getObjects("layer2").entries("question")).toEqual(result);
+    });
+
+    it("only adds extra actions during history scrubbing once", () => {
+        // Given a StorageManager with some entries
+        const storage = getNormalStorage();
+        const puzzle = fakePuzzle("grid", "question");
+        storage.addToHistory({
+            puzzle,
+            layerId: "layer1",
+            actions: [
+                { id: "1", object: { asdf: "a" } },
+                { id: "2", object: { asdf: "b" } },
+                { id: "3", object: { asdf: "c" } },
+            ] satisfies PartialHistoryAction[],
+        });
+
+        // When a filter that gives extra actions is registered
+        const copyToLayer2 = vi.fn(((_puzzle, action) => ({
+            keep: true,
+            extraActions: [{ ...action, layerId: "layer2" }],
+        })) satisfies StorageFilter);
+        storage.addStorageFilters(puzzle, [{ filter: copyToLayer2 }], "layer1");
+        expect(copyToLayer2).toBeCalledTimes(3);
+
+        // Then the extra actions are added only once
+        expect(
+            storage.history.actions.map(({ objectId, layerId, object }) => ({
+                objectId,
+                layerId,
+                object,
+            })),
+        ).toEqual([
+            { objectId: "1", layerId: "layer1", object: null },
+            { objectId: "1", layerId: "layer2", object: null },
+            { objectId: "2", layerId: "layer1", object: null },
+            { objectId: "2", layerId: "layer2", object: null },
+            { objectId: "3", layerId: "layer1", object: null },
+            { objectId: "3", layerId: "layer2", object: null },
+        ] satisfies Partial<HistoryAction>[]);
+
+        const result = [
+            ["1", { asdf: "a" }],
+            ["2", { asdf: "b" }],
+            ["3", { asdf: "c" }],
+        ] satisfies HistoryEntries;
+        expect(storage.getObjects("layer1").entries("question")).toEqual(result);
+        expect(storage.getObjects("layer2").entries("question")).toEqual(result);
+    });
+
+    it("doesn't recurse extra actions to the same filter or a different one", () => {
+        // Given an empty StorageManager
+        const storage = getNormalStorage();
+        const puzzle = fakePuzzle("grid", "question");
+
+        let calledLast = "none" as "none" | "duplicate" | "identity";
+
+        // When a filter that copies an object to the same layer is registered
+        const duplicate = vi.fn(((_puzzle, action) => {
+            calledLast = "duplicate";
+            return {
+                keep: true,
+                extraActions: [{ ...action, objectId: action.objectId + "_dup" }],
+            };
+        }) satisfies StorageFilter);
+        storage.addStorageFilters(puzzle, [{ filter: duplicate }], "layer1");
+        expect(duplicate).toBeCalledTimes(0);
+
+        // ... as well as a filter that does nothing
+        const identity = vi.fn((() => {
+            calledLast = "identity";
+            return { keep: true };
+        }) satisfies StorageFilter);
+        storage.addStorageFilters(puzzle, [{ filter: identity }], "layer1");
+        expect(identity).toBeCalledTimes(0);
+
+        // ... and a single action is pushed to history
+        storage.addToHistory({
+            puzzle,
+            layerId: "layer1",
+            actions: [
+                { id: "processed_once", object: { asdf: "asdf" } },
+            ] satisfies PartialHistoryAction[],
+        });
+
+        // Then only the original action is processed and the extra action(s) are applied without checks
+        expect(
+            storage.history.actions.map(({ objectId, object }) => ({ objectId, object })),
+        ).toEqual([
+            { objectId: "processed_once", object: null },
+            { objectId: "processed_once_dup", object: null },
+        ] satisfies Partial<HistoryAction>[]);
+        expect(storage.getObjects("layer1").entries("question")).toEqual([
+            ["processed_once", { asdf: "asdf" }],
+            ["processed_once_dup", { asdf: "asdf" }],
+        ] satisfies HistoryEntries);
+
+        expect(duplicate).toBeCalledTimes(1);
+        expect(identity).toBeCalledTimes(1);
+        // The `identity` filter must be called last to test it had a chance to "see" the extra action from `duplicate`
+        expect(calledLast).toBe<typeof calledLast>("identity");
+    });
 });

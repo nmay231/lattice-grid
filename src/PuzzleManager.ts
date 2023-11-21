@@ -232,7 +232,7 @@ export class PuzzleManager {
             oldSettings: undefined,
         });
         if (filters) {
-            this.storage.addStorageFilters(filters, layer.id);
+            this.storage.addStorageFilters(this, filters, layer.id);
         }
 
         if (settings) {
@@ -256,7 +256,7 @@ export class PuzzleManager {
                     this.storage.removeStorageFilters(removeFilters);
                 }
                 if (filters) {
-                    this.storage.addStorageFilters(filters, layer.id);
+                    this.storage.addStorageFilters(this, filters, layer.id);
                 }
 
                 // TODO: History is deprecated because filters will now manage removing invalid objects
@@ -315,7 +315,7 @@ export class PuzzleManager {
                 this.storage.removeStorageFilters(removeFilters);
             }
             if (filters) {
-                this.storage.addStorageFilters(filters, layer.id);
+                this.storage.addStorageFilters(this, filters, layer.id);
             }
 
             if (history?.length) {

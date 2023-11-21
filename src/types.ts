@@ -297,7 +297,7 @@ export type StorageFilter = (
         settings: PuzzleManager["settings"];
     },
     action: Readonly<HistoryAction>,
-) => { keep: boolean; validOnlyWithExtraActions?: boolean; extraActions?: HistoryAction[] };
+) => { keep: boolean; extraActions?: HistoryAction[] };
 // #endregion
 
 // #region - Rendering

@@ -8,6 +8,7 @@ import {
     StorageFilter,
 } from "./types";
 import { PUT_AT_END } from "./utils/OrderedMap";
+import { reversed } from "./utils/data";
 import { notify } from "./utils/notifications";
 import { stringifyAnything } from "./utils/string";
 
@@ -34,10 +35,14 @@ export class StorageManager {
     filtersByLayer: Record<Layer["id"], StorageFilter[]> = {};
 
     addStorageFilters(
+        puzzle: Parameters<StorageFilter>[0],
         filters: Array<{ filter: StorageFilter; layerIds?: Layer["id"][] }>,
         defaultLayer: Layer["id"],
     ) {
         if (!filters.length) return;
+
+        const newFiltersByLayer: typeof this.filtersByLayer = {};
+
         for (const { filter, layerIds } of filters) {
             const ids = layerIds ?? [defaultLayer];
             if (this.layersByFilters.has(filter)) {
@@ -47,8 +52,43 @@ export class StorageManager {
             for (const id of ids) {
                 this.filtersByLayer[id] = this.filtersByLayer[id] ?? [];
                 this.filtersByLayer[id].push(filter);
+
+                newFiltersByLayer[id] = newFiltersByLayer[id] ?? [];
+                newFiltersByLayer[id].push(filter);
             }
         }
+
+        if (!this.history.actions.length) return;
+
+        const filtered = [] as typeof this.history.actions;
+        // Scrub history going right-to-left since it's better to keep the latest version if valid rather than only allowing what was valid in the past.
+        for (const undo of reversed(this.history.actions)) {
+            const stored = this.getObjects(undo.layerId);
+            const redo = this._applyHistoryAction({ stored, action: undo });
+
+            if (!(undo.layerId in newFiltersByLayer)) continue;
+
+            const extra = [] as HistoryAction[];
+            let kept = true;
+            for (const filter of newFiltersByLayer[undo.layerId]) {
+                const { keep, extraActions } = filter(puzzle, redo);
+
+                if (!keep) {
+                    kept = false;
+                    break;
+                }
+                if (extraActions) extra.push(...extraActions);
+            }
+            if (!kept) continue;
+            extra.reverse();
+            filtered.push(...extra, redo);
+        }
+
+        filtered.reverse();
+        this.history.actions = filtered;
+        this.history.index = 0;
+
+        while (this.redoHistory().length);
     }
 
     removeStorageFilters(filters: StorageFilter[]) {
@@ -116,8 +156,6 @@ export class StorageManager {
                 continue; // Do not include in history
             }
 
-            const stored = this.getObjects(layerId);
-
             const constructedAction: HistoryAction = {
                 objectId: partialAction.id,
                 layerId,
@@ -138,13 +176,16 @@ export class StorageManager {
             if (partialAction.batchId === "ignore") {
                 // TODO: Do I really want to not track any extra actions provided by filters in history? I can't think of a valid instance where a filter needs to keep actions when the original one is ignored, I guess...
                 for (const action of actions) {
-                    this._applyHistoryAction({ stored, action });
+                    this._applyHistoryAction({ stored: this.getObjects(action.layerId), action });
                 }
                 continue;
             }
 
             for (const action of actions) {
-                const undoAction = this._applyHistoryAction({ stored, action });
+                const undoAction = this._applyHistoryAction({
+                    stored: this.getObjects(action.layerId),
+                    action,
+                });
 
                 const lastAction = this.history.actions[this.history.index - 1];
 

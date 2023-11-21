@@ -1,6 +1,6 @@
 import fc from "fast-check";
 import { zip as lodashZip, range } from "lodash";
-import { concat, zip as ourZip, parseIntBase, reduceTo } from "./data";
+import { concat, zip as ourZip, parseIntBase, reduceTo, reversed } from "./data";
 import { FCNormalFloat, FCRepeat, given } from "./testing/fcArbitraries";
 
 describe("reduceTo", () => {
@@ -67,5 +67,35 @@ describe("concat for iterables", () => {
             yield 2;
         }
         expect([...concat(iterable(), [42], iterable())]).toEqual([1, 2, 42, 1, 2]);
+    });
+});
+
+describe("reversed", () => {
+    it("reverses an array without mutation", () => {
+        const arr = [1, 2, 3];
+        expect([...reversed(arr)]).toEqual([3, 2, 1]);
+        expect(arr).toEqual([1, 2, 3]);
+    });
+
+    it("iterates an array in reverse while the array is mutated on the right end", () => {
+        const arr = [1, 2, 3, 4, 5];
+        const result = [] as number[];
+        for (const x of reversed(arr)) {
+            if (x % 2 == 0) {
+                result.push(...arr.splice(arr.indexOf(x), 1));
+            }
+        }
+
+        expect([arr, result]).toEqual([
+            [1, 3, 5],
+            [4, 2],
+        ]);
+    });
+
+    it("reverses an iterable", () => {
+        function* iterable() {
+            yield* [1, 2, 3];
+        }
+        expect([...reversed(iterable())]).toEqual([3, 2, 1]);
     });
 });
