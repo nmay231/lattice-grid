@@ -10,6 +10,7 @@ import {
     Point,
     PointerMoveOrDown,
 } from "../../types";
+import { PUT_AT_END } from "../OrderedMap";
 import { layerEventEssentials } from "./layerEventEssentials";
 import { partialMock } from "./partialMock";
 
@@ -38,7 +39,7 @@ export const layerEventRunner = <LP extends LayerProps>(arg: LayerEventRunnerArg
         handleHistory: (history?: PartialHistoryAction[]) => {
             if (!history?.length) return;
             for (const action of history) {
-                _stored.setObject("question", action.id, action.object);
+                _stored.setObject("question", action.id, action.object, PUT_AT_END);
             }
         },
         gatherPoints: ({

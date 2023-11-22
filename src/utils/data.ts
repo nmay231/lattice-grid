@@ -65,3 +65,11 @@ export function* concat<T>(...iters: Array<Iterable<T>>) {
         yield* iter;
     }
 }
+
+/** Return the elements of an iterable in reverse (warning non-arrays have their contents copied completely into one before reversing) */
+export function* reversed<T>(iter: Iterable<T>) {
+    const arr = Array.isArray(iter) ? iter : [...iter];
+    for (let i = arr.length - 1; i >= 0; i--) {
+        yield arr[i] as T;
+    }
+}

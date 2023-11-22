@@ -1,3 +1,6 @@
+export const PUT_AT_END = Symbol("PUT_AT_END");
+export type PutAtEnd = typeof PUT_AT_END;
+
 export class OrderedMap<V> {
     map: Record<string, V> = {};
     order: string[] = [];
@@ -7,15 +10,18 @@ export class OrderedMap<V> {
         this.map = {};
     }
 
-    set(key: string, value: V, nextKey: string | null = null): void {
+    set(key: string, value: V, prevKey = PUT_AT_END as PutAtEnd | null | string): void {
         if (key in this.map) {
             this.order.splice(this.order.indexOf(key), 1);
         }
         this.map[key] = value;
-        if (nextKey === null || !(nextKey in this.map) || key === nextKey) {
+
+        if (prevKey === null) {
+            this.order.unshift(key);
+        } else if (prevKey === PUT_AT_END || !(prevKey in this.map) || key === prevKey) {
             this.order.push(key);
         } else {
-            this.order.splice(this.order.indexOf(nextKey), 0, key);
+            this.order.splice(this.order.indexOf(prevKey) + 1, 0, key);
         }
     }
 

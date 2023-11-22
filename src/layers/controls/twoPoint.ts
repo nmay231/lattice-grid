@@ -1,4 +1,12 @@
-import { Layer, LayerProps, PartialHistoryAction, Point, PointType } from "../../types";
+import {
+    HistoryAction,
+    Layer,
+    LayerProps,
+    PartialHistoryAction,
+    Point,
+    PointType,
+    StorageFilter,
+} from "../../types";
 import { zip } from "../../utils/data";
 import { notify } from "../../utils/notifications";
 import { smartSort } from "../../utils/string";
@@ -6,7 +14,7 @@ import { smartSort } from "../../utils/string";
 type StringRecord = Record<string, string>;
 
 export interface TwoPointProps<State extends StringRecord> extends LayerProps {
-    ObjectState: { points: Point[] } & State;
+    ObjectState: { points: Point[]; pointType: PointType } & State;
     Settings: State;
     TempStorage: {
         previousPoint: Point;
@@ -38,7 +46,6 @@ export const handleEventsCurrentSetting = <
     if (!pointTypes?.length || !deltas?.length || !stateKeys.length) {
         throw notify.error({
             message: "twoPoint currentSetting was not provided required parameters",
-            forever: true,
         });
     }
 
@@ -68,12 +75,12 @@ export const handleEventsCurrentSetting = <
     };
 
     const handleEvent: TwoPointLayer["handleEvent"] = function (this: TwoPointLayer, event) {
-        const { grid, storage, type, tempStorage, settings } = event;
+        const { storage, type, tempStorage, settings } = event;
         if ((type !== "pointerDown" && type !== "pointerMove") || !event.points.length) {
             return {};
         }
 
-        const stored = storage.getStored<LP>({ grid, layer: this });
+        const stored = storage.getObjects<LP>(this.id);
         const newPoints = event.points;
 
         tempStorage.batchId = tempStorage.batchId ?? storage.getNewBatchId();
@@ -86,14 +93,14 @@ export const handleEventsCurrentSetting = <
             const id = pair.join(";");
 
             if (tempStorage.targetState === undefined) {
-                const object = stored.getObject(id);
+                const object = stored.getObject(settings.editMode, id);
                 const isSame = object
                     ? stateToString(object) === stateToString(this.settings)
                     : false;
                 tempStorage.targetState = isSame ? null : stateToString(this.settings);
             }
 
-            if (tempStorage.targetState === null && stored.keys(settings.editMode).has(id)) {
+            if (tempStorage.targetState === null && stored.keys(settings.editMode).includes(id)) {
                 history.push({
                     id,
                     batchId: tempStorage.batchId,
@@ -105,6 +112,8 @@ export const handleEventsCurrentSetting = <
                     batchId: tempStorage.batchId,
                     object: {
                         points: pair,
+                        // TODO: Assumes there is only one pointType at a time. I need to switch to GridPoint's if I want to avoid this issue
+                        pointType: pointTypes[0],
                         ...stringToState(tempStorage.targetState),
                     },
                 });
@@ -114,5 +123,13 @@ export const handleEventsCurrentSetting = <
         return { history };
     };
 
-    return { stateToString, stringToState, gatherPoints, handleEvent };
+    const filterCorrectPointType: StorageFilter = (puzzle, _action) => {
+        const action = _action as HistoryAction<TwoPointProps<State>>;
+        if (!action.object || pointTypes.includes(action.object.pointType)) {
+            return { keep: true };
+        }
+        return { keep: false };
+    };
+
+    return { stateToString, stringToState, gatherPoints, handleEvent, filterCorrectPointType };
 };

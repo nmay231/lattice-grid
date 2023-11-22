@@ -21,65 +21,42 @@ describe("SimpleLine", () => {
         return layer;
     };
 
-    it("deletes all objects when changing connection types", () => {
+    it("only changes storage filter when changing connection types", () => {
         const stored = new LayerStorage<SimpleLineProps>();
-        stored.setEntries("question", [
-            ["something", { id: "something", points: [], stroke: "green" }],
-        ]);
+        const simpleLine = getSimpleLine({ stored });
 
-        const simpleLine = getSimpleLine({
-            stored,
-            settings: {
-                pointType: "cells",
-                stroke: "green",
-                selectedState: "green",
-            },
-        });
+        const updateSettings = (newSettings: Partial<SimpleLineLayer["settings"]>) => {
+            const oldSettings = { ...simpleLine.settings };
+            for (const [key, value] of Object.entries(newSettings)) {
+                simpleLine.settings[key as keyof typeof simpleLine.settings] = value as any;
+            }
 
-        const oldSettings = simpleLine.settings;
-        simpleLine.settings = {
-            pointType: "corners",
+            const essentials = layerEventEssentials({ stored });
+            return simpleLine.updateSettings({
+                ...essentials,
+                puzzleSettings: essentials.settings,
+                oldSettings,
+            });
+        };
+
+        const result1 = updateSettings({
+            pointType: "cells",
             stroke: "green",
             selectedState: "green",
-        };
-        const essentials = layerEventEssentials({ stored });
-        const result = simpleLine.updateSettings({
-            ...essentials,
-            puzzleSettings: essentials.settings,
-            oldSettings,
         });
+        expect(result1.removeFilters).toHaveLength(0);
 
-        expect(result?.history).toEqual([{ id: "something", object: null }]);
-    });
+        const result2 = updateSettings({ pointType: "corners" });
+        expect(result2.removeFilters).toHaveLength(1);
 
-    it("does not delete any objects when changing anything but connection types", () => {
-        const stored = new LayerStorage<SimpleLineProps>();
-        stored.setEntries("question", [
-            ["something", { id: "something", points: [], stroke: "green" }],
-        ]);
+        const result3 = updateSettings({ stroke: "blue", selectedState: "blue" });
+        expect(result3.removeFilters).toHaveLength(0);
 
-        const simpleLine = getSimpleLine({
-            stored,
-            settings: {
-                pointType: "cells",
-                stroke: "green",
-                selectedState: "green",
-            },
-        });
-
-        const oldSettings = simpleLine.settings;
-        simpleLine.settings = {
+        const result4 = updateSettings({
             pointType: "cells",
-            stroke: "blue",
-            selectedState: "blue",
-        };
-        const essentials = layerEventEssentials({ stored });
-        const result = simpleLine.updateSettings({
-            ...essentials,
-            puzzleSettings: essentials.settings,
-            oldSettings,
+            stroke: "green",
+            selectedState: "green",
         });
-
-        expect(result.history ?? []).toEqual([]);
+        expect(result4.removeFilters).toHaveLength(1);
     });
 });

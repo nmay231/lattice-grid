@@ -1,11 +1,12 @@
-import { Layer, LayerClass, NeedsUpdating, SVGGroup } from "../types";
+import { LayerClass, SVGGroup } from "../types";
 import { reduceTo } from "../utils/data";
 import { Vec } from "../utils/math";
 import { notify } from "../utils/notifications";
 import { BaseLayer } from "./BaseLayer";
 import {
-    MultiPointKeyDownHandler,
+    MultiPointLayer,
     MultiPointLayerProps,
+    MultiPointStorageFilter,
     handleEventsUnorderedSets,
 } from "./controls/multiPoint";
 import { numberTyper } from "./controls/numberTyper";
@@ -15,12 +16,12 @@ interface KillerCagesProps extends MultiPointLayerProps {
     ObjectState: MultiPointLayerProps["ObjectState"] & { state: string | null };
     Settings: {
         _numberTyper: ReturnType<typeof numberTyper>;
+        storageFilter: MultiPointStorageFilter<KillerCagesProps>;
     };
+    HandlesKeyDown: true;
 }
 
-interface IKillerCagesLayer extends Layer<KillerCagesProps> {
-    _handleKeyDown: MultiPointKeyDownHandler<KillerCagesProps>;
-}
+interface IKillerCagesLayer extends MultiPointLayer<KillerCagesProps> {}
 
 export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKillerCagesLayer {
     static ethereal = false;
@@ -29,23 +30,23 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
     static defaultSettings: LayerClass<KillerCagesProps>["defaultSettings"] = {
         _numberTyper: () => {
             throw notify.error({
-                message: `${this.type}._numberTyper() called before implementing!`,
-                forever: true,
+                message: `${this.type}.settings._numberTyper() called before implementing!`,
             });
         },
+        storageFilter: null!,
     };
 
     static create = ((puzzle): KillerCagesLayer => {
         return new KillerCagesLayer(KillerCagesLayer, puzzle);
     }) satisfies LayerClass<KillerCagesProps>["create"];
 
-    _handleKeyDown: IKillerCagesLayer["_handleKeyDown"] = ({ type, keypress, grid, storage }) => {
-        const stored = storage.getStored<KillerCagesProps>({ grid, layer: this });
+    handleKeyDown: IKillerCagesLayer["handleKeyDown"] = ({ type, keypress, storage }) => {
+        const stored = storage.getObjects<KillerCagesProps>(this.id);
 
         if (!stored.permStorage.currentObjectId) return {};
 
         const id = stored.permStorage.currentObjectId;
-        const object = stored.getObject(id);
+        const object = stored.getObject("question", id);
 
         if (type === "delete") {
             if (object.state === null) return {};
@@ -69,8 +70,9 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
     static constraints = undefined;
 
     static settingsDescription: LayerClass<KillerCagesProps>["settingsDescription"] = {
-        // Actually, derived is interesting in this case because I don't want it to be serialized, but it's not actually derived from anything (at least yet)
+        // Actually, `derived` is interesting in this case because I don't want it to be serialized, but it's not actually derived from anything (at least yet)
         _numberTyper: { type: "constraints", derived: true },
+        storageFilter: { type: "constraints", derived: true },
     };
 
     static isValidSetting<K extends keyof KillerCagesProps["Settings"]>(
@@ -81,19 +83,37 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
     }
 
     updateSettings: IKillerCagesLayer["updateSettings"] = () => {
-        handleEventsUnorderedSets(this, {
-            handleKeyDown: this._handleKeyDown.bind(this) as NeedsUpdating, // Screw you typescript
-            pointTypes: ["cells"],
-            ensureConnected: false, // TODO: Change to true when properly implemented
-            allowOverlap: true, // TODO: Change to false when properly implemented
-            overwriteOthers: false,
-        });
+        const { gatherPoints, handleEvent, unboundFilter } =
+            handleEventsUnorderedSets<KillerCagesProps>({
+                pointTypes: ["cells"],
+                ensureConnected: true,
+                preventOverlap: true,
+                // TODO: Add an option for this in global settings?
+                overwriteOthers: false,
+                previousFilter: this.settings.storageFilter,
+            });
+        this.gatherPoints = gatherPoints;
+
+        // TODO: I can handle this using filters, but that requires updating multiPoint to understand tempStorage is not always valid. It needs to be done eventually, but not right now
+        // this.handleEvent = handleEvent;
+        const _handleEvent = handleEvent.bind(this);
+        this.handleEvent = (arg) => {
+            // TODO: Killer cages should not be placed in answer mode.
+            if (arg.settings.editMode === "answer") {
+                return {};
+            }
+            return _handleEvent(arg);
+        };
+
+        this.settings.storageFilter = unboundFilter.bind(this);
         this.settings._numberTyper = numberTyper({ max: -1, negatives: false });
-        return {};
+        return {
+            filters: [{ filter: this.settings.storageFilter }],
+        };
     };
 
     getSVG: IKillerCagesLayer["getSVG"] = ({ grid, storage, settings }) => {
-        const stored = storage.getStored<KillerCagesProps>({ grid, layer: this });
+        const stored = storage.getObjects<KillerCagesProps>(this.id);
         const pt = grid.getPointTransformer(settings);
 
         const cageElements: SVGGroup["elements"] = new Map();

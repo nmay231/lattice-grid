@@ -1,16 +1,16 @@
 import {
     Color,
     FormSchema,
+    HistoryAction,
     Layer,
     LayerClass,
     ObjectId,
-    PartialHistoryAction,
     Point,
     PointType,
     SVGGroup,
+    StorageFilter,
 } from "../types";
 import { DEFAULT_COLORS, isValidColor } from "../utils/colors";
-import { concat } from "../utils/data";
 import { BaseLayer } from "./BaseLayer";
 import { TwoPointProps, handleEventsCurrentSetting } from "./controls/twoPoint";
 import styles from "./layers.module.css";
@@ -21,6 +21,7 @@ export interface SimpleLineProps extends TwoPointProps<LineState> {
         id: ObjectId;
         stroke: Color;
         points: Point[];
+        pointType: PointType;
     };
     Settings: {
         pointType: PointType;
@@ -81,48 +82,79 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
         return false;
     }
 
-    updateSettings: ISimpleLineLayer["updateSettings"] = ({ grid, storage, oldSettings }) => {
-        let history: PartialHistoryAction<SimpleLineProps>[] | undefined = undefined;
-        if (oldSettings?.pointType !== this.settings.pointType) {
-            // Clear stored if the type of connections allowed changes (because that would allow impossible-to-draw lines otherwise).
-            const stored = storage.getStored({ grid, layer: this });
-            history = [...concat(stored.keys("question"), stored.keys("answer"))].map((id) => ({
-                id,
-                object: null,
-            }));
+    previousStorageFilters = [] as StorageFilter[];
 
-            const { gatherPoints, handleEvent } = handleEventsCurrentSetting<
-                SimpleLineProps,
-                LineState
-            >({
-                // TODO: Directional true/false is ambiguous. There are three types: lines and arrows with/without overlap (that is, can you draw two arrows on top each other in different directions)
-                directional: false,
-                pointTypes: [this.settings.pointType],
-                // TODO: Replace deltas with FSM
-                deltas: [
-                    { dx: 0, dy: 2 },
-                    { dx: 0, dy: -2 },
-                    { dx: 2, dy: 0 },
-                    { dx: -2, dy: 0 },
-                ],
-                stateKeys: ["stroke"],
-            });
+    updateSettings: ISimpleLineLayer["updateSettings"] = ({ oldSettings }) => {
+        const filters = [{ filter: this.lineFilter }];
+        const removeFilters = [] as StorageFilter[];
+        if (oldSettings?.pointType !== this.settings.pointType) {
+            const { gatherPoints, handleEvent, filterCorrectPointType } =
+                handleEventsCurrentSetting<SimpleLineProps, LineState>({
+                    // TODO: Directional true/false is ambiguous. There are three types: lines and arrows with/without overlap (that is, can you draw two arrows on top each other in different directions)
+                    directional: false,
+                    pointTypes: [this.settings.pointType],
+                    // TODO: Replace deltas with FSM
+                    deltas: [
+                        { dx: 0, dy: 2 },
+                        { dx: 0, dy: -2 },
+                        { dx: 2, dy: 0 },
+                        { dx: -2, dy: 0 },
+                    ],
+                    stateKeys: ["stroke"],
+                });
             this.gatherPoints = gatherPoints;
             this.handleEvent = handleEvent;
+
+            removeFilters.push(...this.previousStorageFilters);
+            this.previousStorageFilters = [filterCorrectPointType];
+            filters.push({ filter: filterCorrectPointType });
         }
 
         if (oldSettings?.stroke !== this.settings.stroke) {
             this.settings.selectedState = this.settings.stroke;
         }
 
-        return { history };
+        return { filters, removeFilters };
+    };
+
+    lineFilter: StorageFilter = ({ storage }, _action) => {
+        const action = _action as HistoryAction<SimpleLineProps>;
+        if (action.object == null) {
+            return { keep: true };
+        }
+
+        const stored = storage.getObjects(this.id);
+        if (action.storageMode === "answer" && stored.getObject("question", action.objectId)) {
+            return { keep: false };
+        } else if (
+            action.storageMode === "question" &&
+            stored.getObject("answer", action.objectId)
+        ) {
+            return {
+                keep: true,
+                extraActions: [{ ...action, storageMode: "answer", object: null }],
+            };
+        }
+
+        // You should not be able to draw white lines in cells or black lines on edges. You can't really see them.
+        if (
+            (action.object.stroke === DEFAULT_COLORS.LIGHT_WHITE &&
+                this.settings.pointType === "cells") ||
+            (action.object.stroke === DEFAULT_COLORS.DARK_WHITE &&
+                this.settings.pointType === "corners")
+        ) {
+            // We really need to transform this action. Since the action is immutable, if you can't batch these actions together, then it's better to prevent it.
+            // TODO: That does mean it might be better to change this at the settings level, i.e. allow converting some values to other values instead of just accepting or rejecting
+            if (!action.batchId) return { keep: false };
+
+            return { keep: true, extraActions: [{ ...action, object: null }] };
+        }
+
+        return { keep: true };
     };
 
     getSVG: ISimpleLineLayer["getSVG"] = ({ grid, storage, settings }) => {
-        const stored = storage.getStored<SimpleLineProps>({
-            grid,
-            layer: this,
-        });
+        const stored = storage.getObjects<SimpleLineProps>(this.id);
         let allPoints = [...stored.entries(settings.editMode)].flatMap(
             ([, object]) => object.points,
         );

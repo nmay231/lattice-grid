@@ -37,6 +37,7 @@ export class PuzzleManager {
     SVGGroups = proxy({} as Record<Layer["id"], ValtioRef<SVGGroup[]>>);
 
     grid: Grid = new SquareGrid();
+    // TODO: stratify storage by the different grids. I guess it's the same problem of multiple grids.
     storage = new StorageManager();
     controls = new ControlsManager(this);
     answers = new Map<Layer["id"], Record<ObjectId, UnknownObject>>();
@@ -58,7 +59,7 @@ export class PuzzleManager {
     resetLayers() {
         this.layers.clear();
         this.storage = new StorageManager();
-        this.storage.addStorage({ grid: this.grid, layer: { id: SELECTION_ID } });
+        this.storage.addStorage(SELECTION_ID);
 
         // Guarantee that these layers will be present even if the saved puzzle fails to add them
         this.addLayer(OverlayLayer, null);
@@ -152,9 +153,7 @@ export class PuzzleManager {
                 let correct = true;
                 for (const [layerId, expected] of this.answers.entries()) {
                     const actual = Object.fromEntries(
-                        this.storage
-                            .getStored({ layer: { id: layerId }, grid: this.grid })
-                            .entries("answer"),
+                        this.storage.getObjects(layerId).entries("answer"),
                     );
 
                     if (!isEqual(expected, actual)) {
@@ -167,7 +166,7 @@ export class PuzzleManager {
                     notify.info({
                         title: "Yay! You solved it",
                         message: "your answer matches the setter's answer",
-                        forever: true,
+                        timeout: 0,
                     });
                     // Clear to reset checking and only display one notification
                     this.answers = new Map();
@@ -176,6 +175,7 @@ export class PuzzleManager {
         } else {
             throw notify.error({
                 message: `Failed to render to canvas: ${stringifyAnything(change)}`,
+                timeout: 4000,
             });
         }
 
@@ -187,27 +187,28 @@ export class PuzzleManager {
     _getParams() {
         // TODO: change localStorage key and what's actually stored/how it's stored
         const data: LocalStorageData = {
-            layers: this.layers.values().map(({ id, klass: { type }, settings }) => {
-                const rawSettings: UnknownObject = {};
-                for (const [key, description] of Object.entries(
-                    availableLayers[type as keyof typeof availableLayers].settingsDescription,
-                )) {
-                    if (!description.derived) {
-                        rawSettings[key] = settings[key as never];
+            layers: this.layers
+                .values()
+                .filter(({ id }) => id !== "CellOutlineLayer" && id !== "OverlayLayer")
+                .map(({ id, klass: { type }, settings }) => {
+                    const rawSettings: UnknownObject = {};
+                    for (const [key, description] of Object.entries(
+                        availableLayers[type as keyof typeof availableLayers].settingsDescription,
+                    )) {
+                        if (!description.derived) {
+                            rawSettings[key] = settings[key as never];
+                        }
                     }
-                }
-                return {
-                    id,
-                    type: type as NeedsUpdating,
-                    rawSettings,
-                };
-            }),
+                    return {
+                        id,
+                        type: type as NeedsUpdating,
+                        rawSettings,
+                    };
+                }),
             grid: this.grid.getParams(),
         };
         return data;
     }
-
-    // TODO: I might need to not selectLayer in .addLayer() anymore. But let me figure out the issue right now.
 
     addLayer(
         layerClass: LayerClass<any>,
@@ -218,18 +219,49 @@ export class PuzzleManager {
         if (id) layer.id = id;
 
         // Add the layer to the end, but before the UILayer
-        this.layers.set(layer.id, valtioRef(layer), this.UILayer.id);
-        this.storage.addStorage({ grid: this.grid, layer });
+        this.layers.set(layer.id, valtioRef(layer), this.layers.getPrevKey(this.UILayer.id));
+        this.storage.addStorage(layer.id);
 
         const { grid, settings: puzzleSettings, storage } = this;
-        // TODO: I don't like that updateSettings is called multiple times (here and in .changeLayerSetting), or that any possible history from the initial load is ignored here (I don't check the return from the following call)
-        layer.updateSettings({ grid, puzzleSettings, storage, oldSettings: undefined });
+
+        // TODO: Why do I have to call updateSettings twice again? I should have layers be complete on initialization, not after updateSettings({oldSettings: undefined}).
+        const { filters } = layer.updateSettings({
+            grid,
+            puzzleSettings,
+            storage,
+            oldSettings: undefined,
+        });
+        if (filters) {
+            this.storage.addStorageFilters(this, filters, layer.id);
+        }
+
         if (settings) {
+            let oldSettings = undefined as undefined | UnknownObject;
             for (const [key, value] of Object.entries(settings)) {
-                this.changeLayerSetting(layer.id, key, value);
+                if (layer.klass.isValidSetting(key, value)) {
+                    oldSettings = oldSettings ?? { ...layer.settings };
+                    layer.settings[key] = value;
+                }
+            }
+
+            if (oldSettings) {
+                const { filters, removeFilters } = layer.updateSettings({
+                    grid: this.grid,
+                    puzzleSettings: this.settings,
+                    storage: this.storage,
+                    oldSettings,
+                });
+
+                if (removeFilters) {
+                    this.storage.removeStorageFilters(removeFilters);
+                }
+                if (filters) {
+                    this.storage.addStorageFilters(this, filters, layer.id);
+                }
             }
         }
 
+        // TODO: I might need to not selectLayer in .addLayer() anymore. (I think I only need it on initial add, but I'm not certain).
         this.selectLayer(layer.id);
 
         return layer.id;
@@ -251,7 +283,7 @@ export class PuzzleManager {
             }
         }
         if (this.layers.delete(id)) {
-            this.storage.removeStorage({ grid: this.grid, layer: { id } });
+            this.storage.removeStorage(id);
             this.renderChange({ type: "delete", layerId: id });
         }
     }
@@ -263,15 +295,18 @@ export class PuzzleManager {
             layer.settings[key as never] = value; // Sometimes I hate typescript
 
             const { grid, settings, storage } = this;
-            const { history } = layer.updateSettings({
+            const { filters, removeFilters } = layer.updateSettings({
                 grid,
                 puzzleSettings: settings,
                 storage,
                 oldSettings,
             });
 
-            if (history?.length) {
-                this.storage.addToHistory({ puzzle: this, layerId: layer.id, actions: history });
+            if (removeFilters) {
+                this.storage.removeStorageFilters(removeFilters);
+            }
+            if (filters) {
+                this.storage.addStorageFilters(this, filters, layer.id);
             }
         }
     }
@@ -283,6 +318,7 @@ export class PuzzleManager {
         if (from === -1 || to === -1) {
             throw notify.error({
                 message: `shuffleLayerOnto: One of ${beingMoved} => ${target} not in ${layers.keys()}`,
+                timeout: 4000,
             });
         }
 

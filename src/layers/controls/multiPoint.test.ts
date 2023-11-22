@@ -5,10 +5,20 @@ import { layerEventRunner } from "../../utils/testing/layerEventRunner";
 import { MultiPointLayerProps, handleEventsUnorderedSets } from "./multiPoint";
 
 describe("multiPoint.handleEventsUnorderedSets", () => {
-    type SecondArg = Parameters<typeof handleEventsUnorderedSets>[1];
-    const getMultiPointLayer = (arg = {} as SecondArg) => {
+    type SecondArg = Parameters<typeof handleEventsUnorderedSets>[0];
+    const getMultiPointLayer = (
+        arg: SecondArg = {
+            pointTypes: ["cells"],
+            preventOverlap: false,
+            ensureConnected: false,
+            overwriteOthers: false,
+            previousFilter: null,
+        },
+    ) => {
         const layer = { id: "DummyLayer" } as NeedsUpdating;
-        handleEventsUnorderedSets(layer, { pointTypes: ["cells"], ...arg });
+        const { gatherPoints, handleEvent } = handleEventsUnorderedSets(arg);
+        layer.gatherPoints = gatherPoints;
+        layer.handleEvent = handleEvent;
         return layer;
     };
 
@@ -204,4 +214,18 @@ describe("multiPoint.handleEventsUnorderedSets", () => {
     it.todo("selects an object on undo/redo when object exists");
 
     it.todo("selects an object on undo/redo when object does not exist");
+
+    it.todo("doesn't filter disconnected objects if ensureConnected is false");
+
+    it.todo("filters disconnected objects");
+
+    it.todo("never filters loop objects (loops are not disconnected even if the shrinkwrap is)");
+
+    it.todo("ignores overlap if preventOverlap is false");
+
+    it.todo("prevents overlap if object is new");
+
+    it.todo("prevents overlap if object existed already");
+
+    it.todo("handles overwriteOthers when that is implemented");
 });

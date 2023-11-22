@@ -89,7 +89,7 @@ export class DebugSelectPointsLayer
             );
         }
 
-        return { history: [{ object: null, id: LINE_ID }] };
+        return {};
     };
 
     static create = ((puzzle): DebugSelectPointsLayer => {
@@ -145,9 +145,7 @@ export class DebugSelectPointsLayer
     }
 
     getOverlaySVG: IDebugSelectPointsLayer["getOverlaySVG"] = ({ grid, storage, settings }) => {
-        const object = storage
-            .getStored<DebugSelectPointsProps>({ grid, layer: this })
-            .getObject(LINE_ID);
+        const object = storage.getObjects<DebugSelectPointsProps>(this.id).getObject("ui", LINE_ID);
 
         if (!object?.points.length) {
             return [];

@@ -1,5 +1,13 @@
-import { Layer, LayerClass, LayerHandlerResult, PartialHistoryAction, SVGGroup } from "../types";
-import { concat, zip } from "../utils/data";
+import {
+    HistoryAction,
+    Layer,
+    LayerClass,
+    LayerHandlerResult,
+    SVGGroup,
+    StorageFilter,
+} from "../types";
+import { PUT_AT_END } from "../utils/OrderedMap";
+import { zip } from "../utils/data";
 import { notify } from "../utils/notifications";
 import { BaseLayer } from "./BaseLayer";
 import { numberTyper } from "./controls/numberTyper";
@@ -36,7 +44,6 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
         _numberTyper: () => {
             throw notify.error({
                 message: `${this.type}._numberTyper() called before implementing!`,
-                forever: true,
             });
         },
         currentCharacter: "1",
@@ -49,14 +56,14 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
 
     eventPlaceSinglePointObjects: INumberLayer["eventPlaceSinglePointObjects"] = () => ({});
 
-    handleKeyDown: INumberLayer["handleKeyDown"] = ({ points: ids, storage, grid }) => {
-        const stored = storage.getStored<NumberProps>({ grid, layer: this });
+    handleKeyDown: INumberLayer["handleKeyDown"] = ({ points: ids, storage, settings }) => {
+        const stored = storage.getObjects<NumberProps>(this.id);
         if (!ids.length) {
             return {};
         }
 
         const states: Array<string | null> = ids.map((id) => {
-            const object = stored.getObject(id);
+            const object = stored.getObject(settings.editMode, id);
             return object?.state ?? null;
         });
 
@@ -113,7 +120,7 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
         return false;
     }
 
-    updateSettings: INumberLayer["updateSettings"] = ({ oldSettings, grid, storage }) => {
+    updateSettings: INumberLayer["updateSettings"] = ({ oldSettings }) => {
         if (!oldSettings || oldSettings.gridOrObjectFirst !== this.settings.gridOrObjectFirst) {
             const { gatherPoints, handleEvent, getOverlaySVG, eventPlaceSinglePointObjects } =
                 handleEventsSelection<NumberProps>({});
@@ -124,35 +131,69 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
             this.eventPlaceSinglePointObjects = eventPlaceSinglePointObjects;
         }
 
-        let history: PartialHistoryAction<NumberProps>[] | undefined = undefined;
+        const removeFilters = [] as StorageFilter[];
         if (
             !oldSettings ||
             oldSettings.max !== this.settings.max ||
             oldSettings.negatives !== this.settings.negatives
         ) {
             this.settings._numberTyper = numberTyper(this.settings);
-
-            history = [];
-            const stored = storage.getStored<NumberProps>({ grid, layer: this });
-
-            // Delete numbers that are out of range
-            const min = this.settings.negatives ? -this.settings.max : 0;
-            const max = this.settings.max;
-            for (const [id, object] of concat(
-                stored.entries("answer"),
-                stored.entries("question"),
-            )) {
-                const state = parseInt(object.state);
-                if (state < min || state > max) {
-                    history.push({ object: null, id });
-                }
-            }
+            // TODO: Is this a pattern I want to support? Removing a filter only to add it again to scrub history?
+            removeFilters.push(this.filterNumbersOutOfRange);
         }
-        return { history };
+
+        return {
+            removeFilters,
+            filters: [
+                { filter: this.filterOverlappingObjects },
+                { filter: this.filterNumbersOutOfRange },
+            ],
+        };
+    };
+
+    filterOverlappingObjects: StorageFilter = ({ storage }, action) => {
+        const stored = storage.getObjects<NumberProps>(this.id);
+
+        // given digits can override answer ones, but not the other way around
+        if (action.storageMode === "answer" && stored.getObject("question", action.objectId)) {
+            return { keep: false };
+        } else if (
+            action.storageMode === "question" &&
+            stored.getObject("answer", action.objectId)
+        ) {
+            return {
+                keep: true,
+                extraActions: [
+                    {
+                        layerId: this.id,
+                        batchId: action.batchId,
+                        objectId: action.objectId,
+                        object: null,
+                        storageMode: "answer",
+                        prevObjectId: PUT_AT_END,
+                    },
+                ],
+            };
+        } else {
+            return { keep: true };
+        }
+    };
+
+    _isNumberLayerAction(action: HistoryAction): action is HistoryAction<NumberProps> {
+        return action.layerId === this.id;
+    }
+
+    filterNumbersOutOfRange: StorageFilter = (_, action) => {
+        if (action.object === null || !this._isNumberLayerAction(action)) return { keep: true };
+
+        const min = this.settings.negatives ? -this.settings.max : 0;
+        const max = this.settings.max;
+        const num = parseInt(action.object.state);
+        return { keep: min <= num && num <= max };
     };
 
     getSVG: INumberLayer["getSVG"] = ({ grid, storage, settings }) => {
-        const stored = storage.getStored<NumberProps>({ grid, layer: this });
+        const stored = storage.getObjects<NumberProps>(this.id);
         const group = stored.keys(settings.editMode);
 
         const pt = grid.getPointTransformer(settings);

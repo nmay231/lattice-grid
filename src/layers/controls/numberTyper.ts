@@ -1,7 +1,7 @@
 import { clamp as nClamp } from "lodash";
 import { Keypress } from "../../types";
 
-//** Clamp the value to less than `max` and stringify it  */
+/** Clamp the value to less than `max` and stringify it  */
 const getCleaner = (max: number) => {
     if (max === -1) {
         return (x: number) => x.toString();

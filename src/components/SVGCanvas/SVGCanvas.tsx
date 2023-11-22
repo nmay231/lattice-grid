@@ -63,7 +63,7 @@ export const SVGCanvas = React.memo(function SVGCanvas() {
     useEffect(() => {
         const current = scrollArea.current;
         if (!current) {
-            throw notify.error({ message: "Canvas element not found." });
+            throw notify.error({ message: "Canvas element not found.", timeout: 4000 });
         }
 
         const onWheel = controls.onWheel.bind(controls);

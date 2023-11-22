@@ -150,7 +150,7 @@ const UndoRedo = React.memo(function UndoRedo() {
                 ml="sm"
                 label="Undo"
                 className={styles.icon}
-                disabled={!puzzle.storage.canUndo(puzzle)}
+                disabled={!puzzle.storage.canUndo()}
                 onClick={() => {
                     puzzle.controls.handleKeyPress("ctrl-z");
                 }}
@@ -160,7 +160,7 @@ const UndoRedo = React.memo(function UndoRedo() {
             <IconButton
                 label="Redo"
                 className={styles.icon}
-                disabled={!puzzle.storage.canRedo(puzzle)}
+                disabled={!puzzle.storage.canRedo()}
                 onClick={() => {
                     puzzle.controls.handleKeyPress("ctrl-y");
                 }}

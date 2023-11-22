@@ -1,231 +1,287 @@
 import { LayerStorage } from "./LayerStorage";
-import {
-    Grid,
-    History,
-    HistoryAction,
-    Layer,
-    LayerProps,
-    NeedsUpdating,
-    PartialHistoryAction,
-    PuzzleForStorage,
-    StorageMode,
-    StorageReducer,
-} from "./types";
+import { HistoryAction, Layer, LayerProps, PartialHistoryAction, StorageFilter } from "./types";
+import { PUT_AT_END } from "./utils/OrderedMap";
+import { reversed } from "./utils/data";
 import { notify } from "./utils/notifications";
 import { stringifyAnything } from "./utils/string";
 
-type GridAndLayer = { grid: Pick<Grid, "id">; layer: Pick<Layer, "id"> };
-
 export class StorageManager {
-    objects: Record<Grid["id"], Record<Layer["id"], LayerStorage>> = {};
+    objects: Record<Layer["id"], LayerStorage> = {};
 
-    histories: Record<Grid["id"], History> = {};
+    history: HistoryAction[] = [];
+    index = 0;
 
-    masterReducer: StorageReducer<HistoryAction | null> = (puzzle, action) => action;
-    storageReducers: Array<typeof this.masterReducer> = [];
-
-    addStorage({ grid, layer }: GridAndLayer) {
-        this.objects[grid.id] = this.objects[grid.id] ?? {};
-        this.objects[grid.id][layer.id] = new LayerStorage();
-
-        // TODO: I just need to implement that data structure that handles this automatically because StorageModes might eventually be dynamic (think multiple answers)
-        (["question", "answer", "ui"] satisfies StorageMode[]).forEach((mode) => {
-            this.histories[`${grid.id}-${mode}`] = this.histories[`${grid.id}-${mode}`] || {
-                actions: [],
-                index: 0,
-            };
-        });
+    addStorage(layerId: Layer["id"]) {
+        this.objects[layerId] = new LayerStorage();
     }
 
-    removeStorage({ grid, layer }: GridAndLayer) {
-        delete this.objects[grid.id][layer.id];
+    removeStorage(layerId: Layer["id"]) {
+        delete this.objects[layerId];
+
+        this.removeStorageFilters([...this.filtersByLayer[layerId]]);
     }
 
-    getStored<LP extends LayerProps>({ grid, layer }: GridAndLayer) {
-        return this.objects[grid.id][layer.id] as LayerStorage<LP>;
+    getObjects<LP extends LayerProps>(layerId: Layer["id"]) {
+        return this.objects[layerId] as LayerStorage<LP>;
     }
 
-    // TODO: Have storageReducers subscribe to the layers they need, allow controlling the order they run, etc.
-    addStorageReducer(reducer: typeof this.masterReducer) {
-        this.storageReducers.push(reducer);
-        this.masterReducer = (puzzle, action) =>
-            this.storageReducers.reduce((prev, reduce) => reduce(puzzle, prev), action);
-    }
+    layersByFilters: Map<StorageFilter, { layerIds: Layer["id"][] }> = new Map();
+    filtersByLayer: Record<Layer["id"], StorageFilter[]> = {};
 
-    removeStorageReducer(reducer: typeof this.masterReducer) {
-        const index = this.storageReducers.indexOf(reducer);
-        if (index > -1) {
-            this.storageReducers.splice(index, 1);
-            this.masterReducer = (puzzle, action) =>
-                this.storageReducers.reduce((prev, reduce) => reduce(puzzle, prev), action);
-        } else {
-            notify.error({
-                message: `Storage: Failed to remove a reducer ${stringifyAnything(
-                    reducer,
-                )}. Reducer was never added or already removed!`,
-            });
+    addStorageFilters(
+        puzzle: Parameters<StorageFilter>[0],
+        filters: Array<{ filter: StorageFilter; layerIds?: Layer["id"][] }>,
+        defaultLayer: Layer["id"],
+    ) {
+        const newFiltersByLayer: typeof this.filtersByLayer = {};
+
+        for (const { filter, layerIds } of filters) {
+            const ids = layerIds ?? [defaultLayer];
+            if (this.layersByFilters.has(filter)) {
+                continue;
+            }
+            this.layersByFilters.set(filter, { layerIds: ids });
+            for (const id of ids) {
+                this.filtersByLayer[id] = this.filtersByLayer[id] ?? [];
+                this.filtersByLayer[id].push(filter);
+
+                newFiltersByLayer[id] = newFiltersByLayer[id] ?? [];
+                newFiltersByLayer[id].push(filter);
+            }
+        }
+
+        if (!Object.keys(newFiltersByLayer).length || !this.history.length) return;
+
+        const filtered = [] as typeof this.history;
+        // Scrub history going right-to-left since it's better to keep the latest version if valid rather than only allowing what was valid in the past.
+        for (const undo of reversed(this.history)) {
+            const stored = this.getObjects(undo.layerId);
+            const redo = this._applyHistoryAction({ stored, action: undo });
+
+            if (!(undo.layerId in newFiltersByLayer)) continue;
+
+            const extra = [] as HistoryAction[];
+            let kept = true;
+            for (const filter of newFiltersByLayer[undo.layerId]) {
+                const { keep, extraActions } = filter(puzzle, redo);
+
+                if (!keep) {
+                    kept = false;
+                    break;
+                }
+                if (extraActions) extra.push(...extraActions);
+            }
+            if (!kept) continue;
+            extra.reverse();
+            filtered.push(...extra, redo);
+        }
+
+        filtered.reverse();
+        this.history = filtered;
+        this.index = 0;
+
+        for (this.index = 0; this.index < this.history.length; this.index++) {
+            const action = this.history[this.index];
+            const stored = this.objects[action.layerId];
+
+            const undo = this._applyHistoryAction({ stored, action });
+            this.history[this.index] = undo;
         }
     }
 
+    removeStorageFilters(filters: StorageFilter[]) {
+        if (!filters.length) return;
+        for (const filter of filters) {
+            const result = this.layersByFilters.get(filter);
+            if (!result) {
+                throw notify.error({
+                    message: `Storage: Failed to remove a filter ${stringifyAnything(
+                        filter,
+                    )}. Reducer was never added or already removed!`,
+                });
+            }
+            this.layersByFilters.delete(filter);
+
+            for (const id of result.layerIds) {
+                const index = this.filtersByLayer[id].indexOf(filter);
+                if (index > -1) {
+                    this.filtersByLayer[id].splice(index, 1);
+                } else {
+                    throw notify.error({
+                        title: "removeStorageReducer",
+                        message: `layer ${id} was not subscribed to a filter it was supposed to be to`,
+                    });
+                }
+            }
+        }
+    }
+
+    masterHistoryActionFilter: StorageFilter = (puzzle, action) => {
+        if (!(action.layerId in this.filtersByLayer)) {
+            return { keep: true };
+        }
+        const extras: HistoryAction[] = [];
+        for (const reducer of this.filtersByLayer[action.layerId]) {
+            if (!action) continue;
+            const { keep, extraActions } = reducer(puzzle, action);
+            if (!keep) return { keep: false };
+
+            if (extraActions) extras.push(...extraActions);
+        }
+        return { keep: true, extraActions: extras };
+    };
+
     addToHistory(arg: {
-        puzzle: PuzzleForStorage;
+        puzzle: Parameters<StorageFilter>[0];
         layerId: Layer["id"];
         actions?: PartialHistoryAction[];
     }) {
-        const { puzzle, layerId: defaultLayerId, actions } = arg;
+        const { puzzle, layerId: defaultLayerId, actions: partialActions } = arg;
 
-        if (!actions?.length) {
+        if (!partialActions?.length) {
             return;
         }
-        const gridId = puzzle.grid.id;
         const currentEditMode = puzzle.settings.editMode;
 
-        for (const partialAction of actions) {
-            const layerId = (partialAction as NeedsUpdating).layerId || defaultLayerId;
+        for (const partialAction of partialActions) {
+            const layerId = partialAction.layerId ?? defaultLayerId;
             const storageMode = partialAction.storageMode ?? currentEditMode;
-            const stored = this.objects[gridId][layerId];
-            const history = this.histories[`${gridId}-${storageMode}`];
 
-            const action = this.masterReducer(puzzle, {
+            const constructedAction: HistoryAction = {
                 objectId: partialAction.id,
                 layerId,
-                // This relies on NaN !== (anything including NaN)
-                batchId: partialAction.batchId && Number(partialAction.batchId),
+                batchId:
+                    typeof partialAction.batchId === "number" ? partialAction.batchId : undefined,
                 object: partialAction.object,
-                nextObjectId: stored._getPrevId(partialAction.id),
-            });
-            if (!action) {
-                continue; // One of the reducers chose to ignore this action
+                prevObjectId: PUT_AT_END,
+                storageMode,
+            };
+
+            if (storageMode === "ui") {
+                if (partialAction.batchId !== "ignore") {
+                    notify.error({ message: `Forgot to explicitly ignore UI input ${layerId}}` });
+                }
+                this._applyHistoryAction({
+                    stored: this.getObjects(layerId),
+                    action: constructedAction,
+                });
+                continue; // Do not include in history or filters
             }
 
-            const undoAction = this._applyHistoryAction({ storageMode, stored, action });
+            const { keep, extraActions } = this.masterHistoryActionFilter(
+                puzzle,
+                constructedAction,
+            );
+            const actions = extraActions ?? [];
+            if (keep) actions.unshift(constructedAction);
 
             if (partialAction.batchId === "ignore") {
-                continue; // Do not include in history
-            }
-
-            // TODO: I temporarily filter ui actions from history to prevent any unintended bugs.
-            if (storageMode === "ui") {
-                notify.error({
-                    message: `Forgot to explicitly ignore UI input ${layerId}}`,
-                    forever: true,
-                });
+                // TODO: Do I really want to not track any extra actions provided by filters in history? I can't think of a valid instance where a filter needs to keep actions when the original one is ignored, I guess...
+                for (const action of actions) {
+                    this._applyHistoryAction({ stored: this.getObjects(action.layerId), action });
+                }
                 continue;
             }
 
-            const lastAction = history.actions[history.index - 1];
+            for (const action of actions) {
+                const undoAction = this._applyHistoryAction({
+                    stored: this.getObjects(action.layerId),
+                    action,
+                });
 
-            // Merge two actions if they are batched and affecting the same object
-            if (
-                lastAction?.batchId &&
-                lastAction.layerId === layerId &&
-                lastAction.objectId === partialAction.id &&
-                lastAction.batchId === partialAction.batchId
-            ) {
-                // By not pushing actions to history, the actions are merged
+                const lastAction = this.history[this.index - 1];
 
-                if (action.object === null && lastAction.object === null) {
-                    // We can remove the last action since it is a no-op
-                    history.actions.splice(history.index - 1, 1);
-                    history.index--;
+                // Merge two actions if they are batched and affecting the same object
+                if (
+                    lastAction?.batchId &&
+                    lastAction.objectId === action.objectId &&
+                    lastAction.layerId === action.layerId &&
+                    lastAction.storageMode === action.storageMode &&
+                    lastAction.batchId === action.batchId
+                ) {
+                    // By not pushing the undo action to history, the actions are merged
+
+                    if (action.object === null && lastAction.object === null) {
+                        // We can even remove the last action since it is a no-op
+                        this.history.splice(this.index - 1, 1);
+                        this.index--;
+                    }
+                } else {
+                    // Prune redo actions placed after the current index, if there are any.
+                    this.history.splice(this.index);
+
+                    this.history.push(undoAction);
+                    this.index++;
                 }
-            } else {
-                // Prune redo actions placed after the current index, if there are any.
-                history.actions.splice(history.index);
-
-                history.actions.push(undoAction);
-                history.index++;
             }
         }
     }
 
-    _applyHistoryAction(arg: {
-        stored: LayerStorage;
-        storageMode: StorageMode;
-        action: HistoryAction;
-    }) {
-        const { action, storageMode, stored } = arg;
+    _applyHistoryAction(arg: { stored: LayerStorage; action: HistoryAction }) {
+        const { action, stored } = arg;
 
+        const object = stored.getObject(action.storageMode, action.objectId) || null;
         const undoAction: HistoryAction = {
             ...action,
-            object: stored.getObject(action.objectId) || null,
-            nextObjectId: stored._getPrevId(action.objectId),
+            object,
+            prevObjectId:
+                object === null
+                    ? PUT_AT_END
+                    : stored.prevObjectId(action.storageMode, action.objectId),
         };
-        stored.setObject(storageMode, action.objectId, action.object, action.nextObjectId);
+        stored.setObject(action.storageMode, action.objectId, action.object, action.prevObjectId);
 
         return undoAction;
     }
 
-    undoHistory(puzzle: PuzzleForStorage) {
-        const {
-            grid: { id: gridId },
-            settings: { editMode: storageMode },
-        } = puzzle;
-        const history = this.histories[`${gridId}-${storageMode}`];
-        if (history.index <= 0) {
+    undoHistory() {
+        if (this.index <= 0) {
             return [];
         }
 
         let action: HistoryAction;
         const returnedActions: HistoryAction[] = [];
         do {
-            history.index--;
-            action = history.actions[history.index];
-            const stored = this.objects[gridId][action.layerId];
+            this.index--;
+            action = this.history[this.index];
+            const stored = this.objects[action.layerId];
 
-            const redo = this._applyHistoryAction({ stored, action, storageMode });
-            // Replace the action with its opposite
-            history.actions.splice(history.index, 1, redo);
+            const redo = this._applyHistoryAction({ stored, action });
+            this.history[this.index] = redo;
 
             returnedActions.push(action);
-        } while (action.batchId && action.batchId === history.actions[history.index - 1]?.batchId);
+        } while (action.batchId && action.batchId === this.history[this.index - 1]?.batchId);
 
         return returnedActions;
     }
 
-    redoHistory(puzzle: PuzzleForStorage) {
-        const {
-            grid: { id: gridId },
-            settings: { editMode: storageMode },
-        } = puzzle;
-        const history = this.histories[`${gridId}-${storageMode}`];
-        if (history.index >= history.actions.length) {
+    redoHistory() {
+        if (this.index >= this.history.length) {
             return [];
         }
 
         let action: HistoryAction;
         const returnedActions: HistoryAction[] = [];
         do {
-            action = history.actions[history.index];
-            const stored = this.objects[gridId][action.layerId];
+            action = this.history[this.index];
+            const stored = this.objects[action.layerId];
 
-            const undo = this._applyHistoryAction({ stored, action, storageMode });
-            // Replace the action with its opposite
-            history.actions.splice(history.index, 1, undo);
-            history.index++;
+            const undo = this._applyHistoryAction({ stored, action });
+            this.history[this.index] = undo;
+            this.index++;
 
             returnedActions.push(action);
-        } while (action.batchId && action.batchId === history.actions[history.index]?.batchId);
+        } while (action.batchId && action.batchId === this.history[this.index]?.batchId);
 
         return returnedActions;
     }
 
-    canUndo(puzzle: PuzzleForStorage): boolean {
-        const {
-            grid: { id: gridId },
-            settings: { editMode: storageMode },
-        } = puzzle;
-        const history = this.histories[`${gridId}-${storageMode}`];
-        return history && history.index > 0;
+    canUndo(): boolean {
+        return this.index > 0;
     }
 
-    canRedo(puzzle: PuzzleForStorage): boolean {
-        const {
-            grid: { id: gridId },
-            settings: { editMode: storageMode },
-        } = puzzle;
-        const history = this.histories[`${gridId}-${storageMode}`];
-        return history && history.index < history.actions.length;
+    canRedo(): boolean {
+        return this.index < this.history.length;
     }
 
     _batchId = 1;

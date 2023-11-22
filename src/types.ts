@@ -5,6 +5,7 @@ import type { StorageManager } from "./StorageManager";
 import type { SquareGridParams, _SquareGridTransformer } from "./grids/SquareGrid";
 import type { availableLayers } from "./layers";
 import type { UserCodeJSON } from "./userComputation/codeBlocks";
+import type { PutAtEnd } from "./utils/OrderedMap";
 
 // #region - Compilation
 export type PuzzleError = {
@@ -85,9 +86,13 @@ export type LayerEventEssentials<LP extends LayerProps> = {
 
 export type LayerEvent<LP extends LayerProps> = CleanedDOMEvent & LayerEventEssentials<LP>;
 
-// TODO: Adding OtherState makes sense for IncompleteHistoryAction, but not for LayerHandlerResult. Should this somehow be another property on LayerProps?
+// TODO: Adding OtherState makes sense for PartialHistoryAction, but not for LayerHandlerResult. Should this somehow be another property on LayerProps?
 export type LayerHandlerResult<LP extends LayerProps> = {
     history?: PartialHistoryAction<LP>[];
+};
+export type LayerUpdateSettings = {
+    filters?: Array<{ filter: StorageFilter; layerIds?: Layer["id"][] }>;
+    removeFilters?: Array<StorageFilter>;
 };
 // #endregion
 
@@ -209,7 +214,7 @@ export type Layer<LP extends LayerProps = LayerProps> = {
             puzzleSettings: LayerEventEssentials<LP>["settings"];
             oldSettings: LP["Settings"] | undefined;
         },
-    ): LayerHandlerResult<LP>;
+    ): LayerUpdateSettings;
     gatherPoints: (
         layerEvent: Omit<PointerMoveOrDown, "points"> & LayerEventEssentials<LP>,
     ) => Point[];
@@ -226,7 +231,7 @@ export type Layer<LP extends LayerProps = LayerProps> = {
 export type LayerClass<LP extends LayerProps = LayerProps> = {
     new (klass: LayerClass<LP>, puzzle: PuzzleManager): Layer<LP>;
     create: (puzzle: Pick<PuzzleManager, "layers">) => Layer<LP>;
-    readonly type: string;
+    type: string;
     displayName: string;
     ethereal: boolean;
     defaultSettings: LP["Settings"];
@@ -255,27 +260,37 @@ export type PartialHistoryAction<LP extends LayerProps = LayerProps, OtherState 
     storageMode?: StorageMode;
 } & (
     | { layerId: Layer["id"] | undefined; object: OtherState }
-    | { object: LP["ObjectState"] | null }
+    | { layerId?: never; object: LP["ObjectState"] | null }
 );
 
 export type HistoryAction<LP extends LayerProps = LayerProps> = {
     objectId: ObjectId;
     layerId: Layer["id"];
+    /** Actions with the same batchId (if defined) will be un-/re-done at the same time */
     batchId?: number;
     object: LP["ObjectState"] | null;
-    nextObjectId: ObjectId | null;
-};
-
-export type History = {
-    actions: HistoryAction[];
-    index: number;
+    /** For when render order matters */
+    prevObjectId: PutAtEnd | ObjectId | null;
+    /** Which storage group is this action applied to */
+    storageMode: StorageMode;
 };
 
 export type PuzzleForStorage = {
     grid: Pick<PuzzleManager["grid"], "id">;
     settings: Pick<PuzzleManager["settings"], "editMode">;
 };
-export type StorageReducer<Type> = (puzzle: PuzzleForStorage, arg: Type) => Type;
+
+export type StorageFilter = (
+    puzzle: {
+        grid: Pick<
+            Grid,
+            "id" | "getAllPoints" | "selectPointsWithCursor" | "getPointTransformer" | "_getSVG"
+        >;
+        storage: StorageManager;
+        settings: PuzzleManager["settings"];
+    },
+    action: Readonly<HistoryAction>,
+) => { keep: boolean; extraActions?: HistoryAction[] };
 // #endregion
 
 // #region - Rendering

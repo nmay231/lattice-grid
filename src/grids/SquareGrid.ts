@@ -102,7 +102,7 @@ class _SquareGridPoints<PT extends PointType = PointType> {
 export class _SquareGridTransformer {
     constructor(public settings: Settings) {}
 
-    fromPoints<PT extends PointType = PointType>(type: PT, points: Point[]) {
+    fromPoints<PT extends PointType = PointType>(type: PT, points: readonly Point[]) {
         const gp = new _SquareGridPoints<PT>(type, this.settings);
         const map = new Map<string, Vec>();
         for (const point of points) {
@@ -115,6 +115,7 @@ export class _SquareGridTransformer {
         return [map, gp] as const;
     }
 
+    // TODO: I only have this as a map because some grids in the future will have different sized cells. I could also have this as a method/attribute-property of _SquareGridPoints that is static for grid but dynamic for other grids.
     maxRadius({
         type,
         shape,
@@ -178,28 +179,28 @@ export class _SquareGridTransformer {
 
     /*
      * Here is how inset is handled:
-     * Say we have a single group that loops around and has two corners that touch
-     * (asterisks are inside the group):
-     * **|
-     * --+--
-     *   |**
-     *
-     * When inset >= 0, then we get a nice drawing of two corners not touching.
-     * **|
-     * --.
-     *     .--
+     *   Say we have a single group that loops around and has two corners that touch
+     *   (asterisks are inside the group):
+     *   **|
+     *   --+--
      *     |**
      *
-     * But if inset > 0, then we would draw two corners overlapping, and that's ugly.
-     * So instead, we merge the corners taking the "intersection" of the two corners:
-     * ****|
-     * ****+--
-     * --+****
-     *   |****
+     *   When inset >= 0, then we get a nice drawing of two corners not touching.
+     *   **|
+     *   --.
+     *       .--
+     *       |**
      *
-     * To find the lines in the correct order, we travel along the edges clockwise and
-     * pick the first edge from the counterclockwise direction when inset <= 0, and
-     * from the clockwise direction when inset > 0.
+     *   But if inset > 0, then we would draw two corners overlapping, and that's ugly.
+     *   So instead, we merge the corners taking the "intersection" of the two corners:
+     *   ****|
+     *   ****+--
+     *   --+****
+     *     |****
+     *
+     *   To find the lines in the correct order, we travel along the edges clockwise and
+     *   pick the first edge from the counterclockwise direction when inset <= 0, and
+     *   from the clockwise direction when inset > 0.
      */
     *_shrinkwrap(arg: { inset: number; gp: _SquareGridPoints<"cells">; halfCell: number }) {
         const { inset, gp, halfCell } = arg;
@@ -220,14 +221,14 @@ export class _SquareGridTransformer {
             }
         }
 
-        const theEggShellWasEmpty = () => {
-            // :P
-            return notify.error({
+        // eggShell, heh
+        const TheEggShellWasEmpty = () =>
+            notify.error({
                 message: "Shrinkwrap: the generated edgeShell was unexpectedly empty",
             });
-        };
+
         const { value: start, done } = edgeShell.values().next();
-        if (done) throw theEggShellWasEmpty();
+        if (done) throw TheEggShellWasEmpty();
         let [edge, cell] = start;
         let startingEdge = edge;
 
@@ -273,12 +274,45 @@ export class _SquareGridTransformer {
                 if (!edgeShell.size) return;
 
                 const { value, done } = edgeShell.values().next();
-                if (done) throw theEggShellWasEmpty();
+                if (done) throw TheEggShellWasEmpty();
                 [edge, cell] = value;
                 startingEdge = edge;
             }
         }
         throw notify.error({ message: "Max iteration reached in shrinkwrap algorithm" });
+    }
+
+    /**
+     * Detects if the points are orthogonally connected or not, false if more than one group.
+     * TODO: deprecate once I decide on how I'm gonna write pt.adjacencyTrees() or whatever its name ends up being.
+     */
+    isFullyConnected(cellMap: Map<string, Vec>): boolean {
+        if (cellMap.size <= 1) return true;
+
+        cellMap = new Map(cellMap.entries());
+
+        const stillLeft = [cellMap.keys().next().value as string];
+        let next;
+
+        while ((next = stillLeft.pop()) !== undefined) {
+            const point = cellMap.get(next);
+            if (!point) continue;
+            cellMap.delete(next);
+
+            const adjacent = [
+                point.plus([0, 2]),
+                point.plus([2, 0]),
+                point.plus([0, -2]),
+                point.plus([-2, 0]),
+            ].map((cell) => cell.xy.join(","));
+            for (const adj of adjacent) {
+                if (cellMap.has(adj)) {
+                    stillLeft.push(adj);
+                }
+            }
+        }
+
+        return cellMap.size === 0;
     }
 }
 
@@ -401,7 +435,8 @@ export class SquareGrid implements Grid {
             targets,
         });
 
-        return points;
+        // TODO: Temporary hack to prevent selecting points outside the grid.
+        return points.filter((point) => !this._outOfBounds(this._stringToGridPoint(point)));
     };
 
     getPointTransformer(settings: Settings) {
@@ -457,7 +492,7 @@ export class SquareGrid implements Grid {
             }
             return arr;
         } else {
-            throw notify.error({ message: `Unrecognized point type=${type}`, forever: true });
+            throw notify.error({ message: `Unrecognized point type=${type}` });
         }
     }
 

@@ -1,5 +1,12 @@
-import { FormSchema, Layer, LayerClass, PartialHistoryAction, SVGGroup } from "../types";
-import { concat } from "../utils/data";
+import {
+    FormSchema,
+    HistoryAction,
+    Layer,
+    LayerClass,
+    PartialHistoryAction,
+    SVGGroup,
+    StorageFilter,
+} from "../types";
 import { notify } from "../utils/notifications";
 import { BaseLayer } from "./BaseLayer";
 import { KeyDownEventHandler, SelectedProps, handleEventsSelection } from "./controls/selection";
@@ -18,7 +25,7 @@ type Settings = {
     caseSwap: Record<string, string>;
 };
 
-interface ToggleCharactersProps extends SelectedProps, CurrentCharacterProps, GOOFyProps {
+export interface ToggleCharactersProps extends SelectedProps, CurrentCharacterProps, GOOFyProps {
     ObjectState: { state: string };
     Settings: Settings;
     TempStorage: SelectedProps["TempStorage"];
@@ -32,12 +39,24 @@ interface IToggleCharactersLayer
     _generateCaseSwap: (chars: string) => Settings["caseSwap"];
 }
 
+const obj = <LP extends ToggleCharactersProps>({
+    id,
+    object,
+}: {
+    id: string;
+    object: LP["ObjectState"] | null;
+}): PartialHistoryAction<LP> => ({
+    id,
+    object,
+    storageMode: "answer",
+});
+
 export class ToggleCharactersLayer
     extends BaseLayer<ToggleCharactersProps>
     implements IToggleCharactersLayer
 {
-    static ethereal = false;
-    static readonly type = "ToggleCharactersLayer";
+    static ethereal = true; // TODO: Temporary until I replace PencilMarks
+    static type = "ToggleCharactersLayer";
     static displayName = "Toggle Characters";
     static defaultSettings: LayerClass<ToggleCharactersProps>["defaultSettings"] = {
         currentCharacter: "1",
@@ -64,7 +83,7 @@ export class ToggleCharactersLayer
     // TODO: The grid or object first toggle doesn't show unless controls is not undefined. But I'm gonna leave it as undefined right now since toggle characters is kinda broken on mobile with object first anyways (numpad is not shown, and non-number characters can't be typed at all).
     // static controls: FormSchema<ToggleCharactersProps> = { elements: {} };
     static controls?: FormSchema<ToggleCharactersProps> = undefined;
-    static constraints: FormSchema<ToggleCharactersProps> = {
+    static constraints?: FormSchema<ToggleCharactersProps> = {
         elements: {
             characters: {
                 type: "string",
@@ -100,34 +119,16 @@ export class ToggleCharactersLayer
         return false;
     }
 
-    updateSettings: IToggleCharactersLayer["updateSettings"] = ({ grid, storage, oldSettings }) => {
-        let history: PartialHistoryAction<ToggleCharactersProps>[] | undefined = undefined;
+    updateSettings: IToggleCharactersLayer["updateSettings"] = ({ oldSettings }) => {
+        const removeFilters = [] as StorageFilter[];
         if (oldSettings?.characters !== this.settings.characters) {
+            removeFilters.push(this.filterInvalidCharacters);
             // Remove duplicates
+            // TODO: Do this as part of validation somewhere else
             this.settings.characters = [...this.settings.characters]
                 .filter((char, i) => this.settings.characters.indexOf(char) === i)
                 .join("");
             this.settings.caseSwap = this._generateCaseSwap(this.settings.characters);
-
-            const stored = storage.getStored<ToggleCharactersProps>({ grid, layer: this });
-            history = [];
-
-            // Exclude disallowed characters
-            for (const [id, { state }] of concat(
-                stored.entries("answer"),
-                stored.entries("question"),
-            )) {
-                const newState = [...state]
-                    .filter((char) => this.settings.characters.indexOf(char) > -1)
-                    .join("");
-                if (newState !== state) {
-                    history.push({
-                        object: { state: newState },
-                        storageMode: stored.keys("question").has(id) ? "question" : "answer",
-                        id,
-                    });
-                }
-            }
         }
         if (!oldSettings || oldSettings.gridOrObjectFirst !== this.settings.gridOrObjectFirst) {
             const { gatherPoints, handleEvent, getOverlaySVG, eventPlaceSinglePointObjects } =
@@ -138,7 +139,41 @@ export class ToggleCharactersLayer
                 this.settings.gridOrObjectFirst === "grid" ? getOverlaySVG : undefined;
             this.eventPlaceSinglePointObjects = eventPlaceSinglePointObjects;
         }
-        return { history };
+
+        // TODO: This is only needed when characters change and that doesn't happen right now because ToggleCharacters is temporarily hidden in favor of CenterMarks and TopBottomMarks, and they don't allow changing settings.characters
+        return {};
+        // return { filters: [{ filter: this.filterInvalidCharacters }], removeFilters };
+    };
+
+    // TODO: This filter only needs to run after updateSettings is called. Do I need another field to provide this behavior?
+    filterInvalidCharacters: StorageFilter = ({ storage }, _action) => {
+        const action = _action as HistoryAction<ToggleCharactersProps>;
+        if (action.object === null) return { keep: true };
+
+        let valid = true;
+        for (const char of action.object.state) {
+            if (!(char in this.settings.caseSwap)) {
+                valid = false;
+                break;
+            }
+        }
+        if (valid) return { keep: true };
+
+        if (action.batchId) {
+            const state = [...action.object.state]
+                .filter((char) => char in this.settings.caseSwap)
+                .join("");
+
+            const stored = storage.getObjects<ToggleCharactersProps>(this.id);
+            // If forcing the object to be valid reverts it to the existing object, don't bother adding the action to history
+            if (state === stored.getObject("answer", action.objectId)?.state) {
+                return { keep: false };
+            }
+
+            return { keep: true, extraActions: [{ ...action, object: { state } }] };
+        }
+
+        return { keep: false };
     };
 
     _generateCaseSwap: IToggleCharactersLayer["_generateCaseSwap"] = (chars) => {
@@ -156,17 +191,17 @@ export class ToggleCharactersLayer
         return caseSwap;
     };
 
-    handleKeyDown: IToggleCharactersLayer["handleKeyDown"] = ({ grid, storage, points }) => {
+    handleKeyDown: IToggleCharactersLayer["handleKeyDown"] = ({ storage, points }) => {
         const ids = points;
         if (!ids?.length) {
             return {};
         }
-        const stored = storage.getStored<ToggleCharactersProps>({ grid, layer: this });
+        const stored = storage.getObjects<ToggleCharactersProps>(this.id);
 
         if (this.settings.currentCharacter === null) {
-            const allIds = new Set(concat(stored.keys("answer"), stored.keys("question")));
+            const allIds = new Set(stored.keys("answer"));
             return {
-                history: ids.filter((id) => allIds.has(id)).map((id) => ({ id, object: null })),
+                history: ids.filter((id) => allIds.has(id)).map((id) => obj({ id, object: null })),
             };
         }
 
@@ -176,7 +211,7 @@ export class ToggleCharactersLayer
         }
 
         const states = ids.map((id) => {
-            const object = stored.getObject(id);
+            const object = stored.getObject("answer", id);
             return object?.state || "";
         });
         const allIncluded = states.reduce((prev, next) => prev && next.indexOf(char) > -1, true);
@@ -195,18 +230,20 @@ export class ToggleCharactersLayer
         }
 
         return {
-            history: ids.map((id, index) => ({
-                id,
-                object: !newStates[index] ? null : { id, point: id, state: newStates[index] },
-            })),
+            history: ids.map((id, index) =>
+                obj({
+                    id,
+                    object: !newStates[index] ? null : { state: newStates[index] },
+                }),
+            ),
         };
     };
 
     getSVG: IToggleCharactersLayer["getSVG"] = ({ grid, storage, settings }) => {
-        const stored = storage.getStored<ToggleCharactersProps>({ grid, layer: this });
+        const stored = storage.getObjects<ToggleCharactersProps>(this.id);
 
         const pt = grid.getPointTransformer(settings);
-        const [cellMap, cells] = pt.fromPoints("cells", [...stored.keys(settings.editMode)]);
+        const [cellMap, cells] = pt.fromPoints("cells", stored.keys(settings.editMode));
         const toSVG = cells.toSVGPoints();
         const maxRadius = pt.maxRadius({ type: "cells", shape: "square", size: "lg" });
 
@@ -253,7 +290,6 @@ export class ToggleCharactersLayer
         } else {
             notify.error({
                 message: `Unknown displayStyle in ToggleCharacters ${this.settings.displayStyle}`,
-                forever: true,
             });
             return [];
         }

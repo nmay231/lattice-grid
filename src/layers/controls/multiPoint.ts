@@ -1,5 +1,6 @@
 import { cloneDeep } from "lodash";
 import {
+    HistoryAction,
     Keypress,
     Layer,
     LayerEventEssentials,
@@ -8,6 +9,7 @@ import {
     ObjectId,
     Point,
     PointType,
+    StorageFilter,
 } from "../../types";
 import { notify } from "../../utils/notifications";
 import { smartSort } from "../../utils/string";
@@ -20,31 +22,42 @@ export interface MultiPointLayerProps extends LayerProps {
         batchId: number;
         removeSingle: boolean;
     };
+    HandlesKeyDown: boolean;
 }
 
-export type MultiPointKeyDownHandler<LP extends MultiPointLayerProps> = (
+export interface MultiPointLayer<LP extends MultiPointLayerProps> extends Layer<LP> {
+    handleKeyDown: LP["HandlesKeyDown"] extends true
+        ? (arg: LayerEventEssentials<LP> & Keypress & { points: Point[] }) => LayerHandlerResult<LP>
+        : undefined;
+}
+
+export type MultiPointKeyDownHandler<LP extends LayerProps> = (
     arg: LayerEventEssentials<LP> & Keypress & { points: Point[] },
 ) => LayerHandlerResult<LP>;
 
-export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
-    layer: Layer<LP>,
-    {
-        // TODO: In user settings, rename allowOverlap to "Allow partial overlap"
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        allowOverlap = false,
-        handleKeyDown = null as null | MultiPointKeyDownHandler<LP>,
-        pointTypes = [] as PointType[],
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        overwriteOthers = false,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        ensureConnected = true,
-    },
-) => {
+export type MultiPointStorageFilter<LP extends MultiPointLayerProps> = Pick<
+    HandleEventsUnorderedSetsArg<LP>,
+    "ensureConnected" | "preventOverlap"
+> &
+    ((this: MultiPointLayer<LP>, ...args: Parameters<StorageFilter>) => ReturnType<StorageFilter>);
+
+export type HandleEventsUnorderedSetsArg<LP extends MultiPointLayerProps> = {
+    preventOverlap: boolean;
+    ensureConnected: boolean;
+    overwriteOthers: boolean;
+    pointTypes: PointType[];
+    previousFilter: null | MultiPointStorageFilter<LP>;
+};
+export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>({
+    pointTypes,
+    preventOverlap,
+    ensureConnected,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    overwriteOthers,
+    previousFilter,
+}: HandleEventsUnorderedSetsArg<LP>) => {
     if (!pointTypes?.length) {
-        throw notify.error({
-            message: "Multipoint handler was not provided required parameters",
-            forever: true,
-        });
+        throw notify.error({ message: "Multipoint handler was not provided required parameters" });
     }
 
     // TODO: Allow this to be set by the layer once FSM (or a general gatherPoints method) is implemented.
@@ -55,7 +68,7 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
         { dx: -2, dy: 0 },
     ];
 
-    layer.gatherPoints = (event) => {
+    const gatherPoints: MultiPointLayer<LP>["gatherPoints"] = (event) => {
         const { grid, tempStorage } = event;
         const newPoints = grid.selectPointsWithCursor({
             settings: event.settings,
@@ -76,22 +89,25 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
 
     // TODO: Should I allow multiple current objects? (so I can do `ctrl-a, del` and things like that)
     // TODO: Handle moving objects with long presses (?)
-    layer.handleEvent = (event): LayerHandlerResult<LP> => {
-        const { grid, storage, type, tempStorage, settings } = event;
+    const handleEvent: MultiPointLayer<LP>["handleEvent"] = function (
+        this: MultiPointLayer<LP>,
+        event,
+    ) {
+        const { storage, type, tempStorage, settings } = event;
 
-        const stored = storage.getStored<LP>({ layer, grid });
+        const stored = storage.getObjects<LP>(this.id);
         const currentObjectId = stored.permStorage.currentObjectId || "";
         if (!currentObjectId && type !== "pointerDown" && type !== "undoRedo") {
             return {}; // Other events only matter if there is an object selected
         }
-        const object = stored.getObject(currentObjectId);
+        const object = stored.getObject(settings.editMode, currentObjectId);
 
         switch (type) {
             case "keyDown": {
-                return handleKeyDown?.({ ...event, points: [] }) || {};
+                return this.handleKeyDown?.({ ...event, points: [] }) || {};
             }
             case "delete": {
-                const result = handleKeyDown?.({ ...event, points: [] });
+                const result = this.handleKeyDown?.({ ...event, points: [] });
                 if (result?.history?.length) {
                     // Allow the layer to delete its state before deleting the object itself.
                     return result;
@@ -114,9 +130,12 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
                 // There's only one point with pointerDown
                 const startPoint = event.points[0];
                 // TODO: Only selecting objects from current editMode. Is that what I want?
-                const overlap = [...stored.keys(settings.editMode)].filter(
-                    (id) => stored.getObject(id).points.indexOf(startPoint) > -1,
-                );
+                const overlap = stored
+                    .keys(settings.editMode)
+                    .filter(
+                        (id) =>
+                            stored.getObject(settings.editMode, id).points.indexOf(startPoint) > -1,
+                    );
 
                 if (overlap.length) {
                     // Select the topmost existing object
@@ -129,7 +148,7 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
 
                     // Force a rerender without polluting history
                     return {
-                        history: [{ id, object: stored.getObject(id), batchId }],
+                        history: [{ id, object: stored.getObject(settings.editMode, id), batchId }],
                     };
                 }
 
@@ -225,11 +244,67 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>(
                 return {};
             }
             default: {
-                throw notify.error({
-                    message: `Multipoint unknown event.type=${type}`,
-                    forever: true,
-                });
+                throw notify.error({ message: `Multipoint unknown event.type=${type}` });
             }
         }
     };
+
+    // TODO: This is a bit complicated, and I have some better ideas, but I just want to get this done for now.
+    let unboundFilter: { bind: (layer: MultiPointLayer<LP>) => MultiPointStorageFilter<LP> };
+    if (
+        previousFilter &&
+        previousFilter.ensureConnected === ensureConnected &&
+        previousFilter.preventOverlap === preventOverlap
+    ) {
+        unboundFilter = { bind: () => previousFilter };
+    } else {
+        const isThisLayersAction = (
+            layer: MultiPointLayer<LP>,
+            action: HistoryAction,
+        ): action is HistoryAction<MultiPointLayerProps> => {
+            return action.layerId === layer.id;
+        };
+
+        const filter = function (this: MultiPointLayer<LP>, { grid, settings, storage }, action) {
+            if (!isThisLayersAction(this, action) || action.object === null) return { keep: true };
+
+            if (ensureConnected) {
+                const pt = grid.getPointTransformer(settings);
+                const [cellMap] = pt.fromPoints("cells", action.object.points);
+                if (!pt.isFullyConnected(cellMap)) {
+                    return { keep: false };
+                }
+            }
+
+            if (preventOverlap) {
+                const stored = storage.getObjects<MultiPointLayerProps>(this.id);
+                const points = new Set(action.object.points);
+
+                // TODO: Assumes objects are only in one storageMode
+                for (const [id, { points: existingPoints }] of stored.entries(action.storageMode)) {
+                    if (id === action.objectId) continue;
+                    for (const point of existingPoints) {
+                        if (points.has(point)) {
+                            return { keep: false };
+                        }
+                    }
+                }
+            }
+
+            // TODO: validOnlyWithExtraActions: true
+            // TODO: if (overwriteOthers) { ... }
+
+            return { keep: true };
+        } satisfies StorageFilter;
+
+        unboundFilter = {
+            bind: (layer) =>
+                Object.assign(filter.bind(layer), {
+                    ensureConnected,
+                    preventOverlap,
+                }),
+        };
+    }
+
+    return { gatherPoints, handleEvent, unboundFilter };
 };

@@ -403,14 +403,45 @@ export class ControlsManager {
         let layer = this.getCurrentLayer();
         if (!layer) return;
 
-        if (layerIsCurrentCharacterSetting(layer)) {
-            const value = keypress === "Delete" ? null : keypress;
-            if (layer.klass.isValidSetting("currentCharacter", value)) {
-                layer.settings.currentCharacter = value;
+        if (keypress === "ctrl-`") {
+            if (this.puzzle.settings.pageMode === "edit") {
+                const nowDebugging = !this.puzzle.settings.debugging;
+                this.puzzle.settings.debugging = nowDebugging;
+                this.puzzle.layers.selectable = nowDebugging
+                    ? () => true
+                    : (layer) => !layer.klass.ethereal;
             }
-        }
+        } else if (keypress === "ctrl-z" || keypress === "ctrl-y") {
+            const { storage } = this.puzzle;
+            const appliedActions =
+                keypress === "ctrl-z" ? storage.undoHistory() : storage.redoHistory();
 
-        if (layerIsGOOFy(layer)) {
+            if (appliedActions.length) {
+                const lastAction = appliedActions[appliedActions.length - 1];
+                this.puzzle.selectLayer(lastAction.layerId);
+                if (lastAction.storageMode !== "ui") {
+                    this.puzzle.settings.editMode = lastAction.storageMode;
+                }
+
+                layer = this.getCurrentLayer();
+                if (layer)
+                    this.applyLayerEvent(layer, {
+                        type: "undoRedo",
+                        actions: appliedActions,
+                    });
+            }
+        } else if (layerIsGOOFy(layer)) {
+            if (layerIsCurrentCharacterSetting(layer)) {
+                const value = keypress === "Delete" ? null : keypress;
+                if (layer.klass.isValidSetting("currentCharacter", value)) {
+                    layer.settings.currentCharacter = value;
+                } else {
+                    return;
+                }
+            } else {
+                return;
+            }
+
             if (layer.settings.gridOrObjectFirst === "grid") {
                 const { history } = layer.eventPlaceSinglePointObjects({
                     grid: this.puzzle.grid,
@@ -426,36 +457,12 @@ export class ControlsManager {
 
                 this.puzzle.renderChange({ type: "draw", layerIds: [layer.id] });
             }
+
+            // TODO: Migrate the following to use the replacements for handleEvent
         } else if (keypress === "Escape") {
             this.applyLayerEvent(layer, { type: "cancelAction" });
         } else if (keypress === "Delete") {
             this.applyLayerEvent(layer, { type: "delete", keypress });
-        } else if (keypress === "ctrl-`") {
-            if (this.puzzle.settings.pageMode === "edit") {
-                const nowDebugging = !this.puzzle.settings.debugging;
-                this.puzzle.settings.debugging = nowDebugging;
-                this.puzzle.layers.selectable = nowDebugging
-                    ? () => true
-                    : (layer) => !layer.klass.ethereal;
-            }
-        } else if (keypress === "ctrl-z" || keypress === "ctrl-y") {
-            const { storage } = this.puzzle;
-            const appliedActions =
-                keypress === "ctrl-z"
-                    ? storage.undoHistory(this.puzzle)
-                    : storage.redoHistory(this.puzzle);
-
-            if (appliedActions.length) {
-                const newLayerId = appliedActions[appliedActions.length - 1].layerId;
-                this.puzzle.selectLayer(newLayerId);
-
-                layer = this.getCurrentLayer();
-                if (layer)
-                    this.applyLayerEvent(layer, {
-                        type: "undoRedo",
-                        actions: appliedActions,
-                    });
-            }
         } else {
             this.applyLayerEvent(layer, { type: "keyDown", keypress });
         }
@@ -489,7 +496,6 @@ export class ControlsManager {
             throw notify.error({
                 title: "Submit a bug report if you get this error.",
                 message: `TODO: I need to handle WheelEvent.deltaMode=${rawEvent.deltaMode}`,
-                forever: true,
             });
         }
 

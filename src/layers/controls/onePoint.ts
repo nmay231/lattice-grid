@@ -49,7 +49,6 @@ export const handleEventsCycleStates = <
     if (!states?.length || !pointTypes?.length) {
         throw notify.error({
             message: "onePoint cycleStates was not provided required parameters",
-            forever: true,
         });
     }
 
@@ -60,17 +59,18 @@ export const handleEventsCycleStates = <
             return {};
         }
 
-        const { grid, storage, tempStorage, settings } = event;
+        const { storage, tempStorage, settings } = event;
 
-        const stored = storage.getStored<OnePointProps<ObjectState>>({ grid, layer });
+        const stored = storage.getObjects<OnePointProps<ObjectState>>(layer.id);
         const newPoints = event.points;
 
         let state: ObjectState | null;
         if (tempStorage.targetState !== undefined) {
             state = tempStorage.targetState;
         } else {
-            if (stored.keys(settings.editMode).has(newPoints[0])) {
-                const index = 1 + states.indexOf(stored.getObject(newPoints[0]).state);
+            if (stored.keys(settings.editMode).includes(newPoints[0])) {
+                const index =
+                    1 + states.indexOf(stored.getObject(settings.editMode, newPoints[0]).state);
                 state = index < states.length ? states[index] : null;
             } else {
                 state = states[0];
@@ -98,7 +98,6 @@ export const handleEventsCurrentSetting = <
     if (!pointTypes?.length || !deltas?.length) {
         throw notify.error({
             message: "onePoint currentSetting was not provided required parameters",
-            forever: true,
         });
     }
 
@@ -109,13 +108,13 @@ export const handleEventsCurrentSetting = <
             return {};
         }
 
-        const { grid, storage, tempStorage } = event;
+        const { storage, tempStorage, settings } = event;
 
-        const stored = storage.getStored<OnePointProps<ObjectState>>({ grid, layer });
+        const stored = storage.getObjects<OnePointProps<ObjectState>>(layer.id);
         const newPoints = event.points;
 
         if (tempStorage.targetState === undefined) {
-            const object = stored.getObject(newPoints[0]);
+            const object = stored.getObject(settings.editMode, newPoints[0]);
             const isSame = object?.state === layer.settings.selectedState;
             tempStorage.targetState = isSame ? null : layer.settings.selectedState;
         }
