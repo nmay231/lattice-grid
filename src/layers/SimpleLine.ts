@@ -1,6 +1,7 @@
 import {
     Color,
     FormSchema,
+    HistoryAction,
     Layer,
     LayerClass,
     ObjectId,
@@ -81,8 +82,10 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
         return false;
     }
 
+    previousStorageFilters = [] as StorageFilter[];
+
     updateSettings: ISimpleLineLayer["updateSettings"] = ({ oldSettings }) => {
-        const filters = [] as Array<{ filter: StorageFilter }>;
+        const filters = [{ filter: this.lineFilter }];
         const removeFilters = [] as StorageFilter[];
         if (oldSettings?.pointType !== this.settings.pointType) {
             const { gatherPoints, handleEvent, filterCorrectPointType } =
@@ -113,7 +116,42 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
 
         return { filters, removeFilters };
     };
-    previousStorageFilters = [] as StorageFilter[];
+
+    lineFilter: StorageFilter = ({ storage }, _action) => {
+        const action = _action as HistoryAction<SimpleLineProps>;
+        if (action.object == null) {
+            return { keep: true };
+        }
+
+        const stored = storage.getObjects(this.id);
+        if (action.storageMode === "answer" && stored.getObject("question", action.objectId)) {
+            return { keep: false };
+        } else if (
+            action.storageMode === "question" &&
+            stored.getObject("answer", action.objectId)
+        ) {
+            return {
+                keep: true,
+                extraActions: [{ ...action, storageMode: "answer", object: null }],
+            };
+        }
+
+        // You should not be able to draw white lines in cells or black lines on edges. You can't really see them.
+        if (
+            (action.object.stroke === DEFAULT_COLORS.LIGHT_WHITE &&
+                this.settings.pointType === "cells") ||
+            (action.object.stroke === DEFAULT_COLORS.DARK_WHITE &&
+                this.settings.pointType === "corners")
+        ) {
+            // We really need to transform this action. Since the action is immutable, if you can't batch these actions together, then it's better to prevent it.
+            // TODO: That does mean it might be better to change this at the settings level, i.e. allow converting some values to other values instead of just accepting or rejecting
+            if (!action.batchId) return { keep: false };
+
+            return { keep: true, extraActions: [{ ...action, object: null }] };
+        }
+
+        return { keep: true };
+    };
 
     getSVG: ISimpleLineLayer["getSVG"] = ({ grid, storage, settings }) => {
         const stored = storage.getObjects<SimpleLineProps>(this.id);
