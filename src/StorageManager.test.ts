@@ -723,6 +723,139 @@ describe("StorageManager StorageFilters", () => {
         ]);
     });
 
+    it("maintains object order when scrubbing history", () => {
+        // Given a StorageManager where lots of objects are updated
+        const storage = getNormalStorage();
+        const puzzle = fakePuzzle("grid", "question");
+        storage.addToHistory({
+            puzzle,
+            layerId: "layer1",
+            actions: [
+                { id: "1", object: { asdf: "1a" } },
+                { id: "2", object: { asdf: "2a" } },
+                { id: "3", object: { asdf: "3a" } },
+                { id: "4", object: { asdf: "4a" } },
+                { id: "1", object: { asdf: "1b" } },
+                { id: "3", object: { asdf: "3b" } },
+                { id: "3", object: { asdf: "3c" } },
+                { id: "4", object: { asdf: "4b" } },
+            ] satisfies PartialHistoryAction[],
+        });
+
+        expect(storage.objects["layer1"].entries("question")).toEqual<HistoryEntries>([
+            ["2", { asdf: "2a" }],
+            ["1", { asdf: "1b" }],
+            ["3", { asdf: "3c" }],
+            ["4", { asdf: "4b" }],
+        ]);
+
+        const historySummary = () =>
+            storage.history.map(({ objectId, prevObjectId, object }) => ({
+                objectId,
+                prevObjectId,
+                object,
+            }));
+
+        expect(historySummary()).toEqual([
+            { object: null, objectId: "1", prevObjectId: PUT_AT_END },
+            { object: null, objectId: "2", prevObjectId: PUT_AT_END },
+            { object: null, objectId: "3", prevObjectId: PUT_AT_END },
+            { object: null, objectId: "4", prevObjectId: PUT_AT_END },
+            { object: { asdf: "1a" }, objectId: "1", prevObjectId: null },
+            { object: { asdf: "3a" }, objectId: "3", prevObjectId: "2" },
+            { object: { asdf: "3b" }, objectId: "3", prevObjectId: "1" },
+            { object: { asdf: "4a" }, objectId: "4", prevObjectId: "2" },
+        ]);
+
+        while (storage.undoHistory().length);
+
+        expect(historySummary()).toEqual([
+            { object: { asdf: "1a" }, objectId: "1", prevObjectId: null },
+            { object: { asdf: "2a" }, objectId: "2", prevObjectId: "1" },
+            { object: { asdf: "3a" }, objectId: "3", prevObjectId: "2" },
+            { object: { asdf: "4a" }, objectId: "4", prevObjectId: "3" },
+            { object: { asdf: "1b" }, objectId: "1", prevObjectId: "4" },
+            { object: { asdf: "3b" }, objectId: "3", prevObjectId: "1" },
+            { object: { asdf: "3c" }, objectId: "3", prevObjectId: "1" },
+            { object: { asdf: "4b" }, objectId: "4", prevObjectId: "3" },
+        ]);
+
+        while (storage.redoHistory().length);
+
+        // When some of the objects get Thanos-snapped
+        const filter2: StorageFilter = (_, action) => {
+            if (action.objectId === "2") {
+                return { keep: false };
+            }
+            return { keep: true };
+        };
+        storage.addStorageFilters(puzzle, [{ filter: filter2 }], "layer1");
+
+        // Then relative object order should be maintained throughout history
+        expect(storage.objects["layer1"].entries("question")).toEqual<HistoryEntries>([
+            ["1", { asdf: "1b" }],
+            ["3", { asdf: "3c" }],
+            ["4", { asdf: "4b" }],
+        ]);
+
+        expect(historySummary()).toEqual([
+            { object: null, objectId: "1", prevObjectId: PUT_AT_END },
+            { object: null, objectId: "3", prevObjectId: PUT_AT_END },
+            { object: null, objectId: "4", prevObjectId: PUT_AT_END },
+            { object: { asdf: "1a" }, objectId: "1", prevObjectId: null },
+            { object: { asdf: "3a" }, objectId: "3", prevObjectId: null },
+            { object: { asdf: "3b" }, objectId: "3", prevObjectId: "1" },
+            { object: { asdf: "4a" }, objectId: "4", prevObjectId: null },
+        ]);
+
+        while (storage.undoHistory().length);
+
+        expect(historySummary()).toEqual([
+            { object: { asdf: "1a" }, objectId: "1", prevObjectId: null },
+            { object: { asdf: "3a" }, objectId: "3", prevObjectId: "1" },
+            { object: { asdf: "4a" }, objectId: "4", prevObjectId: "3" },
+            { object: { asdf: "1b" }, objectId: "1", prevObjectId: "4" },
+            { object: { asdf: "3b" }, objectId: "3", prevObjectId: "1" },
+            { object: { asdf: "3c" }, objectId: "3", prevObjectId: "1" },
+            { object: { asdf: "4b" }, objectId: "4", prevObjectId: "3" },
+        ]);
+
+        while (storage.redoHistory().length);
+
+        // When half the objects are Thanos snapped away
+        const filter: StorageFilter = (_, action) => {
+            if (action.objectId === "2" || action.objectId === "1") {
+                return { keep: false };
+            }
+            return { keep: true };
+        };
+        storage.addStorageFilters(puzzle, [{ filter }], "layer1");
+
+        // Relative object order should be maintained throughout history
+        expect(storage.objects["layer1"].entries("question")).toEqual<HistoryEntries>([
+            ["3", { asdf: "3c" }],
+            ["4", { asdf: "4b" }],
+        ]);
+
+        expect(historySummary()).toEqual([
+            { object: null, objectId: "3", prevObjectId: PUT_AT_END },
+            { object: null, objectId: "4", prevObjectId: PUT_AT_END },
+            { object: { asdf: "3a" }, objectId: "3", prevObjectId: null },
+            { object: { asdf: "3b" }, objectId: "3", prevObjectId: "4" },
+            { object: { asdf: "4a" }, objectId: "4", prevObjectId: null },
+        ]);
+
+        while (storage.undoHistory().length);
+
+        expect(historySummary()).toEqual([
+            { object: { asdf: "3a" }, objectId: "3", prevObjectId: null },
+            { object: { asdf: "4a" }, objectId: "4", prevObjectId: "3" },
+            { object: { asdf: "3b" }, objectId: "3", prevObjectId: "4" },
+            { object: { asdf: "3c" }, objectId: "3", prevObjectId: "4" },
+            { object: { asdf: "4b" }, objectId: "4", prevObjectId: "3" },
+        ]);
+    });
+
     it("processes extra actions when changes are made to the grid normally", () => {
         // Given an empty StorageManager
         const storage = getNormalStorage();

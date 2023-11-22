@@ -1,4 +1,4 @@
-export const PUT_AT_END = Symbol("UNSET_KEY");
+export const PUT_AT_END = Symbol("PUT_AT_END");
 export type PutAtEnd = typeof PUT_AT_END;
 
 export class OrderedMap<V> {
