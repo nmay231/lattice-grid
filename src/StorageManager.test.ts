@@ -667,6 +667,7 @@ describe("StorageManager StorageFilters", () => {
             { objectId: "3", object: null },
             { objectId: "3", object: { asdf: "It's just a phase mom!" } },
         ] satisfies Partial<HistoryAction>[]);
+        expect(storage.index).toBe(4);
 
         // ... and no objects deleted
         expect(storage.objects["layer1"].entries("question")).toEqual<HistoryEntries>([
@@ -714,6 +715,7 @@ describe("StorageManager StorageFilters", () => {
             { objectId: "3", object: null },
             { objectId: "3", object: { asdf: "starting state" } },
         ] satisfies Partial<HistoryAction>[]);
+        expect(storage.index).toBe(4);
 
         // ... and no objects deleted
         expect(storage.objects["layer1"].entries("question")).toEqual<HistoryEntries>([

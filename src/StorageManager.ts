@@ -80,7 +80,13 @@ export class StorageManager {
         this.history = filtered;
         this.index = 0;
 
-        while (this.redoHistory().length);
+        for (this.index = 0; this.index < this.history.length; this.index++) {
+            const action = this.history[this.index];
+            const stored = this.objects[action.layerId];
+
+            const undo = this._applyHistoryAction({ stored, action });
+            this.history[this.index] = undo;
+        }
     }
 
     removeStorageFilters(filters: StorageFilter[]) {
@@ -241,8 +247,7 @@ export class StorageManager {
             const stored = this.objects[action.layerId];
 
             const redo = this._applyHistoryAction({ stored, action });
-            // Replace the action with its opposite
-            this.history.splice(this.index, 1, redo);
+            this.history[this.index] = redo;
 
             returnedActions.push(action);
         } while (action.batchId && action.batchId === this.history[this.index - 1]?.batchId);
@@ -262,8 +267,7 @@ export class StorageManager {
             const stored = this.objects[action.layerId];
 
             const undo = this._applyHistoryAction({ stored, action });
-            // Replace the action with its opposite
-            this.history.splice(this.index, 1, undo);
+            this.history[this.index] = undo;
             this.index++;
 
             returnedActions.push(action);
