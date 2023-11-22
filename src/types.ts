@@ -90,9 +90,7 @@ export type LayerEvent<LP extends LayerProps> = CleanedDOMEvent & LayerEventEsse
 export type LayerHandlerResult<LP extends LayerProps> = {
     history?: PartialHistoryAction<LP>[];
 };
-export type LayerUpdateSettings<LP extends LayerProps> = {
-    /** @deprecated */
-    history?: PartialHistoryAction<LP>[];
+export type LayerUpdateSettings = {
     filters?: Array<{ filter: StorageFilter; layerIds?: Layer["id"][] }>;
     removeFilters?: Array<StorageFilter>;
 };
@@ -216,7 +214,7 @@ export type Layer<LP extends LayerProps = LayerProps> = {
             puzzleSettings: LayerEventEssentials<LP>["settings"];
             oldSettings: LP["Settings"] | undefined;
         },
-    ): LayerUpdateSettings<LP>;
+    ): LayerUpdateSettings;
     gatherPoints: (
         layerEvent: Omit<PointerMoveOrDown, "points"> & LayerEventEssentials<LP>,
     ) => Point[];

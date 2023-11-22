@@ -245,7 +245,7 @@ export class PuzzleManager {
             }
 
             if (oldSettings) {
-                const { history, filters, removeFilters } = layer.updateSettings({
+                const { filters, removeFilters } = layer.updateSettings({
                     grid: this.grid,
                     puzzleSettings: this.settings,
                     storage: this.storage,
@@ -257,15 +257,6 @@ export class PuzzleManager {
                 }
                 if (filters) {
                     this.storage.addStorageFilters(this, filters, layer.id);
-                }
-
-                // TODO: History is deprecated because filters will now manage removing invalid objects
-                if (history?.length) {
-                    this.storage.addToHistory({
-                        puzzle: this,
-                        layerId: layer.id,
-                        actions: history,
-                    });
                 }
             }
         }
@@ -304,7 +295,7 @@ export class PuzzleManager {
             layer.settings[key as never] = value; // Sometimes I hate typescript
 
             const { grid, settings, storage } = this;
-            const { history, filters, removeFilters } = layer.updateSettings({
+            const { filters, removeFilters } = layer.updateSettings({
                 grid,
                 puzzleSettings: settings,
                 storage,
@@ -316,10 +307,6 @@ export class PuzzleManager {
             }
             if (filters) {
                 this.storage.addStorageFilters(this, filters, layer.id);
-            }
-
-            if (history?.length) {
-                this.storage.addToHistory({ puzzle: this, layerId: layer.id, actions: history });
             }
         }
     }
