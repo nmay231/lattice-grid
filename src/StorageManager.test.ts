@@ -580,9 +580,25 @@ describe("StorageManager StorageFilters", () => {
         storage.addStorageFilters(puzzle, [{ filter }], "layer1");
 
         // Then it's only added once
-        expect(storage.filtersByLayer).toEqual({
-            layer1: [filter],
-        });
+        expect(storage.filtersByLayer).toEqual({ layer1: [filter] });
+        expect([...storage.layersByFilters.entries()]).toEqual([
+            [filter, { layerIds: ["layer1"] }],
+        ]);
+    });
+
+    it("deregisters filters correctly", () => {
+        // Given a StorageManger with a filter
+        const storage = getNormalStorage();
+        const puzzle = fakePuzzle("grid", "question");
+        const filter: StorageFilter = () => ({ keep: true });
+        storage.addStorageFilters(puzzle, [{ filter }], "layer1");
+
+        // When the filter is removed
+        storage.removeStorageFilters([filter]);
+
+        // Then is actually removed
+        expect(storage.filtersByLayer).toEqual({ layer1: [] });
+        expect([...storage.layersByFilters.entries()]).toEqual([]);
     });
 
     it("registers simple filters that keeps new and updated valid actions", () => {

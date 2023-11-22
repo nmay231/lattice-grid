@@ -97,7 +97,6 @@ export class StorageManager {
             this.layersByFilters.delete(filter);
 
             for (const id of result.layerIds) {
-                this.filtersByLayer[id].push(filter);
                 const index = this.filtersByLayer[id].indexOf(filter);
                 if (index > -1) {
                     this.filtersByLayer[id].splice(index, 1);
