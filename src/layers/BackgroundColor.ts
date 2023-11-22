@@ -1,7 +1,15 @@
-import { Color, FormSchema, Layer, LayerClass, SVGGroup } from "../types";
+import {
+    Color,
+    FormSchema,
+    HistoryAction,
+    Layer,
+    LayerClass,
+    StorageFilter,
+    SVGGroup,
+} from "../types";
 import { DEFAULT_COLORS, isValidColor } from "../utils/colors";
 import { BaseLayer } from "./BaseLayer";
-import { OnePointProps, handleEventsCurrentSetting } from "./controls/onePoint";
+import { handleEventsCurrentSetting, OnePointProps } from "./controls/onePoint";
 import styles from "./layers.module.css";
 
 interface BackgroundColorProps extends OnePointProps<Color> {
@@ -54,7 +62,38 @@ export class BackgroundColorLayer
             ],
         });
 
-        return {};
+        return { filters: [{ filter: this.filterOverlapAndWhiteCells }] };
+    };
+
+    filterOverlapAndWhiteCells: StorageFilter = ({ storage }, _action) => {
+        const action = _action as HistoryAction<BackgroundColorProps>;
+        if (action.object == null) {
+            return { keep: true };
+        }
+
+        const stored = storage.getObjects(this.id);
+        if (action.storageMode === "answer" && stored.getObject("question", action.objectId)) {
+            return { keep: false };
+        } else if (
+            action.storageMode === "question" &&
+            stored.getObject("answer", action.objectId)
+        ) {
+            return {
+                keep: true,
+                extraActions: [{ ...action, storageMode: "answer", object: null }],
+            };
+        }
+
+        // White background objects are hard to tell from the grid background.
+        if (action.object.state === DEFAULT_COLORS.LIGHT_WHITE) {
+            // We really need to transform this action. Since the action is immutable, if you can't batch these actions together, then it's better to prevent it.
+            // TODO: That does mean it might be better to change this at the settings level, i.e. allow converting some values to other values instead of just accepting or rejecting
+            if (!action.batchId) return { keep: false };
+
+            return { keep: true, extraActions: [{ ...action, object: null }] };
+        }
+
+        return { keep: true };
     };
 
     getSVG: IBackgroundColorLayer["getSVG"] = ({ grid, storage, settings }) => {
