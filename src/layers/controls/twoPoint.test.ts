@@ -1,26 +1,12 @@
 import { vi } from "vitest";
 import { LayerStorage } from "../../LayerStorage";
-import { LayerProps, ObjectId, PartialHistoryAction } from "../../types";
-import { zip } from "../../utils/data";
+import { PartialHistoryAction } from "../../types";
 import { layerEventRunner } from "../../utils/testing/layerEventRunner";
 import {
     TwoPointCurrentStateParameters,
     TwoPointProps,
     handleEventsCurrentSetting as twoPointCurrentSetting,
 } from "./twoPoint";
-
-// TODO: Write all new tests with LayerStorage.setEntries()
-const layerStorageFromObjects = <LP extends LayerProps>({
-    ids,
-    objs,
-}: {
-    ids: ObjectId[];
-    objs: LP["ObjectState"][];
-}) => {
-    const stored = new LayerStorage<LP>();
-    stored.setEntries("question", [...zip(ids, objs)]);
-    return stored;
-};
 
 describe("twoPoint.handleEventsCurrentSetting", () => {
     type State = { x: string };
@@ -87,7 +73,7 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
             {
                 batchId: 13,
                 id: "a;b",
-                object: { points: ["a", "b"], x: "default" },
+                object: { points: ["a", "b"], pointType: "cells", x: "default" },
             },
         ]);
 
@@ -116,12 +102,12 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
             {
                 batchId: 13,
                 id: "a;c",
-                object: { points: ["a", "c"], x: "default" },
+                object: { points: ["a", "c"], pointType: "cells", x: "default" },
             },
             {
                 batchId: 13,
                 id: "b;c",
-                object: { points: ["b", "c"], x: "default" },
+                object: { points: ["b", "c"], pointType: "cells", x: "default" },
             },
         ]);
 
@@ -136,12 +122,12 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
             {
                 batchId: 13,
                 id: "b;d",
-                object: { points: ["b", "d"], x: "default" },
+                object: { points: ["b", "d"], pointType: "cells", x: "default" },
             },
             {
                 batchId: 13,
                 id: "d;e",
-                object: { points: ["d", "e"], x: "default" },
+                object: { points: ["d", "e"], pointType: "cells", x: "default" },
             },
         ]);
 
@@ -154,10 +140,10 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
     it("erases some lines when drawing over existing ones with the same state", () => {
         // Given an existing line
         const layer = getTwoPointLayer();
-        const stored = layerStorageFromObjects<TwoPointProps<State>>({
-            ids: ["a;b"],
-            objs: [{ points: ["a", "b"], x: "default" }],
-        });
+        const stored = new LayerStorage<TwoPointProps<State>>();
+        stored.setEntries("question", [
+            ["a;b", { points: ["a", "b"], pointType: "cells", x: "default" }],
+        ]);
         const handler = layerEventRunner({ layer, stored });
         handler.storage.getNewBatchId.mockReturnValueOnce(13);
 
@@ -183,10 +169,10 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
     it("overrides some lines when drawing over existing ones with a different state", () => {
         // Given an existing line with a different state
         const layer = getTwoPointLayer();
-        const stored = layerStorageFromObjects<TwoPointProps<State>>({
-            ids: ["a;b"],
-            objs: [{ points: ["a", "b"], x: "different" }],
-        });
+        const stored = new LayerStorage<TwoPointProps<State>>();
+        stored.setEntries("question", [
+            ["a;b", { points: ["a", "b"], pointType: "cells", x: "different" }],
+        ]);
         const handler = layerEventRunner({ layer, stored });
         handler.storage.getNewBatchId.mockReturnValueOnce(13);
 
@@ -203,7 +189,7 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
             {
                 batchId: 13,
                 id: "a;b",
-                object: { points: ["a", "b"], x: "default" },
+                object: { points: ["a", "b"], pointType: "cells", x: "default" },
             },
         ]);
 
@@ -216,10 +202,10 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
     it("does not erase lines when drawing over similar lines after drawing at all", () => {
         // Given an existing line
         const layer = getTwoPointLayer();
-        const stored = layerStorageFromObjects<TwoPointProps<State>>({
-            ids: ["1;2"],
-            objs: [{ points: ["1", "2"], x: "default" }],
-        });
+        const stored = new LayerStorage<TwoPointProps<State>>();
+        stored.setEntries("question", [
+            ["1;2", { points: ["1", "2"], pointType: "cells", x: "default" }],
+        ]);
         const handler = layerEventRunner({ layer, stored });
         handler.storage.getNewBatchId.mockReturnValueOnce(13);
 
@@ -236,7 +222,7 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
             {
                 batchId: 13,
                 id: "2;3",
-                object: { points: ["2", "3"], x: "default" },
+                object: { points: ["2", "3"], pointType: "cells", x: "default" },
             },
         ]);
 
@@ -253,7 +239,7 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
             {
                 batchId: 13,
                 id: "1;2",
-                object: { points: ["1", "2"], x: "default" },
+                object: { points: ["1", "2"], pointType: "cells", x: "default" },
             },
         ]);
 
@@ -266,10 +252,10 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
     it("does not add lines when deleting lines and drawing over nothing", () => {
         // Given an existing line
         const layer = getTwoPointLayer();
-        const stored = layerStorageFromObjects<TwoPointProps<State>>({
-            ids: ["1;2"],
-            objs: [{ points: ["1", "2"], x: "default" }],
-        });
+        const stored = new LayerStorage<TwoPointProps<State>>();
+        stored.setEntries("question", [
+            ["1;2", { points: ["1", "2"], pointType: "cells", x: "default" }],
+        ]);
         const handler = layerEventRunner({ layer, stored });
         handler.storage.getNewBatchId.mockReturnValueOnce(13);
 

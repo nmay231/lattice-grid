@@ -4,13 +4,12 @@ import {
     Layer,
     LayerClass,
     ObjectId,
-    PartialHistoryAction,
     Point,
     PointType,
     SVGGroup,
+    StorageFilter,
 } from "../types";
 import { DEFAULT_COLORS, isValidColor } from "../utils/colors";
-import { concat } from "../utils/data";
 import { BaseLayer } from "./BaseLayer";
 import { TwoPointProps, handleEventsCurrentSetting } from "./controls/twoPoint";
 import styles from "./layers.module.css";
@@ -21,6 +20,7 @@ export interface SimpleLineProps extends TwoPointProps<LineState> {
         id: ObjectId;
         stroke: Color;
         points: Point[];
+        pointType: PointType;
     };
     Settings: {
         pointType: PointType;
@@ -81,42 +81,39 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
         return false;
     }
 
-    updateSettings: ISimpleLineLayer["updateSettings"] = ({ storage, oldSettings }) => {
-        let history: PartialHistoryAction<SimpleLineProps>[] | undefined = undefined;
+    updateSettings: ISimpleLineLayer["updateSettings"] = ({ oldSettings }) => {
+        const filters = [] as Array<{ filter: StorageFilter }>;
+        const removeFilters = [] as StorageFilter[];
         if (oldSettings?.pointType !== this.settings.pointType) {
-            // Clear stored if the type of connections allowed changes (because that would allow impossible-to-draw lines otherwise).
-            const stored = storage.getObjects(this.id);
-            history = [...concat(stored.keys("question"), stored.keys("answer"))].map((id) => ({
-                id,
-                object: null,
-            }));
-
-            const { gatherPoints, handleEvent } = handleEventsCurrentSetting<
-                SimpleLineProps,
-                LineState
-            >({
-                // TODO: Directional true/false is ambiguous. There are three types: lines and arrows with/without overlap (that is, can you draw two arrows on top each other in different directions)
-                directional: false,
-                pointTypes: [this.settings.pointType],
-                // TODO: Replace deltas with FSM
-                deltas: [
-                    { dx: 0, dy: 2 },
-                    { dx: 0, dy: -2 },
-                    { dx: 2, dy: 0 },
-                    { dx: -2, dy: 0 },
-                ],
-                stateKeys: ["stroke"],
-            });
+            const { gatherPoints, handleEvent, filterCorrectPointType } =
+                handleEventsCurrentSetting<SimpleLineProps, LineState>({
+                    // TODO: Directional true/false is ambiguous. There are three types: lines and arrows with/without overlap (that is, can you draw two arrows on top each other in different directions)
+                    directional: false,
+                    pointTypes: [this.settings.pointType],
+                    // TODO: Replace deltas with FSM
+                    deltas: [
+                        { dx: 0, dy: 2 },
+                        { dx: 0, dy: -2 },
+                        { dx: 2, dy: 0 },
+                        { dx: -2, dy: 0 },
+                    ],
+                    stateKeys: ["stroke"],
+                });
             this.gatherPoints = gatherPoints;
             this.handleEvent = handleEvent;
+
+            removeFilters.push(...this.previousStorageFilters);
+            this.previousStorageFilters = [filterCorrectPointType];
+            filters.push({ filter: filterCorrectPointType });
         }
 
         if (oldSettings?.stroke !== this.settings.stroke) {
             this.settings.selectedState = this.settings.stroke;
         }
 
-        return { history };
+        return { filters, removeFilters };
     };
+    previousStorageFilters = [] as StorageFilter[];
 
     getSVG: ISimpleLineLayer["getSVG"] = ({ grid, storage, settings }) => {
         const stored = storage.getObjects<SimpleLineProps>(this.id);

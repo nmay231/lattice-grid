@@ -1,4 +1,12 @@
-import { Layer, LayerProps, PartialHistoryAction, Point, PointType } from "../../types";
+import {
+    HistoryAction,
+    Layer,
+    LayerProps,
+    PartialHistoryAction,
+    Point,
+    PointType,
+    StorageFilter,
+} from "../../types";
 import { zip } from "../../utils/data";
 import { notify } from "../../utils/notifications";
 import { smartSort } from "../../utils/string";
@@ -6,7 +14,7 @@ import { smartSort } from "../../utils/string";
 type StringRecord = Record<string, string>;
 
 export interface TwoPointProps<State extends StringRecord> extends LayerProps {
-    ObjectState: { points: Point[] } & State;
+    ObjectState: { points: Point[]; pointType: PointType } & State;
     Settings: State;
     TempStorage: {
         previousPoint: Point;
@@ -104,6 +112,8 @@ export const handleEventsCurrentSetting = <
                     batchId: tempStorage.batchId,
                     object: {
                         points: pair,
+                        // TODO: Assumes there is only one pointType at a time. I need to switch to GridPoint's if I want to avoid this issue
+                        pointType: pointTypes[0],
                         ...stringToState(tempStorage.targetState),
                     },
                 });
@@ -113,5 +123,13 @@ export const handleEventsCurrentSetting = <
         return { history };
     };
 
-    return { stateToString, stringToState, gatherPoints, handleEvent };
+    const filterCorrectPointType: StorageFilter = (puzzle, _action) => {
+        const action = _action as HistoryAction<TwoPointProps<State>>;
+        if (!action.object || pointTypes.includes(action.object.pointType)) {
+            return { keep: true };
+        }
+        return { keep: false };
+    };
+
+    return { stateToString, stringToState, gatherPoints, handleEvent, filterCorrectPointType };
 };
