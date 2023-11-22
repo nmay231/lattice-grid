@@ -1,5 +1,12 @@
-import { FormSchema, Layer, LayerClass, PartialHistoryAction, SVGGroup } from "../types";
-import { concat } from "../utils/data";
+import {
+    FormSchema,
+    HistoryAction,
+    Layer,
+    LayerClass,
+    PartialHistoryAction,
+    SVGGroup,
+    StorageFilter,
+} from "../types";
 import { notify } from "../utils/notifications";
 import { BaseLayer } from "./BaseLayer";
 import { KeyDownEventHandler, SelectedProps, handleEventsSelection } from "./controls/selection";
@@ -112,30 +119,16 @@ export class ToggleCharactersLayer
         return false;
     }
 
-    updateSettings: IToggleCharactersLayer["updateSettings"] = ({ storage, oldSettings }) => {
-        let history: PartialHistoryAction<ToggleCharactersProps>[] | undefined = undefined;
+    updateSettings: IToggleCharactersLayer["updateSettings"] = ({ oldSettings }) => {
+        const removeFilters = [] as StorageFilter[];
         if (oldSettings?.characters !== this.settings.characters) {
+            removeFilters.push(this.filterInvalidCharacters);
             // Remove duplicates
+            // TODO: Do this as part of validation somewhere else
             this.settings.characters = [...this.settings.characters]
                 .filter((char, i) => this.settings.characters.indexOf(char) === i)
                 .join("");
             this.settings.caseSwap = this._generateCaseSwap(this.settings.characters);
-
-            const stored = storage.getObjects<ToggleCharactersProps>(this.id);
-            history = [];
-
-            // Exclude disallowed characters
-            for (const [id, { state }] of concat(
-                stored.entries("answer"),
-                stored.entries("question"),
-            )) {
-                const newState = [...state]
-                    .filter((char) => this.settings.characters.indexOf(char) > -1)
-                    .join("");
-                if (newState !== state) {
-                    history.push(obj({ id, object: { state: newState } }));
-                }
-            }
         }
         if (!oldSettings || oldSettings.gridOrObjectFirst !== this.settings.gridOrObjectFirst) {
             const { gatherPoints, handleEvent, getOverlaySVG, eventPlaceSinglePointObjects } =
@@ -146,7 +139,41 @@ export class ToggleCharactersLayer
                 this.settings.gridOrObjectFirst === "grid" ? getOverlaySVG : undefined;
             this.eventPlaceSinglePointObjects = eventPlaceSinglePointObjects;
         }
-        return { history };
+
+        // TODO: This is only needed when characters change and that doesn't happen right now because ToggleCharacters is temporarily hidden in favor of CenterMarks and TopBottomMarks, and they don't allow changing settings.characters
+        return {};
+        // return { filters: [{ filter: this.filterInvalidCharacters }], removeFilters };
+    };
+
+    // TODO: This filter only needs to run after updateSettings is called. Do I need another field to provide this behavior?
+    filterInvalidCharacters: StorageFilter = ({ storage }, _action) => {
+        const action = _action as HistoryAction<ToggleCharactersProps>;
+        if (action.object === null) return { keep: true };
+
+        let valid = true;
+        for (const char of action.object.state) {
+            if (!(char in this.settings.caseSwap)) {
+                valid = false;
+                break;
+            }
+        }
+        if (valid) return { keep: true };
+
+        if (action.batchId) {
+            const state = [...action.object.state]
+                .filter((char) => char in this.settings.caseSwap)
+                .join("");
+
+            const stored = storage.getObjects<ToggleCharactersProps>(this.id);
+            // If forcing the object to be valid reverts it to the existing object, don't bother adding the action to history
+            if (state === stored.getObject("answer", action.objectId)?.state) {
+                return { keep: false };
+            }
+
+            return { keep: true, extraActions: [{ ...action, object: { state } }] };
+        }
+
+        return { keep: false };
     };
 
     _generateCaseSwap: IToggleCharactersLayer["_generateCaseSwap"] = (chars) => {
