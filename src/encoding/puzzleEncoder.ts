@@ -1,4 +1,4 @@
-import { Encoder, Encoding, Scalar, TopLevel } from "./customProtobuf";
+import { Encoder, Encoding, Scalar, TopLevel } from "./protoButt";
 
 const ColorEnum = {
     type: "enum",
@@ -45,6 +45,7 @@ const ContiguousPoints = {
 } as const satisfies TopLevel<Scalar>;
 
 export const PuzzleEncoder = Encoder.create({
+    index: 0,
     type: "enum",
     fields: {
         uncompressedV1: {
@@ -108,7 +109,9 @@ export const PuzzleEncoder = Encoder.create({
                             type: "message",
                             fields: {
                                 max: { index: 1, type: "uint32" },
-                                negatives: { index: 2, type: "bool" },
+                                // TODO: Allow type=bool ?
+                                negatives: { index: 2, type: "uint32" },
+                                // negatives: { index: 2, type: "bool" },
                                 dataV1: {
                                     index: 10,
                                     type: "tuple",
