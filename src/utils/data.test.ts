@@ -1,7 +1,13 @@
 import fc from "fast-check";
 import { zip as lodashZip, range } from "lodash";
-import { concat, zip as ourZip, parseIntBase, reduceTo, reversed } from "./data";
+import { concat, filterUnique, zip as ourZip, parseIntBase, reduceTo, reversed } from "./data";
 import { FCNormalFloat, FCRepeat, given } from "./testing/fcArbitraries";
+
+describe("filterUnique", () => {
+    it("filters down to unique elements", () => {
+        expect([4, 1, 2, 4, 2, 1, 5, 7].filter(filterUnique)).toEqual([4, 1, 2, 5, 7]);
+    });
+});
 
 describe("reduceTo", () => {
     it.each([

@@ -29,6 +29,11 @@ export const reduceTo = {
     last: maxReducer,
 };
 
+/**
+ * Filter array down to unique elements with `array.filter(filterUnique)`.
+ */
+export const filterUnique = <T>(v: T, index: number, arr: T[]): boolean => arr.indexOf(v) === index;
+
 type List<T> = ArrayLike<T>;
 type ZipResult<T> = Generator<T, void>;
 export function zip<T1, T2>(arr1: List<T1>, arr2: List<T2>): ZipResult<[T1, T2]>;

@@ -1,8 +1,8 @@
 import fc, { Arbitrary } from "fast-check";
-import { concat } from "../utils/data";
 import { given } from "../utils/testing/fcArbitraries";
 import { Encoder, Encoding, Scalar, ScalarMap, TopLevel } from "./protoButt";
 
+import { concat } from "../utils/data";
 describe("protoButt", () => {
     const bytesExample = Uint8Array.from([7, 1, 1, 2, 3, 5, 8, 13]);
     const stringExample = Uint8Array.from([11, ...new TextEncoder().encode("hello world")]);
@@ -98,6 +98,64 @@ describe("protoButt", () => {
         },
 
         // Enums with unit variants or non-unit variants
+        {
+            encoding: {
+                type: "enum",
+                fields: { a: { type: "unit", index: 0 }, b: { type: "unit", index: 1 } },
+            },
+            input: { a: true },
+            output: [0],
+        },
+        {
+            encoding: {
+                type: "enum",
+                fields: { a: { type: "sint32", index: 0 }, b: { type: "unit", index: 1 } },
+            },
+            input: { b: true },
+            output: [1],
+        },
+        {
+            encoding: {
+                type: "enum",
+                fields: { a: { type: "uint32", index: 3 }, b: { type: "unit", index: 1 } },
+            },
+            input: { a: 81 },
+            output: [3, 81],
+        },
+        {
+            encoding: {
+                type: "enum",
+                fields: {
+                    a: {
+                        index: 3,
+                        type: "enum",
+                        fields: { b: { index: 4, repeated: true, type: "sint32" } },
+                    },
+                },
+            },
+            input: { a: { b: [5, 5] } },
+            output: [3, 4, 2, 2 * 5, 2 * 5],
+        },
+        {
+            encoding: {
+                type: "enum",
+                fields: { "": { type: "uint32", index: 0 } },
+            },
+            input: { "": 1 },
+            output: [0, 1],
+        },
+
+        // Repeated subfields
+        {
+            encoding: {
+                type: "message",
+                fields: {
+                    a: { index: 0, repeated: true, type: "uint32" },
+                },
+            },
+            input: { a: [1, 2, 4] },
+            output: [1, 0, 3, 1, 2, 4],
+        },
     ] as const satisfies Readonly<
         Array<{
             encoding: TopLevel<Scalar> | TopLevel<Encoding>;
@@ -145,10 +203,11 @@ describe("protoButt", () => {
             expect(repeated3Encoder.decode(expected3)).toEqual([input, input, input]);
         },
     );
+});
 
+describe("asdf", () => {
     // You might be wondering why I check a bunch of examples manually if I have a "fuzz" test here. I have the manual examples so I can check the output matches what I expect.
-    it.skip("always decodes the same object that was encoded", () => {
-        console.log("before...");
+    it("always decodes the same object that was encoded", () => {
         const FCMaybeRepeated = (arb: Arbitrary<any>, repeated: boolean | undefined) => {
             if (repeated) return fc.array(arb);
             return arb;
@@ -222,7 +281,7 @@ describe("protoButt", () => {
         const { encoding } = fc.letrec((tie) => ({
             encoding: fc
                 .tuple(
-                    fc.integer({ min: 0, max: 130 }),
+                    // fc.integer({ min: 0, max: 130 }),
                     fc.constantFrom(undefined, true),
                     fc.oneof(
                         { depthSize: "small", withCrossShrink: true, maxDepth: 4 },
@@ -233,33 +292,64 @@ describe("protoButt", () => {
                     ),
                 )
                 .map(
-                    ([index, repeated, encoding]) =>
-                        ({ index, repeated, ...(encoding as any) }) as Encoding | Scalar,
+                    ([repeated, encoding]) =>
+                        ({ repeated, ...(encoding as any) }) as Encoding | Scalar,
                 ),
             scalar: fc.record({
-                type: fc.constantFrom<keyof ScalarMap>("sint32", "uint32", "bytes", "unit"),
+                type: fc.constantFrom<keyof ScalarMap>("uint32", "sint32", "bytes", "unit"),
             }) satisfies Arbitrary<TopLevel<Scalar>>,
             message: fc.record({
                 type: fc.constant("message"),
-                fields: fc.dictionary(
-                    fc.string(),
-                    tie("encoding") as Arbitrary<Encoding | Scalar>,
-                    { maxKeys: 5 },
-                ),
+                fields: fc
+                    .dictionary(fc.string(), tie("encoding") as Arbitrary<Encoding | Scalar>, {
+                        maxKeys: 5,
+                    })
+                    .chain((fields) => {
+                        const entries = Object.entries(fields);
+                        return fc
+                            .uniqueArray(fc.integer({ min: 0, max: 130 }), {
+                                minLength: entries.length,
+                                maxLength: entries.length,
+                            })
+                            .map((indexes) =>
+                                Object.fromEntries(
+                                    entries.map(([key, field], i) => [
+                                        key,
+                                        { ...field, index: indexes[i] },
+                                    ]),
+                                ),
+                            );
+                    }),
             }) satisfies Arbitrary<TopLevel<Encoding>>,
             enum: fc.record({
                 type: fc.constant("enum"),
-                fields: fc.dictionary(
-                    fc.string(),
-                    tie("encoding") as Arbitrary<Encoding | Scalar>,
-                    { minKeys: 1, maxKeys: 1 },
-                ),
+                fields: fc
+                    .dictionary(fc.string(), tie("encoding") as Arbitrary<Encoding | Scalar>, {
+                        minKeys: 1,
+                        maxKeys: 10,
+                    })
+                    .chain((fields) => {
+                        const entries = Object.entries(fields);
+                        return fc
+                            .uniqueArray(fc.integer({ min: 0, max: 130 }), {
+                                minLength: entries.length,
+                                maxLength: entries.length,
+                            })
+                            .map((indexes) =>
+                                Object.fromEntries(
+                                    entries.map(([key, field], i) => [
+                                        key,
+                                        { ...field, index: indexes[i] },
+                                    ]),
+                                ),
+                            );
+                    }),
             }) satisfies Arbitrary<TopLevel<Encoding>>,
             tuple: fc.record({
                 type: fc.constant("tuple"),
                 fields: fc
                     .dictionary(fc.string(), tie("encoding") as Arbitrary<Encoding | Scalar>, {
-                        maxKeys: 5,
+                        maxKeys: 3,
                     })
                     .map((fields) =>
                         Object.fromEntries(
@@ -276,9 +366,9 @@ describe("protoButt", () => {
         );
         given([encodingObject], {
             numRuns: 100,
-            // endOnFailure: true,
+            skipAllAfterTimeLimit: 10_000,
         }).assertProperty(({ encoding, object }) => {
-            // console.log(encoding, object);
+            console.log(encoding, object);
             const encoder = Encoder.create(encoding);
             expect(object).toEqual(encoder.decode(encoder.encode(object)));
         });

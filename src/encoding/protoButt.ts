@@ -1,6 +1,7 @@
 import { Reader, Writer } from "protobufjs";
+import { filterUnique } from "../utils/data";
 import { notify } from "../utils/notifications";
-import { stringifyAnything } from "../utils/string";
+import { smartSort, stringifyAnything } from "../utils/string";
 
 // TODO: zero length bytes decode as Buffers on node. This hack prevents that.
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -33,7 +34,9 @@ export type Encoding = {
     /** @default false */
     repeated?: boolean;
     /** @internal */
-    _fieldOrder?: string[];
+    _fieldIndexes?: number[];
+    /** @internal */
+    _indexToField?: Record<number, string>;
 };
 export type TopLevel<E extends Encoding | Scalar> = Omit<E, "index">;
 
@@ -69,7 +72,6 @@ type PossibleRepeated<T, Repeated> = Repeated extends true ? T[] : T;
  * -   We also add a tuple type that is similar to messages except only data is encoded; no field numbers or field/byte count. This requires all fields to be set and no new fields to be added in the future. That means the container of the tuple must add a new tuple (or message) field encoding the new data if the old one doesn't suffice. Therefore tuples should be used tastefully and certainly not at the toplevel of an encoding.
  * -   `oneof` fields are merged into enums to basically give you tagged-variants just like Rust enums. In other words, an enum is a message with only one field chosen. Enum variants with no data attached (what most programming languages consider as enums) are accomplished by adding a scalar type called `unit` that encodes no data itself and relies on the container encoding its field number, therefore determining which enum variant it is. Unlike `oneof` fields, enums can be repeated; the only reason for that restriction in the first place is if you care about encoding being "distributive", that is `encode({...data1, ...data2}) == concat(encode(data1), encode(data2))`.
  */
-// TODO: This would be better implemented as a curried function, but I feel like future features might require a more OOP approach
 export class Encoder<E extends Encoding | Scalar> {
     /** Constructor is private. Use `.create()` instead */
     private constructor(public encoding: E) {}
@@ -79,18 +81,21 @@ export class Encoder<E extends Encoding | Scalar> {
         if (this._validateLimit++ > 15) {
             throw Error("Validating recursion limit reached");
         }
-        const fieldOrder = [] as string[];
+        encoding._indexToField = {} as Record<number, string>;
+        encoding._fieldIndexes = [] as number[];
         const fields = Object.entries(encoding.fields);
         for (const [key, field] of fields) {
-            fieldOrder[field.index] = key;
+            encoding._indexToField[field.index] = key;
+            encoding._fieldIndexes.push(field.index);
         }
+        encoding._fieldIndexes = encoding._fieldIndexes.filter(filterUnique);
+        encoding._fieldIndexes.sort(smartSort);
 
         // Indexes must be unique
-        if (Object.values(fieldOrder).length !== fields.length) return false;
+        if (encoding._fieldIndexes.length !== fields.length) return false;
         // Tuple fields must not have gaps and start at zero
-        if (fieldOrder.length !== fields.length && encoding.type === "tuple") return false;
-
-        encoding._fieldOrder = fieldOrder;
+        if (encoding.type === "tuple" && encoding._fieldIndexes.filter((v, i) => v !== i).length)
+            return false;
 
         return fields.every(
             ([, subEncoding]) =>
@@ -113,7 +118,6 @@ export class Encoder<E extends Encoding | Scalar> {
         return new Encoder(encoding);
     }
 
-    /** Value is consumed destructively */
     encode(value: DescriptionToObject<E>): Uint8Array {
         const writer = new Writer();
         this._encode(this.encoding, value, writer, false);
@@ -128,16 +132,20 @@ export class Encoder<E extends Encoding | Scalar> {
         writer: Writer,
         encodeIndex: boolean,
     ): void {
-        if (this._encodeLimit++ > 300) {
+        if (this._encodeLimit++ > 1000) {
             throw Error("Encoding recursion limit reached");
         }
+
         if (encodeIndex) writer.uint32(encoding.index);
+
         if (encoding.repeated) {
             writer.uint32(value.length);
             if (!value.length) return;
+
+            this._encodeLimit -= value.length; // We count repeated fields as one field
             const encoding_ = { ...encoding, repeated: false } as typeof encoding;
             for (const v of value) {
-                this._encode(encoding_, v, writer, encodeIndex);
+                this._encode(encoding_, v, writer, false);
             }
             return;
         }
@@ -153,7 +161,8 @@ export class Encoder<E extends Encoding | Scalar> {
                 return; // Only the index is encoded for unit types (to mimic enum variants)
             }
             case "tuple": {
-                for (const key of encoding._fieldOrder!) {
+                for (const index of encoding._fieldIndexes!) {
+                    const key = encoding._indexToField![index];
                     if (!(key in value)) {
                         throw notify.error(
                             `tuple missing key=${key}: encoding=${stringifyAnything(
@@ -172,7 +181,8 @@ export class Encoder<E extends Encoding | Scalar> {
                 }
 
                 let encodedFields = 0;
-                for (const key of encoding._fieldOrder!) {
+                for (const index of encoding._fieldIndexes!) {
+                    const key = encoding._indexToField![index];
                     if (!(key in value)) continue;
 
                     encodedFields += 1;
@@ -211,15 +221,17 @@ export class Encoder<E extends Encoding | Scalar> {
         key: string,
         container: any,
         reader: Reader,
-        // decodeIndex: boolean,
     ): void {
-        if (this._decodeLimit++ > 300) {
+        if (this._decodeLimit++ > 1000) {
             throw Error("Decoding recursion limit reached");
         }
         if (encoding.repeated) {
             const repeated = (container[key] = [] as any[]);
             const encoding_ = { ...encoding, repeated: false } as typeof encoding;
-            for (let length = reader.uint32(); length > 0; length--) {
+
+            let length = reader.uint32();
+            this._decodeLimit -= length; // We count repeated fields as one field
+            for (; length > 0; length--) {
                 const subContainer = { key: null };
                 this._decode(encoding_, "key", subContainer, reader);
                 repeated.push(subContainer.key);
@@ -240,14 +252,15 @@ export class Encoder<E extends Encoding | Scalar> {
             }
             case "enum": {
                 const index = reader.uint32();
-                const enumVariant = encoding._fieldOrder![index];
+                const enumVariant = encoding._indexToField![index];
                 container[key] = {};
                 this._decode(encoding.fields[enumVariant], enumVariant, container[key], reader);
                 return;
             }
             case "tuple": {
                 const tuple = (container[key] = {});
-                for (const fieldKey of encoding._fieldOrder!) {
+                for (const index of encoding._fieldIndexes!) {
+                    const fieldKey = encoding._indexToField![index];
                     this._decode(encoding.fields[fieldKey], fieldKey, tuple, reader);
                 }
                 return;
@@ -256,13 +269,9 @@ export class Encoder<E extends Encoding | Scalar> {
                 const message = (container[key] = {});
                 for (let nFields = reader.uint32(); nFields > 0; nFields--) {
                     const index = reader.uint32();
-                    const fieldKey = encoding._fieldOrder![index];
+                    const fieldKey = encoding._indexToField![index];
                     this._decode(encoding.fields[fieldKey], fieldKey, message, reader);
                 }
-                // const fields = encoding.fields;
-                // for (const [key, desc] of Object.entries(fields)) {
-                //     this._decode(desc, container[key], reader, encoding.type !== "tuple");
-                // }
                 return;
             }
         }
