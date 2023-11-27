@@ -76,34 +76,37 @@ export class Encoder<E extends Encoding | Scalar> {
     /** Constructor is private. Use `.create()` instead */
     private constructor(public encoding: E) {}
 
-    static _validateLimit = 0;
-    private static validate(encoding: TopLevel<Encoding>): boolean {
-        if (this._validateLimit++ > 15) {
-            throw Error("Validating recursion limit reached");
+    static _validationRecursionCheck = new WeakSet();
+    private static validate(encoding: TopLevel<Encoding>): void {
+        if (this._validationRecursionCheck.has(encoding)) {
+            throw Error("Validation recursion has looped");
         }
+        this._validationRecursionCheck.add(encoding);
         encoding._indexToField = {} as Record<number, string>;
         encoding._fieldIndexes = [] as number[];
         const fields = Object.entries(encoding.fields);
         for (const [key, field] of fields) {
+            if (key in Object.prototype) throw Error(`Do not use keys in Object.prototype: ${key}`);
             encoding._indexToField[field.index] = key;
             encoding._fieldIndexes.push(field.index);
         }
         encoding._fieldIndexes = encoding._fieldIndexes.filter(filterUnique);
         encoding._fieldIndexes.sort(smartSort);
 
-        // Indexes must be unique
-        if (encoding._fieldIndexes.length !== fields.length) return false;
-        // Tuple fields must not have gaps and start at zero
-        if (encoding.type === "tuple" && encoding._fieldIndexes.filter((v, i) => v !== i).length)
-            return false;
+        if (encoding._fieldIndexes.length !== fields.length) {
+            throw Error(`Some indexes overlap: ${stringifyAnything(encoding)}`);
+        }
+        if (encoding.type === "tuple" && encoding._fieldIndexes.filter((v, i) => v !== i).length) {
+            throw Error(
+                `Tuple fields must not have gaps and start at zero: ${stringifyAnything(encoding)}`,
+            );
+        }
 
-        return fields.every(
-            ([, subEncoding]) =>
-                (subEncoding.type !== "tuple" &&
-                    subEncoding.type !== "message" &&
-                    subEncoding.type !== "enum") ||
-                this.validate(subEncoding),
-        );
+        for (const [, field] of fields) {
+            if (field.type === "message" || field.type === "enum" || field.type === "tuple") {
+                this.validate(field);
+            }
+        }
     }
 
     /**
@@ -111,29 +114,28 @@ export class Encoder<E extends Encoding | Scalar> {
      * The toplevel index is not used but needed to satisfy typescript (grr...)
      */
     static create<const E extends Encoding | Scalar>(encoding: E): Encoder<E> {
-        if ("fields" in encoding && !this.validate(encoding)) {
-            throw Error(`Could not instantiate Encoding with ${stringifyAnything(encoding)}`);
-        }
-        this._validateLimit = 0;
+        this._validationRecursionCheck = new WeakSet();
+        if ("fields" in encoding) this.validate(encoding);
+
         return new Encoder(encoding);
     }
 
     encode(value: DescriptionToObject<E>): Uint8Array {
         const writer = new Writer();
+        this._encodingRecursionCheck = new WeakSet();
         this._encode(this.encoding, value, writer, false);
-        this._encodeLimit = 0;
         return writer.finish();
     }
 
-    _encodeLimit = 0;
+    _encodingRecursionCheck = new WeakSet();
     _encode<E extends Encoding | Scalar>(
         encoding: E,
         value: any,
         writer: Writer,
         encodeIndex: boolean,
     ): void {
-        if (this._encodeLimit++ > 1000) {
-            throw Error("Encoding recursion limit reached");
+        if (this._encodingRecursionCheck.has(encoding)) {
+            throw Error("Encoding recursion has looped");
         }
 
         if (encodeIndex) writer.uint32(encoding.index);
@@ -142,7 +144,6 @@ export class Encoder<E extends Encoding | Scalar> {
             writer.uint32(value.length);
             if (!value.length) return;
 
-            this._encodeLimit -= value.length; // We count repeated fields as one field
             const encoding_ = { ...encoding, repeated: false } as typeof encoding;
             for (const v of value) {
                 this._encode(encoding_, v, writer, false);
@@ -188,9 +189,9 @@ export class Encoder<E extends Encoding | Scalar> {
                     encodedFields += 1;
                     this._encode(encoding.fields[key], value[key], writer, true);
                 }
-                if (encoding.type === "enum" && Object.keys(value).length !== encodedFields) {
+                if (encoding.type === "enum" && encodedFields !== 1) {
                     throw notify.error(
-                        `enum has more than one value set: value=${stringifyAnything(value)}`,
+                        `enum has ${encodedFields} value(s) set: value=${stringifyAnything(value)}`,
                     );
                 }
                 return;
@@ -201,8 +202,10 @@ export class Encoder<E extends Encoding | Scalar> {
     decode(encoded: Uint8Array): DescriptionToObject<E> {
         const reader = new Reader(encoded);
         const result = { key: null as DescriptionToObject<E> };
+
+        this._decodingRecursionCheck = new WeakSet();
         this._decode(this.encoding, "key", result, reader);
-        this._decodeLimit = 0;
+
         if (reader.pos !== encoded.length) {
             throw notify.error(
                 `Message not fully consumed: encoding=${stringifyAnything(
@@ -215,23 +218,21 @@ export class Encoder<E extends Encoding | Scalar> {
         return result.key;
     }
 
-    _decodeLimit = 0;
+    _decodingRecursionCheck = new WeakSet();
     _decode<E extends Encoding | Scalar>(
         encoding: E,
         key: string,
         container: any,
         reader: Reader,
     ): void {
-        if (this._decodeLimit++ > 1000) {
-            throw Error("Decoding recursion limit reached");
+        if (this._decodingRecursionCheck.has(encoding)) {
+            throw Error("Decoding recursion has looped");
         }
         if (encoding.repeated) {
             const repeated = (container[key] = [] as any[]);
             const encoding_ = { ...encoding, repeated: false } as typeof encoding;
 
-            let length = reader.uint32();
-            this._decodeLimit -= length; // We count repeated fields as one field
-            for (; length > 0; length--) {
+            for (let length = reader.uint32(); length > 0; length--) {
                 const subContainer = { key: null };
                 this._decode(encoding_, "key", subContainer, reader);
                 repeated.push(subContainer.key);
@@ -277,6 +278,3 @@ export class Encoder<E extends Encoding | Scalar> {
         }
     }
 }
-
-const e = Encoder.create({ type: "uint32", index: 0 });
-e.encode(1);

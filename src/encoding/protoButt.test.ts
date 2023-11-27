@@ -125,6 +125,16 @@ describe("protoButt", () => {
         {
             encoding: {
                 type: "enum",
+                fields: { "": { type: "uint32", index: 0 } },
+            },
+            input: { "": 1 },
+            output: [0, 1],
+        },
+
+        // Repeated subfields
+        {
+            encoding: {
+                type: "enum",
                 fields: {
                     a: {
                         index: 3,
@@ -136,16 +146,6 @@ describe("protoButt", () => {
             input: { a: { b: [5, 5] } },
             output: [3, 4, 2, 2 * 5, 2 * 5],
         },
-        {
-            encoding: {
-                type: "enum",
-                fields: { "": { type: "uint32", index: 0 } },
-            },
-            input: { "": 1 },
-            output: [0, 1],
-        },
-
-        // Repeated subfields
         {
             encoding: {
                 type: "message",
@@ -185,16 +185,6 @@ describe("protoButt", () => {
     );
 
     it.each(examples)(
-        "encodes then decodes each value, repeated, length=2",
-        ({ encoding, input, output }) => {
-            const repeated2Encoder = Encoder.create({ ...encoding, index: 0, repeated: true });
-            const expected2 = Uint8Array.from(concat([2], output, output));
-            expect(repeated2Encoder.encode([input, input] as any)).toEqual(expected2);
-            expect(repeated2Encoder.decode(expected2)).toEqual([input, input]);
-        },
-    );
-
-    it.each(examples)(
         "encodes then decodes each value, repeated, length=3",
         ({ encoding, input, output }) => {
             const repeated3Encoder = Encoder.create({ ...encoding, index: 0, repeated: true });
@@ -203,10 +193,9 @@ describe("protoButt", () => {
             expect(repeated3Encoder.decode(expected3)).toEqual([input, input, input]);
         },
     );
-});
 
-describe("asdf", () => {
-    // You might be wondering why I check a bunch of examples manually if I have a "fuzz" test here. I have the manual examples so I can check the output matches what I expect.
+    // The manual examples above allow me to check against the expected output, while the following fuzz test checks a much larger space
+    // Note: We basically generate random encoding schemas and some examples based on those schemas then check that encoding then decoding gives back the same object
     it("always decodes the same object that was encoded", () => {
         const FCMaybeRepeated = (arb: Arbitrary<any>, repeated: boolean | undefined) => {
             if (repeated) return fc.array(arb);
@@ -276,18 +265,23 @@ describe("asdf", () => {
                 }
             }
         };
-        // TODO: Unless I think of something very simple, I need to just limit the examples to very basic ones, that is only scalars, maxDepth=1, maxDepth=2 with the second layer only allowing 5 or less fields
-        // Try commenting out each recursive one to see what the problem is, then see if I can limit the size of the inner most recursive ones. Understand size a bit more
+
+        const changeBadKeys = <T>([key, field]: [string, T]) =>
+            [key in Object.prototype ? `${key} no. stop it. get some help.` : key, field] as [
+                string,
+                T,
+            ];
+
+        // https://fast-check.dev/docs/core-blocks/arbitraries/combiners/recursive-structure/
         const { encoding } = fc.letrec((tie) => ({
             encoding: fc
                 .tuple(
-                    // fc.integer({ min: 0, max: 130 }),
                     fc.constantFrom(undefined, true),
                     fc.oneof(
                         { depthSize: "small", withCrossShrink: true, maxDepth: 4 },
                         tie("scalar"),
-                        // tie("tuple"),
-                        // tie("message"),
+                        tie("tuple"),
+                        tie("message"),
                         tie("enum"),
                     ),
                 )
@@ -295,9 +289,11 @@ describe("asdf", () => {
                     ([repeated, encoding]) =>
                         ({ repeated, ...(encoding as any) }) as Encoding | Scalar,
                 ),
+
             scalar: fc.record({
                 type: fc.constantFrom<keyof ScalarMap>("uint32", "sint32", "bytes", "unit"),
             }) satisfies Arbitrary<TopLevel<Scalar>>,
+
             message: fc.record({
                 type: fc.constant("message"),
                 fields: fc
@@ -305,7 +301,7 @@ describe("asdf", () => {
                         maxKeys: 5,
                     })
                     .chain((fields) => {
-                        const entries = Object.entries(fields);
+                        const entries = Object.entries(fields).map(changeBadKeys);
                         return fc
                             .uniqueArray(fc.integer({ min: 0, max: 130 }), {
                                 minLength: entries.length,
@@ -321,6 +317,7 @@ describe("asdf", () => {
                             );
                     }),
             }) satisfies Arbitrary<TopLevel<Encoding>>,
+
             enum: fc.record({
                 type: fc.constant("enum"),
                 fields: fc
@@ -337,14 +334,17 @@ describe("asdf", () => {
                             })
                             .map((indexes) =>
                                 Object.fromEntries(
-                                    entries.map(([key, field], i) => [
-                                        key,
-                                        { ...field, index: indexes[i] },
-                                    ]),
+                                    entries
+                                        .map(changeBadKeys)
+                                        .map(([key, field], i) => [
+                                            key,
+                                            { ...field, index: indexes[i] },
+                                        ]),
                                 ),
                             );
                     }),
             }) satisfies Arbitrary<TopLevel<Encoding>>,
+
             tuple: fc.record({
                 type: fc.constant("tuple"),
                 fields: fc
@@ -353,24 +353,24 @@ describe("asdf", () => {
                     })
                     .map((fields) =>
                         Object.fromEntries(
-                            Object.entries(fields).map(([key, field], index) => [
-                                key,
-                                { ...field, index },
-                            ]),
+                            Object.entries(fields)
+                                .map(changeBadKeys)
+                                .map(([key, field], index) => [key, { ...field, index }]),
                         ),
                     ),
             }) satisfies Arbitrary<TopLevel<Encoding>>,
         }));
-        const encodingObject = encoding.chain((encoding) =>
-            fc.record({ encoding: fc.constant(encoding), object: FCExampleFromEncoding(encoding) }),
+        const encodingAndInput = encoding.chain((encoding) =>
+            fc.record({ encoding: fc.constant(encoding), input: FCExampleFromEncoding(encoding) }),
         );
-        given([encodingObject], {
-            numRuns: 100,
+
+        given([encodingAndInput], {
+            numRuns: 1000,
             skipAllAfterTimeLimit: 10_000,
-        }).assertProperty(({ encoding, object }) => {
-            console.log(encoding, object);
+            maxSkipsPerRun: 5,
+        }).assertProperty(({ encoding, input }) => {
             const encoder = Encoder.create(encoding);
-            expect(object).toEqual(encoder.decode(encoder.encode(object)));
+            expect(input).toEqual(encoder.decode(encoder.encode(input)));
         });
     });
 });
