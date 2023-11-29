@@ -1,3 +1,4 @@
+import { PuzzleManager } from "../PuzzleManager";
 import { hopStraight } from "../algorithms/hopStraight";
 import { Grid, Point, PointType, SVGGroup, TupleVector } from "../types";
 import { parseIntBase } from "../utils/data";
@@ -23,7 +24,7 @@ type GridPoint = { x: number; y: number; type: PointType };
 //     toSVGPoints(settings: Pick<PuzzleManager["settings"], "cellSize">): Map<FancyVector, Vector>;
 // }
 
-type Settings = Parameters<Grid["getPointTransformer"]>[0];
+type Settings = Pick<PuzzleManager["settings"], "cellSize">;
 
 class _SquareGridPoints<PT extends PointType = PointType> {
     constructor(
@@ -97,9 +98,8 @@ class _SquareGridPoints<PT extends PointType = PointType> {
     }
 }
 
-// TODO: Only export for testing in the future. I'm temporarily using it's types in types.ts
-// TODO: Also, I don't have a clear sense on which methods should be in the transformer and which on GridPoints, as well as the general format of return types...
-export class _SquareGridTransformer {
+// TODO: I don't have a clear sense on which methods should be in the transformer and which on GridPoints, as well as the general format of return types...
+class _SquareGridTransformer {
     constructor(public settings: Settings) {}
 
     fromPoints<PT extends PointType = PointType>(type: PT, points: readonly Point[]) {

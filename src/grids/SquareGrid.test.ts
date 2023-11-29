@@ -5,7 +5,7 @@ import { reduceTo } from "../utils/data";
 import { Vec } from "../utils/math";
 import { smartSort } from "../utils/string";
 import { FCRepeat, given } from "../utils/testing/fcArbitraries";
-import { SquareGrid, _SquareGridTransformer } from "./SquareGrid";
+import { SquareGrid } from "./SquareGrid";
 
 describe("SquareGrid", () => {
     const common = { minX: 0, minY: 0, type: "square" as const };
@@ -125,8 +125,9 @@ describe("SquareGrid", () => {
 });
 
 describe("SquareGridTransformer", () => {
+    const grid = new SquareGrid();
     // cellSize defaults to 2 so that the grid space matches the svg space
-    const pointTransformer = ({ cellSize = 2 } = {}) => new _SquareGridTransformer({ cellSize });
+    const pointTransformer = ({ cellSize = 2 } = {}) => grid.getPointTransformer({ cellSize });
     const toPoint = (vec: Vec) => vec.xy.join(",");
 
     it("parses points", () => {
@@ -287,8 +288,9 @@ describe("SquareGridTransformer", () => {
 });
 
 describe("SquareGridTransformer.shrinkwrap", () => {
+    const grid = new SquareGrid();
     // cellSize defaults to 2 so that the grid space matches the svg space
-    const pointTransformer = ({ cellSize = 2 } = {}) => new _SquareGridTransformer({ cellSize });
+    const pointTransformer = ({ cellSize = 2 } = {}) => grid.getPointTransformer({ cellSize });
 
     const FCCellVector = () => {
         return FCRepeat(2, fc.integer()).map((vec) => Vec.from(vec).scale(2).plus([1, 1]));

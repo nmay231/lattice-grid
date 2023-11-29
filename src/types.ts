@@ -2,7 +2,7 @@ import React from "react";
 import type { ref } from "valtio";
 import type { PuzzleManager } from "./PuzzleManager";
 import type { StorageManager } from "./StorageManager";
-import type { SquareGridParams, _SquareGridTransformer } from "./grids/SquareGrid";
+import type { SquareGrid, SquareGridParams } from "./grids/SquareGrid";
 import type { availableLayers } from "./layers";
 import type { UserCodeJSON } from "./userComputation/codeBlocks";
 import type { PutAtEnd } from "./utils/OrderedMap";
@@ -136,9 +136,7 @@ export type FocusGroup = "layerList" | "controlSettings" | "constraintSettings" 
 // #region - Grids
 export type Grid = {
     id: string;
-    getPointTransformer: (
-        settings: Pick<PuzzleManager["settings"], "cellSize">,
-    ) => _SquareGridTransformer;
+    getPointTransformer: SquareGrid["getPointTransformer"]; // TODO: Type separately
     getAllPoints: (type: PointType) => Point[];
     selectPointsWithCursor: (arg: {
         settings: PuzzleManager["settings"];
