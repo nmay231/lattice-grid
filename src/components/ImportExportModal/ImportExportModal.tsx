@@ -21,6 +21,15 @@ import { mobileControlsProxy } from "../MobileControls";
 import { sidebarProxy } from "../SideBar/sidebarProxy";
 import { PuzzleData, currentEncodingVersion, importPuzzle } from "./importPuzzle";
 
+const layerCanBeAnswerChecked = (layer: Layer) => {
+    return (
+        !layer.klass.ethereal &&
+        layer.klass.type !== "CenterMarksLayer" &&
+        layer.klass.type !== "TopBottomMarksLayer" &&
+        layer.klass.type !== "ToggleCharactersLayer"
+    );
+};
+
 export const ImportExportButton = () => {
     const open = useCallback(() => {
         openModal("import-export");
@@ -52,13 +61,7 @@ export const ImportExportModal = React.memo(function ImportExportModal() {
         setAnswerCheck(
             puzzle.layers
                 .entries()
-                .filter(
-                    ([, layer]) =>
-                        !layer.klass.ethereal &&
-                        layer.klass.type !== "CenterMarksLayer" &&
-                        layer.klass.type !== "TopBottomMarksLayer" &&
-                        layer.klass.type !== "ToggleCharactersLayer",
-                )
+                .filter(([, layer]) => layerCanBeAnswerChecked(layer))
                 .map(([id]) => id),
         );
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -146,7 +149,7 @@ export const ImportExportModal = React.memo(function ImportExportModal() {
                 <Text size="sm">Which layers are answer checked?</Text>
                 {puzzle.layers
                     .entries()
-                    .filter(([, layer]) => !layer.klass.ethereal)
+                    .filter(([, layer]) => layerCanBeAnswerChecked(layer))
                     .map(([id, layer]) => {
                         return (
                             <Checkbox
