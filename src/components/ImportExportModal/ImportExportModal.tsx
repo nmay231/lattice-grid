@@ -158,7 +158,7 @@ export const ImportExportModal = React.memo(function ImportExportModal() {
                                 checked={answerCheck.includes(id)}
                                 onChange={() => {
                                     if (answerCheck.includes(id)) {
-                                        setAnswerCheck(answerCheck.filter((id) => id !== id));
+                                        setAnswerCheck(answerCheck.filter((id_) => id_ !== id));
                                     } else {
                                         setAnswerCheck([...answerCheck, id]);
                                     }
