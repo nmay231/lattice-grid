@@ -1,7 +1,7 @@
 import fc from "fast-check";
 import { shuffle } from "lodash";
-import { TupleVector } from "../types";
-import { reduceTo } from "../utils/data";
+import { TupleVector, type PointType } from "../types";
+import { parseIntBase, reduceTo } from "../utils/data";
 import { Vec } from "../utils/math";
 import { smartSort } from "../utils/string";
 import { FCRepeat, given } from "../utils/testing/fcArbitraries";
@@ -122,6 +122,126 @@ describe("SquareGrid", () => {
             type: "polygon",
         });
     });
+});
+
+describe("SquareGridEncoder", () => {
+    it.each([
+        { input: [1, 0, 0, 0], output: [8], currentBase: 2, targetBase: 10 },
+        { input: [1, 0, 1, 0], output: [1, 0], currentBase: 2, targetBase: 10 },
+        { input: [1, 0, 0, 0, 0], output: [1, 6], currentBase: 2, targetBase: 10 },
+        {
+            input: [1, 1, 0, 0, 0, 1, 1, 1, 1],
+            output: [1, 8, 15],
+            currentBase: 2,
+            targetBase: 16,
+        },
+        { input: [1, 1, 0, 1, 0], output: [2, 2, 2], currentBase: 2, targetBase: 3 },
+    ] satisfies Array<{
+        input: number[];
+        output: number[];
+        currentBase: number;
+        targetBase: number;
+    }>)("converts to and from some number bases", ({ input, output, currentBase, targetBase }) => {
+        const grid = new SquareGrid();
+        const encoder = grid.getEncoder({ cellSize: 2 });
+
+        expect(encoder.baseConvert(input, currentBase, targetBase)).toEqual(output);
+        expect(encoder.baseConvert(output, targetBase, currentBase)).toEqual(input);
+    });
+
+    it.each([
+        {
+            params: { width: 10, height: 10, pt: "cells" as PointType },
+            input: ["1,1", "19,19", "13,7"],
+            output: [0, 100 - 1, 6 + 3 * 10],
+        },
+        {
+            params: { width: 1, height: 1, pt: "cells" as PointType },
+            input: ["1,1"],
+            output: [0],
+        },
+        {
+            params: { width: 30, height: 30, pt: "cells" as PointType },
+            input: ["1,1", "15,15", "13,7", "59,59"],
+            output: [0, 7 + 7 * 30, 6 + 3 * 30, 900 - 1],
+        },
+        {
+            params: { width: 2, height: 15, pt: "cells" as PointType },
+            input: ["3,29"],
+            output: [30 - 1],
+        },
+        {
+            params: { width: 4, height: 4, pt: "corners" as PointType },
+            input: ["0,0", "2,0", "4,0", "6,0", "8,0", "8,2", "8,4", "8,6", "8,8"],
+            output: [0, 1, 2, 3, 4, 9, 14, 19, 24],
+        },
+        {
+            params: { width: 10, height: 10, pt: "corners" as PointType },
+            input: ["0,0", "2,0", "0,2", "0,4", "8,12", "20,20"],
+            output: [0, 1, 11, 22, 4 + 6 * 11, 11 ** 2 - 1],
+        },
+        {
+            params: { width: 1, height: 14, pt: "corners" as PointType },
+            input: ["2,28", "0,0", "2,0", "2,2", "0,28"],
+            output: [30 - 1, 0, 1, 3, 30 - 2],
+        },
+    ])("en/decodeGridPointsInsideGrid", ({ params, input, output }) => {
+        const grid = new SquareGrid({
+            width: params.width,
+            height: params.height,
+            minX: 0,
+            minY: 0,
+            type: "square",
+        });
+        const settings = { cellSize: 2 };
+        const encoder = grid.getEncoder(settings);
+        const pt = grid.getPointTransformer(settings);
+        const [stringToVec, gp] = pt.fromPoints(params.pt, input);
+        const vecToNumber = encoder.encodeGridPointsInsideGrid(gp);
+
+        const actualOutput = input.map((point) => vecToNumber.get(stringToVec.get(point))!);
+        expect(actualOutput).toEqual(output);
+
+        const numberToVec = encoder.decodeGridPointsInsideGrid(params.pt, output);
+        const recoveredInput = output.map((number) => numberToVec[number].string());
+        expect(recoveredInput).toEqual(input);
+
+        // A transform to origin shouldn't change anything
+        const oldInput = input;
+        for (const transform of [new Vec(-5, 20), new Vec(-0, -100)]) {
+            const input = oldInput.map((point) =>
+                Vec.from(point.split(",").map(parseIntBase(10)) as TupleVector)
+                    .plus(transform.scale(2))
+                    .string(),
+            );
+            const grid = new SquareGrid({
+                width: params.width,
+                height: params.height,
+                minX: transform.x,
+                minY: transform.y,
+                type: "square",
+            });
+            const settings = { cellSize: 2 };
+            const encoder = grid.getEncoder(settings);
+            const pt = grid.getPointTransformer(settings);
+            const [stringToVec, gp] = pt.fromPoints(params.pt, input);
+            const vecToNumber = encoder.encodeGridPointsInsideGrid(gp);
+
+            const actualOutput = input.map((point) => vecToNumber.get(stringToVec.get(point))!);
+            expect(actualOutput).toEqual(output);
+
+            const numberToVec = encoder.decodeGridPointsInsideGrid(params.pt, output);
+            const recoveredInput = output.map((number) => numberToVec[number].string());
+            expect(recoveredInput).toEqual(input);
+        }
+    });
+
+    // it.each([
+    //     {input: }
+    // ])(
+    //     "en/decodeAdjacentGridPointsInsideGrid",
+    //     , () => {}
+    // );
 });
 
 describe("SquareGridTransformer", () => {

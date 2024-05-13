@@ -1,10 +1,13 @@
+import { chunk } from "lodash";
 import { PuzzleManager } from "../PuzzleManager";
 import { hopStraight } from "../algorithms/hopStraight";
-import { Grid, Point, PointType, SVGGroup, TupleVector } from "../types";
-import { parseIntBase } from "../utils/data";
+import type { EncodedColor, EncodedPointType } from "../encoding/puzzleEncoder";
+import { Grid, Point, PointType, SVGGroup, TupleVector, type Color } from "../types";
+import { COLOR_VALUE_TO_NAME, DEFAULT_COLORS } from "../utils/colors";
+import { parseIntBase, zip } from "../utils/data";
 import { Vec } from "../utils/math";
 import { notify } from "../utils/notifications";
-import { randomStringId } from "../utils/string";
+import { randomStringId, stringifyAnything } from "../utils/string";
 import styles from "./styles.module.css";
 
 export type SquareGridParams = {
@@ -316,6 +319,236 @@ class _SquareGridTransformer {
     }
 }
 
+class _SquareGridEncoder {
+    constructor(
+        public params: SquareGridParams,
+        public settings: Settings,
+    ) {}
+
+    // TODO: Assumes grid points are inside the grid
+    encodeGridPointsInsideGrid(gp: _SquareGridPoints) {
+        return this._encodeGridPointsInsideGrid(gp.type, gp.points);
+    }
+
+    // TODO: Maybe I don't need the above method for this purpose. I don't know...
+    _encodeGridPointsInsideGrid(pointType: PointType, points: Vec[]) {
+        if (pointType !== "cells" && pointType !== "corners") {
+            throw Error("Only supports cells and corners for now");
+        }
+
+        const map = new Map<Vec, number>();
+        const { minX, minY, width: _width } = this.params;
+        const width = pointType === "corners" ? _width + 1 : _width;
+
+        for (const point of points) {
+            const { x, y } = point;
+            map.set(point, width * ((y >> 1) - minY) + ((x >> 1) - minX));
+        }
+        return map;
+    }
+
+    decodeGridPointsInsideGrid(pointType: PointType, points: number[]) {
+        if (pointType !== "cells" && pointType !== "corners") {
+            throw Error("Only supports cells and corners for now");
+        }
+
+        const map = {} as Record<number, Vec>;
+        const offset = pointType === "corners" ? 0 : 1;
+        const minX = (this.params.minX << 1) + offset;
+        const minY = (this.params.minY << 1) + offset;
+        const width = this.params.width + 1 - offset;
+        for (const n of points) {
+            // TODO: Assumes cellSize is always 2. Should I just do that from now on?
+            map[n] = new Vec((n % width << 1) + minX, ((n / width) << 1) + minY);
+        }
+        return map;
+    }
+
+    // TODO: _SquareGridAdjacentPoints or something like that
+    encodeAdjacentGridPointsInsideGrid(pointType: PointType, points: Array<[Vec, Vec]>) {
+        if (pointType !== "cells" && pointType !== "corners") {
+            throw Error("Only supports cells and corners for now");
+        }
+
+        const down = new Vec(0, 2);
+        const right = new Vec(2, 0);
+        const CHUNK_SIZE = 8;
+        const downRightBitmap = [];
+
+        for (const byte of chunk(points, CHUNK_SIZE)) {
+            let bitmap = 0;
+            for (const [start, end] of byte) {
+                bitmap <<= 1;
+
+                if (start.plus(down).equals(end)) {
+                    bitmap &= 1;
+                } else if (!start.plus(right).equals(end)) {
+                    throw notify.error(
+                        `Encoding adjacent points failed. Ending point not down or right of start: ${stringifyAnything(
+                            [start, end],
+                        )}`,
+                    );
+                }
+            }
+
+            if (byte.length < CHUNK_SIZE) {
+                bitmap <<= byte.length - CHUNK_SIZE;
+            }
+            downRightBitmap.push(bitmap);
+        }
+
+        const startingPoints = points.map(([start]) => start);
+
+        return {
+            startingPoints: this._encodeGridPointsInsideGrid(pointType, startingPoints),
+            downRightBitmap: Uint8Array.from(downRightBitmap),
+        };
+    }
+
+    decodeAdjacentGridPointsInsideGrid(
+        pointType: PointType,
+        points: number[],
+        downRightBitmap: Uint8Array,
+    ) {
+        if (pointType !== "cells" && pointType !== "corners") {
+            throw Error("Only supports cells and corners for now");
+        }
+        const downRightArray = [...downRightBitmap]
+            .flatMap((byte) => [
+                byte & (1 << 7),
+                byte & (1 << 6),
+                byte & (1 << 5),
+                byte & (1 << 4),
+                byte & (1 << 3),
+                byte & (1 << 2),
+                byte & (1 << 1),
+                byte & (1 << 0),
+            ])
+            .map(Boolean);
+
+        const diff = downRightArray.length - points.length;
+        if (0 <= diff && diff < 8) {
+            throw Error("Length of points and bitmap do not match closely enough");
+        }
+
+        const down = new Vec(2, 0);
+        const right = new Vec(0, 2);
+
+        const map = {} as Record<number, [Vec, Vec]>;
+        const offset = pointType === "corners" ? 1 : 0;
+        const minX = this.params.minX + offset;
+        const minY = this.params.minY + offset;
+        const width = this.params.width + offset;
+        for (const [n, downRight] of zip(points, downRightArray)) {
+            const point = new Vec((n % width) + minX, ((n / width) | 0) + minY);
+            map[n] = [point, point.plus(downRight ? down : right)];
+        }
+        return map;
+    }
+
+    // Don't want to be greedy, but these should be safe: !@#$&*()_-+=;':?,./~
+    _baseCharacters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+
+    // TODO: Constant across all grids
+    /** Treats the numbers as a number in the specified base and encodes into base 256 */
+    encodeNonNegativeNumbersAsBaseConversion(numbers: number[], base: number): Uint8Array {
+        const base16 = this.baseConvert(numbers, base, 16);
+
+        if (base16.length & 1) {
+            base16.unshift(1);
+        } else if (base16.length && (base16[0] === 1 || (base16[0] === 0 && base16[1] === 0))) {
+            base16.unshift(0, 0);
+        }
+
+        const base256 = new Uint8Array(base16.length / 2);
+        for (let i = 0; i < base16.length; i += 2) {
+            base256[i / 2] = 16 * base16[i] + base16[i + 1];
+        }
+        return base256;
+    }
+
+    decodeNonNegativeNumbersAsBaseConversion(numbers: Uint8Array, base: number): number[] {
+        if (!numbers.length) return [];
+
+        const base16 = [] as number[];
+        for (const x of numbers) {
+            base16.push(x >> 4, x & 0b1111);
+        }
+
+        if (numbers[0] === 0) {
+            base16.splice(0, 2);
+        } else if (base16[0] === 1) {
+            base16.shift();
+        }
+        return this.baseConvert(base16, 16, base);
+    }
+
+    baseConvert(digits: number[], currentBase: number, targetBase: number): number[] {
+        if (currentBase <= 1 || currentBase > 36 || targetBase <= 1 || targetBase > 36) {
+            throw Error("Bases must be between 2, 36 inclusive");
+        }
+        const singleCharDigits =
+            currentBase <= 10 ? digits : digits.map((char) => this._baseCharacters[char]);
+        const base10 = parseInt(singleCharDigits.join(""), currentBase);
+
+        // Efficiency? What is that?
+        return [...base10.toString(targetBase).toUpperCase()].map((char) =>
+            this._baseCharacters.indexOf(char),
+        );
+    }
+
+    encodePointType(pointType: PointType): EncodedPointType {
+        switch (pointType) {
+            case "cells":
+                return { cells: true };
+            case "corners":
+                return { corners: true };
+            case "edges":
+                // TODO: This is me reading old code, but I think the reason I
+                // haven't encoded edges is because this actually should not be
+                // pointType, but rather a relation of pointTypes (or a singular
+                // one, as it is for now).
+                throw Error(
+                    "TODO: We failed and I don't even know if this method should be part of SquareGridEncoder",
+                );
+        }
+    }
+
+    decodePointType(pointType: EncodedPointType): PointType {
+        if (pointType.cells) {
+            return "cells";
+        } else if (pointType.corners) {
+            return "corners";
+        } else {
+            throw Error(
+                "TODO: We failed and I don't even know if this method should be part of SquareGridEncoder",
+            );
+        }
+    }
+
+    // TODO: I should probably just stick to one function to stop premature optimizations
+    encodeColor(color: Color): EncodedColor {
+        return { [COLOR_VALUE_TO_NAME[color]]: true };
+    }
+
+    encodeColors(colors: Color[]): EncodedColor[] {
+        return colors.map((color) => ({ [COLOR_VALUE_TO_NAME[color]]: true }));
+    }
+
+    // TODO: Better index than array index (use some sort of map instead of an
+    // array). Perhaps color enum values can be interned at startup?
+    decodeColors(colors: EncodedColor[]): Color[] {
+        return colors.map((encoded) => {
+            const enumVariant = Object.keys(encoded)[0];
+            if (enumVariant in DEFAULT_COLORS) {
+                return DEFAULT_COLORS[enumVariant as keyof typeof DEFAULT_COLORS];
+            } else {
+                throw Error(`Unknown color enum value: ${stringifyAnything(encoded)}`);
+            }
+        });
+    }
+}
+
 export class SquareGrid implements Grid {
     id = `SquareGrid-${randomStringId([])}`; // TODO: Filter other grid ids
     width = 1;
@@ -438,6 +671,10 @@ export class SquareGrid implements Grid {
         // TODO: Temporary hack to prevent selecting points outside the grid.
         return points.filter((point) => !this._outOfBounds(this._stringToGridPoint(point)));
     };
+
+    getEncoder(settings: Settings) {
+        return new _SquareGridEncoder(this.getParams(), settings);
+    }
 
     getPointTransformer(settings: Settings) {
         return new _SquareGridTransformer(settings);
