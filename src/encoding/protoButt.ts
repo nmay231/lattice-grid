@@ -178,13 +178,18 @@ export class Encoder<E extends Encoding | Scalar> {
             case "enum":
             case "message": {
                 if (encoding.type === "message") {
-                    writer.uint32(Object.keys(value).length);
+                    const definedAttrs = Object.values(value).reduce(
+                        (nDefined: number, valueAttr: unknown) =>
+                            valueAttr !== undefined ? nDefined + 1 : nDefined,
+                        0,
+                    );
+                    writer.uint32(definedAttrs);
                 }
 
                 let encodedFields = 0;
                 for (const index of encoding._fieldIndexes!) {
                     const key = encoding._indexToField![index];
-                    if (!(key in value)) continue;
+                    if (value[key] === undefined) continue;
 
                     encodedFields += 1;
                     this._encode(encoding.fields[key], value[key], writer, true);

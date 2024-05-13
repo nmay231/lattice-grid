@@ -4,6 +4,23 @@ import { Encoder, Encoding, Scalar, ScalarMap, TopLevel } from "./protoButt";
 
 import { concat } from "../utils/data";
 describe("protoButt", () => {
+    // The input is not *exactly* equal to itself after encoding then decoding, so it needs its own test
+    it("treats keys set to undefined the same as a key not present", () => {
+        const encoder = Encoder.create({
+            type: "message",
+            fields: {
+                optional: { index: 0, type: "uint32" },
+                required: { index: 10, type: "uint32" },
+            },
+            index: 0,
+        });
+
+        const input = { optional: undefined, required: 42 };
+        const output = Uint8Array.from([1, 10, 42]);
+        expect(encoder.encode(input)).toEqual(output);
+        expect(encoder.decode(output)).toEqual({ required: 42 });
+    });
+
     const bytesExample = Uint8Array.from([7, 1, 1, 2, 3, 5, 8, 13]);
     const stringExample = Uint8Array.from([11, ...new TextEncoder().encode("hello world")]);
 
@@ -15,7 +32,7 @@ describe("protoButt", () => {
                 c: { type: "bytes", index: 0 },
                 b: { type: "sint32", index: 4 },
             },
-        },
+        } satisfies TopLevel<Encoding>,
         input: { a: 900, c: bytesExample.slice(1), b: -420 },
         output: [3, 0, ...bytesExample, 2, 0b1000_0100, 0b0000_0111, 4, 0b1100_0111, 0b0000_0110],
     } as const;
