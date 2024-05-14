@@ -335,12 +335,12 @@ export const extractPuzzleData = (inputText: string): LatestPuzzleData | ParseEr
                     continue;
                 }
 
+                const pointType = encoder.decodePointType(layer.pointType);
                 const pointMap = encoder.decodeAdjacentGridPointsInsideGrid(
-                    "cells",
+                    pointType,
                     layer.dataV1.flatMap(({ startingPoint }) => startingPoint),
                     layer.downRightBitmap,
                 );
-                const pointType = encoder.decodePointType(layer.pointType);
 
                 const objects = new LayerStorage<SimpleLineV1>();
                 const decodedObjects: Array<ReturnType<(typeof objects)["entries"]>[number]> = [];
