@@ -2,6 +2,7 @@
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 import svgrPlugin from "vite-plugin-svgr";
+import { configDefaults } from "vitest/config";
 
 export default defineConfig({
     appType: "spa",
@@ -11,6 +12,7 @@ export default defineConfig({
         globals: true,
         environment: "jsdom",
         setupFiles: "./src/setupTests.ts",
+        exclude: [...configDefaults.exclude, "e2e/**/*"],
         coverage: { exclude: ["src/utils/testUtils.ts"] },
     },
 });

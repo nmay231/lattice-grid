@@ -18,5 +18,5 @@
         "noEmit": true,
         "jsx": "react-jsx"
     },
-    "include": ["src", "vite.config.mts", ".eslintrc.js"]
+    "include": ["src", "e2e", "vite.config.mts", ".eslintrc.js", "playwright.config.ts"]
 }

@@ -93,6 +93,7 @@ export const SVGCanvas = React.memo(function SVGCanvas() {
             >
                 <div
                     className={clsx(styles.innerContainer, layerStyles[`mode-${editMode}`])}
+                    data-testid="svg-canvas"
                     {...controls.eventListeners}
                 >
                     <Inner layers={layers} SVGGroups={SVGGroups} />
