@@ -5,10 +5,11 @@ import { FCNormalFloat, FCRepeat, given } from "./testing/fcArbitraries";
 
 // Most of the simple tests are not really to test correctness as much as they are to check there are no unexpected errors
 describe("Vector", () => {
-    it("has .xy and .size props", () => {
+    it("has .xy and .size props and .toString() method", () => {
         const vec = new Vec(3, 4);
         expect(vec.xy).toEqual([3, 4]);
         expect(vec.size).toEqual(5);
+        expect(vec.string()).toBe("3,4");
     });
 
     it("can add", () => {

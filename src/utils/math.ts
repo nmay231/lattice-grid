@@ -18,6 +18,10 @@ export class Vec {
         return euclidean(0, 0, this.x, this.y);
     }
 
+    string() {
+        return `${this.x},${this.y}`;
+    }
+
     plus(other: Vec | TupleVector) {
         if (other instanceof Vec) {
             other = other.xy;

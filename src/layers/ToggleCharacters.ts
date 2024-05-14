@@ -298,4 +298,9 @@ export class ToggleCharactersLayer
     };
 
     getOverlaySVG: IToggleCharactersLayer["getOverlaySVG"];
+
+    encode: IToggleCharactersLayer["encode"] = () => {
+        // TODO: Shouldn't even be an option to encode this layer yet
+        return { ToggleCharactersLayer: { whichSubClass: 42 } };
+    };
 }

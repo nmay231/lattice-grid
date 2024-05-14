@@ -44,4 +44,8 @@ export class CenterMarksLayer extends ToggleCharactersLayer {
         }
         return false;
     }
+
+    encode: ToggleCharactersLayer["encode"] = () => {
+        return { ToggleCharactersLayer: { whichSubClass: 1 } };
+    };
 }

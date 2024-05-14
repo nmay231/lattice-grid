@@ -183,4 +183,49 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
 
         return [{ id: "lines", type: "line", elements }];
     };
+
+    encode: ISimpleLineLayer["encode"] = ({ grid, storage, settings, answerCheck }) => {
+        const stored = storage.getObjects<SimpleLineProps>(this.id);
+        const objects = stored.entries("question").slice();
+
+        let answersAtEnd = 0;
+        if (answerCheck) {
+            const answers = stored.entries("answer");
+            answersAtEnd = answers.length;
+            objects.push(...answers);
+        }
+
+        const encoder = grid.getEncoder(settings);
+        const pt = grid.getPointTransformer(settings);
+        const [pointMap] = pt.fromPoints(
+            "cells",
+            objects
+                .map(([, { points }]) => points)
+                .flat()
+                .filter(filterUnique),
+        );
+        const { startingPoints, downRightBitmap } = encoder.encodeAdjacentGridPointsInsideGrid(
+            this.settings.pointType,
+            objects.map(([, { points }]) => {
+                const [start, end] = points;
+                return [pointMap.get(start)!, pointMap.get(end)!];
+            }),
+        );
+
+        return {
+            SimpleLineLayer: {
+                dataV1: objects.map(([, obj]) => {
+                    const { stroke, points } = obj;
+                    return {
+                        startingPoint: startingPoints.get(pointMap.get(points[0]))!,
+                        stroke: encoder.encodeColor(stroke),
+                    };
+                }),
+                downRightBitmap,
+                pointType: encoder.encodePointType(this.settings.pointType),
+                stroke: encoder.encodeColor(this.settings.stroke),
+                answersAtEnd: answersAtEnd || undefined,
+            },
+        };
+    };
 }

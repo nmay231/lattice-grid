@@ -43,4 +43,10 @@ export class BaseLayer<LP extends LayerProps>
             message: `${this.klass.type}.handleEvent() called before implementing!`,
         });
     };
+
+    encode: Layer<LP>["encode"] = () => {
+        throw notify.error({
+            message: `${this.klass.type}.encode() called before implementing!`,
+        });
+    };
 }

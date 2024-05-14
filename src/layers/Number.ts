@@ -220,4 +220,36 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
     };
 
     getOverlaySVG: INumberLayer["getOverlaySVG"];
+
+    encode: INumberLayer["encode"] = ({ grid, storage, settings, answerCheck }) => {
+        const stored = storage.getObjects<NumberProps>(this.id);
+        const objects = stored.entries("question").slice();
+
+        let answersAtEnd = 0;
+        if (answerCheck) {
+            const answers = stored.entries("answer");
+            answersAtEnd = answers.length;
+            objects.push(...answers);
+        }
+
+        const encoder = grid.getEncoder(settings);
+        const pt = grid.getPointTransformer(settings);
+        const [pointToVec, gp] = pt.fromPoints(
+            "cells",
+            objects.map(([point]) => point),
+        );
+        const vecToNumber = encoder.encodeGridPointsInsideGrid(gp);
+
+        return {
+            NumberLayer: {
+                max: this.settings.max,
+                negatives: this.settings.negatives ? 1 : 0,
+                dataV1: objects.map(([point, { state }]) => ({
+                    point: vecToNumber.get(pointToVec.get(point))!,
+                    state: parseInt(state),
+                })),
+                answersAtEnd: answersAtEnd || undefined,
+            },
+        };
+    };
 }

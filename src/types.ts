@@ -2,6 +2,7 @@ import React from "react";
 import type { ref } from "valtio";
 import type { PuzzleManager } from "./PuzzleManager";
 import type { StorageManager } from "./StorageManager";
+import type { EncodedLayer } from "./encoding/puzzleEncoder";
 import type { SquareGrid, SquareGridParams } from "./grids/SquareGrid";
 import type { availableLayers } from "./layers";
 import type { UserCodeJSON } from "./userComputation/codeBlocks";
@@ -201,6 +202,7 @@ export type LayerProps = {
     TempStorage: UnknownObject;
     Settings: Record<never, never>;
 };
+export type LayerStorageProps = Pick<LayerProps, "ObjectState" | "PermStorage">;
 
 export type Layer<LP extends LayerProps = LayerProps> = {
     readonly klass: LayerClass<LP>;
@@ -224,6 +226,14 @@ export type Layer<LP extends LayerProps = LayerProps> = {
         },
     ) => SVGGroup[];
     getOverlaySVG?: (data: Omit<LayerEventEssentials<LP>, "tempStorage">) => SVGGroup[];
+    // TODO: Better typing
+    // TODO: Also have encoding and decoding in the same place however I end up going about this.
+    encode: (
+        context: Pick<PuzzleManager, "settings" | "storage"> & {
+            grid: SquareGrid;
+            answerCheck: boolean;
+        },
+    ) => EncodedLayer;
 };
 
 export type LayerClass<LP extends LayerProps = LayerProps> = {

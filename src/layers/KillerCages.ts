@@ -1,4 +1,4 @@
-import { LayerClass, SVGGroup } from "../types";
+import { LayerClass, Point, SVGGroup } from "../types";
 import { reduceTo } from "../utils/data";
 import { Vec } from "../utils/math";
 import { notify } from "../utils/notifications";
@@ -13,7 +13,7 @@ import { numberTyper } from "./controls/numberTyper";
 import styles from "./layers.module.css";
 
 interface KillerCagesProps extends MultiPointLayerProps {
-    ObjectState: MultiPointLayerProps["ObjectState"] & { state: string | null };
+    ObjectState: { points: Point[]; state: string | null };
     Settings: {
         _numberTyper: ReturnType<typeof numberTyper>;
         storageFilter: MultiPointStorageFilter<KillerCagesProps>;
@@ -161,5 +161,31 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
     getOverlaySVG: IKillerCagesLayer["getOverlaySVG"] = () => {
         // TODO: Only render the current Killer Cage when focused
         return [];
+    };
+
+    encode: IKillerCagesLayer["encode"] = ({ grid, storage, settings, answerCheck }) => {
+        if (answerCheck) {
+            notify.error({ message: "Killer Cages should not be able to be answer checked" });
+        }
+
+        const stored = storage.getObjects<KillerCagesProps>(this.id);
+        const objects = stored.entries("question");
+
+        const encoder = grid.getEncoder(settings);
+        const pt = grid.getPointTransformer(settings);
+
+        return {
+            KillerCagesLayer: {
+                dataV1: objects.map(([, { points, state }]) => {
+                    const [pointToVec, gp] = pt.fromPoints("cells", points);
+                    const vecToNumber = encoder.encodeGridPointsInsideGrid(gp);
+
+                    return {
+                        points: points.map((point) => vecToNumber.get(pointToVec.get(point))!),
+                        state: state ? parseInt(state) : undefined,
+                    };
+                }),
+            },
+        };
     };
 }

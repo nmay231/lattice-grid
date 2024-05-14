@@ -44,4 +44,8 @@ export class TopBottomMarksLayer extends ToggleCharactersLayer {
         }
         return false;
     }
+
+    encode: ToggleCharactersLayer["encode"] = () => {
+        return { ToggleCharactersLayer: { whichSubClass: 2 } };
+    };
 }

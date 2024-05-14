@@ -1,6 +1,7 @@
-import { Encoder, Encoding, Scalar, TopLevel } from "./protoButt";
+import { Encoder, Encoding, Scalar, TopLevel, type DescriptionToObject } from "./protoButt";
 
-const ColorEnum = {
+export type EncodedColor = DescriptionToObject<typeof ColorEnum>;
+export const ColorEnum = {
     type: "enum",
     fields: {
         UNKNOWN: { index: 0, type: "unit" },
@@ -25,6 +26,11 @@ const PointScalar = {
     type: "uint32",
 } as const satisfies TopLevel<Scalar>;
 
+const BitmapScalar = {
+    type: "bytes",
+} as const satisfies TopLevel<Scalar>;
+
+export type EncodedPointType = DescriptionToObject<typeof PointTypeScalar>;
 const PointTypeScalar = {
     type: "enum",
     fields: {
@@ -35,14 +41,119 @@ const PointTypeScalar = {
     },
 } as const satisfies TopLevel<Encoding>;
 
-const AdjacentPointPair = {
-    type: "uint32",
-} as const satisfies TopLevel<Scalar>;
-
 const ContiguousPoints = {
     type: "uint32",
     repeated: true,
 } as const satisfies TopLevel<Scalar>;
+
+export type EncodedLayer = DescriptionToObject<typeof layers>[number];
+const layers = {
+    index: 2,
+    type: "enum",
+    repeated: true,
+    fields: {
+        UnknownLayer: { index: 0, type: "bytes" },
+        BackgroundColorLayer: {
+            index: 1,
+            type: "message",
+            fields: {
+                selectedState: { index: 1, ...ColorEnum },
+                dataV1: {
+                    index: 10,
+                    type: "tuple",
+                    repeated: true,
+                    fields: {
+                        point: { index: 1, ...PointScalar },
+                        fill: { index: 2, ...ColorEnum },
+                    },
+                },
+                answersAtEnd: { index: 20, type: "uint32" },
+            },
+        },
+        // TODO: CellOutline is not presented to the user yet.
+        // CellOutlineLayer: { index: 2, type: "message", fields: {} },
+        KillerCagesLayer: {
+            index: 3,
+            type: "message",
+            fields: {
+                dataV1: {
+                    index: 10,
+                    type: "message",
+                    repeated: true,
+                    fields: {
+                        points: { index: 1, ...ContiguousPoints },
+                        state: { index: 2, type: "uint32" },
+                    },
+                },
+            },
+        },
+        NumberLayer: {
+            index: 4,
+            type: "message",
+            fields: {
+                max: { index: 1, type: "uint32" },
+                // TODO: Allow type=bool ?
+                negatives: { index: 2, type: "uint32" },
+                // negatives: { index: 2, type: "bool" },
+                dataV1: {
+                    index: 10,
+                    type: "tuple",
+                    repeated: true,
+                    fields: {
+                        point: { index: 1, ...PointScalar },
+                        state: { index: 2, type: "uint32" },
+                    },
+                },
+                answersAtEnd: { index: 20, type: "uint32" },
+            },
+        },
+        SimpleLineLayer: {
+            index: 5,
+            type: "message",
+            fields: {
+                // TODO: enums
+                pointType: { index: 1, ...PointTypeScalar },
+                stroke: { index: 2, ...ColorEnum },
+                dataV1: {
+                    index: 10,
+                    type: "tuple",
+                    repeated: true,
+                    fields: {
+                        startingPoint: { index: 1, ...PointScalar },
+                        stroke: { index: 3, ...ColorEnum },
+                    },
+                },
+                downRightBitmap: { index: 11, ...BitmapScalar },
+                answersAtEnd: { index: 20, type: "uint32" },
+            },
+        },
+        ToggleCharactersLayer: {
+            index: 6,
+            type: "message",
+            fields: {
+                // TODO: For now, ToggleCharacters will be interacted with using a subclass
+                whichSubClass: { index: 1, type: "uint32" },
+                // TODO: data does not need to be stored yet since objects are forced to be answer mode anyways
+                // TODO: Also, no `answersAtEnd` because they can't be answer checked just yet.
+                // dataV1: {
+                //     index: 10,
+                //     type: "tuple",
+                //     repeated: true,
+                //     fields: {
+                //         point: { index: 1, ...PointScalar },
+                //         // TODO: It's a bitmap of allowed characters.
+                //         state: { index: 2, type: "uint32" },
+                //     },
+                // },
+
+                // // TODO: I don't know if I want to allow toggle characters to have custom characters yet. Maybe I should stick to numbers specifically for now.
+                // characters: { index: 1, type: "string" },
+                // // TODO: Custom enum
+                // displayStyle: { index: 2, type: "uint32" },
+            },
+        },
+    },
+} as const satisfies Encoding;
 
 export const PuzzleEncoder = Encoder.create({
     index: 0,
@@ -63,108 +174,7 @@ export const PuzzleEncoder = Encoder.create({
                         height: { type: "uint32", index: 2 },
                     },
                 },
-                layers: {
-                    index: 2,
-                    type: "enum",
-                    repeated: true,
-                    fields: {
-                        // // TODO: This really isn't necessary I think because if I get an unknown layer, that means I'm gonna consume the rest of the data stream (ortreat the new layer data as ) and therefore the whole thing is botched. But I guess I'll keep it for the sake of validating enums have the zero value.
-                        // TODO: This is more because I will enforce enums always have a zero value, but maybe I could use this for alpha-version layers
-                        UnknownLayer: { index: 0, type: "bytes" },
-                        BackgroundColorLayer: {
-                            index: 1,
-                            type: "message",
-                            fields: {
-                                selectedState: { index: 1, ...ColorEnum },
-                                dataV1: {
-                                    index: 10,
-                                    type: "tuple",
-                                    repeated: true,
-                                    fields: {
-                                        point: { index: 1, ...PointScalar },
-                                        fill: { index: 2, ...ColorEnum },
-                                    },
-                                },
-                            },
-                        },
-                        // TODO: CellOutline is not presented to the user yet.
-                        // CellOutlineLayer: { index: 2, type: "message", fields: {} },
-                        KillerCagesLayer: {
-                            index: 3,
-                            type: "message",
-                            fields: {
-                                dataV1: {
-                                    index: 10,
-                                    type: "message",
-                                    repeated: true,
-                                    fields: {
-                                        points: { index: 1, ...ContiguousPoints },
-                                        state: { index: 2, type: "uint32" },
-                                    },
-                                },
-                            },
-                        },
-                        NumberLayer: {
-                            index: 4,
-                            type: "message",
-                            fields: {
-                                max: { index: 1, type: "uint32" },
-                                // TODO: Allow type=bool ?
-                                negatives: { index: 2, type: "uint32" },
-                                // negatives: { index: 2, type: "bool" },
-                                dataV1: {
-                                    index: 10,
-                                    type: "tuple",
-                                    repeated: true,
-                                    fields: {
-                                        point: { index: 1, ...PointScalar },
-                                        state: { index: 2, type: "uint32" },
-                                    },
-                                },
-                            },
-                        },
-                        SimpleLineLayer: {
-                            index: 5,
-                            type: "message",
-                            fields: {
-                                // TODO: enums
-                                pointType: { index: 1, ...PointTypeScalar },
-                                stroke: { index: 2, ...ColorEnum },
-                                dataV1: {
-                                    index: 10,
-                                    type: "tuple",
-                                    repeated: true,
-                                    fields: {
-                                        pair: { index: 1, ...AdjacentPointPair },
-                                        stroke: { index: 3, ...ColorEnum },
-                                    },
-                                },
-                            },
-                        },
-                        ToggleCharactersLayer: {
-                            index: 6,
-                            type: "message",
-                            fields: {
-                                // For now, ToggleCharacters will be interacted with using a subclass
-                                whichSubClass: { index: 1, type: "uint32" },
-                                dataV1: {
-                                    index: 10,
-                                    type: "tuple",
-                                    repeated: true,
-                                    fields: {
-                                        point: { index: 1, ...PointScalar },
-                                        // TODO: It's a bitmap of allowed characters.
-                                        state: { index: 2, type: "uint32" },
-                                    },
-                                },
-                                // // TODO: I don't know if I want to allow toggle characters to have custom characters yet. Maybe I should stick to numbers specifically for now.
-                                // characters: { index: 1, type: "string" },
-                                // // TODO: Custom enum
-                                // displayStyle: { index: 2, type: "uint32" },
-                            },
-                        },
-                    },
-                },
+                layers,
             },
         },
     },
