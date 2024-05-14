@@ -3,10 +3,12 @@ import { filterUnique } from "../utils/data";
 import { notify } from "../utils/notifications";
 import { smartSort, stringifyAnything } from "../utils/string";
 
-// TODO: zero length bytes decode as Buffers on node. This hack prevents that.
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const util = require("protobufjs/src/util");
-util.Buffer = null;
+if (!window) {
+    // TODO: zero length bytes decode as Buffers on node (during test runs). This hack prevents that.
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const util = require("protobufjs/src/util");
+    util.Buffer = null;
+}
 
 export type ScalarMap = {
     uint32: number;

@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { importPuzzle } from "../components/ImportExportModal/importPuzzle";
+import { importPuzzleData } from "../encoding/importPuzzle";
 import { usePuzzle } from "../state/puzzle";
 
 export const RedirectHome = () => {
@@ -13,7 +13,7 @@ export const RedirectHome = () => {
             navigate(`/play${params}`, { replace: true });
             window.setTimeout(() => {
                 puzzle.settings.editMode = "answer";
-                importPuzzle(puzzle, params.slice(1));
+                importPuzzleData(puzzle, params.slice(1));
             }, 50);
         } else {
             navigate("/edit", { replace: true });

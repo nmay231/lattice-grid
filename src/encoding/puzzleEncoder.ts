@@ -63,8 +63,8 @@ const layers = {
                     type: "tuple",
                     repeated: true,
                     fields: {
-                        point: { index: 1, ...PointScalar },
-                        fill: { index: 2, ...ColorEnum },
+                        point: { index: 0, ...PointScalar },
+                        fill: { index: 1, ...ColorEnum },
                     },
                 },
                 answersAtEnd: { index: 20, type: "uint32" },
@@ -100,8 +100,8 @@ const layers = {
                     type: "tuple",
                     repeated: true,
                     fields: {
-                        point: { index: 1, ...PointScalar },
-                        state: { index: 2, type: "uint32" },
+                        point: { index: 0, ...PointScalar },
+                        state: { index: 1, type: "uint32" },
                     },
                 },
                 answersAtEnd: { index: 20, type: "uint32" },
@@ -119,8 +119,8 @@ const layers = {
                     type: "tuple",
                     repeated: true,
                     fields: {
-                        startingPoint: { index: 1, ...PointScalar },
-                        stroke: { index: 3, ...ColorEnum },
+                        startingPoint: { index: 0, ...PointScalar },
+                        stroke: { index: 1, ...ColorEnum },
                     },
                 },
                 downRightBitmap: { index: 11, ...BitmapScalar },
@@ -140,9 +140,9 @@ const layers = {
                 //     type: "tuple",
                 //     repeated: true,
                 //     fields: {
-                //         point: { index: 1, ...PointScalar },
+                //         point: { index: 0, ...PointScalar },
                 //         // TODO: It's a bitmap of allowed characters.
-                //         state: { index: 2, type: "uint32" },
+                //         state: { index: 1, type: "uint32" },
                 //     },
                 // },
 
@@ -170,8 +170,8 @@ export const PuzzleEncoder = Encoder.create({
                         // // TODO: It would be better to only include the height + width but that would require readjusting all points to the origin.
                         // minX: { type: "sint32", index: 1 },
                         // minY: { type: "sint32", index: 2 },
-                        width: { type: "uint32", index: 1 },
-                        height: { type: "uint32", index: 2 },
+                        width: { type: "uint32", index: 0 },
+                        height: { type: "uint32", index: 1 },
                     },
                 },
                 layers,

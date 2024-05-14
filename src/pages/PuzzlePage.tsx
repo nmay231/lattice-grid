@@ -7,7 +7,6 @@ import { ControlsManager } from "../ControlsManager";
 import { BlocklyModal } from "../components/Blockly/BlocklyModal";
 import { DebugPointers } from "../components/DebugPointers";
 import { ImportExportModal } from "../components/ImportExportModal";
-import { importPuzzle } from "../components/ImportExportModal/importPuzzle";
 import {
     MobileControlsActual,
     MobileControlsMetaControls,
@@ -18,6 +17,7 @@ import { SVGCanvas } from "../components/SVGCanvas/SVGCanvas";
 import { SideBar, UtilityBar } from "../components/SideBar";
 import { ResizeModal } from "../components/SideBar/MainGroup/ResizeModal";
 import { sidebarProxy } from "../components/SideBar/sidebarProxy";
+import { importPuzzleData } from "../encoding/importPuzzle";
 import { usePuzzle } from "../state/puzzle";
 import { NeedsUpdating, PageMode } from "../types";
 import { useGlobalFocusListeners } from "../utils/focusManagement";
@@ -38,7 +38,6 @@ const useGlobalEventListeners = (controls: ControlsManager) => {
         };
     }, [controls]);
 };
-
 export const PuzzlePage = ({ pageMode }: { pageMode: PageMode }) => {
     const puzzle = usePuzzle();
     const navigate = useNavigate();
@@ -53,7 +52,7 @@ export const PuzzlePage = ({ pageMode }: { pageMode: PageMode }) => {
         if (params) {
             window.setTimeout(() => {
                 puzzle.settings.editMode = "answer";
-                importPuzzle(puzzle, params.slice(1));
+                importPuzzleData(puzzle, params.slice(1));
             }, 50);
         } else {
             navigate("/edit", { replace: true });
