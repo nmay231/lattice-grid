@@ -29,8 +29,8 @@ export const ToggleGridObjectFirst = React.memo(function ToggleGridObjectFirst({
                         ] satisfies Array<{ label: string; value: GridOrObject }>
                     }
                     value={value}
-                    onChange={(value: GridOrObject) => {
-                        onChange(value);
+                    onChange={(value) => {
+                        onChange(value satisfies string as GridOrObject);
                         unfocus();
                     }}
                 />
