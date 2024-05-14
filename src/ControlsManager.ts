@@ -54,9 +54,12 @@ export class _PointerState {
         switch (`${this.mode}+${which}` as const) {
             case "start+first": {
                 if (!this.button) {
-                    if (1 & event.buttons) this.button = 1; // left click
-                    else if (2 & event.buttons) this.button = 2; // right click
-                    else if (4 & event.buttons) this.button = 4; // middle click
+                    if (1 & event.buttons)
+                        this.button = 1; // left click
+                    else if (2 & event.buttons)
+                        this.button = 2; // right click
+                    else if (4 & event.buttons)
+                        this.button = 4; // middle click
                     else return ["ignore"] as const;
                 }
 

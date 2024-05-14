@@ -54,6 +54,7 @@ module.exports = {
         "vitest/no-conditional-tests": "off", // ditto
         "vitest/no-hooks": "off",
         "vitest/prefer-called-with": "off",
+        "vitest/prefer-expect-assertions": "off",
         "vitest/prefer-lowercase-title": ["error", { ignoreTopLevelDescribe: true }],
         "vitest/prefer-strict-equal": "off",
         "vitest/prefer-to-be-falsy": "off",

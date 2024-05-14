@@ -47,21 +47,21 @@ export type DescriptionToObject<E extends TopLevel<Encoding> | TopLevel<Scalar>>
         ? E["type"] extends "tuple"
             ? PossibleRepeated<_DescriptionToObject<E>, E["repeated"]>
             : E["type"] extends "message" | "enum"
-            ? PossibleRepeated<Partial<_DescriptionToObject<E>>, E["repeated"]>
-            : never
+              ? PossibleRepeated<Partial<_DescriptionToObject<E>>, E["repeated"]>
+              : never
         : E["type"] extends infer Type
-        ? Type extends keyof ScalarMap
-            ? PossibleRepeated<ScalarMap[Type], E["repeated"]>
-            : never
-        : never;
+          ? Type extends keyof ScalarMap
+              ? PossibleRepeated<ScalarMap[Type], E["repeated"]>
+              : never
+          : never;
 
 type _DescriptionToObject<E extends TopLevel<Encoding>> = {
     [K in keyof E["fields"]]: E["fields"][K]["type"] extends infer Type
         ? Type extends keyof ScalarMap
             ? PossibleRepeated<ScalarMap[Type], E["fields"][K]["repeated"]>
             : E["fields"][K] extends Encoding
-            ? DescriptionToObject<E["fields"][K]>
-            : never
+              ? DescriptionToObject<E["fields"][K]>
+              : never
         : never;
 };
 

@@ -1,4 +1,5 @@
 import { puzzleProxy } from "../../state/puzzle";
+import type { NeedsUpdating } from "../../types";
 import { UserCodeJSON } from "../../userComputation/codeBlocks";
 import { DEFAULT_ALIAS_NAME } from "../../userComputation/utils";
 import { Blockly } from "../../utils/imports/blockly";
@@ -22,7 +23,7 @@ blocks["Compare"] = {
                     ["<", "<"],
                     [">", ">"],
                     ["=", "="],
-                ]),
+                ]) as NeedsUpdating as Blockly.Field<string>,
                 "COMPARE_TYPE",
             );
         this.setInputsInline(true);
@@ -112,7 +113,7 @@ blocks["ObjectSelector"] = {
                 return puzzleProxy.puzzle.layers
                     .values()
                     .map(({ id, displayName }) => [displayName, id]);
-            }),
+            }) as NeedsUpdating as Blockly.Field<string>,
             "LAYER_ID",
         );
         this.setOutput(true, null);
@@ -134,7 +135,9 @@ blocks["RootBlock"] = {
             .appendField("with")
             .appendField(
                 // TODO: multi-select dropdown (not available by default, but there might be some Blockly utility library I can install...)
-                new Blockly.FieldDropdown([["a square", "SQUARE"]]),
+                new Blockly.FieldDropdown([
+                    ["a square", "SQUARE"],
+                ]) as NeedsUpdating as Blockly.Field<string>,
                 "GRID_TYPE",
             )
             .appendField("grid");
@@ -149,7 +152,7 @@ blocks["RootBlock"] = {
                     ["[select layer type]", "UNSELECTED"],
                     ["Number", "NUMBER"],
                     ["Line", "LINE"],
-                ]),
+                ]) as NeedsUpdating as Blockly.Field<string>,
                 "LAYER_CONFIG",
             );
         this.appendStatementInput("CODE_BODY").setCheck(null);

@@ -8,7 +8,7 @@ describe("Vector", () => {
     it("has .xy and .size props and .toString() method", () => {
         const vec = new Vec(3, 4);
         expect(vec.xy).toEqual([3, 4]);
-        expect(vec.size).toEqual(5);
+        expect(vec.size).toBe(5);
         expect(vec.string()).toBe("3,4");
     });
 
