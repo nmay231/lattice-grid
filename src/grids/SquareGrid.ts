@@ -381,7 +381,7 @@ class _SquareGridEncoder {
                 bitmap <<= 1;
 
                 if (start.plus(down).equals(end)) {
-                    bitmap &= 1;
+                    bitmap |= 1;
                 } else if (!start.plus(right).equals(end)) {
                     throw notify.error(
                         `Encoding adjacent points failed. Ending point not down or right of start: ${stringifyAnything(
@@ -392,7 +392,7 @@ class _SquareGridEncoder {
             }
 
             if (byte.length < CHUNK_SIZE) {
-                bitmap <<= byte.length - CHUNK_SIZE;
+                bitmap <<= CHUNK_SIZE - byte.length;
             }
             downRightBitmap.push(bitmap);
         }
@@ -427,30 +427,28 @@ class _SquareGridEncoder {
             .map(Boolean);
 
         const diff = downRightArray.length - points.length;
-        if (0 <= diff && diff < 8) {
+        if (diff < 0 || diff >= 8) {
             throw Error("Length of points and bitmap do not match closely enough");
         }
 
-        const down = new Vec(2, 0);
-        const right = new Vec(0, 2);
+        const down = new Vec(0, 2);
+        const right = new Vec(2, 0);
 
-        const map = {} as Record<number, [Vec, Vec]>;
-        const offset = pointType === "corners" ? 1 : 0;
-        const minX = this.params.minX + offset;
-        const minY = this.params.minY + offset;
-        const width = this.params.width + offset;
+        const numberToVec = this.decodeGridPointsInsideGrid(pointType, points);
+        const pairs = [] as Array<[Vec, Vec]>;
+
         for (const [n, downRight] of zip(points, downRightArray)) {
-            const point = new Vec((n % width) + minX, ((n / width) | 0) + minY);
-            map[n] = [point, point.plus(downRight ? down : right)];
+            const point = numberToVec[n];
+            pairs.push([point, point.plus(downRight ? down : right)]);
         }
-        return map;
+        return pairs;
     }
 
     // Don't want to be greedy, but these should be safe: !@#$&*()_-+=;':?,./~
     _baseCharacters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
     // TODO: Constant across all grids
-    /** Treats the numbers as a number in the specified base and encodes into base 256 */
+    /** @deprecated - I don't know if I need these methods yet... I'm not using them, so I'm not going to test them until I do (I'll hopefully remember since I added this "deprecation" warning) */
     encodeNonNegativeNumbersAsBaseConversion(numbers: number[], base: number): Uint8Array {
         const base16 = this.baseConvert(numbers, base, 16);
 
@@ -467,6 +465,7 @@ class _SquareGridEncoder {
         return base256;
     }
 
+    /** @deprecated */
     decodeNonNegativeNumbersAsBaseConversion(numbers: Uint8Array, base: number): number[] {
         if (!numbers.length) return [];
 
@@ -483,6 +482,7 @@ class _SquareGridEncoder {
         return this.baseConvert(base16, 16, base);
     }
 
+    /** @deprecated */
     baseConvert(digits: number[], currentBase: number, targetBase: number): number[] {
         if (currentBase <= 1 || currentBase > 36 || targetBase <= 1 || targetBase > 36) {
             throw Error("Bases must be between 2, 36 inclusive");
@@ -531,21 +531,14 @@ class _SquareGridEncoder {
         return { [COLOR_VALUE_TO_NAME[color]]: true };
     }
 
-    encodeColors(colors: Color[]): EncodedColor[] {
-        return colors.map((color) => ({ [COLOR_VALUE_TO_NAME[color]]: true }));
-    }
-
-    // TODO: Better index than array index (use some sort of map instead of an
-    // array). Perhaps color enum values can be interned at startup?
-    decodeColors(colors: EncodedColor[]): Color[] {
-        return colors.map((encoded) => {
-            const enumVariant = Object.keys(encoded)[0];
-            if (enumVariant in DEFAULT_COLORS) {
-                return DEFAULT_COLORS[enumVariant as keyof typeof DEFAULT_COLORS];
-            } else {
-                throw Error(`Unknown color enum value: ${stringifyAnything(encoded)}`);
-            }
-        });
+    // Perhaps color enum values can be interned at startup?
+    decodeColor(color: EncodedColor): Color {
+        const enumVariant = Object.keys(color)[0];
+        if (enumVariant in DEFAULT_COLORS) {
+            return DEFAULT_COLORS[enumVariant as keyof typeof DEFAULT_COLORS];
+        } else {
+            throw Error(`Unknown color enum value: ${stringifyAnything(color)}`);
+        }
     }
 }
 

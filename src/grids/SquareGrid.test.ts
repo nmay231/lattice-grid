@@ -151,41 +151,46 @@ describe("SquareGridEncoder", () => {
 
     it.each([
         {
-            params: { width: 10, height: 10, pt: "cells" as PointType },
+            // I hate that just `satisfies PointType` doesn't work here...
+            params: { width: 10, height: 10, pt: "cells" },
             input: ["1,1", "19,19", "13,7"],
             output: [0, 100 - 1, 6 + 3 * 10],
         },
         {
-            params: { width: 1, height: 1, pt: "cells" as PointType },
+            params: { width: 1, height: 1, pt: "cells" },
             input: ["1,1"],
             output: [0],
         },
         {
-            params: { width: 30, height: 30, pt: "cells" as PointType },
+            params: { width: 30, height: 30, pt: "cells" },
             input: ["1,1", "15,15", "13,7", "59,59"],
             output: [0, 7 + 7 * 30, 6 + 3 * 30, 900 - 1],
         },
         {
-            params: { width: 2, height: 15, pt: "cells" as PointType },
+            params: { width: 2, height: 15, pt: "cells" },
             input: ["3,29"],
             output: [30 - 1],
         },
         {
-            params: { width: 4, height: 4, pt: "corners" as PointType },
+            params: { width: 4, height: 4, pt: "corners" },
             input: ["0,0", "2,0", "4,0", "6,0", "8,0", "8,2", "8,4", "8,6", "8,8"],
             output: [0, 1, 2, 3, 4, 9, 14, 19, 24],
         },
         {
-            params: { width: 10, height: 10, pt: "corners" as PointType },
+            params: { width: 10, height: 10, pt: "corners" },
             input: ["0,0", "2,0", "0,2", "0,4", "8,12", "20,20"],
             output: [0, 1, 11, 22, 4 + 6 * 11, 11 ** 2 - 1],
         },
         {
-            params: { width: 1, height: 14, pt: "corners" as PointType },
+            params: { width: 1, height: 14, pt: "corners" },
             input: ["2,28", "0,0", "2,0", "2,2", "0,28"],
             output: [30 - 1, 0, 1, 3, 30 - 2],
         },
-    ])("en/decodeGridPointsInsideGrid", ({ params, input, output }) => {
+    ] satisfies Array<{
+        params: { height: number; width: number; pt: PointType };
+        input: string[];
+        output: number[];
+    }>)("en/decodeGridPointsInsideGrid", ({ params, input, output }) => {
         const grid = new SquareGrid({
             width: params.width,
             height: params.height,
@@ -221,6 +226,7 @@ describe("SquareGridEncoder", () => {
                 minY: transform.y,
                 type: "square",
             });
+            // TODO: cellSize is hardcoded to 2 in the code, for now
             const settings = { cellSize: 2 };
             const encoder = grid.getEncoder(settings);
             const pt = grid.getPointTransformer(settings);
@@ -236,12 +242,57 @@ describe("SquareGridEncoder", () => {
         }
     });
 
-    // it.each([
-    //     {input: }
-    // ])(
-    //     "en/decodeAdjacentGridPointsInsideGrid",
-    //     , () => {}
-    // );
+    it.each([
+        {
+            pt: "cells" as PointType,
+            params: { width: 10, height: 10 },
+            pairs: [
+                [new Vec(1, 1), new Vec(1, 3)],
+                [new Vec(1, 1), new Vec(3, 1)],
+                [new Vec(1, 17), new Vec(1, 19)],
+                [new Vec(1, 19), new Vec(3, 19)],
+                [new Vec(17, 1), new Vec(19, 1)],
+                [new Vec(19, 1), new Vec(19, 3)],
+                [new Vec(17, 19), new Vec(19, 19)],
+                [new Vec(19, 17), new Vec(19, 19)],
+                [new Vec(11, 11), new Vec(11, 13)],
+            ] satisfies Array<[Vec, Vec]>,
+            startingPoints: [0, 0, 80, 90, 8, 9, 98, 89, 55],
+            downRightBitmap: Uint8Array.from([0b1010_0101, 0b1000_0000]),
+        },
+        {
+            pt: "corners" as PointType,
+            params: { width: 10, height: 10 },
+            pairs: [
+                [new Vec(0, 0), new Vec(0, 2)],
+                [new Vec(0, 20), new Vec(2, 20)],
+                [new Vec(18, 0), new Vec(20, 0)],
+                [new Vec(20, 18), new Vec(20, 20)],
+            ] satisfies Array<[Vec, Vec]>,
+            startingPoints: [0, 110, 9, 109],
+            downRightBitmap: Uint8Array.from([0b1001_0000]),
+        },
+    ])(
+        "en/decodeAdjacentGridPointsInsideGrid",
+        ({ pt, params, pairs, startingPoints, downRightBitmap }) => {
+            const grid = new SquareGrid({ ...params, minX: 0, minY: 0, type: "square" });
+            const settings = { cellSize: 2 };
+            const encoder = grid.getEncoder(settings);
+
+            const result = encoder.encodeAdjacentGridPointsInsideGrid(pt, pairs);
+            expect(result.downRightBitmap).toEqual(downRightBitmap);
+            expect(pairs.map(([start]) => result.startingPoints.get(start))).toEqual(
+                startingPoints,
+            );
+
+            const pairsResult = encoder.decodeAdjacentGridPointsInsideGrid(
+                pt,
+                startingPoints,
+                downRightBitmap,
+            );
+            expect(pairsResult).toEqual(pairs);
+        },
+    );
 });
 
 describe("SquareGridTransformer", () => {
