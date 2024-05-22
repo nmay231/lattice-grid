@@ -400,10 +400,12 @@ class _SquareGridEncoder {
             downRightBitmap.push(bitmap);
         }
 
-        const startingPoints = points.map(([start]) => start);
+        const startingPointVecs = points.map(([start]) => start);
+        const pointMap = this._encodeGridPointsInsideGrid(pointType, startingPointVecs);
+        const startingPoints = startingPointVecs.map((vec) => pointMap.get(vec)!);
 
         return {
-            startingPoints: this._encodeGridPointsInsideGrid(pointType, startingPoints),
+            startingPoints,
             downRightBitmap: Uint8Array.from(downRightBitmap),
         };
     }

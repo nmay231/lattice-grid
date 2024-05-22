@@ -215,15 +215,13 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
 
         return {
             SimpleLineLayer: {
-                // TODO: Because SimpleLine sorts points as strings, it will draw the line (11,y) to (9,y) backwards (not going down or right). This doesn't work with the current form of the encoder. So I have to zip the `startingPoints` map and `objects` until SimpleLine knows how to sort lines so the first one is always left or up of the second one.
-                dataV1: [...zip([...startingPoints.values()], objects)].map(
-                    ([startingPoint, [, obj]]) => {
-                        return {
-                            startingPoint,
-                            stroke: encoder.encodeColor(obj.stroke),
-                        };
-                    },
-                ),
+                // TODO: Because SimpleLine sorts points as strings, it will draw the line (11,y) to (9,y) backwards (not going down or right). This doesn't work with the current form of the encoder. So I have to zip `startingPoints` and `objects` until SimpleLine knows how to sort lines so the first one is always left or up of the second one.
+                dataV1: [...zip(startingPoints, objects)].map(([startingPoint, [, obj]]) => {
+                    return {
+                        startingPoint,
+                        stroke: encoder.encodeColor(obj.stroke),
+                    };
+                }),
                 downRightBitmap,
                 pointType: encoder.encodePointType(this.settings.pointType),
                 stroke: encoder.encodeColor(this.settings.stroke),

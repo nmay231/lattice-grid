@@ -9,13 +9,14 @@ test.describe(() => {
     // We let fast-check control the timeout, so it is 30 secs per example instead of 30 secs for the whole test
     test.setTimeout(0);
 
-    // TODO: This test has some weaknesses:
+    // TODO: While this test has found some bugs already, it has some weaknesses:
     // - It's slow and complicated to understand (speed is less of an issue since it's only run infrequently)
     // - It doesn't account for the interaction of question and answer objects
     // - It can't change layer settings
     // - It doesn't detect state that is different but visually identical, but I guess that would be a different test entirely.
-    // - It generates a lot of similar puzzles (I would guess more than half are past examples)
+    // - It generates a lot of similar puzzles and I don't know why yet (I would guess more than half are past examples)
     // - Duplicate layers are not tested (but duplicate layers should be disallowed for now, anyway)
+    // - The output images are just manually written to a file in `/tmp` for now.
     test("Encoded puzzles decode to the same puzzle", async ({ page }) => {
         const testedURLs = [] as string[];
 

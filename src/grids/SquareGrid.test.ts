@@ -284,9 +284,7 @@ describe("SquareGridEncoder", () => {
 
             const result = encoder.encodeAdjacentGridPointsInsideGrid(pt, pairs);
             expect(result.downRightBitmap).toEqual(downRightBitmap);
-            expect(pairs.map(([start]) => result.startingPoints.get(start))).toEqual(
-                startingPoints,
-            );
+            expect(result.startingPoints).toEqual(startingPoints);
 
             const pairsResult = encoder.decodeAdjacentGridPointsInsideGrid(
                 pt,
