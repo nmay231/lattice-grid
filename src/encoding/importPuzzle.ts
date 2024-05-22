@@ -7,8 +7,7 @@ import { Color, ObjectId, Point, PointType } from "../types";
 import { zip } from "../utils/data";
 import { notify } from "../utils/notifications";
 import { stringifyAnything } from "../utils/string";
-import { DescriptionToObject } from "./protoButt";
-import { ColorEnum, PuzzleEncoder } from "./puzzleEncoder";
+import { PuzzleEncoder } from "./puzzleEncoder";
 
 interface BackgroundColorV1 {
     PermStorage: Record<string, never>;
@@ -161,10 +160,6 @@ const concatIfUndefinedThenMessage = (...possiblyUndefined: Array<[any, string]>
         .join(", ");
 };
 
-const colorEnumToString = (color: DescriptionToObject<typeof ColorEnum>): string => {
-    return Object.keys(color)[0];
-};
-
 export const extractPuzzleData = (inputText: string): LatestPuzzleData | ParseError => {
     const array = toUint8Array(inputText);
     let data;
@@ -219,7 +214,7 @@ export const extractPuzzleData = (inputText: string): LatestPuzzleData | ParseEr
                 const objects = new LayerStorage<BackgroundColorV1>();
                 const decodedObjects = layer.dataV1.map(({ fill, point }) => [
                     map[point].string(),
-                    { state: colorEnumToString(fill) },
+                    { state: encoder.decodeColor(fill) },
                 ]) satisfies ReturnType<(typeof objects)["entries"]>;
 
                 if (layer.answersAtEnd && layer.answersAtEnd <= decodedObjects.length) {
@@ -232,7 +227,7 @@ export const extractPuzzleData = (inputText: string): LatestPuzzleData | ParseEr
 
                 outputLayers.push({
                     type: "BackgroundColorLayer",
-                    settings: { selectedState: colorEnumToString(layer.selectedState) },
+                    settings: { selectedState: encoder.decodeColor(layer.selectedState) },
                     objects,
                 });
             } else if (layerEnum.KillerCagesLayer) {
