@@ -124,12 +124,9 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
             const [, cells] = pt.fromPoints("cells", object.points);
             const shrinkwrap = pt.shrinkwrap(cells, { inset: 5 });
 
-            const style =
-                id === stored.permStorage.currentObjectId ? { stroke: "#33F" } : undefined;
             for (const [key, wrap] of Object.entries(shrinkwrap)) {
                 cageElements.set(`${id}-${key}`, {
                     className: styles.killerCagesOutline,
-                    style,
                     points: wrap.join(" "),
                 });
             }
@@ -158,9 +155,29 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
         ];
     };
 
-    getOverlaySVG: IKillerCagesLayer["getOverlaySVG"] = () => {
-        // TODO: Only render the current Killer Cage when focused
-        return [];
+    getOverlaySVG: IKillerCagesLayer["getOverlaySVG"] = ({ storage, settings, grid }) => {
+        const stored = storage.getObjects<KillerCagesProps>(this.id);
+        const pt = grid.getPointTransformer(settings);
+
+        const elements: SVGGroup["elements"] = new Map();
+
+        const id = stored.permStorage.currentObjectId;
+        if (id !== undefined) {
+            const object = stored.getObject("question", id);
+
+            const [, cells] = pt.fromPoints("cells", object.points);
+            const shrinkwrap = pt.shrinkwrap(cells, { inset: 5 });
+
+            for (const [key, wrap] of Object.entries(shrinkwrap)) {
+                elements.set(`${id}-${key}`, {
+                    className: styles.killerCagesOutline,
+                    style: { stroke: "#33F" },
+                    points: wrap.join(" "),
+                });
+            }
+        }
+
+        return [{ id: "currentKillerCage", type: "polygon", elements }];
     };
 
     encode: IKillerCagesLayer["encode"] = ({ grid, storage, settings, answerCheck }) => {
