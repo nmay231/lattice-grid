@@ -43,6 +43,7 @@ module.exports = {
         "no-trailing-spaces": "error",
         "no-unreachable": "error",
         "no-use-before-define": "off",
+        "no-useless-rename": "error",
         "prefer-const": "warn",
         "react-refresh/only-export-components": "error",
         "react/prop-types": "off",

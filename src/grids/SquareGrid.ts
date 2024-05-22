@@ -375,6 +375,9 @@ class _SquareGridEncoder {
         const CHUNK_SIZE = 8;
         const downRightBitmap = [];
 
+        // TODO: Because SimpleLine sorts points as strings, it will draw the line (11,y) to (9,y) backwards (not going down or right)
+        points = points.map((pair) => pair.sort((a, b) => a.x - b.x || a.y - b.y));
+
         for (const byte of chunk(points, CHUNK_SIZE)) {
             let bitmap = 0;
             for (const [start, end] of byte) {

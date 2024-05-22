@@ -256,8 +256,11 @@ describe("SquareGridEncoder", () => {
                 [new Vec(17, 19), new Vec(19, 19)],
                 [new Vec(19, 17), new Vec(19, 19)],
                 [new Vec(11, 11), new Vec(11, 13)],
+                // TODO: Maybe temporary. See note in SimpleLine.encode() and in encodeAdjacentPoints() about sorting points as strings.
+                [new Vec(11, 1), new Vec(9, 1)],
+                [new Vec(9, 3), new Vec(11, 3)],
             ] satisfies Array<[Vec, Vec]>,
-            startingPoints: [0, 0, 80, 90, 8, 9, 98, 89, 55],
+            startingPoints: [0, 0, 80, 90, 8, 9, 98, 89, 55, 4, 14],
             downRightBitmap: Uint8Array.from([0b1010_0101, 0b1000_0000]),
         },
         {
