@@ -58,6 +58,7 @@ export const LayerItem = ({
 
                 {editable && (
                     <ActionIcon
+                        data-testid="remove-layer"
                         onPointerDown={handleDelete}
                         className={styles.remove}
                         tabIndex={editing ? 0 : -1}

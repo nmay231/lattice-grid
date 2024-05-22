@@ -113,7 +113,15 @@ export const ImportExportModal = React.memo(function ImportExportModal() {
     return (
         <Modal opened={opened} title="Import / Export Puzzle" onClose={close} size="lg">
             <Box p="sm">
-                <Textarea autosize readOnly minRows={1} maxRows={6} mb="md" value={puzzleString} />
+                <Textarea
+                    data-testid="exported-url"
+                    autosize
+                    readOnly
+                    minRows={1}
+                    maxRows={6}
+                    mb="md"
+                    value={puzzleString}
+                />
 
                 <Text size="sm">Which layers are answer checked?</Text>
                 {puzzle.layers

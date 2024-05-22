@@ -41,5 +41,7 @@ export function given<Ts extends [unknown, ...unknown[]]>(
     return {
         assertProperty: (predicate: (...args: Ts) => boolean | void) =>
             fc.assert(fc.property(...arbitraries, predicate), params),
+        assertAsyncProperty: (predicate: (...args: Ts) => Promise<boolean | void>) =>
+            fc.assert(fc.asyncProperty(...arbitraries, predicate), params),
     };
 }

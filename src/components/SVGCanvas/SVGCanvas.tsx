@@ -21,9 +21,9 @@ const Inner = React.memo(function Inner(arg: Pick<PuzzleManager, "layers" | "SVG
                 // TODO: Allow question and answer to be reordered. Also fix this monstrosity.
                 const question = SVGGroups[`${id}-question`].flatMap((group) => {
                     const mainKey = `${id}-question-${group.id}`;
-                    const className = `${group.className ?? ""} ${layerStyles.question}`;
+                    const className = clsx(group.className, layerStyles.question);
                     return (
-                        <g className={className} key={mainKey}>
+                        <g data-testid={`svg-canvas-${id}`} className={className} key={mainKey}>
                             {[...group.elements.entries()].map(([id, element]) =>
                                 React.createElement(group.type, {
                                     ...element,
@@ -35,9 +35,9 @@ const Inner = React.memo(function Inner(arg: Pick<PuzzleManager, "layers" | "SVG
                 });
                 const answer = SVGGroups[`${id}-answer`].flatMap((group) => {
                     const mainKey = `${id}-answer-${group.id}`;
-                    const className = `${group.className ?? ""} ${layerStyles.answer}`;
+                    const className = clsx(group.className, layerStyles.answer);
                     return (
-                        <g className={className} key={mainKey}>
+                        <g data-testid={`svg-canvas-${id}`} className={className} key={mainKey}>
                             {[...group.elements.entries()].map(([id, element]) =>
                                 React.createElement(group.type, {
                                     ...element,
