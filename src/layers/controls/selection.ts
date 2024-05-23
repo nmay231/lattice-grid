@@ -133,11 +133,9 @@ export const handleEventsSelection = <LP extends SelectedProps>(
             }
             case "pointerDown":
             case "pointerMove": {
-                if (layerIsGOOFy(this)) {
-                    if (this.settings.gridOrObjectFirst === "object") {
-                        // TODO: Get the layer to switch to onePoint.handleEventsCurrentSetting but after it can handle a generic settings key ("currentCharacter" instead of "selectedState"). I do that instead of adapting selection to do it because other layers will decide between one of the two onePoint handlers.
-                        return this.handleKeyDown(event);
-                    }
+                if (layerIsGOOFy(this) && this.settings.gridOrObjectFirst === "object") {
+                    // TODO: Get the layer to switch to onePoint.handleEventsCurrentSetting but after it can handle a generic settings key ("currentCharacter" instead of "selectedState"). I do that instead of adapting selection to do it because other layers will decide between one of the two onePoint handlers.
+                    return this.handleKeyDown(event);
                 }
                 internal.permStorage.groupNumber = internal.permStorage.groupNumber || 1;
                 const currentPoints = internal.keys("ui");

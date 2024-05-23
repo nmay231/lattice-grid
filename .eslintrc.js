@@ -14,6 +14,7 @@ module.exports = {
         "plugin:@typescript-eslint/recommended-requiring-type-checking",
         "plugin:valtio/recommended",
         "plugin:vitest/all",
+        "plugin:sonarjs/recommended-legacy",
         "eslint-config-prettier",
     ],
     parser: "@typescript-eslint/parser",
@@ -21,7 +22,7 @@ module.exports = {
         project: ["./tsconfig.json"],
         ecmaFeatures: { jsx: true },
     },
-    plugins: ["react", "testing-library", "react-refresh"],
+    plugins: ["react", "react-refresh", "sonarjs", "testing-library"],
     settings: {
         react: { version: "detect" },
     },
@@ -48,6 +49,9 @@ module.exports = {
         "react-refresh/only-export-components": "error",
         "react/prop-types": "off",
         "react/react-in-jsx-scope": "off",
+        "sonarjs/no-duplicate-string": "off",
+        "sonarjs/no-inverted-boolean-check": "error",
+        "sonarjs/prefer-immediate-return": "off",
         "vitest/max-expects": "off",
         "vitest/no-alias-methods": "off",
         "vitest/no-conditional-expect": "off", // ditto

@@ -20,6 +20,14 @@ test.describe("Answer check for BackgroundColor, SimpleLine, and Number", () => 
         { color: false, line: false, number: false },
     ];
 
+    const coordToPointerEventFromCanvasParams =
+        (canvasParams: Record<"x" | "y" | "width" | "height", number>) =>
+        (x: number, y: number): PartialPointerEvent => {
+            const clientX = ((x + 0.5) * canvasParams.width) / 12 + canvasParams.x;
+            const clientY = ((y + 0.5) * canvasParams.height) / 12 + canvasParams.y;
+            return { clientX, clientY, buttons: 1, pointerId: 0 };
+        };
+
     for (const param of parameters) {
         test(`should answer check for combination: ${stringifyAnything(param)}`, async ({
             page,
@@ -53,11 +61,7 @@ test.describe("Answer check for BackgroundColor, SimpleLine, and Number", () => 
                 canvasParams[key] = Math.round(canvasParams[key]);
             }
 
-            const coordToPointerEvent = (x: number, y: number): PartialPointerEvent => {
-                const clientX = ((x + 0.5) * canvasParams.width) / 12 + canvasParams.x;
-                const clientY = ((y + 0.5) * canvasParams.height) / 12 + canvasParams.y;
-                return { clientX, clientY, buttons: 1, pointerId: 0 };
-            };
+            const coordToPointerEvent = coordToPointerEventFromCanvasParams(canvasParams);
 
             await selectEditMode("Setting");
 
@@ -187,11 +191,7 @@ test.describe("Answer check for BackgroundColor, SimpleLine, and Number", () => 
             canvasParams[key] = Math.round(canvasParams[key]);
         }
 
-        const coordToPointerEvent = (x: number, y: number): PartialPointerEvent => {
-            const clientX = ((x + 0.5) * canvasParams.width) / 12 + canvasParams.x;
-            const clientY = ((y + 0.5) * canvasParams.height) / 12 + canvasParams.y;
-            return { clientX, clientY, buttons: 1, pointerId: 0 };
-        };
+        const coordToPointerEvent = coordToPointerEventFromCanvasParams(canvasParams);
 
         // Enable debug mode
         await page.keyboard.press("Control+`");
