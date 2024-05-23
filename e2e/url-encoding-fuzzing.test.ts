@@ -109,7 +109,7 @@ test.describe(() => {
                     }
                 }
                 if (nextToggle === "up") {
-                    await canvas.dispatchEvent("pointerdown", pointerEvent);
+                    await canvas.dispatchEvent("pointerup", pointerEvent);
                 }
 
                 if (keyboard)

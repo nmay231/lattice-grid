@@ -531,8 +531,10 @@ class _SquareGridEncoder {
         }
     }
 
-    // TODO: I should probably just stick to one function to stop premature optimizations
     encodeColor(color: Color): EncodedColor {
+        if (!(color in COLOR_VALUE_TO_NAME)) {
+            throw notify.error(`"${color}" is not a known color value to be encoded`);
+        }
         return { [COLOR_VALUE_TO_NAME[color]]: true };
     }
 
