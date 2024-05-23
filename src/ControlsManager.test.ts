@@ -2,7 +2,7 @@ import fc from "fast-check";
 import { random, range, shuffle } from "lodash";
 import { PartialPointerEvent, _PointerState as PointerState } from "./ControlsManager";
 import { TupleVector } from "./types";
-import { zip } from "./utils/data";
+import { zipDefined } from "./utils/data";
 import { FCRepeat, given } from "./utils/testing/fcArbitraries";
 import { partialMock } from "./utils/testing/partialMock";
 
@@ -44,7 +44,7 @@ const asynchronousPointers = () => {
                 pointerId: number;
             }> = [];
 
-            for (const [position, index, generated] of zip(
+            for (const [position, index, generated] of zipDefined(
                 range(randomIndexes.length),
                 randomIndexes,
                 definition,

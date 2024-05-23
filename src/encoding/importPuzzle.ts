@@ -4,7 +4,7 @@ import { PuzzleManager } from "../PuzzleManager";
 import { SquareGrid } from "../grids/SquareGrid";
 import { availableLayers } from "../layers";
 import { Color, ObjectId, Point, PointType } from "../types";
-import { zip } from "../utils/data";
+import { zipDefined } from "../utils/data";
 import { notify } from "../utils/notifications";
 import { stringifyAnything } from "../utils/string";
 import { PuzzleEncoder } from "./puzzleEncoder";
@@ -339,7 +339,7 @@ export const extractPuzzleData = (inputText: string): LatestPuzzleData | ParseEr
 
                 const objects = new LayerStorage<SimpleLineV1>();
                 const decodedObjects: Array<ReturnType<(typeof objects)["entries"]>[number]> = [];
-                for (const [{ stroke }, pair] of zip(layer.dataV1, pointMap)) {
+                for (const [{ stroke }, pair] of zipDefined(layer.dataV1, pointMap)) {
                     const points = [pair[0].string(), pair[1].string()];
                     decodedObjects.push([
                         points.join(";"),

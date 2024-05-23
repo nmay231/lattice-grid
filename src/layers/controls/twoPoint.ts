@@ -7,7 +7,7 @@ import {
     PointType,
     StorageFilter,
 } from "../../types";
-import { zip } from "../../utils/data";
+import { zipDefined } from "../../utils/data";
 import { notify } from "../../utils/notifications";
 
 type StringRecord = Record<string, string>;
@@ -50,7 +50,7 @@ export const handleEventsCurrentSetting = <
 
     const stateToString = (obj: State) => stateKeys.map((key) => obj[key]).join(";");
     const stringToState = (str: string) =>
-        Object.fromEntries(zip(stateKeys, str.split(";"))) as State;
+        Object.fromEntries(zipDefined(stateKeys, str.split(";"))) as State;
 
     const gatherPoints: TwoPointLayer["gatherPoints"] = function (
         this: TwoPointLayer,

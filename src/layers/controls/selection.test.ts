@@ -1,6 +1,6 @@
 import { LayerStorage } from "../../LayerStorage";
 import { LayerProps, NeedsUpdating, ObjectId, PartialHistoryAction } from "../../types";
-import { zip } from "../../utils/data";
+import { zipDefined } from "../../utils/data";
 import { layerEventRunner } from "../../utils/testing/layerEventRunner";
 import {
     SELECTION_ID,
@@ -27,7 +27,7 @@ const layerStorageFromObjects = <LP extends LayerProps>({
     objs: LP["ObjectState"][];
 }) => {
     const stored = new LayerStorage<LP>();
-    stored.setEntries("ui", [...zip(ids, objs)]);
+    stored.setEntries("ui", [...zipDefined(ids, objs)]);
     return stored;
 };
 

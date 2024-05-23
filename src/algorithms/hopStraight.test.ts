@@ -1,6 +1,6 @@
 import fc from "fast-check";
 import { TupleVector } from "../types";
-import { parseIntBase, zip } from "../utils/data";
+import { parseIntBase, zipDefined } from "../utils/data";
 import { Vec } from "../utils/math";
 import { given } from "../utils/testing/fcArbitraries";
 import { hopStraight } from "./hopStraight";
@@ -60,7 +60,7 @@ describe("hopStraight", () => {
                 Vec.from(string.split(",").map(parseIntBase(10)) as TupleVector),
             );
 
-            const vecMoves = [...zip([start, ...vecPoints.slice(0, -1)], vecPoints)].map(
+            const vecMoves = [...zipDefined([start, ...vecPoints.slice(0, -1)], vecPoints)].map(
                 ([prev, next]) => prev.drawTo(next),
             );
 

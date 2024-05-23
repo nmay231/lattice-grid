@@ -36,22 +36,22 @@ export const filterUnique = <T>(v: T, index: number, arr: T[]): boolean => arr.i
 
 type List<T> = ArrayLike<T>;
 type ZipResult<T> = Generator<T, void>;
-export function zip<T1, T2>(arr1: List<T1>, arr2: List<T2>): ZipResult<[T1, T2]>;
-export function zip<T1, T2, T3>(
+export function zipDefined<T1, T2>(arr1: List<T1>, arr2: List<T2>): ZipResult<[T1, T2]>;
+export function zipDefined<T1, T2, T3>(
     arr1: List<T1>,
     arr2: List<T2>,
     arr3: List<T3>,
 ): ZipResult<[T1, T2, T3]>;
-export function zip<T1, T2, T3, T4>(
+export function zipDefined<T1, T2, T3, T4>(
     arr1: List<T1>,
     arr2: List<T2>,
     arr3: List<T3>,
     arr4: List<T4>,
 ): ZipResult<[T1, T2, T3, T4]>;
-export function zip<T>(...arrays: Array<List<T>>): ZipResult<Array<T>>;
+export function zipDefined<T>(...arrays: Array<List<T>>): ZipResult<Array<T>>;
 
 /** Write a custom zip function better than lodash's because it only iterates over the shortest array and you don't have stupid undefined sprinkled in. */
-export function* zip<T>(...arrays: Array<List<T>>) {
+export function* zipDefined<T>(...arrays: Array<List<T>>) {
     if (arrays.length < 2) {
         throw new Error("Must have two arrays at least");
     }

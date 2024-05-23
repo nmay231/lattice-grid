@@ -4,7 +4,7 @@ import { hopStraight } from "../algorithms/hopStraight";
 import type { EncodedColor, EncodedPointType } from "../encoding/puzzleEncoder";
 import { Grid, Point, PointType, SVGGroup, TupleVector, type Color } from "../types";
 import { COLOR_VALUE_TO_NAME, DEFAULT_COLORS } from "../utils/colors";
-import { parseIntBase, zip } from "../utils/data";
+import { parseIntBase, zipDefined } from "../utils/data";
 import { Vec } from "../utils/math";
 import { notify } from "../utils/notifications";
 import { randomStringId, stringifyAnything } from "../utils/string";
@@ -439,7 +439,7 @@ class _SquareGridEncoder {
         const numberToVec = this.decodeGridPointsInsideGrid(pointType, points);
         const pairs = [] as Array<[Vec, Vec]>;
 
-        for (const [n, downRight] of zip(points, downRightArray)) {
+        for (const [n, downRight] of zipDefined(points, downRightArray)) {
             const point = numberToVec[n];
             pairs.push([point, point.plus(downRight ? down : right)]);
         }

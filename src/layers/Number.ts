@@ -7,7 +7,7 @@ import {
     StorageFilter,
 } from "../types";
 import { PUT_AT_END } from "../utils/OrderedMap";
-import { zip } from "../utils/data";
+import { zipDefined } from "../utils/data";
 import { notify } from "../utils/notifications";
 import { BaseLayer } from "./BaseLayer";
 import { numberTyper } from "./controls/numberTyper";
@@ -73,7 +73,7 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
 
         const history: LayerHandlerResult<NumberProps>["history"] = [];
 
-        for (const [id, old, new_] of zip(ids, states, newStates)) {
+        for (const [id, old, new_] of zipDefined(ids, states, newStates)) {
             if (old === new_) continue;
 
             history.push({

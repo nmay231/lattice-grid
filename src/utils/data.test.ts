@@ -1,7 +1,7 @@
 /* eslint-disable unicorn/consistent-function-scoping */
 import fc from "fast-check";
 import { zip as lodashZip, range } from "lodash";
-import { concat, filterUnique, zip as ourZip, parseIntBase, reduceTo, reversed } from "./data";
+import { concat, filterUnique, parseIntBase, reduceTo, reversed, zipDefined } from "./data";
 import { FCNormalFloat, FCRepeat, given } from "./testing/fcArbitraries";
 
 describe("filterUnique", () => {
@@ -60,7 +60,7 @@ describe("zip with better types", () => {
                     fc.array(FCRepeat(length, fc.integer()), { minLength: 2, maxLength: 5 }),
                 ),
         ]).assertProperty((arrays) => {
-            expect([...ourZip(...arrays)]).toEqual(lodashZip(...arrays));
+            expect([...zipDefined(...arrays)]).toEqual(lodashZip(...arrays));
         });
     });
 });
