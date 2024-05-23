@@ -1,12 +1,12 @@
 import { randomId } from "@mantine/hooks";
 import { Base64 } from "js-base64";
-import { inspect } from "node-inspect-extracted";
+import { inspect, type InspectOptions } from "node-inspect-extracted";
 import { deflate, inflate } from "pako";
 import { UnknownObject } from "../types";
 
-export const stringifyAnything = (obj: any): string => {
+export const stringifyAnything = (obj: any, params: Partial<InspectOptions> = {}): string => {
     try {
-        return inspect(obj, { showProxy: true });
+        return inspect(obj, { ...params, showProxy: true });
     } catch (err) {
         console.error(err);
         return `[COULD_NOT_STRINGIFY_OBJECT]`;

@@ -1,8 +1,12 @@
 import { expect, test } from "@playwright/test";
 import fc from "fast-check";
+import { existsSync, mkdirSync, writeFileSync } from "fs";
 import Jimp from "jimp";
+import { tmpdir } from "os";
+import { join } from "path";
 import type { PartialPointerEvent } from "../src/ControlsManager";
 import { availableLayers } from "../src/layers";
+import { stringifyAnything } from "../src/utils/string";
 import { FCRepeat, given } from "../src/utils/testing/fcArbitraries";
 
 test.describe(() => {
@@ -14,11 +18,10 @@ test.describe(() => {
     // - It doesn't account for the interaction of question and answer objects
     // - It can't change layer settings
     // - It doesn't detect state that is different but visually identical, but I guess that would be a different test entirely.
-    // - It generates a lot of similar puzzles and I don't know why yet (I would guess more than half are past examples)
     // - Duplicate layers are not tested (but duplicate layers should be disallowed for now, anyway)
-    // - The output images are just manually written to a file in `/tmp` for now.
     test("Encoded puzzles decode to the same puzzle", async ({ page }) => {
         const testedURLs = [] as string[];
+        const numRuns = 1000;
 
         const FCCoordinate = FCRepeat(2, fc.integer({ min: 0, max: 100 }));
 
@@ -57,19 +60,15 @@ test.describe(() => {
                 .map((layer) => layer.displayName),
             { minLength: 1 },
         );
-        await given([actions, layers], {
-            numRuns: 100,
-            timeout: 60_000,
-            seed: -674930219,
-            path: "9",
-            // Keep `endOnFailure: true`, because it's very unlikely that fast-check will actually find a minimum example
-            endOnFailure: true,
-        }).assertAsyncProperty(async (actions, layers) => {
-            page.on("console", async (msg) => {
-                const values = [];
-                for (const arg of msg.args()) values.push(await arg.jsonValue());
-                console.log(...values);
-            });
+        await given([actions, layers], { numRuns }).assertAsyncProperty(async (actions, layers) => {
+            // page.on("console", async (msg) => {
+            //     const values = [];
+            //     for (const arg of msg.args())
+            //         values.push(
+            //             stringifyAnything(await arg.jsonValue(), { depth: 5, colors: true }),
+            //         );
+            //     console.log(...values);
+            // });
 
             // console.log(stringifyAnything(layers), stringifyAnything(actions));
             await page.goto("/edit");
@@ -130,7 +129,7 @@ test.describe(() => {
                 canvasParams[key] = Math.round(canvasParams[key]);
             }
 
-            const expectedImage = await page.screenshot({
+            const expectedImageBuffer = await page.screenshot({
                 clip: canvasParams,
                 scale: "css",
             });
@@ -138,10 +137,9 @@ test.describe(() => {
             await page.getByText("Import / Export").click();
             const url = await page.getByTestId("exported-url").inputValue();
             if (testedURLs.includes(url)) {
-                console.log(`Skipped: ${url}`);
-                fc.pre(false);
+                console.log(`\x1b[0;33mDup\x1b[0m: ${url}`);
             } else {
-                console.log(`Testing: ${url}`);
+                console.log(`\x1b[0;32mNew\x1b[0m: ${url}`);
                 testedURLs.push(url);
             }
             await page.goto(url);
@@ -151,20 +149,43 @@ test.describe(() => {
                 const notifications = document.querySelector('.mantine-Notifications-root');
                 notifications.style.display = "none";
             `);
-            const actualImage = await page.screenshot({
+            const actualImageBuffer = await page.screenshot({
                 clip: canvasParams,
                 scale: "css",
             });
 
-            const diff = Jimp.diff(await Jimp.read(expectedImage), await Jimp.read(actualImage));
+            const expectedImage = await Jimp.read(expectedImageBuffer);
+            const actualImage = await Jimp.read(actualImageBuffer);
+            const diff = Jimp.diff(expectedImage, actualImage);
 
             if (diff.percent > 0) {
-                diff.image.write("/tmp/diff.png");
-                (await Jimp.read(expectedImage)).write("/tmp/expectedImage.png");
-                (await Jimp.read(actualImage)).write("/tmp/actualImage.png");
+                const time = Date.now() % 1_000_000;
+                console.log(
+                    `\x1b[0;31mPERCENT DIFFERENT\x1b[0m: ${diff.percent.toFixed(5)} -- time=${time}`,
+                );
+
+                const tmp = join(`${tmpdir()}`, "latgrid-url-fuzzing");
+                if (!existsSync(tmp)) {
+                    mkdirSync(tmp);
+                }
+                writeFileSync(
+                    join(tmp, `${time}-instructions.txt`),
+                    stringifyAnything({ layers, actions }),
+                    { flag: "w" },
+                );
+                diff.image.write(join(tmp, "diff.png"));
+                diff.image.write(join(tmp, `${time}-diff.png`));
+                expectedImage.write(join(tmp, "expectedImage.png"));
+                expectedImage.write(join(tmp, `${time}-expectedImage.png`));
+                actualImage.write(join(tmp, "actualImage.png"));
+                actualImage.write(join(tmp, `${time}-actualImage.png`));
             }
 
             expect(diff.percent).toBe(0);
         });
+
+        console.log(
+            `\x1b[0;32m${((testedURLs.length / numRuns) * 100).toFixed(2)}% of ${numRuns} were unique URLs.\x1b[0m`,
+        );
     });
 });

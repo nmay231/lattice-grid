@@ -120,7 +120,7 @@ export const handleEventsCurrentSetting = <
         }
 
         tempStorage.batchId = tempStorage.batchId ?? storage.getNewBatchId();
-        const state: ObjectState | null = tempStorage.targetState;
+        const state = tempStorage.targetState;
         const history = newPoints.map((id) => ({
             id,
             batchId: tempStorage.batchId,

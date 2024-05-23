@@ -162,9 +162,8 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
         const elements: SVGGroup["elements"] = new Map();
 
         const id = stored.permStorage.currentObjectId;
-        if (id !== undefined) {
-            const object = stored.getObject("question", id);
-
+        const object = stored.getObject("question", id!);
+        if (object) {
             const [, cells] = pt.fromPoints("cells", object.points);
             const shrinkwrap = pt.shrinkwrap(cells, { inset: 5 });
 
