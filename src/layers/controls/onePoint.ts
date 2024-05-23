@@ -82,7 +82,7 @@ export const handleEventsCycleStates = <
         const history = newPoints.map((id) => ({
             id,
             batchId: tempStorage.batchId,
-            object: state === null ? null : { point: id, state },
+            object: state === null ? null : { state },
         }));
         return { history };
     };
@@ -124,7 +124,7 @@ export const handleEventsCurrentSetting = <
         const history = newPoints.map((id) => ({
             id,
             batchId: tempStorage.batchId,
-            object: state === null ? null : { point: id, state },
+            object: state === null ? null : { state },
         }));
         return { history };
     };

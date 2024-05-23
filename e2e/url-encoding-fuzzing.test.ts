@@ -16,7 +16,7 @@ test.describe(() => {
     // TODO: While this test has found some bugs already, it has some weaknesses:
     // - It's slow and complicated to understand (speed is less of an issue since it's only run infrequently)
     // - It doesn't account for the interaction of question and answer objects
-    // - It can't change layer settings
+    // - It can't change layer settings or grid size
     // - It doesn't detect state that is different but visually identical, but I guess that would be a different test entirely.
     // - Duplicate layers are not tested (but duplicate layers should be disallowed for now, anyway)
     test("Encoded puzzles decode to the same puzzle", async ({ page }) => {
