@@ -1,7 +1,9 @@
 import { vi } from "vitest";
 import { LayerStorage } from "../../LayerStorage";
-import { PartialHistoryAction } from "../../types";
+import { PartialHistoryAction, type Grid } from "../../types";
+import { smartSort } from "../../utils/string";
 import { layerEventRunner } from "../../utils/testing/layerEventRunner";
+import { partialMock } from "../../utils/testing/partialMock";
 import {
     TwoPointCurrentStateParameters,
     TwoPointProps,
@@ -35,6 +37,31 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
         };
     };
 
+    const attachMockPointTransformer = (grid: Grid) => {
+        type FakeGridPoint<T = unknown> = { input: T; string(): T };
+        const fakePointMap = {
+            get<T>(input: T): FakeGridPoint<T> {
+                return {
+                    input,
+                    string() {
+                        return input;
+                    },
+                };
+            },
+        };
+        const pt = partialMock<ReturnType<Grid["getPointTransformer"]>>({
+            fromPoints() {
+                return [fakePointMap];
+            },
+            sorter() {
+                return (a: FakeGridPoint<string>, b: FakeGridPoint<string>) =>
+                    smartSort(a.input, b.input);
+            },
+        });
+
+        vi.spyOn(grid, "getPointTransformer").mockImplementation(() => pt);
+    };
+
     type HistoryType = PartialHistoryAction<TwoPointProps<State>>[];
 
     // TODO: we have to call layer.gatherPoints each time because it's not a pure function. We might not have to if modified appropriately.
@@ -59,6 +86,7 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
         const layer = getTwoPointLayer();
         const handler = layerEventRunner({ layer });
         handler.storage.getNewBatchId.mockReturnValueOnce(13);
+        attachMockPointTransformer(handler.grid);
 
         // When two points are selected
         const points1 = handler.gatherPoints({ type: "pointerDown", points: ["a"] });
@@ -88,6 +116,7 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
         const layer = getTwoPointLayer();
         const handler = layerEventRunner({ layer });
         handler.storage.getNewBatchId.mockReturnValueOnce(13);
+        attachMockPointTransformer(handler.grid);
 
         // When three points are selected
         const points1 = handler.gatherPoints({ type: "pointerDown", points: ["a"] });
@@ -146,6 +175,7 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
         ]);
         const handler = layerEventRunner({ layer, stored });
         handler.storage.getNewBatchId.mockReturnValueOnce(13);
+        attachMockPointTransformer(handler.grid);
 
         // When the existing line is drawn over with the same settings
         const points1 = handler.gatherPoints({ type: "pointerDown", points: ["b"] });
@@ -175,6 +205,7 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
         ]);
         const handler = layerEventRunner({ layer, stored });
         handler.storage.getNewBatchId.mockReturnValueOnce(13);
+        attachMockPointTransformer(handler.grid);
 
         // When the line is drawn over
         const points1 = handler.gatherPoints({ type: "pointerDown", points: ["b"] });
@@ -208,6 +239,7 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
         ]);
         const handler = layerEventRunner({ layer, stored });
         handler.storage.getNewBatchId.mockReturnValueOnce(13);
+        attachMockPointTransformer(handler.grid);
 
         // When drawing a new line
         const points1 = handler.gatherPoints({ type: "pointerDown", points: ["3"] });
@@ -258,6 +290,7 @@ describe("twoPoint.handleEventsCurrentSetting", () => {
         ]);
         const handler = layerEventRunner({ layer, stored });
         handler.storage.getNewBatchId.mockReturnValueOnce(13);
+        attachMockPointTransformer(handler.grid);
 
         // When drawing over it
         const points1 = handler.gatherPoints({ type: "pointerDown", points: ["1"] });

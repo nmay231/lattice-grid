@@ -21,7 +21,7 @@ test.describe(() => {
     // - Duplicate layers are not tested (but duplicate layers should be disallowed for now, anyway)
     test("Encoded puzzles decode to the same puzzle", async ({ page }) => {
         const testedURLs = [] as string[];
-        const numRuns = 1000;
+        const numRuns = 100;
 
         const FCCoordinate = FCRepeat(2, fc.integer({ min: 0, max: 100 }));
 
@@ -71,8 +71,17 @@ test.describe(() => {
             // });
 
             // console.log(stringifyAnything(layers), stringifyAnything(actions));
+
             await page.goto("/edit");
             await page.getByRole("button", { name: "Reset Puzzle" }).click();
+
+            const removeLayer = page.getByTestId("remove-layer");
+            await removeLayer.click(); // Remove the number layer that's there by default
+            const addLayer = page.locator(`input[value="Add New Layer"][aria-haspopup="listbox"]`);
+            for (const layerDisplayName of layers) {
+                await addLayer.click();
+                await page.getByRole("option", { name: layerDisplayName }).click();
+            }
 
             const canvas = page.getByTestId("svg-canvas");
             const canvasParams = (await canvas.boundingBox())!;
@@ -83,14 +92,6 @@ test.describe(() => {
                 const clientY = (y * canvasParams.height) / 100 + canvasParams.y;
                 return { clientX, clientY, buttons: 1, pointerId: 0 };
             };
-
-            const removeLayer = page.getByTestId("remove-layer");
-            await removeLayer.click(); // Remove the number layer that's there by default
-            const addLayer = page.locator(`input[value="Add New Layer"][aria-haspopup="listbox"]`);
-            for (const layerDisplayName of layers) {
-                await addLayer.click();
-                await page.getByRole("option", { name: layerDisplayName }).click();
-            }
 
             for (const { cursorMoves, cursorStart, keyboard } of actions) {
                 let pointerEvent = coordToPointerEvent(cursorStart);

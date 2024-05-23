@@ -30,6 +30,11 @@ export default defineConfig({
         trace: "on-first-retry",
     },
 
+    // Ignore platform and project (browser) in snapshot filenames
+    snapshotPathTemplate: "{testDir}/{testFilePath}-snapshots/{arg}{ext}",
+    // Default:
+    // snapshotPathTemplate: '{testDir}/{testFilePath}-snapshots/{arg}-{projectName}-{platform}{ext}',
+
     /* Configure projects for major browsers */
     projects: [
         {

@@ -18,6 +18,7 @@ export const layerEventEssentials = <LP extends LayerProps = LayerProps>(
         id: "grid",
         getAllPoints: vi.fn().mockImplementation(() => []),
         selectPointsWithCursor: vi.fn().mockImplementation(() => []),
+        getPointTransformer: vi.fn(),
     });
     const _stored = stored || new LayerStorage<LP>();
 

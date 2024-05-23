@@ -9,7 +9,6 @@ import {
 } from "../../types";
 import { zip } from "../../utils/data";
 import { notify } from "../../utils/notifications";
-import { smartSort } from "../../utils/string";
 
 type StringRecord = Record<string, string>;
 
@@ -75,7 +74,7 @@ export const handleEventsCurrentSetting = <
     };
 
     const handleEvent: TwoPointLayer["handleEvent"] = function (this: TwoPointLayer, event) {
-        const { storage, type, tempStorage, settings } = event;
+        const { storage, type, tempStorage, settings, grid } = event;
         if ((type !== "pointerDown" && type !== "pointerMove") || !event.points.length) {
             return {};
         }
@@ -86,9 +85,15 @@ export const handleEventsCurrentSetting = <
         tempStorage.batchId = tempStorage.batchId ?? storage.getNewBatchId();
         const history: PartialHistoryAction<LP>[] = [];
         for (let i = 0; i < newPoints.length - 1; i++) {
-            const pair = newPoints.slice(i, i + 2);
+            let pair = newPoints.slice(i, i + 2);
             if (!directional) {
-                pair.sort(smartSort);
+                const pt = grid.getPointTransformer(settings);
+                const [pointMap] = pt.fromPoints(pointTypes[0], pair);
+                const sorter = pt.sorter({ direction: "NW" });
+                pair = pair
+                    .map((string) => pointMap.get(string)!)
+                    .sort(sorter)
+                    .map((vec) => vec.string());
             }
             const id = pair.join(";");
 
