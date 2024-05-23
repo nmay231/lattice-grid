@@ -58,6 +58,7 @@ class _SquareGridPoints<PT extends PointType = PointType> {
 
             for (const point of this.points) {
                 // deltas = (t2t === edges->cells) XOR (x is even) ? upDown : leftRight
+                // eslint-disable-next-line unicorn/no-negated-condition
                 const deltas = (type === "cells") !== !(point.x & 1) ? upDown : leftRight;
 
                 const neighbors = deltas.map((delta) => point.plus(delta));
@@ -143,7 +144,7 @@ class _SquareGridTransformer {
         return (this.settings.cellSize / 2) * shapeMap[type][shape] * sizeMap[type][size];
     }
 
-    sorter({ direction = "NW" } = { direction: "NW" }) {
+    sorter({ direction = "NW" } = {}) {
         type Sorter = (a: Vec, b: Vec) => number;
         const sorters: Record<string, Sorter> = {
             N: (a, b) => a.y - b.y,
@@ -177,7 +178,7 @@ class _SquareGridTransformer {
     }
 
     shrinkwrap(gp: _SquareGridPoints<"cells">, { inset = 0 } = {}) {
-        return Array.from(this._shrinkwrap({ inset, gp, halfCell: this.settings.cellSize / 2 }));
+        return [...this._shrinkwrap({ inset, gp, halfCell: this.settings.cellSize / 2 })];
     }
 
     /*
@@ -207,7 +208,7 @@ class _SquareGridTransformer {
      */
     *_shrinkwrap(arg: { inset: number; gp: _SquareGridPoints<"cells">; halfCell: number }) {
         const { inset, gp, halfCell } = arg;
-        if (!gp.points.length) return;
+        if (gp.points.length === 0) return;
         const [edgeMap] = gp.adjacent("edges");
 
         // I really wish JS had a tuple type that worked with strict equality...
@@ -274,7 +275,7 @@ class _SquareGridTransformer {
                 cornersNormals = [];
 
                 yield corners.map((vec) => vec.xy.join(",")) satisfies string[];
-                if (!edgeShell.size) return;
+                if (edgeShell.size === 0) return;
 
                 const { value, done } = edgeShell.values().next();
                 if (done) throw TheEggShellWasEmpty();
@@ -333,7 +334,7 @@ class _SquareGridEncoder {
     // TODO: Maybe I don't need the above method for this purpose. I don't know...
     _encodeGridPointsInsideGrid(pointType: PointType, points: Vec[]) {
         if (pointType !== "cells" && pointType !== "corners") {
-            throw Error("Only supports cells and corners for now");
+            throw new Error("Only supports cells and corners for now");
         }
 
         const map = new Map<Vec, number>();
@@ -349,7 +350,7 @@ class _SquareGridEncoder {
 
     decodeGridPointsInsideGrid(pointType: PointType, points: number[]) {
         if (pointType !== "cells" && pointType !== "corners") {
-            throw Error("Only supports cells and corners for now");
+            throw new Error("Only supports cells and corners for now");
         }
 
         const map = {} as Record<number, Vec>;
@@ -367,7 +368,7 @@ class _SquareGridEncoder {
     // TODO: _SquareGridAdjacentPoints or something like that
     encodeAdjacentGridPointsInsideGrid(pointType: PointType, points: Array<[Vec, Vec]>) {
         if (pointType !== "cells" && pointType !== "corners") {
-            throw Error("Only supports cells and corners for now");
+            throw new Error("Only supports cells and corners for now");
         }
 
         const down = new Vec(0, 2);
@@ -411,7 +412,7 @@ class _SquareGridEncoder {
         downRightBitmap: Uint8Array,
     ) {
         if (pointType !== "cells" && pointType !== "corners") {
-            throw Error("Only supports cells and corners for now");
+            throw new Error("Only supports cells and corners for now");
         }
         const downRightArray = [...downRightBitmap]
             .flatMap((byte) => [
@@ -422,13 +423,14 @@ class _SquareGridEncoder {
                 byte & (1 << 3),
                 byte & (1 << 2),
                 byte & (1 << 1),
+                // eslint-disable-next-line unicorn/prefer-math-trunc
                 byte & (1 << 0),
             ])
             .map(Boolean);
 
         const diff = downRightArray.length - points.length;
         if (diff < 0 || diff >= 8) {
-            throw Error("Length of points and bitmap do not match closely enough");
+            throw new Error("Length of points and bitmap do not match closely enough");
         }
 
         const down = new Vec(0, 2);
@@ -454,7 +456,7 @@ class _SquareGridEncoder {
 
         if (base16.length & 1) {
             base16.unshift(1);
-        } else if (base16.length && (base16[0] === 1 || (base16[0] === 0 && base16[1] === 0))) {
+        } else if (base16.length > 0 && (base16[0] === 1 || (base16[0] === 0 && base16[1] === 0))) {
             base16.unshift(0, 0);
         }
 
@@ -467,7 +469,7 @@ class _SquareGridEncoder {
 
     /** @deprecated */
     decodeNonNegativeNumbersAsBaseConversion(numbers: Uint8Array, base: number): number[] {
-        if (!numbers.length) return [];
+        if (numbers.length === 0) return [];
 
         const base16 = [] as number[];
         for (const x of numbers) {
@@ -485,11 +487,11 @@ class _SquareGridEncoder {
     /** @deprecated */
     baseConvert(digits: number[], currentBase: number, targetBase: number): number[] {
         if (currentBase <= 1 || currentBase > 36 || targetBase <= 1 || targetBase > 36) {
-            throw Error("Bases must be between 2, 36 inclusive");
+            throw new Error("Bases must be between 2, 36 inclusive");
         }
         const singleCharDigits =
             currentBase <= 10 ? digits : digits.map((char) => this._baseCharacters[char]);
-        const base10 = parseInt(singleCharDigits.join(""), currentBase);
+        const base10 = Number.parseInt(singleCharDigits.join(""), currentBase);
 
         // Efficiency? What is that?
         return [...base10.toString(targetBase).toUpperCase()].map((char) =>
@@ -499,18 +501,21 @@ class _SquareGridEncoder {
 
     encodePointType(pointType: PointType): EncodedPointType {
         switch (pointType) {
-            case "cells":
+            case "cells": {
                 return { cells: true };
-            case "corners":
+            }
+            case "corners": {
                 return { corners: true };
-            case "edges":
+            }
+            case "edges": {
                 // TODO: This is me reading old code, but I think the reason I
                 // haven't encoded edges is because this actually should not be
                 // pointType, but rather a relation of pointTypes (or a singular
                 // one, as it is for now).
-                throw Error(
+                throw new Error(
                     "TODO: We failed and I don't even know if this method should be part of SquareGridEncoder",
                 );
+            }
         }
     }
 
@@ -520,7 +525,7 @@ class _SquareGridEncoder {
         } else if (pointType.corners) {
             return "corners";
         } else {
-            throw Error(
+            throw new Error(
                 "TODO: We failed and I don't even know if this method should be part of SquareGridEncoder",
             );
         }
@@ -539,7 +544,7 @@ class _SquareGridEncoder {
         if (enumVariant in DEFAULT_COLORS) {
             return DEFAULT_COLORS[enumVariant as keyof typeof DEFAULT_COLORS];
         } else {
-            throw Error(`Unknown color enum value: ${stringifyAnything(color)}`);
+            throw new Error(`Unknown color enum value: ${stringifyAnything(color)}`);
         }
     }
 }
@@ -646,7 +651,7 @@ export class SquareGrid implements Grid {
             firstPoint.plus([1, 1]),
         ].filter((p) => pointTypes.includes(this._stringToGridPoint(p.xy.join(",")).type));
 
-        let start: Vec | undefined = undefined;
+        let start: Vec | undefined;
         if (previousPoint) {
             start = Vec.from(previousPoint.split(",").map(parseIntBase(10)) as TupleVector);
 
@@ -683,8 +688,8 @@ export class SquareGrid implements Grid {
 
     _stringToGridPoint(point: Point): GridPoint {
         const [, x_, y_] = /^(-?\d+),(-?\d+)$/.exec(point) || [];
-        const x = parseInt(x_);
-        const y = parseInt(y_);
+        const x = Number.parseInt(x_);
+        const y = Number.parseInt(y_);
         const xEven = (x >> 1) << 1 === x,
             yEven = (y >> 1) << 1 === y;
         if (xEven && yEven) {
@@ -740,7 +745,7 @@ export class SquareGrid implements Grid {
         const maxY = 2 * (this.y0 + this.height) + 1;
 
         // TODO: CellOutline should be filtering out of bound points from being selected in the first place, but this solves any duplication issues for now.
-        const outside = new Set([...blacklist]);
+        const outside = new Set(blacklist);
         for (let x = minX; x <= maxX; x += 2) {
             outside.add(`${x},${minY}`);
             outside.add(`${x},${maxY}`);
@@ -761,7 +766,7 @@ export class SquareGrid implements Grid {
 
         for (const [index, group] of Object.entries(shrinkwrap)) {
             if (group.includes(outlierCorner)) {
-                shrinkwrap.splice(parseInt(index), 1);
+                shrinkwrap.splice(Number.parseInt(index), 1);
                 outlierCorner = null;
                 break;
             }

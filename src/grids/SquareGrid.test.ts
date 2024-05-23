@@ -27,8 +27,8 @@ describe("SquareGrid", () => {
             mediumGrid._outOfBounds({ x: 10, y: 21, type: "edges" }),
             mediumGrid._outOfBounds({ x: 21, y: 10, type: "edges" }),
             mediumGrid._outOfBounds({
-                x: 1000000,
-                y: 1000000,
+                x: 1_000_000,
+                y: 1_000_000,
                 type: "corners",
             }),
         ]).toEqual([true, true, true, true]);
@@ -302,13 +302,12 @@ describe("SquareGridTransformer", () => {
     const grid = new SquareGrid();
     // cellSize defaults to 2 so that the grid space matches the svg space
     const pointTransformer = ({ cellSize = 2 } = {}) => grid.getPointTransformer({ cellSize });
-    const toPoint = (vec: Vec) => vec.xy.join(",");
 
     it("parses points", () => {
         const pt = pointTransformer();
         const [map, cells] = pt.fromPoints("cells", ["1,1", "3,3", "5,5"]);
 
-        expect(Array.from(map.entries())).toEqual([
+        expect([...map.entries()]).toEqual([
             ["1,1", { x: 1, y: 1 }],
             ["3,3", { x: 3, y: 3 }],
             ["5,5", { x: 5, y: 5 }],
@@ -328,7 +327,7 @@ describe("SquareGridTransformer", () => {
         const pt = pointTransformer({ cellSize: 2 });
         let [, cells] = pt.fromPoints("cells", ["1,1", "3,3", "5,5"]);
 
-        expect(Array.from(cells.toSVGPoints().entries())).toEqual([
+        expect([...cells.toSVGPoints().entries()]).toEqual([
             [{ x: 1, y: 1 }, [1, 1]],
             [{ x: 3, y: 3 }, [3, 3]],
             [{ x: 5, y: 5 }, [5, 5]],
@@ -337,7 +336,7 @@ describe("SquareGridTransformer", () => {
         pt.settings.cellSize = 60; // The standard cellSize
         [, cells] = pt.fromPoints("cells", ["1,1", "3,3", "5,5"]);
 
-        expect(Array.from(cells.toSVGPoints().entries())).toEqual([
+        expect([...cells.toSVGPoints().entries()]).toEqual([
             [{ x: 1, y: 1 }, [30, 30]],
             [{ x: 3, y: 3 }, [90, 90]],
             [{ x: 5, y: 5 }, [150, 150]],
@@ -366,11 +365,21 @@ describe("SquareGridTransformer", () => {
 
         const NW = pt.sorter({ direction: "NW" });
         // "3,1" before "1,3"
-        expect([...cells.points].sort(NW).map(toPoint)).toEqual(["1,1", "3,1", "1,3", "3,3"]);
+        expect([...cells.points].sort(NW).map((vec) => vec.string())).toEqual([
+            "1,1",
+            "3,1",
+            "1,3",
+            "3,3",
+        ]);
 
         const WN = pt.sorter({ direction: "WN" });
         // "1,3" before "3,1"
-        expect([...cells.points].sort(WN).map(toPoint)).toEqual(["1,1", "1,3", "3,1", "3,3"]);
+        expect([...cells.points].sort(WN).map((vec) => vec.string())).toEqual([
+            "1,1",
+            "1,3",
+            "3,1",
+            "3,3",
+        ]);
     });
 
     it("sorter is idempotent and consistent", () => {
@@ -389,10 +398,16 @@ describe("SquareGridTransformer", () => {
             const sorted = [...cells.points].sort(sorter);
 
             // Sorting should be idempotent
-            expect([...sorted].map(toPoint)).toEqual(sorted.map(toPoint));
+            expect([...sorted].map((vec) => vec.string())).toEqual(
+                sorted.map((vec) => vec.string()),
+            );
 
             // Sorting order should be consistent, i.e. sorting order does not depend on starting order
-            expect(shuffle(sorted).sort(sorter).map(toPoint)).toEqual(sorted.map(toPoint));
+            expect(
+                shuffle(sorted)
+                    .sort(sorter)
+                    .map((vec) => vec.string()),
+            ).toEqual(sorted.map((vec) => vec.string()));
         });
     });
 
@@ -696,7 +711,7 @@ describe("SquareGridTransformer.shrinkwrap", () => {
                 cornerNE.minus([1, -1]),
             ].map((vec) => vec.xy.join(","));
 
-            expect(new Set(shrinkwrap.map(putMaxAtStart))).toEqual(
+            expect(new Set(shrinkwrap.map((point) => putMaxAtStart(point)))).toEqual(
                 new Set([putMaxAtStart(inner), putMaxAtStart(outer)]),
             );
         });
@@ -830,7 +845,7 @@ describe("SquareGridTransformer.shrinkwrap", () => {
                 cornerNE.plus(SW).scale(halfCell).plus(SW),
             ].map((vec) => vec.xy.join(","));
 
-            expect(new Set(shrinkwrap.map(putMaxAtStart))).toEqual(
+            expect(new Set(shrinkwrap.map((point) => putMaxAtStart(point)))).toEqual(
                 new Set([putMaxAtStart(inner), putMaxAtStart(outer)]),
             );
         });
@@ -848,8 +863,8 @@ describe("SquareGridTransformer.shrinkwrap", () => {
             ];
 
             expect(shrinkwrap).toHaveLength(2);
-            expect(new Set(shrinkwrap.map(putMaxAtStart))).toEqual(
-                new Set(expected.map(putMaxAtStart)),
+            expect(new Set(shrinkwrap.map((point) => putMaxAtStart(point)))).toEqual(
+                new Set(expected.map((point) => putMaxAtStart(point))),
             );
         }
         {
@@ -862,8 +877,8 @@ describe("SquareGridTransformer.shrinkwrap", () => {
             ];
 
             expect(shrinkwrap).toHaveLength(2);
-            expect(new Set(shrinkwrap.map(putMaxAtStart))).toEqual(
-                new Set(expected.map(putMaxAtStart)),
+            expect(new Set(shrinkwrap.map((point) => putMaxAtStart(point)))).toEqual(
+                new Set(expected.map((point) => putMaxAtStart(point))),
             );
         }
     });

@@ -13,7 +13,7 @@ describe("Number Layer", () => {
         const layer = NumberLayer.create({ layers: new IndexedOrderedMap() });
         const essentials = layerEventEssentials({ stored });
 
-        let oldSettings: NumberProps["Settings"] | undefined = undefined;
+        let oldSettings: NumberProps["Settings"] | undefined;
         layer.updateSettings({ ...essentials, puzzleSettings: essentials.settings, oldSettings });
 
         if (settings) {

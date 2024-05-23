@@ -31,7 +31,10 @@ export const MobileControlsMetaControls = React.memo(function MobileControlsMeta
                     left="0px"
                     top={mobileControls.enabled && pageMode === "edit" ? "0px" : "8px"}
                 >
-                    {!sidebar.opened ? (
+                    {sidebar.opened ? (
+                        // TODO: Size manually copied from the width of the burger
+                        <Box w="29px" h="29px"></Box>
+                    ) : (
                         <Tooltip
                             label="Toggle Sidebar"
                             events={{ hover: true, focus: true, touch: true }}
@@ -44,9 +47,6 @@ export const MobileControlsMetaControls = React.memo(function MobileControlsMeta
                                 onClick={() => (sidebar.opened = !sidebar.opened)}
                             />
                         </Tooltip>
-                    ) : (
-                        // TODO: Size manually copied from the width of the burger
-                        <Box w="29px" h="29px"></Box>
                     )}
                 </Box>
                 <div className={styles.row}>

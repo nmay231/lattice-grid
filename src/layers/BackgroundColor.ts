@@ -121,7 +121,7 @@ export class BackgroundColorLayer
 
     encode: IBackgroundColorLayer["encode"] = ({ grid, storage, settings, answerCheck }) => {
         const stored = storage.getObjects<BackgroundColorProps>(this.id);
-        const objects = stored.entries("question").slice();
+        const objects = [...stored.entries("question")];
 
         let answersAtEnd = 0;
         if (answerCheck) {

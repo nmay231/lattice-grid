@@ -1,3 +1,4 @@
+/* eslint-disable unicorn/consistent-function-scoping */
 import fc from "fast-check";
 import { zip as lodashZip, range } from "lodash";
 import { concat, filterUnique, zip as ourZip, parseIntBase, reduceTo, reversed } from "./data";
@@ -26,9 +27,7 @@ describe("reduceTo", () => {
             (array, sorter) => {
                 const sorted = [...array].sort(sorter);
                 expect(array.reduce(reduceTo.min<number>(sorter))).toBeCloseTo(sorted[0]);
-                expect(array.reduce(reduceTo.max<number>(sorter))).toBeCloseTo(
-                    sorted[sorted.length - 1],
-                );
+                expect(array.reduce(reduceTo.max<number>(sorter))).toBeCloseTo(sorted.at(-1)!);
             },
         );
     });
@@ -39,14 +38,14 @@ describe("parseIntBase", () => {
         const numberStrings = [61, 123, 2, 2, 5, 3, 5, 67, 2, 190_873, 87_287_936_108_264]
             .join(",")
             .split(",");
-        expect(numberStrings.map((number) => parseInt(number))).toEqual(
+        expect(numberStrings.map((number) => Number.parseInt(number))).toEqual(
             numberStrings.map(parseIntBase(10)),
         );
     });
 
     it("does other bases than 10", () => {
-        const base36 = [..."0123456789abcdefghijklmnopqrstuvwxyz"].concat("EEEEEEEEE");
-        expect(base36.map(parseIntBase(36))).toEqual(range(0, 36).concat(40623982667366));
+        const base36 = [..."0123456789abcdefghijklmnopqrstuvwxyz", "EEEEEEEEE"];
+        expect(base36.map(parseIntBase(36))).toEqual([...range(0, 36), 40_623_982_667_366]);
 
         expect(parseIntBase(2)("110100100")).toBe(420);
     });
@@ -61,7 +60,7 @@ describe("zip with better types", () => {
                     fc.array(FCRepeat(length, fc.integer()), { minLength: 2, maxLength: 5 }),
                 ),
         ]).assertProperty((arrays) => {
-            expect(Array.from(ourZip(...arrays))).toEqual(lodashZip(...arrays));
+            expect([...ourZip(...arrays)]).toEqual(lodashZip(...arrays));
         });
     });
 });

@@ -157,6 +157,7 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
         const allPoints = stored
             .entries(settings.editMode)
             .flatMap(([, object]) => object.points)
+
             .filter(filterUnique);
 
         const pt = grid.getPointTransformer(settings);
@@ -186,7 +187,7 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
 
     encode: ISimpleLineLayer["encode"] = ({ grid, storage, settings, answerCheck }) => {
         const stored = storage.getObjects<SimpleLineProps>(this.id);
-        const objects = stored.entries("question").slice();
+        const objects = [...stored.entries("question")];
 
         let answersAtEnd = 0;
         if (answerCheck) {
@@ -199,10 +200,7 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
         const pt = grid.getPointTransformer(settings);
         const [pointMap] = pt.fromPoints(
             "cells",
-            objects
-                .map(([, { points }]) => points)
-                .flat()
-                .filter(filterUnique),
+            objects.flatMap(([, { points }]) => points).filter(filterUnique),
         );
 
         const { startingPoints, downRightBitmap } = encoder.encodeAdjacentGridPointsInsideGrid(

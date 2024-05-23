@@ -11,7 +11,7 @@ describe("SimpleLine", () => {
     const getSimpleLine = ({ stored, settings }: Arg) => {
         const layer = SimpleLineLayer.create({ layers: new IndexedOrderedMap() });
         const essentials = layerEventEssentials({ stored });
-        let oldSettings: typeof settings = undefined;
+        let oldSettings: typeof settings;
         if (settings) {
             oldSettings = layer.settings;
             layer.settings = { ...settings };

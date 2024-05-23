@@ -1,3 +1,4 @@
+/* eslint-disable unicorn/filename-case */
 import { ScrollArea } from "@mantine/core";
 import { clsx } from "clsx";
 import React, { useEffect, useRef } from "react";
@@ -47,7 +48,7 @@ const Inner = React.memo(function Inner(arg: Pick<PuzzleManager, "layers" | "SVG
                         </g>
                     );
                 });
-                return question.concat(answer);
+                return [...question, ...answer];
             })}
         </svg>
     );

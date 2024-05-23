@@ -445,7 +445,9 @@ describe("StorageManager", () => {
     });
 
     it("does not prune history when actions have batchId=ignore or are ui actions", () => {
-        const notifySpy = vi.spyOn(notify, "error").mockImplementation(() => Error());
+        const notifySpy = vi
+            .spyOn(notify, "error")
+            .mockImplementation(() => new Error("Dummy error"));
 
         const puzzle = fakePuzzle("grid", "question");
         const storage = getNormalStorage();
@@ -769,7 +771,7 @@ describe("StorageManager StorageFilters", () => {
             { object: { asdf: "4a" }, objectId: "4", prevObjectId: "2" },
         ]);
 
-        while (storage.undoHistory().length);
+        while (storage.undoHistory().length > 0);
 
         expect(historySummary()).toEqual([
             { object: { asdf: "1a" }, objectId: "1", prevObjectId: null },
@@ -782,7 +784,7 @@ describe("StorageManager StorageFilters", () => {
             { object: { asdf: "4b" }, objectId: "4", prevObjectId: "3" },
         ]);
 
-        while (storage.redoHistory().length);
+        while (storage.redoHistory().length > 0);
 
         // When some of the objects get Thanos-snapped
         const filter2: StorageFilter = (_, action) => {
@@ -810,7 +812,7 @@ describe("StorageManager StorageFilters", () => {
             { object: { asdf: "4a" }, objectId: "4", prevObjectId: null },
         ]);
 
-        while (storage.undoHistory().length);
+        while (storage.undoHistory().length > 0);
 
         expect(historySummary()).toEqual([
             { object: { asdf: "1a" }, objectId: "1", prevObjectId: null },
@@ -822,7 +824,7 @@ describe("StorageManager StorageFilters", () => {
             { object: { asdf: "4b" }, objectId: "4", prevObjectId: "3" },
         ]);
 
-        while (storage.redoHistory().length);
+        while (storage.redoHistory().length > 0);
 
         // When half the objects are Thanos snapped away
         const filter: StorageFilter = (_, action) => {
@@ -847,7 +849,7 @@ describe("StorageManager StorageFilters", () => {
             { object: { asdf: "4a" }, objectId: "4", prevObjectId: null },
         ]);
 
-        while (storage.undoHistory().length);
+        while (storage.undoHistory().length > 0);
 
         expect(historySummary()).toEqual([
             { object: { asdf: "3a" }, objectId: "3", prevObjectId: null },

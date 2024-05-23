@@ -35,10 +35,10 @@ export class IfElse implements ICodeBlock<IIfElse> {
         public json: IIfElse,
     ) {
         if (json.ifTrue?.length) {
-            json.ifTrue.forEach((block) => compute.compileBlock(this, block));
+            for (const block of json.ifTrue) compute.compileBlock(this, block);
         }
         if (json.ifFalse?.length) {
-            json.ifFalse.forEach((block) => compute.compileBlock(this, block));
+            for (const block of json.ifFalse) compute.compileBlock(this, block);
         }
     }
 }

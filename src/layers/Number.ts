@@ -58,7 +58,7 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
 
     handleKeyDown: INumberLayer["handleKeyDown"] = ({ points: ids, storage, settings }) => {
         const stored = storage.getObjects<NumberProps>(this.id);
-        if (!ids.length) {
+        if (ids.length === 0) {
             return {};
         }
 
@@ -188,7 +188,7 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
 
         const min = this.settings.negatives ? -this.settings.max : 0;
         const max = this.settings.max;
-        const num = parseInt(action.object.state);
+        const num = Number.parseInt(action.object.state);
         return { keep: min <= num && num <= max };
     };
 
@@ -223,7 +223,7 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
 
     encode: INumberLayer["encode"] = ({ grid, storage, settings, answerCheck }) => {
         const stored = storage.getObjects<NumberProps>(this.id);
-        const objects = stored.entries("question").slice();
+        const objects = [...stored.entries("question")];
 
         let answersAtEnd = 0;
         if (answerCheck) {
@@ -246,7 +246,7 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
                 negatives: this.settings.negatives ? 1 : 0,
                 dataV1: objects.map(([point, { state }]) => ({
                     point: vecToNumber.get(pointToVec.get(point))!,
-                    state: parseInt(state),
+                    state: Number.parseInt(state),
                 })),
                 answersAtEnd: answersAtEnd || undefined,
             },

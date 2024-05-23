@@ -14,7 +14,7 @@ const getCleaner = (max: number) => {
 };
 
 const toOptionalNumber = (val: string | null): number | null => {
-    const num = val ? parseInt(val) : null;
+    const num = val ? Number.parseInt(val) : null;
     if (Number.isNaN(num)) return null;
     return num;
 };
@@ -27,7 +27,7 @@ export const numberTyper = ({ max, negatives }: TypeNumberArg) => {
         numberStrings: Array<string | null>,
         event: Keypress | string | null,
     ): Array<string | null> | "doNothing" => {
-        if (!numberStrings.length) return "doNothing";
+        if (numberStrings.length === 0) return "doNothing";
 
         let numbers = numberStrings.map(toOptionalNumber);
         const keypress = typeof event === "string" ? event : event?.keypress || null;
@@ -44,10 +44,10 @@ export const numberTyper = ({ max, negatives }: TypeNumberArg) => {
             // TODO: Keep the minus sign as part of an inProgress object and remove it when the interaction times out.
             if (!negatives) return "doNothing";
             return numbers.map((num) => (num === null ? null : clean(-num)));
-        } else if (/^[a-fA-F]$/.test(keypress)) {
+        } else if (/^[A-Fa-f]$/.test(keypress)) {
             // TODO: if (!(settings.allowHex && (max === -1 || max > 10))) return "doNothing";
             // TODO: Should I allow the option to type multiDigit characters in hex?
-            const num = clean(parseInt(keypress.toLowerCase(), 36));
+            const num = clean(Number.parseInt(keypress.toLowerCase(), 36));
             return numbers.map(() => num);
         }
 
@@ -56,8 +56,8 @@ export const numberTyper = ({ max, negatives }: TypeNumberArg) => {
             // If not all of the selected numbers are the same, then they should all be considered unset numbers
             numbers = numbers.map(() => null);
         }
-        if (/^[0-9]$/.test(keypress)) {
-            return numbers.map((num) => clean(10 * (num || 0) + parseInt(keypress)));
+        if (/^\d$/.test(keypress)) {
+            return numbers.map((num) => clean(10 * (num || 0) + Number.parseInt(keypress)));
         }
         return "doNothing"; // Change nothing
     };

@@ -198,7 +198,7 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
 
                     return {
                         points: points.map((point) => vecToNumber.get(pointToVec.get(point))!),
-                        state: state ? parseInt(state) : undefined,
+                        state: state ? Number.parseInt(state) : undefined,
                     };
                 }),
             },

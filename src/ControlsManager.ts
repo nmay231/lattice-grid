@@ -68,13 +68,15 @@ export class _PointerState {
                     { button: this.button, xy: [event.clientX, event.clientY] as TupleVector },
                 ] as const;
             }
-            case "start+second":
+            case "start+second": {
                 this.mode = "panZoom";
                 // We send an "up" event because the layer should not receive a down event (which is still delayed since mode === "start")
                 // The reason it's "up" instead of just "cancelDown" is so that there is always a up event for every down (even if the pair is never sent to the layer).
                 return ["up", "cancelDown"] as const;
-            case "drawPan+second":
+            }
+            case "drawPan+second": {
                 return ["ignore"] as const;
+            }
             case "panZoom+first":
             case "panZoom+second":
             case "drawPan+first": {
@@ -258,7 +260,7 @@ export class ControlsManager {
 
         if (layerEvent.type === "pointerDown" || layerEvent.type === "pointerMove") {
             const points = layer.gatherPoints(layerEvent);
-            if (!points.length) {
+            if (points.length === 0) {
                 return;
             }
             layerEvent.points = points;
@@ -389,7 +391,7 @@ export class ControlsManager {
         const keypress = keypressString(rawEvent);
 
         // This should be a very small whitelist for which key-strokes are allowed to be blocked
-        if (["ctrl-a", "ctrl-i"].indexOf(keypress) > -1 || keypress.length === 1) {
+        if (["ctrl-a", "ctrl-i"].includes(keypress) || keypress.length === 1) {
             // Keyboard shortcuts should still be preventDefault'ed even if we are handling pointer events
             rawEvent.preventDefault();
         }
@@ -419,8 +421,8 @@ export class ControlsManager {
             const appliedActions =
                 keypress === "ctrl-z" ? storage.undoHistory() : storage.redoHistory();
 
-            if (appliedActions.length) {
-                const lastAction = appliedActions[appliedActions.length - 1];
+            const lastAction = appliedActions.at(-1);
+            if (lastAction) {
                 this.puzzle.selectLayer(lastAction.layerId);
                 if (lastAction.storageMode !== "ui") {
                     this.puzzle.settings.editMode = lastAction.storageMode;

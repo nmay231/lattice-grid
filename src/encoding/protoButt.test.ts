@@ -318,7 +318,7 @@ describe("protoButt", () => {
                         maxKeys: 5,
                     })
                     .chain((fields) => {
-                        const entries = Object.entries(fields).map(changeBadKeys);
+                        const entries = Object.entries(fields).map((entry) => changeBadKeys(entry));
                         return fc
                             .uniqueArray(fc.integer({ min: 0, max: 130 }), {
                                 minLength: entries.length,
@@ -352,7 +352,7 @@ describe("protoButt", () => {
                             .map((indexes) =>
                                 Object.fromEntries(
                                     entries
-                                        .map(changeBadKeys)
+                                        .map((entry) => changeBadKeys(entry))
                                         .map(([key, field], i) => [
                                             key,
                                             { ...field, index: indexes[i] },
@@ -371,7 +371,7 @@ describe("protoButt", () => {
                     .map((fields) =>
                         Object.fromEntries(
                             Object.entries(fields)
-                                .map(changeBadKeys)
+                                .map((entry) => changeBadKeys(entry))
                                 .map(([key, field], index) => [key, { ...field, index }]),
                         ),
                     ),

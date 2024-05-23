@@ -21,11 +21,13 @@ export class RootBlock implements ICodeBlock<IRootBlock> {
             });
             return;
         }
-        json.codeBody.forEach((block) => compute.compileBlock(this, block));
+        for (const block of json.codeBody) {
+            compute.compileBlock(this, block);
+        }
     }
 
     validateInputs() {
-        if (!this.json.codeBody.length) {
+        if (this.json.codeBody.length === 0) {
             this.compute.compilerErrors.push({
                 message: "The root block must have at least one statement",
                 isInternal: false,

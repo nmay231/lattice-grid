@@ -1,3 +1,4 @@
+/* eslint-disable unicorn/filename-case */
 import { puzzleProxy } from "../../state/puzzle";
 import type { NeedsUpdating } from "../../types";
 import { UserCodeJSON } from "../../userComputation/codeBlocks";

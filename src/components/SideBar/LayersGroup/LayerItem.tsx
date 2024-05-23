@@ -36,7 +36,7 @@ export const LayerItem = ({
             {...(editing ? {} : attributes)}
             data-autofocus={selected || undefined}
             data-layerid={id}
-            tabIndex={!editing ? 0 : -1}
+            tabIndex={editing ? -1 : 0}
         >
             <div className={styles.itemBody}>
                 {editable && (

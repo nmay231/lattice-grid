@@ -1,2 +1,1 @@
-import * as Blockly from "blockly";
-export { Blockly };
+export * as Blockly from "blockly";

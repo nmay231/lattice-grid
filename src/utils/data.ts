@@ -5,7 +5,7 @@
  * array.map(parseIntBase(10)) // New
  * ```
  */
-export const parseIntBase = (base: number) => (str: string) => parseInt(str, base);
+export const parseIntBase = (base: number) => (str: string) => Number.parseInt(str, base);
 
 const minReducer = <T = any>(sorter: (a: T, b: T) => number) => {
     return (a: T, b: T) => (sorter(a, b) <= 0 ? a : b);
@@ -53,11 +53,11 @@ export function zip<T>(...arrays: Array<List<T>>): ZipResult<Array<T>>;
 /** Write a custom zip function better than lodash's because it only iterates over the shortest array and you don't have stupid undefined sprinkled in. */
 export function* zip<T>(...arrays: Array<List<T>>) {
     if (arrays.length < 2) {
-        throw Error("Must have two arrays at least");
+        throw new Error("Must have two arrays at least");
     }
 
     // TODO: I could simply require the arrays to be the same length and error if they are not. I sorta like that
-    const max = arrays.reduce((length, b) => Math.min(length, b.length), Infinity);
+    const max = arrays.reduce((length, iter) => Math.min(length, iter.length), Infinity);
 
     for (let index = 0; index < max; index++) {
         yield arrays.map((arr) => arr[index]);

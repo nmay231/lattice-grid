@@ -9,14 +9,14 @@ type Arg = {
 };
 
 export const hopStraight = ({ start, targets, cursor, deltas, toString }: Arg) => {
-    if (!deltas.length) return [];
+    if (deltas.length === 0) return [];
     if (!start) {
         const closest = targets.reduce((prev, next) =>
             prev.minus(cursor).size < next.minus(cursor).size ? prev : next,
         );
         return [toString(closest)];
     }
-    const targetStrings = targets.map(toString);
+    const targetStrings = targets.map((vec) => toString(vec));
 
     let direction = start.drawTo(cursor);
     let current = start;

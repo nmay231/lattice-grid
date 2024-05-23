@@ -1,9 +1,9 @@
 import { expect, test } from "@playwright/test";
 import fc from "fast-check";
-import { existsSync, mkdirSync, writeFileSync } from "fs";
 import Jimp from "jimp";
-import { tmpdir } from "os";
-import { join } from "path";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import type { PartialPointerEvent } from "../src/ControlsManager";
 import { availableLayers } from "../src/layers";
 import { stringifyAnything } from "../src/utils/string";
@@ -40,7 +40,7 @@ test.describe(() => {
             keyboard: fc.option(
                 fc.array(
                     fc.stringMatching(
-                        /^([a-zA-Z0-9+\-=_]|Backspace|Space|Tab)$/,
+                        /^([\w+=-]|Backspace|Space|Tab)$/,
                         // /^(Key[A-Z]|Digit[0-9]|Backspace|Space|Control|Minus|Equal)$/,
                     ),
                     { minLength: 1, maxLength: 3 },
@@ -138,9 +138,9 @@ test.describe(() => {
             await page.getByText("Import / Export").click();
             const url = await page.getByTestId("exported-url").inputValue();
             if (testedURLs.includes(url)) {
-                console.log(`\x1b[0;33mDup\x1b[0m: ${url}`);
+                console.log(`\u001B[0;33mDup\u001B[0m: ${url}`);
             } else {
-                console.log(`\x1b[0;32mNew\x1b[0m: ${url}`);
+                console.log(`\u001B[0;32mNew\u001B[0m: ${url}`);
                 testedURLs.push(url);
             }
             await page.goto(url);
@@ -162,31 +162,31 @@ test.describe(() => {
             if (diff.percent > 0) {
                 const time = Date.now() % 1_000_000;
                 console.log(
-                    `\x1b[0;31mPERCENT DIFFERENT\x1b[0m: ${diff.percent.toFixed(5)} -- time=${time}`,
+                    `\u001B[0;31mPERCENT DIFFERENT\u001B[0m: ${diff.percent.toFixed(5)} -- time=${time}`,
                 );
 
-                const tmp = join(`${tmpdir()}`, "latgrid-url-fuzzing");
+                const tmp = path.join(`${tmpdir()}`, "latgrid-url-fuzzing");
                 if (!existsSync(tmp)) {
                     mkdirSync(tmp);
                 }
                 writeFileSync(
-                    join(tmp, `${time}-instructions.txt`),
+                    path.join(tmp, `${time}-instructions.txt`),
                     stringifyAnything({ layers, actions }),
                     { flag: "w" },
                 );
-                diff.image.write(join(tmp, "diff.png"));
-                diff.image.write(join(tmp, `${time}-diff.png`));
-                expectedImage.write(join(tmp, "expectedImage.png"));
-                expectedImage.write(join(tmp, `${time}-expectedImage.png`));
-                actualImage.write(join(tmp, "actualImage.png"));
-                actualImage.write(join(tmp, `${time}-actualImage.png`));
+                diff.image.write(path.join(tmp, "diff.png"));
+                diff.image.write(path.join(tmp, `${time}-diff.png`));
+                expectedImage.write(path.join(tmp, "expectedImage.png"));
+                expectedImage.write(path.join(tmp, `${time}-expectedImage.png`));
+                actualImage.write(path.join(tmp, "actualImage.png"));
+                actualImage.write(path.join(tmp, `${time}-actualImage.png`));
             }
 
             expect(diff.percent).toBe(0);
         });
 
         console.log(
-            `\x1b[0;32m${((testedURLs.length / numRuns) * 100).toFixed(2)}% of ${numRuns} were unique URLs.\x1b[0m`,
+            `\u001B[0;32m${((testedURLs.length / numRuns) * 100).toFixed(2)}% of ${numRuns} were unique URLs.\u001B[0m`,
         );
     });
 });

@@ -56,12 +56,13 @@ export const handleEventsSelection = <LP extends SelectedProps>(
     arg: any, // TODO
 ) => {
     type SelectedLayer = Layer<LP> & KeyDownEventHandler<LP>;
-    const gatherPoints: SelectedLayer["gatherPoints"] = function ({
+
+    const gatherPoints: SelectedLayer["gatherPoints"] = ({
         grid,
         settings,
         cursor,
         tempStorage,
-    }) {
+    }) => {
         let newPoints = grid.selectPointsWithCursor({
             settings,
             cursor,
@@ -81,13 +82,13 @@ export const handleEventsSelection = <LP extends SelectedProps>(
             ],
         });
 
-        if (!newPoints.length) return [];
-        tempStorage.previousPoint = newPoints[newPoints.length - 1];
+        if (newPoints.length === 0) return [];
+        tempStorage.previousPoint = newPoints.at(-1);
 
         const blacklist: Point[] = tempStorage.blacklist || [];
         tempStorage.blacklist = blacklist;
-        newPoints = newPoints.filter((id) => blacklist.indexOf(id) === -1);
-        if (!newPoints.length) return [];
+        newPoints = newPoints.filter((id) => !blacklist.includes(id));
+        if (newPoints.length === 0) return [];
 
         tempStorage.blacklist.push(...newPoints);
 
@@ -163,13 +164,12 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                         const groupsToMerge = new Set(
                             ids.map((id) => internal.getObject("ui", id)?.state),
                         );
-                        const allIds = ids
-                            .filter((id) => !currentPoints.includes(id))
-                            .concat(
-                                [...currentPoints].filter((id) =>
-                                    groupsToMerge.has(internal.getObject("ui", id).state),
-                                ),
-                            );
+                        const allIds = [
+                            ...ids.filter((id) => !currentPoints.includes(id)),
+                            ...currentPoints.filter((id) =>
+                                groupsToMerge.has(internal.getObject("ui", id).state),
+                            ),
+                        ];
                         const state = tempStorage.targetState;
                         history = allIds.map((id) => obj({ id, object: { state } }));
                     }
@@ -183,7 +183,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                     if (removeOld) {
                         const oldIds = [...currentPoints];
                         history = oldIds
-                            .filter((toDelete) => ids.indexOf(toDelete) === -1)
+                            .filter((toDelete) => !ids.includes(toDelete))
                             .map((toDelete) => obj({ id: toDelete, object: null }));
 
                         if (oldIds.length === 1 && oldIds[0] === ids[0]) {
@@ -210,7 +210,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
                 // Clear old selection
                 const history = [...internal.keys("ui")]
                     // TODO: This doesn't account for actions that do not apply to external layer. Do I need to fix?
-                    .filter((oldId) => newIds.indexOf(oldId) === -1)
+                    .filter((oldId) => !newIds.includes(oldId))
                     .map((oldId) => obj({ id: oldId, object: null }));
 
                 internal.permStorage.groupNumber = 2;
@@ -231,7 +231,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
         }
     };
 
-    const getOverlaySVG: SelectedLayer["getOverlaySVG"] = function ({ grid, storage, settings }) {
+    const getOverlaySVG: SelectedLayer["getOverlaySVG"] = ({ grid, storage, settings }) => {
         // TODO: Selection can be made by multiple layers, but not all layers support the same cells/corners selection. In the future, I need to filter the points by the type of points selectable by the current layer.
         const stored = storage.getObjects<InternalProps>(layerId);
         const points = stored.keys("ui");
@@ -240,7 +240,7 @@ export const handleEventsSelection = <LP extends SelectedProps>(
 
         const elements: SVGGroup["elements"] = new Map();
 
-        if (points.length) {
+        if (points.length > 0) {
             const className = styles.selection;
             for (const group of new Set(states)) {
                 const [, cells] = pt.fromPoints(

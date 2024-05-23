@@ -214,17 +214,17 @@ export class ToggleCharactersLayer
             const object = stored.getObject("answer", id);
             return object?.state || "";
         });
-        const allIncluded = states.reduce((prev, next) => prev && next.indexOf(char) > -1, true);
+        const allIncluded = states.every((state) => state.includes(char));
 
         let newStates: string[];
         if (allIncluded) {
             newStates = states.map((state) => [...state].filter((c) => c !== char).join(""));
         } else {
             newStates = states.map((state) =>
-                state.indexOf(char) > -1
+                state.includes(char)
                     ? state
                     : [...this.settings.characters]
-                          .filter((c) => c === char || state.indexOf(c) > -1)
+                          .filter((c) => c === char || state.includes(c))
                           .join(""),
             );
         }
@@ -233,7 +233,7 @@ export class ToggleCharactersLayer
             history: ids.map((id, index) =>
                 obj({
                     id,
-                    object: !newStates[index] ? null : { state: newStates[index] },
+                    object: newStates[index] ? { state: newStates[index] } : null,
                 }),
             ),
         };

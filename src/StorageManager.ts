@@ -50,7 +50,7 @@ export class StorageManager {
             }
         }
 
-        if (!Object.keys(newFiltersByLayer).length || !this.history.length) return;
+        if (Object.keys(newFiltersByLayer).length === 0 || this.history.length === 0) return;
 
         const filtered = [] as typeof this.history;
         // Scrub history going right-to-left since it's better to keep the latest version if valid rather than only allowing what was valid in the past.
@@ -90,7 +90,7 @@ export class StorageManager {
     }
 
     removeStorageFilters(filters: StorageFilter[]) {
-        if (!filters.length) return;
+        if (filters.length === 0) return;
         for (const filter of filters) {
             const result = this.layersByFilters.get(filter);
             if (!result) {

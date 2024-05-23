@@ -7,6 +7,7 @@ import { MultiPointLayerProps, handleEventsUnorderedSets } from "./multiPoint";
 describe("multiPoint.handleEventsUnorderedSets", () => {
     type SecondArg = Parameters<typeof handleEventsUnorderedSets>[0];
     const getMultiPointLayer = (
+        // eslint-disable-next-line unicorn/no-object-as-default-parameter
         arg: SecondArg = {
             pointTypes: ["cells"],
             preventOverlap: false,

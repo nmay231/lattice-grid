@@ -5,7 +5,7 @@ import { smartSort, stringifyAnything } from "../utils/string";
 
 if (window.process) {
     // TODO: zero length bytes decode as Buffers on node (during test runs). This hack prevents that.
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    // eslint-disable-next-line @typescript-eslint/no-var-requires, unicorn/prefer-module
     const util = require("protobufjs/src/util");
     util.Buffer = null;
 }
@@ -81,14 +81,16 @@ export class Encoder<E extends Encoding | Scalar> {
     static _validationRecursionCheck = new WeakSet();
     private static validate(encoding: TopLevel<Encoding>): void {
         if (this._validationRecursionCheck.has(encoding)) {
-            throw Error("Validation recursion has looped");
+            throw new Error("Validation recursion has looped");
         }
         this._validationRecursionCheck.add(encoding);
         encoding._indexToField = {} as Record<number, string>;
         encoding._fieldIndexes = [] as number[];
         const fields = Object.entries(encoding.fields);
         for (const [key, field] of fields) {
-            if (key in Object.prototype) throw Error(`Do not use keys in Object.prototype: ${key}`);
+            if (key in Object.prototype) {
+                throw new Error(`Do not use keys in Object.prototype: ${key}`);
+            }
             encoding._indexToField[field.index] = key;
             encoding._fieldIndexes.push(field.index);
         }
@@ -96,10 +98,10 @@ export class Encoder<E extends Encoding | Scalar> {
         encoding._fieldIndexes.sort(smartSort);
 
         if (encoding._fieldIndexes.length !== fields.length) {
-            throw Error(`Some indexes overlap: ${stringifyAnything(encoding)}`);
+            throw new Error(`Some indexes overlap: ${stringifyAnything(encoding)}`);
         }
-        if (encoding.type === "tuple" && encoding._fieldIndexes.filter((v, i) => v !== i).length) {
-            throw Error(
+        if (encoding.type === "tuple" && encoding._fieldIndexes.some((v, i) => v !== i)) {
+            throw new Error(
                 `Tuple fields must not have gaps and start at zero: ${stringifyAnything(encoding)}`,
             );
         }
@@ -137,14 +139,14 @@ export class Encoder<E extends Encoding | Scalar> {
         encodeIndex: boolean,
     ): void {
         if (this._encodingRecursionCheck.has(encoding)) {
-            throw Error("Encoding recursion has looped");
+            throw new Error("Encoding recursion has looped");
         }
 
         if (encodeIndex) writer.uint32(encoding.index);
 
         if (encoding.repeated) {
             writer.uint32(value.length);
-            if (!value.length) return;
+            if (value.length === 0) return;
 
             const encoding_ = { ...encoding, repeated: false } as typeof encoding;
             for (const v of value) {
@@ -182,7 +184,7 @@ export class Encoder<E extends Encoding | Scalar> {
                 if (encoding.type === "message") {
                     const definedAttrs = Object.values(value).reduce(
                         (nDefined: number, valueAttr: unknown) =>
-                            valueAttr !== undefined ? nDefined + 1 : nDefined,
+                            valueAttr === undefined ? nDefined : nDefined + 1,
                         0,
                     );
                     writer.uint32(definedAttrs);
@@ -233,7 +235,7 @@ export class Encoder<E extends Encoding | Scalar> {
         reader: Reader,
     ): void {
         if (this._decodingRecursionCheck.has(encoding)) {
-            throw Error("Decoding recursion has looped");
+            throw new Error("Decoding recursion has looped");
         }
         if (encoding.repeated) {
             const repeated = (container[key] = [] as any[]);

@@ -27,13 +27,13 @@ const pointGatherer =
             previousPoint: tempStorage.previousPoint,
         });
 
-        if (!newPoints.length) return [];
-        tempStorage.previousPoint = newPoints[newPoints.length - 1];
+        if (newPoints.length === 0) return [];
+        tempStorage.previousPoint = newPoints.at(-1);
         const blacklist = tempStorage.blacklist ?? [];
         tempStorage.blacklist = blacklist;
-        newPoints = newPoints.filter((point) => blacklist.indexOf(point) === -1);
+        newPoints = newPoints.filter((point) => !blacklist.includes(point));
 
-        if (!newPoints.length) return [];
+        if (newPoints.length === 0) return [];
         tempStorage.blacklist.push(...newPoints);
 
         return newPoints;
@@ -65,9 +65,7 @@ export const handleEventsCycleStates = <
         const newPoints = event.points;
 
         let state: ObjectState | null;
-        if (tempStorage.targetState !== undefined) {
-            state = tempStorage.targetState;
-        } else {
+        if (tempStorage.targetState === undefined) {
             if (stored.keys(settings.editMode).includes(newPoints[0])) {
                 const index =
                     1 + states.indexOf(stored.getObject(settings.editMode, newPoints[0]).state);
@@ -76,6 +74,8 @@ export const handleEventsCycleStates = <
                 state = states[0];
             }
             tempStorage.targetState = state;
+        } else {
+            state = tempStorage.targetState;
         }
 
         tempStorage.batchId = tempStorage.batchId ?? storage.getNewBatchId();

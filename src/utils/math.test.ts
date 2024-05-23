@@ -62,6 +62,7 @@ describe("Vector", () => {
             const [x, y] = xy;
 
             const vec = new Vec(x, y);
+            // eslint-disable-next-line unicorn/prefer-modern-math-apis -- Math.hypot() gives slightly different results sometimes. Got to love IEEE 754
             const denominator = Math.sqrt(x ** 2 + y ** 2);
             expect(vec.unit().xy).toEqual([x / denominator, y / denominator]);
 
