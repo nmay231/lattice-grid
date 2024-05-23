@@ -23,6 +23,7 @@ import { sidebarProxy } from "../SideBar/sidebarProxy";
 const layerCanBeAnswerChecked = (layer: Layer) => {
     return (
         !layer.klass.ethereal &&
+        layer.klass.type !== "KillerCagesLayer" &&
         layer.klass.type !== "CenterMarksLayer" &&
         layer.klass.type !== "TopBottomMarksLayer" &&
         layer.klass.type !== "ToggleCharactersLayer"
