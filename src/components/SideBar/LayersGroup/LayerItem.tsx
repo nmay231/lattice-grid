@@ -45,7 +45,7 @@ export const LayerItem = ({
                         {...listeners}
                         className={styles.handle}
                         tabIndex={editing ? 0 : -1}
-                        bg="none"
+                        variant="subtle"
                     >
                         <IoMdMenu />
                     </ActionIcon>
@@ -62,7 +62,7 @@ export const LayerItem = ({
                         onPointerDown={handleDelete}
                         className={styles.remove}
                         tabIndex={editing ? 0 : -1}
-                        bg="none"
+                        variant="subtle"
                     >
                         <IoMdClose />
                     </ActionIcon>
