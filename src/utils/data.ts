@@ -1,3 +1,5 @@
+import { smartSort } from "./string";
+
 /**
  * Useful for passing to arr.map() since it ignores extra arguments unlike parseInt
  * ```ts
@@ -78,3 +80,9 @@ export function* reversed<T>(iter: Iterable<T>) {
         yield arr[i] as T;
     }
 }
+
+export const sortByKey = <Obj, Key extends number | string>(
+    keyFunc: (x: Obj) => Key,
+): ((a: Obj, b: Obj) => number) => {
+    return (a, b) => smartSort(keyFunc(a), keyFunc(b));
+};

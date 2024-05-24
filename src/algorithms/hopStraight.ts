@@ -1,3 +1,4 @@
+import { reduceTo, sortByKey } from "../utils/data";
 import { Vec } from "../utils/math";
 
 type Arg = {
@@ -11,9 +12,7 @@ type Arg = {
 export const hopStraight = ({ start, targets, cursor, deltas, toString }: Arg) => {
     if (deltas.length === 0) return [];
     if (!start) {
-        const closest = targets.reduce((prev, next) =>
-            prev.minus(cursor).size < next.minus(cursor).size ? prev : next,
-        );
+        const closest = targets.reduce(reduceTo.min(sortByKey((vec) => vec.minus(cursor).size)));
         return [toString(closest)];
     }
     const targetStrings = targets.map((vec) => toString(vec));
@@ -27,8 +26,8 @@ export const hopStraight = ({ start, targets, cursor, deltas, toString }: Arg) =
     if (targetStrings.includes(points[0])) return [];
 
     while (direction.positiveAngleTo(start.drawTo(cursor)) < Math.PI / 2 && --maxIterations > 0) {
-        const bestDelta = deltas.reduce((prev, next) =>
-            prev.positiveAngleTo(direction) < next.positiveAngleTo(direction) ? prev : next,
+        const bestDelta = deltas.reduce(
+            reduceTo.min(sortByKey((vec) => vec.positiveAngleTo(direction))),
         );
         current = current.plus(bestDelta);
         direction = current.drawTo(cursor);
