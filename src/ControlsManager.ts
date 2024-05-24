@@ -54,9 +54,12 @@ export class _PointerState {
         switch (`${this.mode}+${which}` as const) {
             case "start+first": {
                 if (!this.button) {
-                    if (1 & event.buttons) this.button = 1; // left click
-                    else if (2 & event.buttons) this.button = 2; // right click
-                    else if (4 & event.buttons) this.button = 4; // middle click
+                    if (1 & event.buttons)
+                        this.button = 1; // left click
+                    else if (2 & event.buttons)
+                        this.button = 2; // right click
+                    else if (4 & event.buttons)
+                        this.button = 4; // middle click
                     else return ["ignore"] as const;
                 }
 
@@ -65,13 +68,15 @@ export class _PointerState {
                     { button: this.button, xy: [event.clientX, event.clientY] as TupleVector },
                 ] as const;
             }
-            case "start+second":
+            case "start+second": {
                 this.mode = "panZoom";
                 // We send an "up" event because the layer should not receive a down event (which is still delayed since mode === "start")
                 // The reason it's "up" instead of just "cancelDown" is so that there is always a up event for every down (even if the pair is never sent to the layer).
                 return ["up", "cancelDown"] as const;
-            case "drawPan+second":
+            }
+            case "drawPan+second": {
                 return ["ignore"] as const;
+            }
             case "panZoom+first":
             case "panZoom+second":
             case "drawPan+first": {
@@ -206,10 +211,6 @@ export class ControlsManager {
         onPointerDown: this.onPointerDown.bind(this),
         onPointerMove: this.onPointerMove.bind(this),
         onPointerUp: this.onPointerUp.bind(this),
-        // I don't know how to handle leave events since touch interactions always call leave before up.
-        // TODO: I will come back to this so that you don't get weird shenanigans when leaving the canvas when drawing with a mouse (it does still work with touch screens).
-        // onPointerLeave: this.onPointerLeave.bind(this),
-        // onPointerEnter: this.onPointerEnter.bind(this),
         onContextMenu: this.onContextMenu.bind(this),
     };
 
@@ -255,7 +256,7 @@ export class ControlsManager {
 
         if (layerEvent.type === "pointerDown" || layerEvent.type === "pointerMove") {
             const points = layer.gatherPoints(layerEvent);
-            if (!points.length) {
+            if (points.length === 0) {
                 return;
             }
             layerEvent.points = points;
@@ -283,10 +284,12 @@ export class ControlsManager {
         const layer = this.getCurrentLayer();
         const [action, details] = this.state.onPointerDown(rawEvent);
         if (!layer || action === "ignore") return;
+        rawEvent.currentTarget.setPointerCapture(rawEvent.pointerId);
 
         if (action === "up" && details === "cancelDown") {
             // The previous down event was cancelled and changed to panZoom
-            return this._downCB.set(null);
+            this._downCB.set(null);
+            return;
         }
 
         const event = this.cleanPointerEvent("pointerDown", details.xy, rawEvent);
@@ -386,7 +389,7 @@ export class ControlsManager {
         const keypress = keypressString(rawEvent);
 
         // This should be a very small whitelist for which key-strokes are allowed to be blocked
-        if (["ctrl-a", "ctrl-i"].indexOf(keypress) > -1 || keypress.length === 1) {
+        if (["ctrl-a", "ctrl-i"].includes(keypress) || keypress.length === 1) {
             // Keyboard shortcuts should still be preventDefault'ed even if we are handling pointer events
             rawEvent.preventDefault();
         }
@@ -416,8 +419,8 @@ export class ControlsManager {
             const appliedActions =
                 keypress === "ctrl-z" ? storage.undoHistory() : storage.redoHistory();
 
-            if (appliedActions.length) {
-                const lastAction = appliedActions[appliedActions.length - 1];
+            const lastAction = appliedActions.at(-1);
+            if (lastAction) {
                 this.puzzle.selectLayer(lastAction.layerId);
                 if (lastAction.storageMode !== "ui") {
                     this.puzzle.settings.editMode = lastAction.storageMode;

@@ -11,15 +11,24 @@ import {
 } from "@mantine/core";
 import { useClipboard } from "@mantine/hooks";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { LayerStorageJSON } from "../../LayerStorage";
+import { exportPuzzleData } from "../../encoding/exportPuzzle";
+import { importPuzzleData } from "../../encoding/importPuzzle";
 import { usePuzzle } from "../../state/puzzle";
 import { Layer } from "../../types";
 import { openModal, useFocusElementHandler, useModal } from "../../utils/focusManagement";
 import { notify } from "../../utils/notifications";
-import { compressJSON } from "../../utils/string";
 import { mobileControlsProxy } from "../MobileControls";
 import { sidebarProxy } from "../SideBar/sidebarProxy";
-import { PuzzleData, currentEncodingVersion, importPuzzle } from "./importPuzzle";
+
+const layerCanBeAnswerChecked = (layer: Layer) => {
+    return (
+        !layer.klass.ethereal &&
+        layer.klass.type !== "KillerCagesLayer" &&
+        layer.klass.type !== "CenterMarksLayer" &&
+        layer.klass.type !== "TopBottomMarksLayer" &&
+        layer.klass.type !== "ToggleCharactersLayer"
+    );
+};
 
 export const ImportExportButton = () => {
     const open = useCallback(() => {
@@ -52,47 +61,18 @@ export const ImportExportModal = React.memo(function ImportExportModal() {
         setAnswerCheck(
             puzzle.layers
                 .entries()
-                .filter(
-                    ([, layer]) =>
-                        !layer.klass.ethereal &&
-                        layer.klass.type !== "CenterMarksLayer" &&
-                        layer.klass.type !== "TopBottomMarksLayer" &&
-                        layer.klass.type !== "ToggleCharactersLayer",
-                )
+                .filter(([, layer]) => layerCanBeAnswerChecked(layer))
                 .map(([id]) => id),
         );
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [opened]);
 
-    const puzzleWithoutAnswerCheck = useMemo(() => {
-        if (opened) {
-            // TODO: Assume only one grid
-            const currentObjects = puzzle.storage.objects;
-            const objects: Record<Layer["id"], LayerStorageJSON> = {};
-            for (const layerId of puzzle.layers.keys()) {
-                // Ignore UI Information
-                if (layerId === "OverlayLayer") continue;
-                objects[layerId] = currentObjects[layerId].toJSON();
-            }
-            const params = puzzle._getParams();
-            // TODO: Synchronize version numbers from one source.
-            return {
-                objects,
-                params,
-                version: currentEncodingVersion,
-            } satisfies Omit<PuzzleData, "answerCheck">;
-        }
-    }, [puzzle, opened]);
-
     const puzzleString = useMemo(() => {
-        if (puzzleWithoutAnswerCheck) {
-            const string = compressJSON({
-                ...puzzleWithoutAnswerCheck,
-                answerCheck,
-            } satisfies PuzzleData);
+        if (opened) {
+            const string = exportPuzzleData(puzzle, answerCheck);
             return `${window.location.origin}/${exportPlay ? "" : "edit"}?${string}`;
         }
-    }, [puzzleWithoutAnswerCheck, answerCheck, exportPlay]);
+    }, [opened, puzzle, answerCheck, exportPlay]);
 
     const noRefSet = () => {
         throw notify.error({ message: "Ref not set in import/export textarea" });
@@ -104,7 +84,7 @@ export const ImportExportModal = React.memo(function ImportExportModal() {
         if (/^https?:\/\//.test(text)) {
             text = text.split("?")[1];
         }
-        importPuzzle(puzzle, text);
+        importPuzzleData(puzzle, text);
         close();
     };
 
@@ -134,19 +114,20 @@ export const ImportExportModal = React.memo(function ImportExportModal() {
     return (
         <Modal opened={opened} title="Import / Export Puzzle" onClose={close} size="lg">
             <Box p="sm">
-                <Text size="lg" fs="italic" fw="bold" ta="center" c="yellow">
-                    *Temporary solution for import/export*
-                </Text>
-                <Text size="sm" fs="italic" fw="bold" ta="center" mb="md" c="red">
-                    This is a temporary format. URLs are not expected to work indefinitely.
-                </Text>
-
-                <Textarea autosize readOnly minRows={1} maxRows={6} mb="md" value={puzzleString} />
+                <Textarea
+                    data-testid="exported-url"
+                    autosize
+                    readOnly
+                    minRows={1}
+                    maxRows={6}
+                    mb="md"
+                    value={puzzleString}
+                />
 
                 <Text size="sm">Which layers are answer checked?</Text>
                 {puzzle.layers
                     .entries()
-                    .filter(([, layer]) => !layer.klass.ethereal)
+                    .filter(([, layer]) => layerCanBeAnswerChecked(layer))
                     .map(([id, layer]) => {
                         return (
                             <Checkbox
@@ -155,7 +136,7 @@ export const ImportExportModal = React.memo(function ImportExportModal() {
                                 checked={answerCheck.includes(id)}
                                 onChange={() => {
                                     if (answerCheck.includes(id)) {
-                                        setAnswerCheck(answerCheck.filter((id) => id !== id));
+                                        setAnswerCheck(answerCheck.filter((id_) => id_ !== id));
                                     } else {
                                         setAnswerCheck([...answerCheck, id]);
                                     }
@@ -165,8 +146,7 @@ export const ImportExportModal = React.memo(function ImportExportModal() {
                     })}
 
                 <Text size="sm" fs="italic" fw="bold" ta="center" mt="md" mb="md" c="red">
-                    This only exports solving URLs. Feature complete edit-mode URLs are in the
-                    works.
+                    Can only export solving URLs for now. Feature complete edit-mode URLs are WIP.
                 </Text>
                 <Checkbox
                     disabled
@@ -181,7 +161,7 @@ export const ImportExportModal = React.memo(function ImportExportModal() {
                         }}
                         color={copyError ? "red" : copied ? "teal" : "blue"}
                     >
-                        {copyError ? "Cannot copy!" : copied ? "Copied!" : "Export + Copy"}
+                        {copyError ? "Cannot copy!" : copied ? "Copied!" : "Export & Copy"}
                     </Button>
                 </Center>
 
@@ -201,7 +181,7 @@ export const ImportExportModal = React.memo(function ImportExportModal() {
                             <Button onClick={handleImport}>Import</Button>
                         ) : (
                             <Button onClick={handlePaste} disabled={importAttempted}>
-                                Paste + Import
+                                Paste & Import
                             </Button>
                         )}
                     </Group>

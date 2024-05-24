@@ -148,7 +148,7 @@ export class PuzzleManager {
             }
 
             // Quick and dirty answer check
-            if (this.settings.pageMode === "play" && this.answers.size) {
+            if (this.settings.pageMode === "play" && this.answers.size > 0) {
                 // TODO: This assumes that all objects can be checked to be equal using recursive equality. Some objects might have hidden state that is not relevant to answer checking
                 let correct = true;
                 for (const [layerId, expected] of this.answers.entries()) {

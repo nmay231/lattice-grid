@@ -7,9 +7,8 @@ import {
     PointType,
     StorageFilter,
 } from "../../types";
-import { zip } from "../../utils/data";
+import { zipDefined } from "../../utils/data";
 import { notify } from "../../utils/notifications";
-import { smartSort } from "../../utils/string";
 
 type StringRecord = Record<string, string>;
 
@@ -43,7 +42,7 @@ export const handleEventsCurrentSetting = <
     stateKeys,
 }: TwoPointCurrentStateParameters<State>) => {
     type TwoPointLayer = Layer<LP>;
-    if (!pointTypes?.length || !deltas?.length || !stateKeys.length) {
+    if (!pointTypes?.length || !deltas?.length || stateKeys.length === 0) {
         throw notify.error({
             message: "twoPoint currentSetting was not provided required parameters",
         });
@@ -51,7 +50,7 @@ export const handleEventsCurrentSetting = <
 
     const stateToString = (obj: State) => stateKeys.map((key) => obj[key]).join(";");
     const stringToState = (str: string) =>
-        Object.fromEntries(zip(stateKeys, str.split(";"))) as State;
+        Object.fromEntries(zipDefined(stateKeys, str.split(";"))) as State;
 
     const gatherPoints: TwoPointLayer["gatherPoints"] = function (
         this: TwoPointLayer,
@@ -67,7 +66,7 @@ export const handleEventsCurrentSetting = <
         if (tempStorage.previousPoint) {
             newPoints.unshift(tempStorage.previousPoint);
         }
-        tempStorage.previousPoint = newPoints[newPoints.length - 1];
+        tempStorage.previousPoint = newPoints.at(-1);
 
         if (newPoints.length < 2) return [];
 
@@ -75,8 +74,8 @@ export const handleEventsCurrentSetting = <
     };
 
     const handleEvent: TwoPointLayer["handleEvent"] = function (this: TwoPointLayer, event) {
-        const { storage, type, tempStorage, settings } = event;
-        if ((type !== "pointerDown" && type !== "pointerMove") || !event.points.length) {
+        const { storage, type, tempStorage, settings, grid } = event;
+        if ((type !== "pointerDown" && type !== "pointerMove") || event.points.length === 0) {
             return {};
         }
 
@@ -86,9 +85,15 @@ export const handleEventsCurrentSetting = <
         tempStorage.batchId = tempStorage.batchId ?? storage.getNewBatchId();
         const history: PartialHistoryAction<LP>[] = [];
         for (let i = 0; i < newPoints.length - 1; i++) {
-            const pair = newPoints.slice(i, i + 2);
+            let pair = newPoints.slice(i, i + 2);
             if (!directional) {
-                pair.sort(smartSort);
+                const pt = grid.getPointTransformer(settings);
+                const [pointMap] = pt.fromPoints(pointTypes[0], pair);
+                const sorter = pt.sorter({ direction: "NW" });
+                pair = pair
+                    .map((string) => pointMap.get(string)!)
+                    .sort(sorter)
+                    .map((vec) => vec.string());
             }
             const id = pair.join(";");
 

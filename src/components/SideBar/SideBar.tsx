@@ -7,7 +7,8 @@ import { DebugGroup } from "./DebugGroup";
 import { LayersGroup } from "./LayersGroup";
 import { MainGroup } from "./MainGroup";
 import styles from "./SideBar.module.css";
-import { UtilityBar } from "./UtilityBar";
+
+export { UtilityBar as SideBarUtilityBar } from "./UtilityBar";
 
 export const SideBar = React.memo(function SideBar() {
     const { pageMode, debugging: debug } = useSettings();
@@ -23,5 +24,3 @@ export const SideBar = React.memo(function SideBar() {
         </ScrollArea>
     );
 });
-
-export const SideBarUtilityBar = UtilityBar;

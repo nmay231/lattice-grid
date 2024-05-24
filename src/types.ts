@@ -2,7 +2,8 @@ import React from "react";
 import type { ref } from "valtio";
 import type { PuzzleManager } from "./PuzzleManager";
 import type { StorageManager } from "./StorageManager";
-import type { SquareGridParams, _SquareGridTransformer } from "./grids/SquareGrid";
+import type { EncodedLayer } from "./encoding/puzzleEncoder";
+import type { SquareGrid, SquareGridParams } from "./grids/SquareGrid";
 import type { availableLayers } from "./layers";
 import type { UserCodeJSON } from "./userComputation/codeBlocks";
 import type { PutAtEnd } from "./utils/OrderedMap";
@@ -122,8 +123,8 @@ export type RecursivePartial<T> = {
     [P in keyof T]?: T[P] extends (infer U)[]
         ? RecursivePartial<U>[]
         : T[P] extends object
-        ? RecursivePartial<T[P]>
-        : T[P];
+          ? RecursivePartial<T[P]>
+          : T[P];
 };
 
 // Rename valtio refs to not confuse them with React refs
@@ -136,9 +137,7 @@ export type FocusGroup = "layerList" | "controlSettings" | "constraintSettings" 
 // #region - Grids
 export type Grid = {
     id: string;
-    getPointTransformer: (
-        settings: Pick<PuzzleManager["settings"], "cellSize">,
-    ) => _SquareGridTransformer;
+    getPointTransformer: SquareGrid["getPointTransformer"]; // TODO: Type separately
     getAllPoints: (type: PointType) => Point[];
     selectPointsWithCursor: (arg: {
         settings: PuzzleManager["settings"];
@@ -203,6 +202,7 @@ export type LayerProps = {
     TempStorage: UnknownObject;
     Settings: Record<never, never>;
 };
+export type LayerStorageProps = Pick<LayerProps, "ObjectState" | "PermStorage">;
 
 export type Layer<LP extends LayerProps = LayerProps> = {
     readonly klass: LayerClass<LP>;
@@ -226,6 +226,14 @@ export type Layer<LP extends LayerProps = LayerProps> = {
         },
     ) => SVGGroup[];
     getOverlaySVG?: (data: Omit<LayerEventEssentials<LP>, "tempStorage">) => SVGGroup[];
+    // TODO: Better typing
+    // TODO: Also have encoding and decoding in the same place however I end up going about this.
+    encode: (
+        context: Pick<PuzzleManager, "settings" | "storage"> & {
+            grid: SquareGrid;
+            answerCheck: boolean;
+        },
+    ) => EncodedLayer;
 };
 
 export type LayerClass<LP extends LayerProps = LayerProps> = {

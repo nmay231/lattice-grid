@@ -18,6 +18,10 @@ export class Vec {
         return euclidean(0, 0, this.x, this.y);
     }
 
+    string() {
+        return `${this.x},${this.y}`;
+    }
+
     plus(other: Vec | TupleVector) {
         if (other instanceof Vec) {
             other = other.xy;
@@ -63,16 +67,23 @@ export class Vec {
         // I wish modulus always returned positive like it does in python...
         const qt = ((clockwiseQuarterTurns % 4) + 4) % 4;
         switch (qt) {
-            case 0:
+            case 0: {
                 return this;
-            case 1:
+            }
+            case 1: {
                 return new Vec(-this.y, this.x);
-            case 2:
+            }
+            case 2: {
                 return new Vec(-this.x, -this.y);
-            case 3:
+            }
+            case 3: {
                 return new Vec(this.y, -this.x);
-            default:
-                throw Error(`must be an integer number of quarter-turns: ${clockwiseQuarterTurns}`);
+            }
+            default: {
+                throw new Error(
+                    `must be an integer number of quarter-turns: ${clockwiseQuarterTurns}`,
+                );
+            }
         }
     }
 

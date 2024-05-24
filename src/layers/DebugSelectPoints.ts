@@ -1,5 +1,5 @@
 import { Delta, FormSchema, Layer, LayerClass, LayerProps, Point, SVGGroup } from "../types";
-import { zip } from "../utils/data";
+import { zipDefined } from "../utils/data";
 import { Vec } from "../utils/math";
 import { BaseLayer } from "./BaseLayer";
 import styles from "./layers.module.css";
@@ -160,7 +160,7 @@ export class DebugSelectPointsLayer
         const [map, points] = pt.fromPoints("cells", object.points);
         const cells = points.toSVGPoints();
 
-        for (const [_start, _end] of zip(object.points, object.points.slice(1))) {
+        for (const [_start, _end] of zipDefined(object.points, object.points.slice(1))) {
             const start = cells.get(map.get(_start));
             const end = cells.get(map.get(_end));
             if (!start || !end) break;

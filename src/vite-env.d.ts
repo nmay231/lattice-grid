@@ -1,3 +1,4 @@
+/* eslint-disable unicorn/filename-case */
 /// <reference types="vite/client" />
 
 interface Map<K, V> {

@@ -7,7 +7,7 @@ import {
     StorageFilter,
 } from "../types";
 import { PUT_AT_END } from "../utils/OrderedMap";
-import { zip } from "../utils/data";
+import { zipDefined } from "../utils/data";
 import { notify } from "../utils/notifications";
 import { BaseLayer } from "./BaseLayer";
 import { numberTyper } from "./controls/numberTyper";
@@ -58,7 +58,7 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
 
     handleKeyDown: INumberLayer["handleKeyDown"] = ({ points: ids, storage, settings }) => {
         const stored = storage.getObjects<NumberProps>(this.id);
-        if (!ids.length) {
+        if (ids.length === 0) {
             return {};
         }
 
@@ -73,7 +73,7 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
 
         const history: LayerHandlerResult<NumberProps>["history"] = [];
 
-        for (const [id, old, new_] of zip(ids, states, newStates)) {
+        for (const [id, old, new_] of zipDefined(ids, states, newStates)) {
             if (old === new_) continue;
 
             history.push({
@@ -188,7 +188,7 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
 
         const min = this.settings.negatives ? -this.settings.max : 0;
         const max = this.settings.max;
-        const num = parseInt(action.object.state);
+        const num = Number.parseInt(action.object.state);
         return { keep: min <= num && num <= max };
     };
 
@@ -220,4 +220,36 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
     };
 
     getOverlaySVG: INumberLayer["getOverlaySVG"];
+
+    encode: INumberLayer["encode"] = ({ grid, storage, settings, answerCheck }) => {
+        const stored = storage.getObjects<NumberProps>(this.id);
+        const objects = [...stored.entries("question")];
+
+        let answersAtEnd = 0;
+        if (answerCheck) {
+            const answers = stored.entries("answer");
+            answersAtEnd = answers.length;
+            objects.push(...answers);
+        }
+
+        const encoder = grid.getEncoder(settings);
+        const pt = grid.getPointTransformer(settings);
+        const [pointToVec, gp] = pt.fromPoints(
+            "cells",
+            objects.map(([point]) => point),
+        );
+        const vecToNumber = encoder.encodeGridPointsInsideGrid(gp);
+
+        return {
+            NumberLayer: {
+                max: this.settings.max,
+                negatives: this.settings.negatives ? 1 : 0,
+                dataV1: objects.map(([point, { state }]) => ({
+                    point: vecToNumber.get(pointToVec.get(point))!,
+                    state: Number.parseInt(state),
+                })),
+                answersAtEnd: answersAtEnd || undefined,
+            },
+        };
+    };
 }

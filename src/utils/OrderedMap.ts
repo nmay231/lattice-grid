@@ -44,11 +44,11 @@ export class OrderedMap<V> {
     }
 
     getFirstKey(): string | null {
-        return this.order.length ? this.order[0] : null;
+        return this.order[0] ?? null;
     }
 
     getLastKey(): string | null {
-        return this.order.length ? this.order[this.order.length - 1] : null;
+        return this.order.at(-1) ?? null;
     }
 
     keys(): string[] {

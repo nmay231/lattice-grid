@@ -77,12 +77,12 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>({
             deltas,
             previousPoint: tempStorage.previousPoint,
         });
-        if (!newPoints.length) return [];
+        if (newPoints.length === 0) return [];
 
         if (tempStorage.previousPoint) {
             newPoints.unshift(tempStorage.previousPoint);
         }
-        tempStorage.previousPoint = newPoints[newPoints.length - 1];
+        tempStorage.previousPoint = newPoints.at(-1);
 
         return newPoints;
     };
@@ -132,14 +132,13 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>({
                 // TODO: Only selecting objects from current editMode. Is that what I want?
                 const overlap = stored
                     .keys(settings.editMode)
-                    .filter(
-                        (id) =>
-                            stored.getObject(settings.editMode, id).points.indexOf(startPoint) > -1,
+                    .filter((id) =>
+                        stored.getObject(settings.editMode, id).points.includes(startPoint),
                     );
 
-                if (overlap.length) {
+                const id = overlap.at(-1);
+                if (id !== undefined) {
                     // Select the topmost existing object
-                    const id = overlap[overlap.length - 1];
                     if (id === currentObjectId) {
                         // Only remove a cell if the object was already selected
                         tempStorage.removeSingle = true;
@@ -208,7 +207,7 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>({
                     );
 
                     // Delete the object if empty
-                    if (!objectCopy.points.length) {
+                    if (objectCopy.points.length === 0) {
                         return {
                             history: [{ id: currentObjectId, batchId, object: null }],
                         };
@@ -232,8 +231,8 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>({
             }
             case "undoRedo": {
                 // TODO: layer might have sub-layers and action.layerId !== layer.id
-                const last = event.actions[event.actions.length - 1];
-                if (last.object !== null) {
+                const last = event.actions.at(-1);
+                if (last && last.object !== null) {
                     stored.permStorage.currentObjectId = last.objectId;
                     return {
                         // TODO: Force render

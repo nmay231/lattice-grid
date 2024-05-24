@@ -2,7 +2,7 @@ import fc from "fast-check";
 import { random, range, shuffle } from "lodash";
 import { PartialPointerEvent, _PointerState as PointerState } from "./ControlsManager";
 import { TupleVector } from "./types";
-import { zip } from "./utils/data";
+import { zipDefined } from "./utils/data";
 import { FCRepeat, given } from "./utils/testing/fcArbitraries";
 import { partialMock } from "./utils/testing/partialMock";
 
@@ -30,7 +30,7 @@ const asynchronousPointers = () => {
             subLengths.push(n);
 
             const sortedIndexes = subLengths.flatMap((length, index) =>
-                [...new Array(length)].map(() => index),
+                Array.from<number>({ length }).fill(index),
             );
             const randomIndexes = shuffle(sortedIndexes);
 
@@ -44,7 +44,7 @@ const asynchronousPointers = () => {
                 pointerId: number;
             }> = [];
 
-            for (const [position, index, generated] of zip(
+            for (const [position, index, generated] of zipDefined(
                 range(randomIndexes.length),
                 randomIndexes,
                 definition,
@@ -84,7 +84,7 @@ describe("asynchronousPointers", () => {
 
                 expect(down.type).toBe("down");
                 expect(up.type).toBe("up");
-                if (moves.length) {
+                if (moves.length > 0) {
                     expect(new Set(moves.map(({ type }) => type))).toEqual(new Set(["move"]));
                 }
             }
@@ -405,11 +405,11 @@ describe("PointerState", () => {
             const downUp = actions.filter((action) => action === "down" || action === "up");
             expect(downUp.length % 2).toBe(0); // Should be even
 
-            if (downUp.length) {
+            if (downUp.length > 0) {
                 // If the first pair is [down, up]
                 expect(downUp.slice(0, 2)).toEqual(["down", "up"]);
                 // and every pair is equal to the next pair, then we alternate between down and up as expected
-                expect(downUp.slice(2)).toEqual(downUp.slice(0, downUp.length - 2));
+                expect(downUp.slice(2)).toEqual(downUp.slice(0, -2));
             }
 
             expect(stateOf(state)).toBe(STARTING_STATE);

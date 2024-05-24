@@ -84,7 +84,7 @@ describe("OrderedMap", () => {
         expect(map.order).toEqual(["a", "c", "d", "b", "e"]);
 
         if (map instanceof IndexedOrderedMap) {
-            expect(map.currentKey).toBe(null);
+            expect(map.currentKey).toBeNull();
         }
     });
 
@@ -183,7 +183,7 @@ describe("OrderedMap", () => {
         expect(map.has("c")).toBe(false);
 
         expect(map.get("a")).toBe(2);
-        expect(map.get("c")).toBe(undefined);
+        expect(map.get("c")).toBeUndefined();
 
         expect(map.keys()).toEqual(["z", "a", "d"]);
         expect(map.values()).toEqual([1, 2, 3]);
@@ -213,11 +213,11 @@ describe("OrderedMap", () => {
         map.set("b", 2);
         map.set("c", 3);
 
-        expect(map.getFirstKey()).toEqual("a");
-        expect(map.getLastKey()).toEqual("c");
+        expect(map.getFirstKey()).toBe("a");
+        expect(map.getLastKey()).toBe("c");
 
-        expect(newMap().getFirstKey()).toEqual(null);
-        expect(newMap().getLastKey()).toEqual(null);
+        expect(newMap().getFirstKey()).toBeNull();
+        expect(newMap().getLastKey()).toBeNull();
     });
 });
 

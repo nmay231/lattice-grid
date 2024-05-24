@@ -1,4 +1,4 @@
-import { LayerProps, ObjectId, StorageMode, UnknownObject } from "./types";
+import { LayerProps, ObjectId, StorageMode, UnknownObject, type LayerStorageProps } from "./types";
 import { OrderedMap, PutAtEnd } from "./utils/OrderedMap";
 
 export type LayerStorageJSON = {
@@ -6,7 +6,7 @@ export type LayerStorageJSON = {
     question: Array<[ObjectId, UnknownObject]>;
 };
 
-export class LayerStorage<LP extends LayerProps = LayerProps> {
+export class LayerStorage<LP extends LayerStorageProps = LayerStorageProps> {
     private answer = new OrderedMap<LP["ObjectState"]>();
     private question = new OrderedMap<LP["ObjectState"]>();
     private ui = new OrderedMap<LP["ObjectState"]>();

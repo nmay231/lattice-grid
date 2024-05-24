@@ -1,11 +1,11 @@
 import fc from "fast-check";
 import { shuffle } from "lodash";
-import { TupleVector } from "../types";
-import { reduceTo } from "../utils/data";
+import { TupleVector, type PointType } from "../types";
+import { parseIntBase, reduceTo } from "../utils/data";
 import { Vec } from "../utils/math";
 import { smartSort } from "../utils/string";
 import { FCRepeat, given } from "../utils/testing/fcArbitraries";
-import { SquareGrid, _SquareGridTransformer } from "./SquareGrid";
+import { SquareGrid } from "./SquareGrid";
 
 describe("SquareGrid", () => {
     const common = { minX: 0, minY: 0, type: "square" as const };
@@ -27,8 +27,8 @@ describe("SquareGrid", () => {
             mediumGrid._outOfBounds({ x: 10, y: 21, type: "edges" }),
             mediumGrid._outOfBounds({ x: 21, y: 10, type: "edges" }),
             mediumGrid._outOfBounds({
-                x: 1000000,
-                y: 1000000,
+                x: 1_000_000,
+                y: 1_000_000,
                 type: "corners",
             }),
         ]).toEqual([true, true, true, true]);
@@ -124,16 +124,190 @@ describe("SquareGrid", () => {
     });
 });
 
+describe("SquareGridEncoder", () => {
+    it.each([
+        { input: [1, 0, 0, 0], output: [8], currentBase: 2, targetBase: 10 },
+        { input: [1, 0, 1, 0], output: [1, 0], currentBase: 2, targetBase: 10 },
+        { input: [1, 0, 0, 0, 0], output: [1, 6], currentBase: 2, targetBase: 10 },
+        {
+            input: [1, 1, 0, 0, 0, 1, 1, 1, 1],
+            output: [1, 8, 15],
+            currentBase: 2,
+            targetBase: 16,
+        },
+        { input: [1, 1, 0, 1, 0], output: [2, 2, 2], currentBase: 2, targetBase: 3 },
+    ] satisfies Array<{
+        input: number[];
+        output: number[];
+        currentBase: number;
+        targetBase: number;
+    }>)("converts to and from some number bases", ({ input, output, currentBase, targetBase }) => {
+        const grid = new SquareGrid();
+        const encoder = grid.getEncoder({ cellSize: 2 });
+
+        expect(encoder.baseConvert(input, currentBase, targetBase)).toEqual(output);
+        expect(encoder.baseConvert(output, targetBase, currentBase)).toEqual(input);
+    });
+
+    it.each([
+        {
+            // I hate that just `satisfies PointType` doesn't work here...
+            params: { width: 10, height: 10, pt: "cells" },
+            input: ["1,1", "19,19", "13,7"],
+            output: [0, 100 - 1, 6 + 3 * 10],
+        },
+        {
+            params: { width: 1, height: 1, pt: "cells" },
+            input: ["1,1"],
+            output: [0],
+        },
+        {
+            params: { width: 30, height: 30, pt: "cells" },
+            input: ["1,1", "15,15", "13,7", "59,59"],
+            output: [0, 7 + 7 * 30, 6 + 3 * 30, 900 - 1],
+        },
+        {
+            params: { width: 2, height: 15, pt: "cells" },
+            input: ["3,29"],
+            output: [30 - 1],
+        },
+        {
+            params: { width: 4, height: 4, pt: "corners" },
+            input: ["0,0", "2,0", "4,0", "6,0", "8,0", "8,2", "8,4", "8,6", "8,8"],
+            output: [0, 1, 2, 3, 4, 9, 14, 19, 24],
+        },
+        {
+            params: { width: 10, height: 10, pt: "corners" },
+            input: ["0,0", "2,0", "0,2", "0,4", "8,12", "20,20"],
+            output: [0, 1, 11, 22, 4 + 6 * 11, 11 ** 2 - 1],
+        },
+        {
+            params: { width: 1, height: 14, pt: "corners" },
+            input: ["2,28", "0,0", "2,0", "2,2", "0,28"],
+            output: [30 - 1, 0, 1, 3, 30 - 2],
+        },
+    ] satisfies Array<{
+        params: { height: number; width: number; pt: PointType };
+        input: string[];
+        output: number[];
+    }>)("en/decodeGridPointsInsideGrid", ({ params, input, output }) => {
+        const grid = new SquareGrid({
+            width: params.width,
+            height: params.height,
+            minX: 0,
+            minY: 0,
+            type: "square",
+        });
+        const settings = { cellSize: 2 };
+        const encoder = grid.getEncoder(settings);
+        const pt = grid.getPointTransformer(settings);
+        const [stringToVec, gp] = pt.fromPoints(params.pt, input);
+        const vecToNumber = encoder.encodeGridPointsInsideGrid(gp);
+
+        const actualOutput = input.map((point) => vecToNumber.get(stringToVec.get(point))!);
+        expect(actualOutput).toEqual(output);
+
+        const numberToVec = encoder.decodeGridPointsInsideGrid(params.pt, output);
+        const recoveredInput = output.map((number) => numberToVec[number].string());
+        expect(recoveredInput).toEqual(input);
+
+        // A transform to origin shouldn't change anything
+        const oldInput = input;
+        for (const transform of [new Vec(-5, 20), new Vec(-0, -100)]) {
+            const input = oldInput.map((point) =>
+                Vec.from(point.split(",").map(parseIntBase(10)) as TupleVector)
+                    .plus(transform.scale(2))
+                    .string(),
+            );
+            const grid = new SquareGrid({
+                width: params.width,
+                height: params.height,
+                minX: transform.x,
+                minY: transform.y,
+                type: "square",
+            });
+            // TODO: cellSize is hardcoded to 2 in the code, for now
+            const settings = { cellSize: 2 };
+            const encoder = grid.getEncoder(settings);
+            const pt = grid.getPointTransformer(settings);
+            const [stringToVec, gp] = pt.fromPoints(params.pt, input);
+            const vecToNumber = encoder.encodeGridPointsInsideGrid(gp);
+
+            const actualOutput = input.map((point) => vecToNumber.get(stringToVec.get(point))!);
+            expect(actualOutput).toEqual(output);
+
+            const numberToVec = encoder.decodeGridPointsInsideGrid(params.pt, output);
+            const recoveredInput = output.map((number) => numberToVec[number].string());
+            expect(recoveredInput).toEqual(input);
+        }
+    });
+
+    it.each([
+        {
+            pt: "cells" as PointType,
+            params: { width: 10, height: 10 },
+            pairs: [
+                [new Vec(1, 1), new Vec(1, 3)],
+                [new Vec(1, 1), new Vec(3, 1)],
+                [new Vec(1, 17), new Vec(1, 19)],
+                [new Vec(1, 19), new Vec(3, 19)],
+                [new Vec(17, 1), new Vec(19, 1)],
+                [new Vec(19, 1), new Vec(19, 3)],
+                [new Vec(17, 19), new Vec(19, 19)],
+                [new Vec(19, 17), new Vec(19, 19)],
+                [new Vec(11, 11), new Vec(11, 13)],
+                [new Vec(9, 3), new Vec(11, 3)],
+                // SimpleLine now reliably sorts its point pairs, so I went back to erroring if the line is drawn backwards (going up or left).
+                // [new Vec(11, 1), new Vec(9, 1)],
+            ] satisfies Array<[Vec, Vec]>,
+            startingPoints: [0, 0, 80, 90, 8, 9, 98, 89, 55, 14],
+            downRightBitmap: Uint8Array.from([0b1010_0101, 0b1000_0000]),
+        },
+        {
+            pt: "corners" as PointType,
+            params: { width: 10, height: 10 },
+            pairs: [
+                [new Vec(0, 0), new Vec(0, 2)],
+                [new Vec(0, 20), new Vec(2, 20)],
+                [new Vec(18, 0), new Vec(20, 0)],
+                [new Vec(20, 18), new Vec(20, 20)],
+            ] satisfies Array<[Vec, Vec]>,
+            startingPoints: [0, 110, 9, 109],
+            downRightBitmap: Uint8Array.from([0b1001_0000]),
+        },
+    ])(
+        "en/decodeAdjacentGridPointsInsideGrid",
+        ({ pt, params, pairs, startingPoints, downRightBitmap }) => {
+            const grid = new SquareGrid({ ...params, minX: 0, minY: 0, type: "square" });
+            const settings = { cellSize: 2 };
+            const encoder = grid.getEncoder(settings);
+
+            const result = encoder.encodeAdjacentGridPointsInsideGrid(pt, pairs);
+            expect(result.downRightBitmap).toEqual(downRightBitmap);
+            expect(pairs.map(([start]) => result.startingPoints.get(start))).toEqual(
+                startingPoints,
+            );
+
+            const pairsResult = encoder.decodeAdjacentGridPointsInsideGrid(
+                pt,
+                startingPoints,
+                downRightBitmap,
+            );
+            expect(pairsResult).toEqual(pairs);
+        },
+    );
+});
+
 describe("SquareGridTransformer", () => {
+    const grid = new SquareGrid();
     // cellSize defaults to 2 so that the grid space matches the svg space
-    const pointTransformer = ({ cellSize = 2 } = {}) => new _SquareGridTransformer({ cellSize });
-    const toPoint = (vec: Vec) => vec.xy.join(",");
+    const pointTransformer = ({ cellSize = 2 } = {}) => grid.getPointTransformer({ cellSize });
 
     it("parses points", () => {
         const pt = pointTransformer();
         const [map, cells] = pt.fromPoints("cells", ["1,1", "3,3", "5,5"]);
 
-        expect(Array.from(map.entries())).toEqual([
+        expect([...map.entries()]).toEqual([
             ["1,1", { x: 1, y: 1 }],
             ["3,3", { x: 3, y: 3 }],
             ["5,5", { x: 5, y: 5 }],
@@ -153,7 +327,7 @@ describe("SquareGridTransformer", () => {
         const pt = pointTransformer({ cellSize: 2 });
         let [, cells] = pt.fromPoints("cells", ["1,1", "3,3", "5,5"]);
 
-        expect(Array.from(cells.toSVGPoints().entries())).toEqual([
+        expect([...cells.toSVGPoints().entries()]).toEqual([
             [{ x: 1, y: 1 }, [1, 1]],
             [{ x: 3, y: 3 }, [3, 3]],
             [{ x: 5, y: 5 }, [5, 5]],
@@ -162,7 +336,7 @@ describe("SquareGridTransformer", () => {
         pt.settings.cellSize = 60; // The standard cellSize
         [, cells] = pt.fromPoints("cells", ["1,1", "3,3", "5,5"]);
 
-        expect(Array.from(cells.toSVGPoints().entries())).toEqual([
+        expect([...cells.toSVGPoints().entries()]).toEqual([
             [{ x: 1, y: 1 }, [30, 30]],
             [{ x: 3, y: 3 }, [90, 90]],
             [{ x: 5, y: 5 }, [150, 150]],
@@ -191,11 +365,21 @@ describe("SquareGridTransformer", () => {
 
         const NW = pt.sorter({ direction: "NW" });
         // "3,1" before "1,3"
-        expect([...cells.points].sort(NW).map(toPoint)).toEqual(["1,1", "3,1", "1,3", "3,3"]);
+        expect([...cells.points].sort(NW).map((vec) => vec.string())).toEqual([
+            "1,1",
+            "3,1",
+            "1,3",
+            "3,3",
+        ]);
 
         const WN = pt.sorter({ direction: "WN" });
         // "1,3" before "3,1"
-        expect([...cells.points].sort(WN).map(toPoint)).toEqual(["1,1", "1,3", "3,1", "3,3"]);
+        expect([...cells.points].sort(WN).map((vec) => vec.string())).toEqual([
+            "1,1",
+            "1,3",
+            "3,1",
+            "3,3",
+        ]);
     });
 
     it("sorter is idempotent and consistent", () => {
@@ -214,10 +398,16 @@ describe("SquareGridTransformer", () => {
             const sorted = [...cells.points].sort(sorter);
 
             // Sorting should be idempotent
-            expect([...sorted].map(toPoint)).toEqual(sorted.map(toPoint));
+            expect([...sorted].map((vec) => vec.string())).toEqual(
+                sorted.map((vec) => vec.string()),
+            );
 
             // Sorting order should be consistent, i.e. sorting order does not depend on starting order
-            expect(shuffle(sorted).sort(sorter).map(toPoint)).toEqual(sorted.map(toPoint));
+            expect(
+                shuffle(sorted)
+                    .sort(sorter)
+                    .map((vec) => vec.string()),
+            ).toEqual(sorted.map((vec) => vec.string()));
         });
     });
 
@@ -287,8 +477,9 @@ describe("SquareGridTransformer", () => {
 });
 
 describe("SquareGridTransformer.shrinkwrap", () => {
+    const grid = new SquareGrid();
     // cellSize defaults to 2 so that the grid space matches the svg space
-    const pointTransformer = ({ cellSize = 2 } = {}) => new _SquareGridTransformer({ cellSize });
+    const pointTransformer = ({ cellSize = 2 } = {}) => grid.getPointTransformer({ cellSize });
 
     const FCCellVector = () => {
         return FCRepeat(2, fc.integer()).map((vec) => Vec.from(vec).scale(2).plus([1, 1]));
@@ -520,7 +711,7 @@ describe("SquareGridTransformer.shrinkwrap", () => {
                 cornerNE.minus([1, -1]),
             ].map((vec) => vec.xy.join(","));
 
-            expect(new Set(shrinkwrap.map(putMaxAtStart))).toEqual(
+            expect(new Set(shrinkwrap.map((point) => putMaxAtStart(point)))).toEqual(
                 new Set([putMaxAtStart(inner), putMaxAtStart(outer)]),
             );
         });
@@ -654,7 +845,7 @@ describe("SquareGridTransformer.shrinkwrap", () => {
                 cornerNE.plus(SW).scale(halfCell).plus(SW),
             ].map((vec) => vec.xy.join(","));
 
-            expect(new Set(shrinkwrap.map(putMaxAtStart))).toEqual(
+            expect(new Set(shrinkwrap.map((point) => putMaxAtStart(point)))).toEqual(
                 new Set([putMaxAtStart(inner), putMaxAtStart(outer)]),
             );
         });
@@ -672,8 +863,8 @@ describe("SquareGridTransformer.shrinkwrap", () => {
             ];
 
             expect(shrinkwrap).toHaveLength(2);
-            expect(new Set(shrinkwrap.map(putMaxAtStart))).toEqual(
-                new Set(expected.map(putMaxAtStart)),
+            expect(new Set(shrinkwrap.map((point) => putMaxAtStart(point)))).toEqual(
+                new Set(expected.map((point) => putMaxAtStart(point))),
             );
         }
         {
@@ -686,8 +877,8 @@ describe("SquareGridTransformer.shrinkwrap", () => {
             ];
 
             expect(shrinkwrap).toHaveLength(2);
-            expect(new Set(shrinkwrap.map(putMaxAtStart))).toEqual(
-                new Set(expected.map(putMaxAtStart)),
+            expect(new Set(shrinkwrap.map((point) => putMaxAtStart(point)))).toEqual(
+                new Set(expected.map((point) => putMaxAtStart(point))),
             );
         }
     });

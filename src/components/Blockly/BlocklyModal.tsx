@@ -87,7 +87,7 @@ export const BlocklyModal = React.memo(function BlocklyModal() {
         const topBlocks = Blockly.getMainWorkspace()
             .getTopBlocks(true)
             .filter((block) => block.type === "RootBlock");
-        if (!topBlocks.length) {
+        if (topBlocks.length === 0) {
             console.error("no root blocks");
             return;
         } else if (topBlocks.length > 1) {

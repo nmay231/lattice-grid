@@ -36,7 +36,7 @@ export const LayerItem = ({
             {...(editing ? {} : attributes)}
             data-autofocus={selected || undefined}
             data-layerid={id}
-            tabIndex={!editing ? 0 : -1}
+            tabIndex={editing ? -1 : 0}
         >
             <div className={styles.itemBody}>
                 {editable && (
@@ -45,7 +45,7 @@ export const LayerItem = ({
                         {...listeners}
                         className={styles.handle}
                         tabIndex={editing ? 0 : -1}
-                        bg="none"
+                        variant="subtle"
                     >
                         <IoMdMenu />
                     </ActionIcon>
@@ -58,10 +58,11 @@ export const LayerItem = ({
 
                 {editable && (
                     <ActionIcon
+                        data-testid="remove-layer"
                         onPointerDown={handleDelete}
                         className={styles.remove}
                         tabIndex={editing ? 0 : -1}
-                        bg="none"
+                        variant="subtle"
                     >
                         <IoMdClose />
                     </ActionIcon>

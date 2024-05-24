@@ -16,6 +16,10 @@ export const DEFAULT_COLORS = {
     DARK_WHITE: "var(--user-dark-white)",
 } as const;
 
+export const COLOR_VALUE_TO_NAME = Object.fromEntries(
+    Object.entries(DEFAULT_COLORS).map(([key, value]) => [value, key]),
+);
+
 // Don't just do Object.values(DEFAULT_COLORS) because these colors have to stay in order
 // TODO: Or do they? It depends on if this is used as the source of truth for how colors are encoded
 const validColors: Array<(typeof DEFAULT_COLORS)[keyof typeof DEFAULT_COLORS]> = [

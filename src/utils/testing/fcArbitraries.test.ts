@@ -26,6 +26,7 @@ describe("given", () => {
         given(arbitraries as any).assertProperty(predicate);
 
         expect(fc.property as Mock).toBeCalledWith(...arbitraries, predicate);
+        // eslint-disable-next-line unicorn/no-useless-undefined
         expect(fc.assert as Mock).toBeCalledWith("property", undefined);
     });
 

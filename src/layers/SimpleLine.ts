@@ -4,13 +4,13 @@ import {
     HistoryAction,
     Layer,
     LayerClass,
-    ObjectId,
     Point,
     PointType,
     SVGGroup,
     StorageFilter,
 } from "../types";
 import { DEFAULT_COLORS, isValidColor } from "../utils/colors";
+import { filterUnique } from "../utils/data";
 import { BaseLayer } from "./BaseLayer";
 import { TwoPointProps, handleEventsCurrentSetting } from "./controls/twoPoint";
 import styles from "./layers.module.css";
@@ -18,7 +18,6 @@ import styles from "./layers.module.css";
 type LineState = { stroke: Color };
 export interface SimpleLineProps extends TwoPointProps<LineState> {
     ObjectState: {
-        id: ObjectId;
         stroke: Color;
         points: Point[];
         pointType: PointType;
@@ -155,10 +154,11 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
 
     getSVG: ISimpleLineLayer["getSVG"] = ({ grid, storage, settings }) => {
         const stored = storage.getObjects<SimpleLineProps>(this.id);
-        let allPoints = [...stored.entries(settings.editMode)].flatMap(
-            ([, object]) => object.points,
-        );
-        allPoints = allPoints.filter((point, index) => index === allPoints.indexOf(point));
+        const allPoints = stored
+            .entries(settings.editMode)
+            .flatMap(([, object]) => object.points)
+
+            .filter(filterUnique);
 
         const pt = grid.getPointTransformer(settings);
         const [pointMap, gridPoints] = pt.fromPoints(this.settings.pointType, allPoints);
@@ -168,7 +168,7 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
         for (const [id, { points, stroke }] of stored.entries(settings.editMode)) {
             const first = toSVG.get(pointMap.get(points[0]));
             const second = toSVG.get(pointMap.get(points[1]));
-            if (!first || !second) continue; // TODO?
+            if (!first || !second) continue; // TODO: Log a warning?
 
             const [x1, y1] = first;
             const [x2, y2] = second;
@@ -183,5 +183,48 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
         }
 
         return [{ id: "lines", type: "line", elements }];
+    };
+
+    encode: ISimpleLineLayer["encode"] = ({ grid, storage, settings, answerCheck }) => {
+        const stored = storage.getObjects<SimpleLineProps>(this.id);
+        const objects = [...stored.entries("question")];
+
+        let answersAtEnd = 0;
+        if (answerCheck) {
+            const answers = stored.entries("answer");
+            answersAtEnd = answers.length;
+            objects.push(...answers);
+        }
+
+        const encoder = grid.getEncoder(settings);
+        const pt = grid.getPointTransformer(settings);
+        const [pointMap] = pt.fromPoints(
+            "cells",
+            objects.flatMap(([, { points }]) => points).filter(filterUnique),
+        );
+
+        const { startingPoints, downRightBitmap } = encoder.encodeAdjacentGridPointsInsideGrid(
+            this.settings.pointType,
+            objects.map(([, { points }]) => {
+                const [start, end] = points;
+                return [pointMap.get(start)!, pointMap.get(end)!];
+            }),
+        );
+
+        return {
+            SimpleLineLayer: {
+                dataV1: objects.map(([, obj]) => {
+                    const { stroke, points } = obj;
+                    return {
+                        startingPoint: startingPoints.get(pointMap.get(points[0]))!,
+                        stroke: encoder.encodeColor(stroke),
+                    };
+                }),
+                downRightBitmap,
+                pointType: encoder.encodePointType(this.settings.pointType),
+                stroke: encoder.encodeColor(this.settings.stroke),
+                answersAtEnd: answersAtEnd || undefined,
+            },
+        };
     };
 }

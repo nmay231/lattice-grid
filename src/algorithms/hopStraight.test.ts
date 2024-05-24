@@ -1,6 +1,6 @@
 import fc from "fast-check";
 import { TupleVector } from "../types";
-import { parseIntBase, zip } from "../utils/data";
+import { parseIntBase, zipDefined } from "../utils/data";
 import { Vec } from "../utils/math";
 import { given } from "../utils/testing/fcArbitraries";
 import { hopStraight } from "./hopStraight";
@@ -46,13 +46,12 @@ describe("hopStraight", () => {
                 target = target.plus(move);
             }
 
-            const vecToString = (vec: Vec) => vec.xy.join(",");
             const points = hopStraight({
                 start,
                 cursor: target,
                 deltas: moveSet,
                 targets: [target],
-                toString: vecToString,
+                toString: (vec: Vec) => vec.string(),
             });
 
             expect(points.length).toBeLessThanOrEqual(moves.length);
@@ -61,18 +60,18 @@ describe("hopStraight", () => {
                 Vec.from(string.split(",").map(parseIntBase(10)) as TupleVector),
             );
 
-            const vecMoves = Array.from(zip([start].concat(vecPoints.slice(0, -1)), vecPoints)).map(
+            const vecMoves = [...zipDefined([start, ...vecPoints.slice(0, -1)], vecPoints)].map(
                 ([prev, next]) => prev.drawTo(next),
             );
 
-            const moveSetStrings = moveSet.map(vecToString);
+            const moveSetStrings = moveSet.map((vec: Vec) => vec.string());
 
-            for (const move of vecMoves.map(vecToString)) {
+            for (const move of vecMoves.map((vec: Vec) => vec.string())) {
                 expect(moveSetStrings).includes(move);
             }
 
-            if (moveSet !== knight && points.length) {
-                expect(points.at(-1)).toEqual(vecToString(target));
+            if (moveSet !== knight && points.length > 0) {
+                expect(points.at(-1)).toEqual(target.string());
             }
         });
     });

@@ -5,10 +5,11 @@ import { FCNormalFloat, FCRepeat, given } from "./testing/fcArbitraries";
 
 // Most of the simple tests are not really to test correctness as much as they are to check there are no unexpected errors
 describe("Vector", () => {
-    it("has .xy and .size props", () => {
+    it("has .xy and .size props and .toString() method", () => {
         const vec = new Vec(3, 4);
         expect(vec.xy).toEqual([3, 4]);
-        expect(vec.size).toEqual(5);
+        expect(vec.size).toBe(5);
+        expect(vec.string()).toBe("3,4");
     });
 
     it("can add", () => {
@@ -61,6 +62,7 @@ describe("Vector", () => {
             const [x, y] = xy;
 
             const vec = new Vec(x, y);
+            // eslint-disable-next-line unicorn/prefer-modern-math-apis -- Math.hypot() gives slightly different results sometimes. Got to love IEEE 754
             const denominator = Math.sqrt(x ** 2 + y ** 2);
             expect(vec.unit().xy).toEqual([x / denominator, y / denominator]);
 

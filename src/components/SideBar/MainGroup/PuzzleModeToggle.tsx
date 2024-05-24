@@ -19,8 +19,8 @@ export const PuzzleModeToggle = () => {
                     ] satisfies Array<{ label: string; value: EditMode }>
                 }
                 value={editMode}
-                onChange={(value: EditMode) => {
-                    puzzle.settings.editMode = value;
+                onChange={(value) => {
+                    puzzle.settings.editMode = value satisfies string as EditMode;
                     unfocus();
                 }}
             ></SegmentedControl>

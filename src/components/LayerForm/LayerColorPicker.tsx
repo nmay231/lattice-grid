@@ -1,5 +1,4 @@
 import { Box, ColorSwatch, Text } from "@mantine/core";
-import { GetInputProps } from "@mantine/form/lib/types";
 import { clsx } from "clsx";
 import { useFocusElementHandler } from "../../utils/focusManagement";
 import styles from "./LayerColorPicker.module.css";
@@ -23,8 +22,8 @@ const theOnlyColorsThatExistOnThePlanet = [
 ];
 
 type Arg1 = {
+    onChange(color: string): void;
     value: string;
-    onChange?: (color: string) => void;
     label: string;
 };
 export const LayerColorPicker = ({ label, value, onChange }: Arg1) => {
@@ -45,10 +44,11 @@ export const LayerColorPicker = ({ label, value, onChange }: Arg1) => {
     );
 };
 
-interface Arg2 extends Pick<ReturnType<GetInputProps<any>>, "onChange"> {
+type Arg2 = {
+    onChange(color: string): void;
     selected: boolean;
     color: string;
-}
+};
 
 const Swatch = ({ color, selected, onChange }: Arg2) => {
     const { ref } = useFocusElementHandler();
