@@ -211,10 +211,6 @@ export class ControlsManager {
         onPointerDown: this.onPointerDown.bind(this),
         onPointerMove: this.onPointerMove.bind(this),
         onPointerUp: this.onPointerUp.bind(this),
-        // I don't know how to handle leave events since touch interactions always call leave before up.
-        // TODO: I will come back to this so that you don't get weird shenanigans when leaving the canvas when drawing with a mouse (it does still work with touch screens).
-        // onPointerLeave: this.onPointerLeave.bind(this),
-        // onPointerEnter: this.onPointerEnter.bind(this),
         onContextMenu: this.onContextMenu.bind(this),
     };
 
@@ -288,10 +284,12 @@ export class ControlsManager {
         const layer = this.getCurrentLayer();
         const [action, details] = this.state.onPointerDown(rawEvent);
         if (!layer || action === "ignore") return;
+        rawEvent.currentTarget.setPointerCapture(rawEvent.pointerId);
 
         if (action === "up" && details === "cancelDown") {
             // The previous down event was cancelled and changed to panZoom
-            return this._downCB.set(null);
+            this._downCB.set(null);
+            return;
         }
 
         const event = this.cleanPointerEvent("pointerDown", details.xy, rawEvent);
