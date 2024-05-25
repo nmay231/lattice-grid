@@ -227,4 +227,10 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
             },
         };
     };
+
+    describeObject: ISimpleLineLayer["describeObject"] = ({ obj }) => {
+        return {
+            points: obj.points,
+        };
+    };
 }

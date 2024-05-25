@@ -252,4 +252,10 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
             },
         };
     };
+
+    describeObject: INumberLayer["describeObject"] = ({ id }) => {
+        return {
+            points: [id],
+        };
+    };
 }

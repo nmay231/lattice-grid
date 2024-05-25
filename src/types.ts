@@ -7,6 +7,7 @@ import type { SquareGrid, SquareGridParams } from "./grids/SquareGrid";
 import type { availableLayers } from "./layers";
 import type { UserCodeJSON } from "./userComputation/codeBlocks";
 import type { PutAtEnd } from "./utils/OrderedMap";
+import { Vec } from "./utils/math";
 
 // #region - Compilation
 export type PuzzleError = {
@@ -169,6 +170,7 @@ export type Grid = {
         blacklist: ReadonlySet<string>;
         settings: Pick<PuzzleManager["settings"], "cellSize">;
     }): SVGGroup[];
+    pointOutOfBounds(gridPoint: Vec): boolean;
 };
 // #endregion
 
@@ -219,12 +221,7 @@ export type Layer<LP extends LayerProps = LayerProps> = {
         layerEvent: Omit<PointerMoveOrDown, "points"> & LayerEventEssentials<LP>,
     ) => Point[];
     handleEvent: (layerEvent: LayerEvent<LP>) => LayerHandlerResult<LP>;
-    getSVG: (
-        data: Omit<LayerEventEssentials<LP>, "tempStorage"> & {
-            /** ObjectId => className(s) as a string */
-            // TODO: styleGroups: Map<ObjectId, string>;
-        },
-    ) => SVGGroup[];
+    getSVG: (data: Omit<LayerEventEssentials<LP>, "tempStorage">) => SVGGroup[];
     getOverlaySVG?: (data: Omit<LayerEventEssentials<LP>, "tempStorage">) => SVGGroup[];
     // TODO: Better typing
     // TODO: Also have encoding and decoding in the same place however I end up going about this.
@@ -234,6 +231,8 @@ export type Layer<LP extends LayerProps = LayerProps> = {
             answerCheck: boolean;
         },
     ) => EncodedLayer;
+    // TODO: I am thinking I could somehow develop a schema so I can describe the data in an object declaratively, but I'm not gonna worry about that for now.
+    describeObject: (input: { obj: LP["ObjectState"]; id: ObjectId }) => ObjectDescription;
 };
 
 export type LayerClass<LP extends LayerProps = LayerProps> = {
@@ -259,6 +258,8 @@ export type LayerClass<LP extends LayerProps = LayerProps> = {
         value: unknown,
     ): value is LP["Settings"][K];
 };
+
+export type ObjectDescription = { points: Point[] };
 // #endregion
 
 // #region - Undo-Redo History

@@ -49,4 +49,10 @@ export class BaseLayer<LP extends LayerProps>
             message: `${this.klass.type}.encode() called before implementing!`,
         });
     };
+
+    describeObject: Layer<LP>["describeObject"] = () => {
+        throw notify.error({
+            message: `${this.klass.type}.describeObject() called before implementing!`,
+        });
+    };
 }

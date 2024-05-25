@@ -14,19 +14,19 @@ describe("SquareGrid", () => {
 
     it("knows points are within bounds", () => {
         expect([
-            mediumGrid._outOfBounds({ x: 1, y: 1, type: "cells" }),
-            mediumGrid._outOfBounds({ x: 1, y: 19, type: "cells" }),
-            mediumGrid._outOfBounds({ x: 19, y: 1, type: "cells" }),
-            mediumGrid._outOfBounds({ x: 19, y: 19, type: "cells" }),
+            mediumGrid.pointOutOfBounds({ x: 1, y: 1, type: "cells" }),
+            mediumGrid.pointOutOfBounds({ x: 1, y: 19, type: "cells" }),
+            mediumGrid.pointOutOfBounds({ x: 19, y: 1, type: "cells" }),
+            mediumGrid.pointOutOfBounds({ x: 19, y: 19, type: "cells" }),
         ]).toEqual([false, false, false, false]);
     });
 
     it("knows points are outside bounds", () => {
         expect([
-            mediumGrid._outOfBounds({ x: -1, y: -1, type: "cells" }),
-            mediumGrid._outOfBounds({ x: 10, y: 21, type: "edges" }),
-            mediumGrid._outOfBounds({ x: 21, y: 10, type: "edges" }),
-            mediumGrid._outOfBounds({
+            mediumGrid.pointOutOfBounds({ x: -1, y: -1, type: "cells" }),
+            mediumGrid.pointOutOfBounds({ x: 10, y: 21, type: "edges" }),
+            mediumGrid.pointOutOfBounds({ x: 21, y: 10, type: "edges" }),
+            mediumGrid.pointOutOfBounds({
                 x: 1_000_000,
                 y: 1_000_000,
                 type: "corners",

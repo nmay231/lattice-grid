@@ -204,4 +204,10 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
             },
         };
     };
+
+    describeObject: IKillerCagesLayer["describeObject"] = ({ obj }) => {
+        return {
+            points: obj.points,
+        };
+    };
 }

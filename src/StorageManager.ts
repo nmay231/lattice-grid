@@ -1,5 +1,13 @@
 import { LayerStorage } from "./LayerStorage";
-import { HistoryAction, Layer, LayerProps, PartialHistoryAction, StorageFilter } from "./types";
+import {
+    HistoryAction,
+    Layer,
+    LayerProps,
+    PartialHistoryAction,
+    StorageFilter,
+    type ObjectDescription,
+    type UnknownObject,
+} from "./types";
 import { PUT_AT_END } from "./utils/OrderedMap";
 import { reversed } from "./utils/data";
 import { notify } from "./utils/notifications";
@@ -53,7 +61,7 @@ export class StorageManager {
         if (Object.keys(newFiltersByLayer).length === 0 || this.history.length === 0) return;
 
         const filtered = [] as typeof this.history;
-        // Scrub history going right-to-left since it's better to keep the latest version if valid rather than only allowing what was valid in the past.
+        // Scrub history going newest-to-oldest since it's better to keep the latest version if valid rather than only allowing what was valid in the past.
         for (const undo of reversed(this.history)) {
             const stored = this.getObjects(undo.layerId);
             const redo = this._applyHistoryAction({ stored, action: undo });
@@ -91,6 +99,7 @@ export class StorageManager {
 
     removeStorageFilters(filters: StorageFilter[]) {
         if (filters.length === 0) return;
+
         for (const filter of filters) {
             const result = this.layersByFilters.get(filter);
             if (!result) {
@@ -130,6 +139,47 @@ export class StorageManager {
         }
         return { keep: true, extraActions: extras };
     };
+
+    /**
+     * Used to remove objects outside the grid after resizing. In the future,
+     * might also handle direction objects (arrows or half-cell triangles) being
+     * transformed on grid rotation. */
+    applyGlobalTransformations(arg: {
+        layers: Record<Layer["id"], Pick<Layer, "describeObject">>;
+        transforms: Record<
+            Layer["id"],
+            (desc: ObjectDescription) => null | { obj: null | UnknownObject }
+        >;
+    }) {
+        while (this.canUndo()) {
+            this.undoHistory();
+        }
+
+        const { layers, transforms } = arg;
+        for (const action of this.history) {
+            if (action.layerId in layers && action.object !== null) {
+                const { layerId } = action;
+                const transformed = transforms[layerId](
+                    layers[layerId].describeObject({ id: action.objectId, obj: action.object }),
+                );
+                if (transformed) {
+                    action.object = transformed.obj;
+                }
+            }
+
+            const stored = this.objects[action.layerId];
+            const object = stored.getObject(action.storageMode, action.objectId) || null;
+            if (object === null && action.object === null) {
+                // TODO: This definitely will mess with prevObjectId, but that's probably gonna be obsolete before it's useful anyways...
+                continue;
+            }
+
+            this.history[this.index] = this._applyHistoryAction({ stored, action });
+            this.index++;
+        }
+
+        this.history.splice(this.index, this.history.length - this.index);
+    }
 
     addToHistory(arg: {
         puzzle: Parameters<StorageFilter>[0];

@@ -669,7 +669,7 @@ export class SquareGrid implements Grid {
         });
 
         // TODO: Temporary hack to prevent selecting points outside the grid.
-        return points.filter((point) => !this._outOfBounds(this._stringToGridPoint(point)));
+        return points.filter((point) => !this.pointOutOfBounds(this._stringToGridPoint(point)));
     };
 
     getEncoder(settings: Settings) {
@@ -680,7 +680,7 @@ export class SquareGrid implements Grid {
         return new _SquareGridTransformer(settings);
     }
 
-    _outOfBounds(gridPoint: GridPoint) {
+    pointOutOfBounds(gridPoint: GridPoint | Vec) {
         const x = gridPoint.x / 2 - this.x0;
         const y = gridPoint.y / 2 - this.y0;
         return x < 0 || x > this.width || y < 0 || y > this.height;
