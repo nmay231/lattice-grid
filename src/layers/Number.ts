@@ -115,7 +115,11 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
             return value === "grid" || value === "object";
         } else if (key === "currentCharacter") {
             // TODO: Change this when key presses are switched from `ctrl-a` to `ctrl+a`
-            return value === null || (typeof value === "string" && value.length === 1);
+            return (
+                value === null ||
+                // TODO: Figure out how GOOFy layers will allow typing certain actions (specifically Backspace) while NOT changing the current setting.
+                (typeof value === "string" && /^([\dA-Fa-f]|Backspace|-)$/.test(value))
+            );
         }
         return false;
     }
