@@ -1,6 +1,7 @@
 import { ActionIcon, ActionIconProps, Box, Burger, Center, Select, Tooltip } from "@mantine/core";
 import React from "react";
 import { IoMdArrowDropleft, IoMdArrowDropright, IoMdRedo, IoMdUndo } from "react-icons/io";
+import { useSnapshot } from "valtio";
 import { useProxy } from "valtio/utils";
 import { usePuzzle, useSettings } from "../../state/puzzle";
 import { useFocusElementHandler } from "../../utils/focusManagement";
@@ -141,7 +142,7 @@ export const MobileControlsActual = React.memo(function MobileControlsActual() {
 
 const UndoRedo = React.memo(function UndoRedo() {
     const puzzle = usePuzzle();
-    useProxy(puzzle.SVGGroups);
+    useSnapshot(puzzle.SVGGroups); // Rerender when any part of the grid changes
     useSettings().editMode; // Rerender when switching between solving/setting
 
     // TODO: It's gonna be really annoying to rerender in all the right places... I should probably have StorageManager just update a proxy attribute as part of undo/redo or maybe _applyHistoryAction()
