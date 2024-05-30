@@ -24,9 +24,18 @@ export class StorageManager {
     }
 
     removeStorage(layerId: Layer["id"]) {
+        this.removeStorageFilters([...this.filtersByLayer[layerId]]);
         delete this.objects[layerId];
 
-        this.removeStorageFilters([...this.filtersByLayer[layerId]]);
+        for (let i = this.history.length - 1; i >= 0; i--) {
+            const action = this.history[i];
+            if (action.layerId === layerId) {
+                this.history.splice(i, 1);
+                if (i < this.index) {
+                    this.index--;
+                }
+            }
+        }
     }
 
     getObjects<LP extends LayerProps>(layerId: Layer["id"]) {
