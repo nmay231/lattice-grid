@@ -181,8 +181,9 @@ export class Encoder<E extends Encoding | Scalar> {
             }
             case "enum":
             case "message": {
+                let definedAttrs;
                 if (encoding.type === "message") {
-                    const definedAttrs = Object.values(value).reduce(
+                    definedAttrs = Object.values(value).reduce(
                         (nDefined: number, valueAttr: unknown) =>
                             valueAttr === undefined ? nDefined : nDefined + 1,
                         0,
@@ -198,9 +199,14 @@ export class Encoder<E extends Encoding | Scalar> {
                     encodedFields += 1;
                     this._encode(encoding.fields[key], value[key], writer, true);
                 }
+
                 if (encoding.type === "enum" && encodedFields !== 1) {
                     throw notify.error(
                         `enum has ${encodedFields} value(s) set: value=${stringifyAnything(value)}`,
+                    );
+                } else if (encoding.type === "message" && definedAttrs !== encodedFields) {
+                    throw notify.error(
+                        `message includes fields not in set "${stringifyAnything(Object.values(encoding._indexToField!))}": message=${stringifyAnything(value)}`,
                     );
                 }
                 return;
