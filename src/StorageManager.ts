@@ -75,7 +75,10 @@ export class StorageManager {
             const stored = this.getObjects(undo.layerId);
             const redo = this._applyHistoryAction({ stored, action: undo });
 
-            if (!(undo.layerId in newFiltersByLayer)) continue;
+            if (!(undo.layerId in newFiltersByLayer)) {
+                filtered.push(redo);
+                continue;
+            }
 
             const extra = [] as HistoryAction[];
             let kept = true;
