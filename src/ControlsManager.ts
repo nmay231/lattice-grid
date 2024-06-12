@@ -442,6 +442,8 @@ export class ControlsManager {
                         actions: appliedActions,
                     });
             }
+        } else if (keypress === "Escape") {
+            this.applyLayerEvent(layer, { type: "cancelAction" });
         } else if (layerIsGOOFy(layer)) {
             if (layerIsCurrentCharacterSetting(layer)) {
                 const value = keypress === "Delete" ? null : keypress;
@@ -471,8 +473,6 @@ export class ControlsManager {
             }
 
             // TODO: Migrate the following to use the replacements for handleEvent
-        } else if (keypress === "Escape") {
-            this.applyLayerEvent(layer, { type: "cancelAction" });
         } else if (keypress === "Delete") {
             this.applyLayerEvent(layer, { type: "delete", keypress });
         } else {
