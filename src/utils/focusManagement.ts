@@ -1,9 +1,16 @@
 /**
- * There is a list of possible actions that a user can take on the page that affects focus. Additionally, depending on
+ * The list of layers is focused so you can (shift+)tab through the layers.
+ * However, clicking buttons and other interactable elements remain focused
+ * after their interaction, which we don't want otherwise tab won't work. But we
+ * do want certain elements like the input in layer constraints (think the max
+ * value for NumberLayer) to remain focused so you can type in them. Also there
+ * are certain actions a user can take like clicking outside the grid to clear
+ * the selected cells in NumberLayer.
  *
- * Here are the list of focusin/out events that can happen based on the user actions. The delay "group" is there because keyboard users can focus an element and apply its action (like a button click) after a delay.
- * -
+ * This collection of functions handles all of that.
  */
+// TODO: I should change this to be a factory function that builds all of these
+// functions for easier testing, but I'll get there eventually.
 
 import { mergeRefs, useEventListener, useFocusTrap } from "@mantine/hooks";
 import { useEffect } from "react";
@@ -19,7 +26,8 @@ export const _focusState = {
     lastGroupTarget: null as HTMLElement | null,
 };
 
-// The current focus group must be kept in a proxy so that components are rerendered, but could the rest of _focusState be merged for simplicity?
+// TODO: The current focus group *must* be kept in a proxy so that components
+// are rerendered, but could the rest of _focusState be merged for simplicity?
 export const focusProxy = proxy({ group: "layerList" as FocusGroup });
 
 export const useGlobalFocusListeners = ({ pageFocusOut }: { pageFocusOut: () => void }) => {
