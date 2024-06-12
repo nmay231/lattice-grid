@@ -16,7 +16,7 @@ describe("protoButt", () => {
         });
 
         const input = { optional: undefined, required: 42 };
-        const output = Uint8Array.from([1, 10, 42]);
+        const output = Uint8Array.from([2, 10, 42]);
         expect(encoder.encode(input)).toEqual(output);
         expect(encoder.decode(output)).toEqual({ required: 42 });
     });
@@ -34,7 +34,7 @@ describe("protoButt", () => {
             },
         } satisfies TopLevel<Encoding>,
         input: { a: 900, c: bytesExample.slice(1), b: -420 },
-        output: [3, 0, ...bytesExample, 2, 0b1000_0100, 0b0000_0111, 4, 0b1100_0111, 0b0000_0110],
+        output: [15, 0, ...bytesExample, 2, 0b1000_0100, 0b0000_0111, 4, 0b1100_0111, 0b0000_0110],
     } as const;
 
     const examples = [
@@ -85,7 +85,7 @@ describe("protoButt", () => {
         {
             encoding: { type: "message", fields: { a: { type: "uint32", index: 0 } } },
             input: { a: 42 },
-            output: [1, 0, 42],
+            output: [2, 0, 42],
         },
         {
             encoding: {
@@ -93,7 +93,7 @@ describe("protoButt", () => {
                 fields: { a: { type: "uint32", index: 1 }, b: { type: "sint32", index: 3 } },
             },
             input: { a: 42, b: -42 },
-            output: [2, 1, 42, 3, 2 * 42 - 1],
+            output: [4, 1, 42, 3, 2 * 42 - 1],
         },
         threeFieldMessageExample,
 
@@ -101,12 +101,12 @@ describe("protoButt", () => {
         {
             ...threeFieldMessageExample,
             input: { a: 12, b: 5 },
-            output: [2, 2, 12, 4, 2 * 5],
+            output: [4, 2, 12, 4, 2 * 5],
         },
         {
             ...threeFieldMessageExample,
             input: { c: stringExample.slice(1) },
-            output: [1, 0, ...stringExample],
+            output: [13, 0, ...stringExample],
         },
         {
             ...threeFieldMessageExample,
@@ -171,7 +171,7 @@ describe("protoButt", () => {
                 },
             },
             input: { a: [1, 2, 4] },
-            output: [1, 0, 3, 1, 2, 4],
+            output: [5, 0, 3, 1, 2, 4],
         },
     ] as const satisfies Readonly<
         Array<{
@@ -211,9 +211,12 @@ describe("protoButt", () => {
         },
     );
 
-    // The manual examples above allow me to check against the expected output, while the following fuzz test checks a much larger space
-    // Note: We basically generate random encoding schemas and some examples based on those schemas then check that encoding then decoding gives back the same object
-    it("always decodes the same object that was encoded", () => {
+    // The manual examples above allow me to check against the expected output,
+    // while the following fuzz test checks a much larger space. Note: We
+    // basically generate random encoding schemas and some examples based on
+    // those schemas then check that encoding the example then decoding gives
+    // back the same object
+    it("always decodes to the same object that was encoded", () => {
         const FCMaybeRepeated = (arb: Arbitrary<any>, repeated: boolean | undefined) => {
             if (repeated) return fc.array(arb);
             return arb;
@@ -387,7 +390,11 @@ describe("protoButt", () => {
             maxSkipsPerRun: 5,
         }).assertProperty(({ encoding, input }) => {
             const encoder = Encoder.create(encoding);
-            expect(input).toEqual(encoder.decode(encoder.encode(input)));
+
+            const encoded = encoder.encode(input);
+            const decoded = encoder.decode(encoded);
+
+            expect(input).toEqual(decoded);
         });
     });
 });

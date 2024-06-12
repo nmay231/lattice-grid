@@ -183,12 +183,13 @@ export class Encoder<E extends Encoding | Scalar> {
             case "message": {
                 let definedAttrs;
                 if (encoding.type === "message") {
+                    writer.fork();
+
                     definedAttrs = Object.values(value).reduce(
                         (nDefined: number, valueAttr: unknown) =>
                             valueAttr === undefined ? nDefined : nDefined + 1,
                         0,
                     );
-                    writer.uint32(definedAttrs);
                 }
 
                 let encodedFields = 0;
@@ -209,6 +210,11 @@ export class Encoder<E extends Encoding | Scalar> {
                         `message includes fields not in set "${stringifyAnything(Object.values(encoding._indexToField!))}": message=${stringifyAnything(value)}`,
                     );
                 }
+
+                if (encoding.type === "message") {
+                    writer.ldelim();
+                }
+
                 return;
             }
         }
@@ -283,12 +289,28 @@ export class Encoder<E extends Encoding | Scalar> {
             }
             case "message": {
                 const message = (container[key] = {});
-                for (let nFields = reader.uint32(); nFields > 0; nFields--) {
+                const length = reader.uint32();
+                const end = reader.pos + length;
+
+                let loopingLimit;
+                for (loopingLimit = 1000; reader.pos < end && loopingLimit > 0; loopingLimit--) {
                     const index = reader.uint32();
                     const fieldKey = encoding._indexToField![index];
                     this._decode(encoding.fields[fieldKey], fieldKey, message, reader);
                 }
+
+                if (loopingLimit <= 0) {
+                    throw notify.error("Looped too much while decoding message");
+                } else if (reader.pos !== end) {
+                    notify.error(
+                        `message length did not match encoded length: ${reader.pos - end + length} != ${length}`,
+                    );
+                }
+
                 return;
+            }
+            default: {
+                throw notify.error(`Unknown encoding type: ${(encoding as any).type}`);
             }
         }
     }
