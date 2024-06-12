@@ -44,7 +44,7 @@ export const numberTyper = ({ max, negatives }: TypeNumberArg) => {
             // TODO: Keep the minus sign as part of an inProgress object and remove it when the interaction times out.
             if (!negatives) return "doNothing";
             return numbers.map((num) => (num === null ? null : clean(-num)));
-        } else if (/^[A-Fa-f]$/.test(keypress)) {
+        } else if (/^[A-Ga-g]$/.test(keypress)) {
             // TODO: if (!(settings.allowHex && (max === -1 || max > 10))) return "doNothing";
             // TODO: Should I allow the option to type multiDigit characters in hex?
             const num = clean(Number.parseInt(keypress.toLowerCase(), 36));

@@ -119,7 +119,7 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
             return (
                 value === null ||
                 // TODO: Figure out how GOOFy layers will allow typing certain actions (specifically Backspace) while NOT changing the current setting.
-                (typeof value === "string" && /^([\dA-Fa-f]|Backspace)$/.test(value))
+                (typeof value === "string" && /^([\dA-Ga-g]|Backspace)$/.test(value))
             );
         }
         return false;
