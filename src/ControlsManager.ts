@@ -284,7 +284,16 @@ export class ControlsManager {
         const layer = this.getCurrentLayer();
         const [action, details] = this.state.onPointerDown(rawEvent);
         if (!layer || action === "ignore") return;
-        rawEvent.currentTarget.setPointerCapture(rawEvent.pointerId);
+
+        try {
+            rawEvent.currentTarget.setPointerCapture(rawEvent.pointerId);
+        } catch {
+            // I'm manually creating pointer events that I handle, so of course
+            // setPointerCapture fails during e2e tests.
+            console.error(
+                "You should only see this message during e2e tests (onPointerDown failed to capture pointer)",
+            );
+        }
 
         if (action === "up" && details === "cancelDown") {
             // The previous down event was cancelled and changed to panZoom
