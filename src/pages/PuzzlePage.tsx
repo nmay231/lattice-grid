@@ -41,7 +41,7 @@ const useGlobalEventListeners = (controls: ControlsManager) => {
 export const PuzzlePage = ({ pageMode }: { pageMode: PageMode }) => {
     const puzzle = usePuzzle();
     const navigate = useNavigate();
-    const { search: params } = useLocation();
+    const { search } = useLocation();
 
     usePageLeave(puzzle.controls.onPageBlur.bind(puzzle.controls));
     useGlobalEventListeners(puzzle.controls);
@@ -49,16 +49,18 @@ export const PuzzlePage = ({ pageMode }: { pageMode: PageMode }) => {
 
     useEffect(() => {
         puzzle.settings.pageMode = pageMode;
-        if (params) {
+        const urlSearch = new URLSearchParams(search);
+        const puzzleString = urlSearch.get("0");
+        if (puzzleString) {
             window.setTimeout(() => {
                 puzzle.settings.editMode = "answer";
-                importPuzzleData(puzzle, params.slice(1));
+                importPuzzleData(puzzle, puzzleString);
             }, 50);
         } else {
             navigate("/edit", { replace: true });
             puzzle.startUp();
         }
-    }, [puzzle, pageMode, navigate, params]);
+    }, [puzzle, pageMode, navigate, search]);
 
     const mobileControls = useProxy(mobileControlsProxy);
     const sidebar = useProxy(sidebarProxy);

@@ -70,7 +70,8 @@ export const ImportExportModal = React.memo(function ImportExportModal() {
     const puzzleString = useMemo(() => {
         if (opened) {
             const string = exportPuzzleData(puzzle, answerCheck);
-            return `${window.location.origin}/${exportPlay ? "" : "edit"}?${string}`;
+            // TODO: Make `/edit` urls actually work.
+            return `${window.location.origin}/${exportPlay ? "" : "edit"}?0=${string}`;
         }
     }, [opened, puzzle, answerCheck, exportPlay]);
 
