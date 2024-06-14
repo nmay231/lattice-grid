@@ -303,4 +303,10 @@ export class ToggleCharactersLayer
         // TODO: Shouldn't even be an option to encode this layer yet
         return { ToggleCharactersLayer: { whichSubClass: 42 } };
     };
+
+    describeObject: IToggleCharactersLayer["describeObject"] = ({ id }) => {
+        return {
+            points: [id],
+        };
+    };
 }

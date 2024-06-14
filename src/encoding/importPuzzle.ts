@@ -23,7 +23,10 @@ interface KillerCagesV1 {
 interface NumberLayerV1 {
     PermStorage: Record<string, never>;
     ObjectState: { state: string };
-    Settings: { max: number; negatives: boolean };
+    Settings: {
+        max: number;
+        // negatives: boolean
+    };
 }
 
 interface SimpleLineV1 {
@@ -267,10 +270,14 @@ export const extractPuzzleData = (inputText: string): LatestPuzzleData | ParseEr
                 });
             } else if (layerEnum.NumberLayer) {
                 const layer = layerEnum.NumberLayer;
-                if (!layer.dataV1 || layer.max === undefined || layer.negatives === undefined) {
+                if (
+                    !layer.dataV1 ||
+                    layer.max === undefined
+                    //  || layer.negatives === undefined
+                ) {
                     const missing = concatIfUndefinedThenMessage(
                         [layer.max, "max value setting"],
-                        [layer.negatives, "allow negatives setting"],
+                        // [layer.negatives, "allow negatives setting"],
                         [layer.dataV1, "layer data"],
                     );
                     nonfatalErrors.push({
@@ -287,9 +294,9 @@ export const extractPuzzleData = (inputText: string): LatestPuzzleData | ParseEr
                 );
 
                 const objects = new LayerStorage<NumberLayerV1>();
-                const decodedObjects = layer.dataV1.map(({ point, state }) => [
+                const decodedObjects = layer.dataV1.map(({ point, unsignedState }) => [
                     map[point].string(),
-                    { state: `${state}` },
+                    { state: `${unsignedState}` },
                 ]) satisfies ReturnType<(typeof objects)["entries"]>;
 
                 if (layer.answersAtEnd && layer.answersAtEnd <= decodedObjects.length) {
@@ -300,17 +307,20 @@ export const extractPuzzleData = (inputText: string): LatestPuzzleData | ParseEr
                     objects.setEntries("question", decodedObjects);
                 }
 
-                if (layer.negatives > 1) {
-                    nonfatalErrors.push({
-                        title: "Unexpected number in boolean value in NumberLayer",
-                        internalMessage: `NumberLayer.negatives should be a boolean (0 or 1) but got ${layer.negatives}`,
-                        context: {},
-                    });
-                }
+                // if (layer.negatives > 1) {
+                //     nonfatalErrors.push({
+                //         title: "Unexpected number in boolean value in NumberLayer",
+                //         internalMessage: `NumberLayer.negatives should be a boolean (0 or 1) but got ${layer.negatives}`,
+                //         context: {},
+                //     });
+                // }
 
                 outputLayers.push({
                     type: "NumberLayer",
-                    settings: { max: layer.max, negatives: !!layer.negatives },
+                    settings: {
+                        max: layer.max,
+                        // negatives: !!layer.negatives
+                    },
                     objects,
                 });
             } else if (layerEnum.SimpleLineLayer) {

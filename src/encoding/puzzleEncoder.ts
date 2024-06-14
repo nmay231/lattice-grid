@@ -92,16 +92,14 @@ const layers = {
             type: "message",
             fields: {
                 max: { index: 1, type: "uint32" },
-                // TODO: Allow type=bool ?
-                negatives: { index: 2, type: "uint32" },
-                // negatives: { index: 2, type: "bool" },
+                // negatives: { index: 2, type: "uint32" },
                 dataV1: {
                     index: 10,
                     type: "tuple",
                     repeated: true,
                     fields: {
                         point: { index: 0, ...PointScalar },
-                        state: { index: 1, type: "uint32" },
+                        unsignedState: { index: 1, type: "uint32" },
                     },
                 },
                 answersAtEnd: { index: 20, type: "uint32" },

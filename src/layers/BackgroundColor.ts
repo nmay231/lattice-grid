@@ -149,4 +149,10 @@ export class BackgroundColorLayer
             },
         };
     };
+
+    describeObject: IBackgroundColorLayer["describeObject"] = ({ id }) => {
+        return {
+            points: [id],
+        };
+    };
 }

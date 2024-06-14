@@ -32,5 +32,5 @@ export const exportPuzzleData = (
     const bytes = PuzzleEncoder.encode({
         uncompressedV1: { squareGridParams: { width, height }, layers },
     });
-    return fromUint8Array(bytes);
+    return fromUint8Array(bytes, true);
 };

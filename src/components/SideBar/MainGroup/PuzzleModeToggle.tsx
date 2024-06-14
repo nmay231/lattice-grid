@@ -21,6 +21,8 @@ export const PuzzleModeToggle = () => {
                 value={editMode}
                 onChange={(value) => {
                     puzzle.settings.editMode = value satisfies string as EditMode;
+                }}
+                onClick={() => {
                     unfocus();
                 }}
             ></SegmentedControl>

@@ -29,13 +29,13 @@ export const numberTyper = ({ max, negatives }: TypeNumberArg) => {
     ): Array<string | null> | "doNothing" => {
         if (numberStrings.length === 0) return "doNothing";
 
-        let numbers = numberStrings.map(toOptionalNumber);
+        let numbers = numberStrings.map((n) => toOptionalNumber(n));
         const keypress = typeof event === "string" ? event : event?.keypress || null;
 
         if (keypress === "Backspace") {
             return numbers.map((num) => {
                 if (num === null) return null;
-                num = Math.floor(num / 10);
+                num = Math.trunc(num / 10);
                 return num ? clean(num) : null;
             });
         } else if (keypress === null || keypress === "Delete") {
@@ -44,7 +44,7 @@ export const numberTyper = ({ max, negatives }: TypeNumberArg) => {
             // TODO: Keep the minus sign as part of an inProgress object and remove it when the interaction times out.
             if (!negatives) return "doNothing";
             return numbers.map((num) => (num === null ? null : clean(-num)));
-        } else if (/^[A-Fa-f]$/.test(keypress)) {
+        } else if (/^[A-Ga-g]$/.test(keypress)) {
             // TODO: if (!(settings.allowHex && (max === -1 || max > 10))) return "doNothing";
             // TODO: Should I allow the option to type multiDigit characters in hex?
             const num = clean(Number.parseInt(keypress.toLowerCase(), 36));
@@ -57,7 +57,13 @@ export const numberTyper = ({ max, negatives }: TypeNumberArg) => {
             numbers = numbers.map(() => null);
         }
         if (/^\d$/.test(keypress)) {
-            return numbers.map((num) => clean(10 * (num || 0) + Number.parseInt(keypress)));
+            return numbers.map((num) =>
+                clean(
+                    num
+                        ? 10 * num + Math.sign(num) * Number.parseInt(keypress)
+                        : Number.parseInt(keypress),
+                ),
+            );
         }
         return "doNothing"; // Change nothing
     };

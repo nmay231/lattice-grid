@@ -11,7 +11,7 @@ import { FCRepeat, given } from "../src/utils/testing/fcArbitraries";
 
 test.describe(() => {
     // We let fast-check control the timeout, so it is 30 secs per example instead of 30 secs for the whole test
-    test.setTimeout(0);
+    test.describe.configure({ timeout: 0 });
 
     // TODO: While this test has found some bugs already, it has some weaknesses:
     // - It's slow and complicated to understand (speed is less of an issue since it's only run infrequently)
@@ -19,6 +19,8 @@ test.describe(() => {
     // - It can't change layer settings or grid size
     // - It doesn't detect state that is different but visually identical, but I guess that would be a different test entirely.
     // - Duplicate layers are not tested (but duplicate layers should be disallowed for now, anyway)
+    // - All the layers are added at the beginning and none are removed part way through.
+    // - Console errors are not tracked
     test("Encoded puzzles decode to the same puzzle", async ({ page }) => {
         const testedURLs = [] as string[];
         const numRuns = 100;

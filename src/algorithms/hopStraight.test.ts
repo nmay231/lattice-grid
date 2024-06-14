@@ -37,6 +37,8 @@ describe("hopStraight", () => {
                     }),
                 ),
             ),
+            // TODO: I have a rare/sporadic issue where knights moves act a little weird
+            // { seed: 1033320010, path: "12:9:15", endOnFailure: true }
         ]).assertProperty(([moveSet, indexes]) => {
             const moves = indexes.map((i) => moveSet[i]);
 

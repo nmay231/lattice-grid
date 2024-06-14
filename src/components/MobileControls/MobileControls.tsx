@@ -1,6 +1,7 @@
 import { ActionIcon, ActionIconProps, Box, Burger, Center, Select, Tooltip } from "@mantine/core";
 import React from "react";
 import { IoMdArrowDropleft, IoMdArrowDropright, IoMdRedo, IoMdUndo } from "react-icons/io";
+import { useSnapshot } from "valtio";
 import { useProxy } from "valtio/utils";
 import { usePuzzle, useSettings } from "../../state/puzzle";
 import { useFocusElementHandler } from "../../utils/focusManagement";
@@ -62,8 +63,9 @@ export const MobileControlsMetaControls = React.memo(function MobileControlsMeta
                     onClick={() => {
                         const id = puzzle.layers.currentKey;
                         if (!id) return;
-                        let prev = puzzle.layers.getPrevSelectableKey(id);
-                        if (!prev) prev = puzzle.layers.getLastSelectableKey();
+                        // Kinda funny that since the layers are reversed for the user (since topmost is listed first but drawn last)
+                        let prev = puzzle.layers.getNextSelectableKey(id);
+                        if (!prev) prev = puzzle.layers.getFirstSelectableKey();
                         if (!prev) return;
                         puzzle.selectLayer(prev);
                     }}
@@ -84,6 +86,7 @@ export const MobileControlsMetaControls = React.memo(function MobileControlsMeta
                     data={puzzle.layers
                         .entries()
                         .filter(([, layer]) => puzzle.layers.selectable(layer))
+                        .toReversed()
                         .map(([id, layer]) => ({
                             label: layer.displayName,
                             value: id,
@@ -95,8 +98,8 @@ export const MobileControlsMetaControls = React.memo(function MobileControlsMeta
                     onClick={() => {
                         const id = puzzle.layers.currentKey;
                         if (!id) return;
-                        let next = puzzle.layers.getNextSelectableKey(id);
-                        if (!next) next = puzzle.layers.getFirstSelectableKey();
+                        let next = puzzle.layers.getPrevSelectableKey(id);
+                        if (!next) next = puzzle.layers.getLastSelectableKey();
                         if (!next) return;
                         puzzle.selectLayer(next);
                     }}
@@ -139,7 +142,7 @@ export const MobileControlsActual = React.memo(function MobileControlsActual() {
 
 const UndoRedo = React.memo(function UndoRedo() {
     const puzzle = usePuzzle();
-    useProxy(puzzle.SVGGroups);
+    useSnapshot(puzzle.SVGGroups); // Rerender when any part of the grid changes
     useSettings().editMode; // Rerender when switching between solving/setting
 
     // TODO: It's gonna be really annoying to rerender in all the right places... I should probably have StorageManager just update a proxy attribute as part of undo/redo or maybe _applyHistoryAction()

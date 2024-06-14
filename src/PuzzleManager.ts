@@ -17,6 +17,7 @@ import {
     LayerClass,
     LocalStorageData,
     NeedsUpdating,
+    ObjectDescription,
     ObjectId,
     PageMode,
     RenderChange,
@@ -108,6 +109,26 @@ export class PuzzleManager {
         canvasSizeProxy.minY = minY;
         canvasSizeProxy.width = width;
         canvasSizeProxy.height = height;
+    }
+
+    /** Basically, delete objects outside the grid when the resize modal is closed */
+    finalizeResizedCanvas() {
+        const layers = this.layers.entries().filter(([, layer]) => {
+            const type = layer.klass.type as keyof typeof availableLayers;
+            return type !== "CellOutlineLayer" && type !== "OverlayLayer";
+        });
+
+        const grid = this.grid;
+        const pt = grid.getPointTransformer(this.settings);
+        const keepInGrid = (desc: ObjectDescription): null | { obj: null | UnknownObject } => {
+            // TODO: PointType is hardcoded to "cells" for now, since it is only a description atm anyways
+            const [pointMap] = pt.fromPoints("cells", desc.points);
+            const filter = [...pointMap.values()].some((point) => grid.pointOutOfBounds(point));
+            return filter ? { obj: null } : null;
+        };
+        const transforms = Object.fromEntries(layers.map(([layerId]) => [layerId, keepInGrid]));
+
+        this.storage.applyGlobalTransformations({ layers: Object.fromEntries(layers), transforms });
     }
 
     renderChange(change: RenderChange) {

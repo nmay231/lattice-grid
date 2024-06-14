@@ -21,7 +21,7 @@ export interface NumberProps extends GOOFyProps, CurrentCharacterProps, Selected
     TempStorage: SelectedProps["TempStorage"];
     Settings: {
         max: number;
-        negatives: boolean;
+        // negatives: boolean;
         gridOrObjectFirst: GridOrObject;
         currentCharacter: string | null;
         _numberTyper: ReturnType<typeof numberTyper>;
@@ -40,7 +40,7 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
     static displayName = "Number";
     static defaultSettings: LayerClass<NumberProps>["defaultSettings"] = {
         max: 9,
-        negatives: false,
+        // negatives: false,
         _numberTyper: () => {
             throw notify.error({
                 message: `${this.type}._numberTyper() called before implementing!`,
@@ -90,14 +90,15 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
     };
     static constraints: LayerClass<NumberProps>["constraints"] = {
         elements: {
-            max: { type: "number", label: "Max", min: 0 },
-            negatives: { type: "boolean", label: "Allow negatives" },
+            // TODO: `max` is a temporary artificial limit on the max value for numbers
+            max: { type: "number", label: "Max", min: 0, max: 9999 },
+            // negatives: { type: "boolean", label: "Allow negatives" },
         },
     };
 
     static settingsDescription: LayerClass<NumberProps>["settingsDescription"] = {
         max: { type: "constraints" },
-        negatives: { type: "constraints" },
+        // negatives: { type: "constraints" },
         _numberTyper: { type: "constraints", derived: true },
         gridOrObjectFirst: { type: "controls" },
         currentCharacter: { type: "controls" },
@@ -107,15 +108,20 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
         key: K | string,
         value: unknown,
     ): value is NumberProps["Settings"][K] {
-        if (key === "negatives") {
-            return typeof value === "boolean";
-        } else if (key === "max") {
+        // if (key === "negatives") {
+        //     return typeof value === "boolean";
+        // } else
+        if (key === "max") {
             return typeof value === "number";
         } else if (key === "gridOrObjectFirst") {
             return value === "grid" || value === "object";
         } else if (key === "currentCharacter") {
             // TODO: Change this when key presses are switched from `ctrl-a` to `ctrl+a`
-            return value === null || (typeof value === "string" && value.length === 1);
+            return (
+                value === null ||
+                // TODO: Figure out how GOOFy layers will allow typing certain actions (specifically Backspace) while NOT changing the current setting.
+                (typeof value === "string" && /^([\dA-Ga-g]|Backspace)$/.test(value))
+            );
         }
         return false;
     }
@@ -134,10 +140,10 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
         const removeFilters = [] as StorageFilter[];
         if (
             !oldSettings ||
-            oldSettings.max !== this.settings.max ||
-            oldSettings.negatives !== this.settings.negatives
+            oldSettings.max !== this.settings.max
+            // || oldSettings.negatives !== this.settings.negatives
         ) {
-            this.settings._numberTyper = numberTyper(this.settings);
+            this.settings._numberTyper = numberTyper({ negatives: false, ...this.settings });
             // TODO: Is this a pattern I want to support? Removing a filter only to add it again to scrub history?
             removeFilters.push(this.filterNumbersOutOfRange);
         }
@@ -186,7 +192,8 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
     filterNumbersOutOfRange: StorageFilter = (_, action) => {
         if (action.object === null || !this._isNumberLayerAction(action)) return { keep: true };
 
-        const min = this.settings.negatives ? -this.settings.max : 0;
+        // const min = this.settings.negatives ? -this.settings.max : 0;
+        const min = 0;
         const max = this.settings.max;
         const num = Number.parseInt(action.object.state);
         return { keep: min <= num && num <= max };
@@ -243,13 +250,19 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
         return {
             NumberLayer: {
                 max: this.settings.max,
-                negatives: this.settings.negatives ? 1 : 0,
+                // negatives: this.settings.negatives ? 1 : 0,
                 dataV1: objects.map(([point, { state }]) => ({
                     point: vecToNumber.get(pointToVec.get(point))!,
-                    state: Number.parseInt(state),
+                    unsignedState: Number.parseInt(state),
                 })),
                 answersAtEnd: answersAtEnd || undefined,
             },
+        };
+    };
+
+    describeObject: INumberLayer["describeObject"] = ({ id }) => {
+        return {
+            points: [id],
         };
     };
 }

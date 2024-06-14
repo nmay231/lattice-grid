@@ -69,8 +69,6 @@ export class OrderedMap<V> {
         this.order.splice(this.order.indexOf(key), 1);
         return true;
     }
-
-    // TODO: toJSON()
 }
 
 export class IndexedOrderedMap<V> extends OrderedMap<V> {

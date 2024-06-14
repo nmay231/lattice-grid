@@ -5,20 +5,22 @@ import { usePuzzle } from "../state/puzzle";
 
 export const RedirectHome = () => {
     const navigate = useNavigate();
-    const { search: params } = useLocation();
+    const { search } = useLocation();
     const puzzle = usePuzzle();
 
     useEffect(() => {
-        if (params) {
-            navigate(`/play${params}`, { replace: true });
+        const urlSearch = new URLSearchParams(search);
+        const puzzleString = urlSearch.get("0");
+        if (puzzleString) {
+            navigate(`/play?0=${puzzleString}`, { replace: true });
             window.setTimeout(() => {
                 puzzle.settings.editMode = "answer";
-                importPuzzleData(puzzle, params.slice(1));
+                importPuzzleData(puzzle, puzzleString);
             }, 50);
         } else {
             navigate("/edit", { replace: true });
         }
-    }, [navigate, params, puzzle]);
+    }, [navigate, puzzle, search]);
 
     return <>Redirecting</>;
 };
