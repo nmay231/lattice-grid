@@ -18,7 +18,7 @@ export const SideBar = React.memo(function SideBar() {
             <MainGroup />
             <LayersGroup />
             <ControlsGroup />
-            {pageMode === "edit" && <CodeGroup />}
+            {pageMode === "edit" && debug && <CodeGroup />}
             {debug && <DebugGroup />}
             <Divider mb={20} /> {/* Show the user that there's nothing below. */}
         </ScrollArea>
