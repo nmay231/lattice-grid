@@ -90,7 +90,8 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
     };
     static constraints: LayerClass<NumberProps>["constraints"] = {
         elements: {
-            max: { type: "number", label: "Max", min: 0 },
+            // TODO: `max` is a temporary artificial limit on the max value for numbers
+            max: { type: "number", label: "Max", min: 0, max: 9999 },
             // negatives: { type: "boolean", label: "Allow negatives" },
         },
     };

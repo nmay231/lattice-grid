@@ -106,7 +106,8 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
         };
 
         this.settings.storageFilter = unboundFilter.bind(this);
-        this.settings._numberTyper = numberTyper({ max: -1, negatives: false });
+        // TODO: Artificial limit temporarily set to max int32. It needs a different interface for typing the max (it should round to the max instead of restarting at 0; this is different than NumberLayer)
+        this.settings._numberTyper = numberTyper({ max: 0xff_ff_ff_ff, negatives: false });
         return {
             filters: [{ filter: this.settings.storageFilter }],
         };
@@ -141,7 +142,7 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
 
                 numberElements.set(corner.xy.join(","), {
                     className: textStyles,
-                    children: object.state, // TODO: I don't like this React concept leaking... Then again, className is sorta React specific.
+                    children: object.state, // TODO: I don't like this React concept leaking... Then again, className is also sorta React specific.
                     x: point.x,
                     y: point.y,
                     fontSize: "12px",

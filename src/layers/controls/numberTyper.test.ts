@@ -108,7 +108,8 @@ describe("numberTyper", () => {
         { negatives: false, max: 20, key: "B", start: [""], result: ["11"] },
         { negatives: false, max: 20, key: "C", start: [""], result: ["12"] },
         { negatives: false, max: 20, key: "d", start: [""], result: ["13"] },
-        { negatives: false, max: 20, key: "g", start: [""], result: "doNothing" as const },
+        { negatives: false, max: 20, key: "g", start: [""], result: ["16"] },
+        { negatives: false, max: 20, key: "h", start: [""], result: "doNothing" as const },
         { negatives: false, max: 20, key: "z", start: [""], result: "doNothing" as const },
         // TODO: Do I want this where a-f gives 0-5 when the max is not large enough?
         { negatives: false, max: 9, key: "a", start: [""], result: ["0"] },
@@ -123,7 +124,8 @@ describe("numberTyper", () => {
         { negatives: false, max: 20, key: "a", start: ["20"], result: ["10"] },
         { negatives: false, max: 20, key: "B", start: ["0"], result: ["11"] },
         { negatives: false, max: 20, key: "C", start: ["3"], result: ["12"] },
-        { negatives: false, max: 20, key: "g", start: [""], result: "doNothing" as const },
+        { negatives: false, max: 20, key: "g", start: ["5"], result: ["16"] },
+        { negatives: false, max: 20, key: "h", start: ["5"], result: "doNothing" as const },
         { negatives: false, max: 20, key: "z", start: [""], result: "doNothing" as const },
         // TODO: Basically, I need to have a test for every boundary of negative cross product with (max-1, max, max+1) where max+1 should doNothing.
         { negatives: false, max: 9, key: "a", start: ["1"], result: ["0"] },
