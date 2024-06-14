@@ -68,11 +68,37 @@ type _DescriptionToObject<E extends TopLevel<Encoding>> = {
 type PossibleRepeated<T, Repeated> = Repeated extends true ? T[] : T;
 
 /**
- * ProtoButt (only serious business here) is an reimplementation of protobuf with some large changes to make it better for our specific use-case. It would be worth reading up on protobuf's encoding strategy to get a better understanding before reading the code (https://protobuf.dev/programming-guides/encoding).
- * -   For one, many of the encoding types are not included since most of them are redundant or simply unneeded (so far).
- * -   Since we don't care about forwards compatibility (old programs reading new data still working), that means we can exclude encoding the wire-type as part of the field index. This saves a lot of data when including many small messages. Additionally, the message length encodes the number of fields not the number of bytes.
- * -   We also add a tuple type that is similar to messages except only data is encoded; no field numbers or field/byte count. This requires all fields to be set and no new fields to be added in the future. That means the container of the tuple must add a new tuple (or message) field encoding the new data if the old one doesn't suffice. Therefore tuples should be used tastefully and certainly not at the toplevel of an encoding.
- * -   `oneof` fields are merged into enums to basically give you tagged-variants just like Rust enums. In other words, an enum is a message with only one field chosen. Enum variants with no data attached (what most programming languages consider as enums) are accomplished by adding a scalar type called `unit` that encodes no data itself and relies on the container encoding its field number, therefore determining which enum variant it is. Unlike `oneof` fields, enums can be repeated; the only reason for that restriction in the first place is if you care about encoding being "distributive", that is `encode({...data1, ...data2}) == concat(encode(data1), encode(data2))`.
+ * ProtoButt (only serious business here) is an reimplementation/wrapper of
+ * protobuf with a few large changes to make it better for our specific
+ * use-case. It would be worth reading up on protobuf's encoding strategy to get
+ * a better understanding before reading the code
+ * (https://protobuf.dev/programming-guides/encoding). Specifically varint,
+ * field number/index, and message length-prefix.
+ *   - For one, many of the encoding types are not included since most of them
+ *     are redundant, not readily useable in javascript (int64), or simply
+ *     unneeded (so far).
+ *   - Since we don't care about forwards compatibility (old programs reading
+ *     new data without crashing), that means we can exclude encoding the
+ *     wire-type as part of the field index. This saves a lot of data when
+ *     including many small messages.
+ *   - We also add a `tuple` type that is similar to messages except only data
+ *     is encoded; no field numbers or length count. This requires all fields to
+ *     be set and no new fields to be added to the schema in the future. This is
+ *     useful for collections of data that are pretty consistent like
+ *     coordinates. If the data does need to change, then the *container* of the
+ *     tuple must add a new field encoding the data as a different tuple (or
+ *     message). Therefore tuples should be used tastefully and certainly not at
+ *     the toplevel of an encoding.
+ *   - `oneof` fields are merged into enums to basically give you
+ *     tagged-variants just like Rust enums. In other words, an enum is a
+ *     message with only one field chosen. Enum variants with no data attached
+ *     (what most programming languages consider as enums) are accomplished by
+ *     adding a scalar type called `unit` that encodes no data itself and relies
+ *     on the container encoding its field number, therefore determining which
+ *     enum variant it is. Unlike `oneof` fields, enums can be repeated; the
+ *     only reason protobuf implemented that restriction in the first place is
+ *     if you want the `encode()` function to be "distributive", that is
+ *     `encode({...part1, ...part2}) == [...encode(part1), ...encode(part2)]`.
  */
 export class Encoder<E extends Encoding | Scalar> {
     /** Constructor is private. Use `.create()` instead */

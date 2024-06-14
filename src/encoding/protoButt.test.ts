@@ -37,11 +37,30 @@ describe("protoButt", () => {
         output: [15, 0, ...bytesExample, 2, 0b1000_0100, 0b0000_0111, 4, 0b1100_0111, 0b0000_0110],
     } as const;
 
-    const examples = [
+    const examples: Array<{
+        encoding: TopLevel<Scalar> | TopLevel<Encoding>;
+        input: any;
+        output: readonly number[] | Uint8Array;
+    }> = [
         // Scalars
         { encoding: { type: "uint32" }, input: 42, output: [42] },
-        { encoding: { type: "uint32" }, input: 0, output: [0] },
         { encoding: { type: "uint32" }, input: 900, output: [0b1000_0100, 0b0000_0111] },
+        { encoding: { type: "uint32" }, input: 0, output: [0] },
+        {
+            encoding: { type: "uint32" },
+            input: 0xff_ff_ff_ff,
+            output: [255, 255, 255, 255, 0b1111],
+        },
+        {
+            encoding: { type: "sint32" },
+            input: 0x7f_ff_ff_ff,
+            output: [254, 255, 255, 255, 0b1111],
+        },
+        {
+            encoding: { type: "sint32" },
+            input: -0x80_00_00_00,
+            output: [255, 255, 255, 255, 0b1111],
+        },
         { encoding: { type: "sint32" }, input: 0, output: [0] },
         { encoding: { type: "sint32" }, input: -420, output: [0b1100_0111, 0b0000_0110] },
         { encoding: { type: "sint32" }, input: 420, output: [0b1100_1000, 0b0000_0110] },
@@ -173,13 +192,7 @@ describe("protoButt", () => {
             input: { a: [1, 2, 4] },
             output: [5, 0, 3, 1, 2, 4],
         },
-    ] as const satisfies Readonly<
-        Array<{
-            encoding: TopLevel<Scalar> | TopLevel<Encoding>;
-            input: any;
-            output: readonly number[] | Uint8Array;
-        }>
-    >;
+    ];
 
     it.each(examples)(
         "encodes then decodes each value unrepeated",
