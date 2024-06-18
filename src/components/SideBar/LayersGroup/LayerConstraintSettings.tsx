@@ -1,14 +1,13 @@
 import { Text } from "@mantine/core";
 import { useProxy } from "valtio/utils";
-import { usePuzzle } from "../../../state/puzzle";
+import { PuzzleManager } from "../../../PuzzleManager";
 import { FormSchema, Layer, LayerProps } from "../../../types";
 import { useFocusGroup } from "../../../utils/focusManagement";
 import { LayerForm, layerSettingsRerender } from "../../LayerForm";
 
-type InnerProps = { layer: Layer; constraints: FormSchema<LayerProps> };
+type InnerProps = { layer: Layer; constraints: FormSchema<LayerProps>; puzzle: PuzzleManager };
 
-const _LayerConstraintSettings = ({ layer, constraints }: InnerProps) => {
-    const puzzle = usePuzzle();
+const _LayerConstraintSettings = ({ layer, constraints, puzzle }: InnerProps) => {
     const rerender = useProxy(layerSettingsRerender);
     const { ref, unfocus } = useFocusGroup({ puzzle, group: "controlSettings" });
 
@@ -38,9 +37,8 @@ const _LayerConstraintSettings = ({ layer, constraints }: InnerProps) => {
     );
 };
 
-export const LayerConstraintSettings = () => {
-    const { layers: layersProxy } = usePuzzle();
-    const layers = useProxy(layersProxy);
+export const LayerConstraintSettings = ({ puzzle }: { puzzle: PuzzleManager }) => {
+    const layers = useProxy(puzzle.layers);
     const id = layers.currentKey;
     const layer = id && layers.get(id);
 
@@ -61,6 +59,11 @@ export const LayerConstraintSettings = () => {
     }
 
     return (
-        <_LayerConstraintSettings key={id} layer={layer} constraints={layer.klass.constraints} />
+        <_LayerConstraintSettings
+            key={id}
+            layer={layer}
+            constraints={layer.klass.constraints}
+            puzzle={puzzle}
+        />
     );
 };

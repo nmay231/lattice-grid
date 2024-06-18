@@ -1,17 +1,17 @@
 import { Button, Center, Group, Stack } from "@mantine/core";
 import React from "react";
 import { Link } from "react-router-dom";
-import { usePuzzle, useSettings } from "../../../state/puzzle";
+import { useProxy } from "valtio/utils";
+import type { PuzzleManager } from "../../../PuzzleManager";
 import { useFocusElementHandler } from "../../../utils/focusManagement";
 import { ImportExportButton } from "../../ImportExportModal/ImportExportModal";
 import { Group as Collapse } from "../Group";
 import { PuzzleModeToggle } from "./PuzzleModeToggle";
 import { ResizeGridButton } from "./ResizeModal";
 
-export const MainGroup = React.memo(function MainGroup() {
-    const puzzle = usePuzzle();
-    const { pageMode } = useSettings();
+export const MainGroup = React.memo(function MainGroup({ puzzle }: { puzzle: PuzzleManager }) {
     const { ref, unfocus } = useFocusElementHandler();
+    const { pageMode } = useProxy(puzzle.settings);
 
     return (
         <Collapse name="Puzzle" expanded>
@@ -19,7 +19,7 @@ export const MainGroup = React.memo(function MainGroup() {
                 <Stack>
                     {pageMode === "edit" && (
                         <>
-                            <PuzzleModeToggle />
+                            <PuzzleModeToggle puzzle={puzzle} />
                             <ResizeGridButton />
                             <ImportExportButton />
                             <Button

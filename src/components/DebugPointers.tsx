@@ -1,7 +1,7 @@
 import { Affix, Box } from "@mantine/core";
 import React from "react";
 import { useProxy } from "valtio/utils";
-import { usePuzzle, useSettings } from "../state/puzzle";
+import { PuzzleManager } from "../PuzzleManager";
 
 const CrossHairs = ({ x = 0, y = 0, color = "black" }) => {
     return (
@@ -18,10 +18,10 @@ const CrossHairs = ({ x = 0, y = 0, color = "black" }) => {
     );
 };
 
-const _DebugPointers = () => {
+const _DebugPointers = ({ puzzle }: { puzzle: PuzzleManager }) => {
     const {
         controls: { state },
-    } = usePuzzle();
+    } = puzzle;
     const { mode, firstPointer: first, secondPointer: second } = useProxy(state);
 
     return (
@@ -41,9 +41,13 @@ const _DebugPointers = () => {
     );
 };
 
-export const DebugPointers = React.memo(function DebugPointers() {
-    const { debugging } = useSettings();
+export const DebugPointers = React.memo(function DebugPointers({
+    puzzle,
+}: {
+    puzzle: PuzzleManager;
+}) {
+    const { debugging } = useProxy(puzzle.settings);
     if (!debugging) return <></>;
 
-    return <_DebugPointers />;
+    return <_DebugPointers puzzle={puzzle} />;
 });

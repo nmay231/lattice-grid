@@ -31,6 +31,7 @@ import { notify } from "./utils/notifications";
 import { LatestTimeout } from "./utils/primitiveWrappers";
 import { stringifyAnything } from "./utils/string";
 
+// TODO: Rename to PuzzleContext
 export class PuzzleManager {
     layers = proxy(new IndexedOrderedMap<ValtioRef<Layer>>((layer) => !layer.klass.ethereal));
     UILayer = availableLayers["OverlayLayer"].create(this);

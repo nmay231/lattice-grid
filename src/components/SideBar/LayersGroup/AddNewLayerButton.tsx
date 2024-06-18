@@ -1,15 +1,15 @@
 import { Select } from "@mantine/core";
 import { useCallback, useMemo, useState } from "react";
+import { useProxy } from "valtio/utils";
+import { PuzzleManager } from "../../../PuzzleManager";
 import { availableLayers } from "../../../layers";
-import { usePuzzle, useSettings } from "../../../state/puzzle";
 import { useFocusElementHandler } from "../../../utils/focusManagement";
 import { smartSort } from "../../../utils/string";
 
 const DEFAULT_VALUE = "Add New Layer";
 
-export const AddNewLayerButton = () => {
-    const puzzle = usePuzzle();
-    const { debugging } = useSettings();
+export const AddNewLayerButton = ({ puzzle }: { puzzle: PuzzleManager }) => {
+    const { debugging } = useProxy(puzzle.settings);
     const [layerType, setLayerType] = useState(DEFAULT_VALUE);
     const { ref, unfocus } = useFocusElementHandler();
 

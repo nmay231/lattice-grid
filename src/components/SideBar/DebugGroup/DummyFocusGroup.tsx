@@ -1,9 +1,8 @@
 import { useState } from "react";
-import { usePuzzle } from "../../../state/puzzle";
+import { PuzzleManager } from "../../../PuzzleManager";
 import { useFocusElementHandler, useFocusGroup } from "../../../utils/focusManagement";
 
-export const DummyFocusGroup = () => {
-    const puzzle = usePuzzle();
+export const DummyFocusGroup = ({ puzzle }: { puzzle: PuzzleManager }) => {
     const { ref } = useFocusGroup({ puzzle, group: "debug" });
     const { ref: buttonRef, unfocus } = useFocusElementHandler();
     const [state, setState] = useState([..."12345"]);

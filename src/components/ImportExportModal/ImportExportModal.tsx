@@ -11,9 +11,9 @@ import {
 } from "@mantine/core";
 import { useClipboard } from "@mantine/hooks";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { PuzzleManager } from "../../PuzzleManager";
 import { exportPuzzleData } from "../../encoding/exportPuzzle";
 import { importPuzzleData } from "../../encoding/importPuzzle";
-import { usePuzzle } from "../../state/puzzle";
 import { Layer } from "../../types";
 import { openModal, useFocusElementHandler, useModal } from "../../utils/focusManagement";
 import { notify } from "../../utils/notifications";
@@ -47,8 +47,11 @@ export const ImportExportButton = () => {
     );
 };
 
-export const ImportExportModal = React.memo(function ImportExportModal() {
-    const puzzle = usePuzzle();
+export const ImportExportModal = React.memo(function ImportExportModal({
+    puzzle,
+}: {
+    puzzle: PuzzleManager;
+}) {
     const [importAttempted, setImportAttempted] = useState(false);
     const textRef = useRef<HTMLTextAreaElement>(null);
     const [exportPlay, setExportPlay] = useState(true);

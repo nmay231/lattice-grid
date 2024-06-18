@@ -3,7 +3,7 @@ import React from "react";
 import { IoMdArrowDropleft, IoMdArrowDropright, IoMdRedo, IoMdUndo } from "react-icons/io";
 import { useSnapshot } from "valtio";
 import { useProxy } from "valtio/utils";
-import { usePuzzle, useSettings } from "../../state/puzzle";
+import { PuzzleManager } from "../../PuzzleManager";
 import { useFocusElementHandler } from "../../utils/focusManagement";
 import { LayerControlSettings } from "../SideBar/ControlsGroup/LayerControlSettings";
 import { PuzzleModeToggle } from "../SideBar/MainGroup/PuzzleModeToggle";
@@ -11,13 +11,16 @@ import { sidebarProxy } from "../SideBar/sidebarProxy";
 import styles from "./mobileControls.module.css";
 import { mobileControlsProxy } from "./mobileControlsProxy";
 
-export const MobileControlsMetaControls = React.memo(function MobileControlsMetaControls() {
-    const puzzle = usePuzzle();
+export const MobileControlsMetaControls = React.memo(function MobileControlsMetaControls({
+    puzzle,
+}: {
+    puzzle: PuzzleManager;
+}) {
     const layersProxy = puzzle.layers;
     const currentLayerId = useProxy(layersProxy).currentKey;
     const sidebar = useProxy(sidebarProxy);
     const mobileControls = useProxy(mobileControlsProxy);
-    const { pageMode } = useSettings();
+    const { pageMode } = useProxy(puzzle.settings);
 
     const { ref: layerDropdownRef, unfocus } = useFocusElementHandler();
     const { ref: openToggleRef } = useFocusElementHandler();
@@ -51,8 +54,8 @@ export const MobileControlsMetaControls = React.memo(function MobileControlsMeta
                     )}
                 </Box>
                 <div className={styles.row}>
-                    {pageMode === "edit" && <PuzzleModeToggle />}
-                    <UndoRedo />
+                    {pageMode === "edit" && <PuzzleModeToggle puzzle={puzzle} />}
+                    <UndoRedo puzzle={puzzle} />
                 </div>
             </div>
 
@@ -132,18 +135,22 @@ const IconButton = ({ label, onClick, ...rest }: Arg2) => {
     );
 };
 
-export const MobileControlsActual = React.memo(function MobileControlsActual() {
+export const MobileControlsActual = React.memo(function MobileControlsActual({
+    puzzle,
+}: {
+    puzzle: PuzzleManager;
+}) {
     return (
         <Center>
-            <LayerControlSettings />
+            <LayerControlSettings puzzle={puzzle} />
         </Center>
     );
 });
 
-const UndoRedo = React.memo(function UndoRedo() {
-    const puzzle = usePuzzle();
+const UndoRedo = React.memo(function UndoRedo({ puzzle }: { puzzle: PuzzleManager }) {
     useSnapshot(puzzle.SVGGroups); // Rerender when any part of the grid changes
-    useSettings().editMode; // Rerender when switching between solving/setting
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { editMode: _unused } = useProxy(puzzle.settings); // Rerender when switching between solving/setting
 
     // TODO: It's gonna be really annoying to rerender in all the right places... I should probably have StorageManager just update a proxy attribute as part of undo/redo or maybe _applyHistoryAction()
 

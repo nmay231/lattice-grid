@@ -4,6 +4,7 @@ import { useCallback, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useProxy } from "valtio/utils";
 import { ControlsManager } from "../ControlsManager";
+import type { PuzzleManager } from "../PuzzleManager";
 import { DebugPointers } from "../components/DebugPointers";
 import { ImportExportModal } from "../components/ImportExportModal";
 import {
@@ -17,8 +18,7 @@ import { SideBar, UtilityBar } from "../components/SideBar";
 import { ResizeModal } from "../components/SideBar/MainGroup/ResizeModal";
 import { sidebarProxy } from "../components/SideBar/sidebarProxy";
 import { importPuzzleData } from "../encoding/importPuzzle";
-import { usePuzzle } from "../state/puzzle";
-import { NeedsUpdating, PageMode } from "../types";
+import { NeedsUpdating } from "../types";
 import { useGlobalFocusListeners } from "../utils/focusManagement";
 import styles from "./PuzzlePage.module.css";
 
@@ -37,8 +37,7 @@ const useGlobalEventListeners = (controls: ControlsManager) => {
         };
     }, [controls]);
 };
-export const PuzzlePage = ({ pageMode }: { pageMode: PageMode }) => {
-    const puzzle = usePuzzle();
+export const PuzzlePage = ({ puzzle }: { puzzle: PuzzleManager }) => {
     const navigate = useNavigate();
     const { search } = useLocation();
 
@@ -47,7 +46,6 @@ export const PuzzlePage = ({ pageMode }: { pageMode: PageMode }) => {
     useResizeObserver();
 
     useEffect(() => {
-        puzzle.settings.pageMode = pageMode;
         const urlSearch = new URLSearchParams(search);
         const puzzleString = urlSearch.get("0");
         if (puzzleString) {
@@ -59,7 +57,7 @@ export const PuzzlePage = ({ pageMode }: { pageMode: PageMode }) => {
             navigate("/edit", { replace: true });
             puzzle.startUp();
         }
-    }, [puzzle, pageMode, navigate, search]);
+    }, [puzzle, navigate, search]);
 
     const mobileControls = useProxy(mobileControlsProxy);
     const sidebar = useProxy(sidebarProxy);
@@ -73,7 +71,7 @@ export const PuzzlePage = ({ pageMode }: { pageMode: PageMode }) => {
         >
             <div className={clsx(styles.sidebar)}>
                 <UtilityBar />
-                <SideBar />
+                <SideBar puzzle={puzzle} />
             </div>
             <div
                 className={clsx(
@@ -86,22 +84,22 @@ export const PuzzlePage = ({ pageMode }: { pageMode: PageMode }) => {
                         marginTop: mobileControls.opened ? "0%" : "-100%",
                     }}
                 >
-                    <MobileControlsMetaControls />
+                    <MobileControlsMetaControls puzzle={puzzle} />
                 </div>
-                <SVGCanvas />
+                <SVGCanvas puzzle={puzzle} />
                 <div
                     style={{
                         marginBottom: mobileControls.opened ? "0%" : "-100%",
                     }}
                 >
-                    <MobileControlsActual />
+                    <MobileControlsActual puzzle={puzzle} />
                 </div>
             </div>
 
-            <DebugPointers />
+            <DebugPointers puzzle={puzzle} />
 
-            <ResizeModal />
-            <ImportExportModal />
+            <ResizeModal puzzle={puzzle} />
+            <ImportExportModal puzzle={puzzle} />
         </div>
     );
 };

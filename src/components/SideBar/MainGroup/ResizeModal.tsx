@@ -2,8 +2,8 @@ import { Button, Modal, Paper } from "@mantine/core";
 import React, { useCallback, useEffect, useMemo } from "react";
 import { IoIosArrowDown, IoIosArrowUp } from "react-icons/io";
 import { useProxy } from "valtio/utils";
+import { PuzzleManager } from "../../../PuzzleManager";
 import { canvasSizeProxy } from "../../../state/canvasSize";
-import { usePuzzle } from "../../../state/puzzle";
 import { openModal, useFocusElementHandler, useModal } from "../../../utils/focusManagement";
 import { mobileControlsProxy } from "../../MobileControls";
 import { sidebarProxy } from "../sidebarProxy";
@@ -26,8 +26,7 @@ export const ResizeGridButton = () => {
     );
 };
 
-export const ResizeModal = React.memo(function ResizeModal() {
-    const puzzle = usePuzzle();
+export const ResizeModal = React.memo(function ResizeModal({ puzzle }: { puzzle: PuzzleManager }) {
     const buttons = useMemo(() => puzzle.grid.getCanvasResizers(), [puzzle]);
     const { opened, close } = useModal("resize-grid");
     const canvasSize = useProxy(canvasSizeProxy);

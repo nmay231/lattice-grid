@@ -1,11 +1,11 @@
 import { SegmentedControl } from "@mantine/core";
-import { usePuzzle, useSettings } from "../../../state/puzzle";
+import { useProxy } from "valtio/utils";
+import { PuzzleManager } from "../../../PuzzleManager";
 import { EditMode } from "../../../types";
 import { useFocusElementHandler } from "../../../utils/focusManagement";
 
-export const PuzzleModeToggle = () => {
-    const puzzle = usePuzzle();
-    const { editMode } = useSettings();
+export const PuzzleModeToggle = ({ puzzle }: { puzzle: PuzzleManager }) => {
+    const { editMode } = useProxy(puzzle.settings);
     const { ref, unfocus } = useFocusElementHandler();
 
     return (
