@@ -5,57 +5,8 @@ import type { StorageManager } from "./StorageManager";
 import type { EncodedLayer } from "./encoding/puzzleEncoder";
 import type { SquareGrid, SquareGridParams } from "./grids/SquareGrid";
 import type { availableLayers } from "./layers";
-import type { UserCodeJSON } from "./userComputation/codeBlocks";
 import type { PutAtEnd } from "./utils/OrderedMap";
 import { Vec } from "./utils/math";
-
-// #region - Compilation
-export type PuzzleError = {
-    message: string;
-    objects?: {
-        layerId: Layer["id"];
-        gridId: Grid["id"];
-        objectIds: ObjectId[];
-    };
-};
-
-export type CompilerErrorDetails = {
-    message: string;
-    isInternal?: boolean;
-    codeBlockIds: UserCodeJSON["id"][];
-};
-
-export type ICodeBlock<T extends UserCodeJSON = UserCodeJSON> = {
-    json: T;
-
-    registerVariableNames?(): void;
-    expandVariables?(): void;
-    variableInfo?(): IVariableInfo | null;
-    validateInputs?(): void;
-
-    // TODO: Better name perhaps? But also figure out iterator/generator pattern and how rank translation will be handled.
-    getValue?(): any;
-
-    // TODO: Should runOnce be required? I think it should, but I'll do that all at once after blocks have been developed some more.
-    runOnce?(): void;
-
-    // validation: expression type+rank validation, variable scope checks, alias expansion ->
-    // optimization: unused code errors, optimization pattern matching, caching static values ->
-    // runtime: step-solver, puzzle solution validation ->
-    // stringify: compression (var name shorten, remove useless aliases), debug output (basically a memory dump)
-};
-
-export type VariableCodeBlock = Required<Pick<ICodeBlock, "variableInfo" | "getValue" | "json">>;
-
-export interface IVariableInfo {
-    // For now, I think I'll take after the MatLab style of every variable being a nested array of a scalar type.
-    scalarType: "boolean" | "integer" | "point" | "object";
-    rank: number;
-    effectiveRank?: number; // TODO: Is this what I need to handle iteration in for-each loops?
-    // TODO: Eventually, I want a convenient function that will return values in the specified rank
-    // getValue: () => any;
-}
-// #endregion
 
 // #region - Events
 export type PointerMoveOrDown = {

@@ -4,7 +4,6 @@ import { useCallback, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useProxy } from "valtio/utils";
 import { ControlsManager } from "../ControlsManager";
-import { BlocklyModal } from "../components/Blockly/BlocklyModal";
 import { DebugPointers } from "../components/DebugPointers";
 import { ImportExportModal } from "../components/ImportExportModal";
 import {
@@ -102,7 +101,6 @@ export const PuzzlePage = ({ pageMode }: { pageMode: PageMode }) => {
             <DebugPointers />
 
             <ResizeModal />
-            <BlocklyModal />
             <ImportExportModal />
         </div>
     );
