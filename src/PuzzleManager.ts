@@ -43,7 +43,7 @@ export class PuzzleManager {
     sessionMetadata: CleanedSessionMetadata = null!;
     private constructor() {}
     static createEditPuzzle(): PuzzleManager {
-        const [sessionMetadata, id] = this.loadSessionMetadata();
+        const [sessionMetadata, currentEditPuzzle] = this.loadSessionMetadata();
 
         const puzzle = new PuzzleManager();
         puzzle.sessionMetadata = sessionMetadata;
@@ -51,7 +51,7 @@ export class PuzzleManager {
         try {
             // loadSessionMetadata ensures there's at least one valid puzzle
             // TODO: I think want latgrid to always load the "newest" puzzle and to load an older one, I just change the metadata to make it the newest one and then edit it. This works for now, though; I'll just do both things.
-            puzzle.loadEditPuzzle(id);
+            puzzle.loadEditPuzzle(currentEditPuzzle);
         } catch {
             // TODO: Report errors that are not already reported
             puzzle.resetPuzzle();
@@ -63,13 +63,14 @@ export class PuzzleManager {
     }
 
     static createSolvePuzzle(puzzleString: string): PuzzleManager {
+        const [sessionMetadata] = this.loadSessionMetadata();
         const puzzle = new PuzzleManager();
+        puzzle.sessionMetadata = sessionMetadata;
+
         importPuzzleData(puzzle, puzzleString);
-        console.log(puzzleString);
         puzzle.settings.pageMode = "play";
         puzzle.settings.editMode = "answer";
-        // TODO: I don't actually need this yet, right? Since I'm not yet worried about saving solve progress.
-        // puzzle.sessionMetadata = null;
+
         return puzzle;
     }
 
