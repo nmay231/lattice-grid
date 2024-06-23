@@ -1,5 +1,5 @@
-import { Button, Center, Group, Stack } from "@mantine/core";
-import React from "react";
+import { Button, Center, Group, Popover, Stack, Text } from "@mantine/core";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useProxy } from "valtio/utils";
 import type { PuzzleManager } from "../../../PuzzleManager";
@@ -10,6 +10,9 @@ import { ResizeGridButton } from "./ResizeModal";
 
 export const MainGroup = React.memo(function MainGroup({ puzzle }: { puzzle: PuzzleManager }) {
     const resetButton = useFocusElementHandler();
+    const resetConfirmButton = useFocusElementHandler();
+    const [resetOpened, setResetOpened] = useState(false);
+
     const puzzlesListButton = useFocusElementHandler();
     const { pageMode } = useProxy(puzzle.settings);
 
@@ -23,8 +26,8 @@ export const MainGroup = React.memo(function MainGroup({ puzzle }: { puzzle: Puz
                                 ref={puzzlesListButton.ref}
                                 tabIndex={0}
                                 onClick={() => {
-                                    openModal("my-puzzle-list");
                                     puzzlesListButton.unfocus();
+                                    openModal("my-puzzle-list");
                                 }}
                             >
                                 My Puzzles
@@ -33,17 +36,38 @@ export const MainGroup = React.memo(function MainGroup({ puzzle }: { puzzle: Puz
                             <ResizeGridButton />
                             <ImportExportButton />
                             <hr />
-                            <Button
-                                ref={resetButton.ref}
-                                tabIndex={0}
-                                color="red"
-                                onClick={() => {
-                                    puzzle.resetPuzzle();
-                                    resetButton.unfocus();
-                                }}
+                            <Popover
+                                trapFocus
+                                opened={resetOpened}
+                                onClose={() => setResetOpened(false)}
                             >
-                                Reset Puzzle
-                            </Button>
+                                <Popover.Target>
+                                    <Button
+                                        ref={resetButton.ref}
+                                        tabIndex={0}
+                                        color="red"
+                                        onClick={() => setResetOpened(true)}
+                                    >
+                                        Reset Puzzle
+                                    </Button>
+                                </Popover.Target>
+                                <Popover.Dropdown>
+                                    <Text>Are you sure?</Text>
+                                    <Button
+                                        ref={resetConfirmButton.ref}
+                                        tabIndex={0}
+                                        color="red"
+                                        onClick={() => {
+                                            resetConfirmButton.unfocus();
+                                            setResetOpened(false);
+                                            puzzle.resetPuzzle();
+                                            puzzle.renderChange({ type: "draw", layerIds: "all" });
+                                        }}
+                                    >
+                                        Yes I&apos;m sure
+                                    </Button>
+                                </Popover.Dropdown>
+                            </Popover>
                         </>
                     )}
                     <Link to="/about">About this site</Link>
