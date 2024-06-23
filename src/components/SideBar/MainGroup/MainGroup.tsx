@@ -6,7 +6,6 @@ import type { PuzzleManager } from "../../../PuzzleManager";
 import { useFocusElementHandler } from "../../../utils/focusManagement";
 import { ImportExportButton } from "../../ImportExportModal/ImportExportModal";
 import { Group as Collapse } from "../Group";
-import { PuzzleModeToggle } from "./PuzzleModeToggle";
 import { ResizeGridButton } from "./ResizeModal";
 
 export const MainGroup = React.memo(function MainGroup({ puzzle }: { puzzle: PuzzleManager }) {
@@ -19,7 +18,6 @@ export const MainGroup = React.memo(function MainGroup({ puzzle }: { puzzle: Puz
                 <Stack>
                     {pageMode === "edit" && (
                         <>
-                            <PuzzleModeToggle puzzle={puzzle} />
                             <ResizeGridButton />
                             <ImportExportButton />
                             <Button
