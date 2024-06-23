@@ -8,41 +8,84 @@ export const AboutPage = () => {
                 <Title order={1}>About Lattice Grid</Title>
                 <Stack mt="sm">
                     <Text>
-                        The vision of this project is to provide an interface for making pencil
-                        puzzles and developing puzzle variants without in-depth coding knowledge.
-                        This is an alpha release to get the word out and to get early feedback (and
-                        to see if I&#39;m not completely crazy).
+                        Latgrid is an open-source project I have worked on for almost three years
+                        now. The main goal is to make it very easy to encode your own puzzle
+                        variants with granular control for how answer check and controls work.
+                        However, those are hard to get right and require a large foundation to be
+                        complete. Nonetheless, I&apos;ve already implemented a few features that I
+                        think will interest you.
                     </Text>
-                    <Text>Here are some of the eventual goals this project hopes to achieve.</Text>
                     <ul>
                         <li>
-                            Short URLs for simple puzzles. Puzzle sites tend to either
-                            <ol>
-                                <li>
-                                    Encode each puzzle variant in a customized format which works
-                                    well for the intended case, but not for variants using
-                                    similar/additional logic, or
-                                </li>
-                                <li>
-                                    Encode it in a general format without worrying about length and
-                                    requiring the user to use a url shortener.
-                                </li>
-                            </ol>
-                            We will solve this by attempting multiple formats optimized to different
-                            use-cases and picking whichever is shortest.
+                            <b>Easy Mobile interactions.</b> You are able to create puzzles with
+                            large grids using zoom+pan or draw+pan (if you draw with one finger, you
+                            can pan with the other).
                         </li>
-                        <li>Reorder drawing layers.</li>
-                        <li>Built-in extensively customizable drawing objects.</li>
                         <li>
-                            Create and share puzzle variants without installing browser extensions.
+                            <b>Short URLs.</b> Currently, I base64-encode a binary format adapted
+                            from <Link to="https://protobuf.dev/">Protobuf</Link>, but future plans
+                            include optimized formats for common puzzle formats (e.g. Sudoku and
+                            many of its variants) as well compression for any substantial URL.
                         </li>
-                        <li>Step-solver and uniqueness prover.</li>
-                        <li>Multiple grids or puzzles in the same URL.</li>
+                        <li>
+                            <b>Invisible mistakes are impossible.</b> Things like drawing black
+                            lines over grid lines or leaving a number outside the grid can cause
+                            issues with answer check because you didn&apos;t realize you left an
+                            invisible/hard-to-see object that is answer-checked. These are
+                            considered bugs and are now impossible.
+                        </li>
+                        <li>
+                            <b> Session Management.</b> While the goal will always be to make it
+                            easy to store a copy of all of your puzzles offline using urls, it is
+                            also very convenient to be able to refresh the page without deleting
+                            your progress and review all of your previous puzzles in the same app.
+                        </li>
+                        <li>
+                            <b> Batched undos.</b> Drawing is undone per interaction instead of per
+                            object (it&apos;s best learned by seeing it yourself). Additionally,
+                            major modifications like resizing the grid do not clear undo history.
+                        </li>
                     </ul>
                     <Text>
-                        The GitHub project will be private for now until it is less of a mess than
-                        it is at the moment. When it goes public, it will be under the MIT license
-                        and open to contributions.
+                        Don&apos;t get me wrong, this project still needs work. But I have a vision
+                        for what I want from this project. Here are some of the eventual goals I
+                        hope to achieve.
+                    </Text>
+                    <ul>
+                        <li>
+                            Finer control over how objects are drawn. Right now, I already allow
+                            changing the draw order, but there are use-cases where duplicate layers
+                            are used to draw objects in front of and behind other ones, e.g. numbers
+                            in front of or behind colors, where you only know about the ones behind
+                            when you clear the color somehow.
+                        </li>
+                        <li>
+                            Built-in extensively customizable drawing objects. Imagine you want to
+                            draw a &quot;snake&quot; object with a triangle for a head and a circle
+                            for a tail. I have a few ideas for how that can be done.
+                        </li>
+                        <li>
+                            Create and share puzzle variants without running arbitrary javascript.
+                            (Of course, you have to trust the javascript that I write, but that is
+                            all open-source anyways.)
+                        </li>
+                        <li>
+                            By encoding your variant into constraints, I hope to provide a
+                            generalized step-solver and uniqueness prover.
+                        </li>
+                        <li>
+                            Multiple grids or puzzles in the same URL. Useful for some cheeky
+                            bifurcation, or for publishing a whole collection of puzzles.
+                        </li>
+                    </ul>
+                    <Text>
+                        The <Link to="https://github.com/nmay231/lattice-grid">GitHub project</Link>{" "}
+                        is available right now! It is under the MIT license and open to bug reports
+                        and feature requests. But if you do have a feature request, be ready to hear
+                        no, and <i>always</i> open an issue before contributing a pull request. I
+                        already have a vision for how certain things will work and just need to find
+                        time and motivation to actually implement it. That said, I am looking
+                        forward to your feedback!
                     </Text>
                     <Link to="/edit">Back to editing</Link>
                 </Stack>
