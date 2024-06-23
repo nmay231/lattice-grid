@@ -84,12 +84,13 @@ export const ImportExportModal = React.memo(function ImportExportModal({
 
     const handleImport = () => {
         if (!textRef.current) return noRefSet();
-        let text = textRef.current.value.trim();
+        const text = textRef.current.value.trim();
         if (/^https?:\/\//.test(text)) {
-            text = text.split("?")[1];
+            window.location.assign(text);
+        } else {
+            importPuzzleData(puzzle, text);
+            close();
         }
-        importPuzzleData(puzzle, text);
-        close();
     };
 
     const handlePaste = () => {
@@ -109,7 +110,7 @@ export const ImportExportModal = React.memo(function ImportExportModal({
                     error,
                     title: "Failed to paste",
                     message:
-                        "You have prevented us from pasting using this button. You can still manually paste into the text field above and click Load.",
+                        "You have prevented us from pasting using this button. You can still manually paste into the text field above and click Import.",
                     timeout: 5000,
                 });
             });
