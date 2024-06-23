@@ -22,6 +22,16 @@ export const AddNewLayerButton = ({ puzzle }: { puzzle: PuzzleManager }) => {
                 availableLayers[value as keyof typeof availableLayers],
                 null,
             );
+
+            // TODO: Temporary (TM) solution to put background colors in the background.
+            // TODO: Should remove after I get layer renderOrder figured out
+            if (value === ("BackgroundColorLayer" satisfies keyof typeof availableLayers)) {
+                const bottom = puzzle.layers.getFirstSelectableKey();
+                if (bottom && bottom !== newId) {
+                    puzzle.shuffleLayerOnto(newId, bottom);
+                }
+            }
+
             puzzle.renderChange({ type: "draw", layerIds: [newId] });
             // TODO: Mantine has a bug where the displayed value doesn't update even though the state does
             setLayerType(DEFAULT_VALUE);
