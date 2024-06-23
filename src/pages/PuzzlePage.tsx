@@ -1,7 +1,6 @@
 import { usePageLeave } from "@mantine/hooks";
 import { clsx } from "clsx";
 import { useCallback, useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
 import { useProxy } from "valtio/utils";
 import { ControlsManager } from "../ControlsManager";
 import type { PuzzleManager } from "../PuzzleManager";
@@ -17,7 +16,6 @@ import { SVGCanvas } from "../components/SVGCanvas/SVGCanvas";
 import { SideBar, UtilityBar } from "../components/SideBar";
 import { ResizeModal } from "../components/SideBar/MainGroup/ResizeModal";
 import { sidebarProxy } from "../components/SideBar/sidebarProxy";
-import { importPuzzleData } from "../encoding/importPuzzle";
 import { NeedsUpdating } from "../types";
 import { useGlobalFocusListeners } from "../utils/focusManagement";
 import styles from "./PuzzlePage.module.css";
@@ -38,26 +36,9 @@ const useGlobalEventListeners = (controls: ControlsManager) => {
     }, [controls]);
 };
 export const PuzzlePage = ({ puzzle }: { puzzle: PuzzleManager }) => {
-    const navigate = useNavigate();
-    const { search } = useLocation();
-
     usePageLeave(puzzle.controls.onPageBlur.bind(puzzle.controls));
     useGlobalEventListeners(puzzle.controls);
     useResizeObserver();
-
-    useEffect(() => {
-        const urlSearch = new URLSearchParams(search);
-        const puzzleString = urlSearch.get("0");
-        if (puzzleString) {
-            window.setTimeout(() => {
-                puzzle.settings.editMode = "answer";
-                importPuzzleData(puzzle, puzzleString);
-            }, 50);
-        } else {
-            navigate("/edit", { replace: true });
-            puzzle.startUp();
-        }
-    }, [puzzle, navigate, search]);
 
     const mobileControls = useProxy(mobileControlsProxy);
     const sidebar = useProxy(sidebarProxy);

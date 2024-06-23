@@ -58,3 +58,13 @@ export const decompressJSON = (URLSafe: string) => {
     const object = JSON.parse(JSONString);
     return object;
 };
+
+/** Mostly helpful for ensuring it's url safe */
+export const base64 = {
+    parse(input: string): Uint8Array {
+        return Base64.toUint8Array(input);
+    },
+    stringify(input: Uint8Array): string {
+        return Base64.fromUint8Array(input, true);
+    },
+};

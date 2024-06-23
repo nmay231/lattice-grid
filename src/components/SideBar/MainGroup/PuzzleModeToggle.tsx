@@ -21,6 +21,8 @@ export const PuzzleModeToggle = ({ puzzle }: { puzzle: PuzzleManager }) => {
                 value={editMode}
                 onChange={(value) => {
                     puzzle.settings.editMode = value satisfies string as EditMode;
+                    // TODO: Uses a hack. I need to extract the save to disk feature into its own method
+                    puzzle.renderChange({ type: "draw", layerIds: [] });
                 }}
                 onClick={() => {
                     unfocus();

@@ -3,6 +3,13 @@ import { isEqual } from "lodash";
 import { proxy } from "valtio";
 import { ControlsManager } from "./ControlsManager";
 import { StorageManager } from "./StorageManager";
+import { extractLayersData, importPuzzleData } from "./encoding/importPuzzle";
+import { EncodedLayer } from "./encoding/puzzleEncoder";
+import {
+    editPuzzleEncoder,
+    sessionsEncoder,
+    type CleanedSessionMetadata,
+} from "./encoding/sessionsEncoder";
 import { SquareGrid } from "./grids/SquareGrid";
 import { availableLayers } from "./layers";
 import { CellOutlineLayer } from "./layers/CellOutline";
@@ -15,7 +22,6 @@ import {
     Grid,
     Layer,
     LayerClass,
-    LocalStorageData,
     NeedsUpdating,
     ObjectDescription,
     ObjectId,
@@ -29,10 +35,44 @@ import { IndexedOrderedMap } from "./utils/OrderedMap";
 import { valtioRef } from "./utils/imports/valtio";
 import { notify } from "./utils/notifications";
 import { LatestTimeout } from "./utils/primitiveWrappers";
-import { stringifyAnything } from "./utils/string";
+import { base64, stringifyAnything } from "./utils/string";
 
 // TODO: Rename to PuzzleContext
 export class PuzzleManager {
+    // TODO
+    sessionMetadata: CleanedSessionMetadata = null!;
+    private constructor() {}
+    static createEditPuzzle(): PuzzleManager {
+        const [sessionMetadata, id] = this.loadSessionMetadata();
+
+        const puzzle = new PuzzleManager();
+        puzzle.sessionMetadata = sessionMetadata;
+
+        try {
+            // loadSessionMetadata ensures there's at least one valid puzzle
+            // TODO: I think want latgrid to always load the "newest" puzzle and to load an older one, I just change the metadata to make it the newest one and then edit it. This works for now, though; I'll just do both things.
+            puzzle.loadEditPuzzle(id);
+        } catch (error) {
+            console.error(error);
+            puzzle.resetPuzzle();
+        }
+        puzzle.resizeCanvas();
+        puzzle.renderChange({ type: "draw", layerIds: "all" });
+
+        return puzzle;
+    }
+
+    static createSolvePuzzle(puzzleString: string): PuzzleManager {
+        const puzzle = new PuzzleManager();
+        importPuzzleData(puzzle, puzzleString);
+        console.log(puzzleString);
+        puzzle.settings.pageMode = "play";
+        puzzle.settings.editMode = "answer";
+        // TODO: I don't actually need this yet, right? Since I'm not yet worried about saving solve progress.
+        // puzzle.sessionMetadata = null;
+        return puzzle;
+    }
+
     layers = proxy(new IndexedOrderedMap<ValtioRef<Layer>>((layer) => !layer.klass.ethereal));
     UILayer = availableLayers["OverlayLayer"].create(this);
     CellOutlineLayer = availableLayers["CellOutlineLayer"].create(this);
@@ -52,12 +92,6 @@ export class PuzzleManager {
         cellSize: 60,
     });
 
-    startUp() {
-        this.loadPuzzle();
-        this.resizeCanvas();
-        this.renderChange({ type: "draw", layerIds: "all" });
-    }
-
     resetLayers() {
         this.layers.clear();
         this.storage = new StorageManager();
@@ -68,40 +102,146 @@ export class PuzzleManager {
         this.addLayer(CellOutlineLayer, null);
     }
 
-    loadPuzzle() {
-        const local = localStorage.getItem("_currentPuzzle");
-        if (!local) {
-            this.freshPuzzle();
-            return;
+    static loadSessionMetadata(): [CleanedSessionMetadata, number] {
+        let needToSave = false;
+        let metadata;
+
+        const metadataString = localStorage.getItem("sessionMetadataV1");
+        if (metadataString) {
+            try {
+                metadata = sessionsEncoder.decode(base64.parse(metadataString));
+            } catch {
+                notify.error("Corrupted data in session metadata localStorage");
+                needToSave = true;
+            }
         }
 
-        try {
-            this.resetLayers();
-            const data = JSON.parse(local);
-            this._loadPuzzle(data as NeedsUpdating); // TODO: zod verification?
-            this.renderChange({ type: "draw", layerIds: "all" });
-        } catch (error: NeedsUpdating) {
-            notify.error({
-                error: error as Error,
-                message: "Failed to load puzzle from local storage",
-            });
-            this.freshPuzzle();
+        const solvingPuzzles: CleanedSessionMetadata["solvingPuzzles"] = [];
+        if (metadata?.solvingPuzzles?.length) {
+            for (const puzzle of metadata.solvingPuzzles) {
+                const { author, firstSolved, searchParams, title } = puzzle;
+                if (author && firstSolved && searchParams && title) {
+                    solvingPuzzles.push({ author, firstSolved, searchParams, title });
+                } else {
+                    // TODO: handle invalid data without dropping it
+                    notify.error(`A solving puzzle had invalid data: ${stringifyAnything(puzzle)}`);
+                    needToSave = true;
+                }
+            }
         }
+
+        let timestamp = metadata?.myPuzzles?.[0]?.id;
+        const now = new Date();
+        const nowUTC = now.toUTCString();
+
+        const myPuzzles: CleanedSessionMetadata["myPuzzles"] = [];
+        if (!timestamp || !metadata) {
+            timestamp = now.getTime();
+            myPuzzles.push({
+                author: metadata?.myAuthorName || "anonymous",
+                title: "Untitled",
+                id: timestamp,
+                created: nowUTC,
+                edited: nowUTC,
+            });
+            needToSave = true;
+        } else {
+            for (const puzzle of metadata.myPuzzles!) {
+                const { author, created, edited, id, svgPreviewString, title } = puzzle;
+                if (author && created && edited && id && title) {
+                    myPuzzles.push({ author, created, edited, id, svgPreviewString, title });
+                } else {
+                    // TODO: handle invalid data without dropping it
+                    // TODO: Also, these are terrible errors messages rn...
+                    notify.error(
+                        `An editing puzzle had invalid data: ${stringifyAnything(puzzle)}`,
+                    );
+                    needToSave = true;
+                }
+            }
+        }
+
+        const { joinedOn, myAuthorName } = metadata ?? {};
+        if (!joinedOn || !myAuthorName) {
+            needToSave = true;
+        }
+        const result: CleanedSessionMetadata = {
+            joinedOn: joinedOn ?? nowUTC,
+            myAuthorName: myAuthorName ?? "anonymous",
+            myPuzzles,
+            solvingPuzzles,
+        };
+
+        if (needToSave) {
+            localStorage.setItem(
+                "sessionMetadataV1",
+                base64.stringify(sessionsEncoder.encode(result)),
+            );
+        }
+
+        return [result, timestamp];
     }
 
-    freshPuzzle() {
+    loadEditPuzzle(timestamp: number) {
+        const puzzleString = localStorage.getItem(`user-edit:${timestamp}`);
+
+        if (puzzleString === null) {
+            // TODO: Report issue
+            throw new Error(`localStorage puzzle id=${timestamp} is null`);
+        }
+        const currentPuzzle = editPuzzleEncoder.decode(base64.parse(puzzleString));
+
+        if (
+            !currentPuzzle?.layers ||
+            !currentPuzzle.grid?.square ||
+            !currentPuzzle.editMode ||
+            currentPuzzle.currentLayerIndex === undefined
+        ) {
+            throw notify.error(
+                `Missing data in puzzle information: ${stringifyAnything(currentPuzzle)}`,
+            );
+        }
+        const gridParams = { ...currentPuzzle.grid.square, type: "square" as const };
+        const data = extractLayersData(currentPuzzle.layers, gridParams);
+
+        if ("internalMessage" in data) {
+            throw notify.error({
+                title: `Error: ${data.title}`,
+                // TODO: Put data.context into a expandable section of the notification
+                message: `${data.internalMessage}; ${stringifyAnything(data.context)}`,
+            });
+        } else if (data.nonfatalErrors.length > 0) {
+            notify.error({
+                title: "Had some errors when loading data from localStorage",
+                message: `errors: ${stringifyAnything(data.nonfatalErrors)}`,
+            });
+        }
+
+        this.resetLayers();
+        this.grid.setParams({ ...gridParams, minX: 0, minY: 0 });
+
+        let toFocus: Layer["id"] = "Expected at least one layer...";
+        for (let index = 0; index < data.layers.length; index++) {
+            const layer = data.layers[index];
+            const layerId = this.addLayer(availableLayers[layer.type], null, layer.settings);
+            this.storage.objects[layerId] = layer.objects;
+
+            if (index === currentPuzzle.currentLayerIndex) {
+                toFocus = layerId;
+            }
+        }
+        this.layers.select(toFocus);
+        this.focusCurrentLayer();
+
+        // TODO: Change editMode to an enum, maybe...
+        this.settings.editMode =
+            currentPuzzle.editMode === ("answer" satisfies EditMode) ? "answer" : "question";
+    }
+
+    resetPuzzle() {
         this.resetLayers();
         this.addLayer(NumberLayer, null);
-        this.grid.setParams({ type: "square", width: 10, height: 10, minX: 0, minY: 0 });
-        this.resizeCanvas();
-        this.renderChange({ type: "draw", layerIds: "all" });
-    }
-
-    _loadPuzzle(data: LocalStorageData) {
-        for (const { id, type: layerClass, rawSettings } of data.layers) {
-            this.addLayer(availableLayers[layerClass], id, rawSettings);
-        }
-        this.grid.setParams(data.grid);
+        this.grid.setParams({ width: 10, height: 10, minX: 0, minY: 0 });
     }
 
     resizeCanvas() {
@@ -202,34 +342,53 @@ export class PuzzleManager {
         }
 
         if (this.settings.pageMode === "edit") {
-            localStorage.setItem("_currentPuzzle", JSON.stringify(this._getParams()));
-        }
-    }
+            const { grid, settings, storage } = this;
 
-    _getParams() {
-        // TODO: change localStorage key and what's actually stored/how it's stored
-        const data: LocalStorageData = {
-            layers: this.layers
-                .values()
-                .filter(({ id }) => id !== "CellOutlineLayer" && id !== "OverlayLayer")
-                .map(({ id, klass: { type }, settings }) => {
-                    const rawSettings: UnknownObject = {};
-                    for (const [key, description] of Object.entries(
-                        availableLayers[type as keyof typeof availableLayers].settingsDescription,
-                    )) {
-                        if (!description.derived) {
-                            rawSettings[key] = settings[key as never];
-                        }
-                    }
-                    return {
-                        id,
-                        type: type as NeedsUpdating,
-                        rawSettings,
-                    };
-                }),
-            grid: this.grid.getParams(),
-        };
-        return data;
+            const layers: EncodedLayer[] = [];
+            const layerToIndex: Record<Layer["id"], number> = {};
+            let index = 0;
+            for (const [id, layer] of this.layers.entries()) {
+                if (
+                    (
+                        [
+                            "CellOutlineLayer",
+                            "DebugSelectPointsLayer",
+                            "OverlayLayer",
+                            "ToggleCharactersLayer",
+                        ] satisfies Array<keyof typeof availableLayers>
+                    ).includes(layer.id)
+                ) {
+                    continue;
+                }
+
+                layerToIndex[id] = index;
+                index++;
+
+                // const answerCheck = layer.id in this.answers;
+                layers.push(
+                    layer.encode({
+                        grid: grid as NeedsUpdating,
+                        settings,
+                        storage,
+                        answerCheck: true,
+                    }),
+                );
+            }
+
+            const { width, height } = this.grid.getParams();
+
+            const bytes = editPuzzleEncoder.encode({
+                grid: { square: { width, height } },
+                layers,
+                editMode: this.settings.editMode,
+                // answerCheck: Object.keys(this.answers).map(id => ({layerIndex: layerToIndex[id]})),
+                currentLayerIndex: layerToIndex[this.layers.currentKey!],
+                historyV1: [],
+            });
+            // TODO: I'm sure a race condition somewhere will run this code when metadata has changed but not the puzzle data or something like that.
+            const puzzleId = this.sessionMetadata.myPuzzles[0].id;
+            localStorage.setItem(`user-edit:${puzzleId}`, base64.stringify(bytes));
+        }
     }
 
     addLayer(

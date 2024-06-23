@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { PuzzleManager } from "../PuzzleManager";
-import { importPuzzleData } from "../encoding/importPuzzle";
 import type { PageMode } from "../types";
 import { PuzzlePage } from "./PuzzlePage";
 
@@ -9,24 +8,25 @@ export const LoadPuzzle = ({ pageMode }: { pageMode: PageMode }) => {
     const [puzzle, setPuzzle] = useState<PuzzleManager>();
     const [prevPageMode, setPrevPageMode] = useState<PageMode>();
     const { search } = useLocation();
+    const navigate = useNavigate();
 
     useEffect(() => {
         if (pageMode === prevPageMode) return;
         setPrevPageMode(pageMode);
 
-        const puzzle = new PuzzleManager();
-        setPuzzle(puzzle);
         if (pageMode === "edit") {
-            puzzle.settings.editMode = "question";
+            setPuzzle(PuzzleManager.createEditPuzzle());
         } else if (pageMode === "play") {
-            window.setTimeout(() => {
-                const urlSearch = new URLSearchParams(search);
-                const puzzleString = urlSearch.get("0");
-
-                // TODO: This temporary change breaks answer check
-                puzzle.settings.editMode = "answer";
-                importPuzzleData(puzzle, puzzleString!);
-            }, 50);
+            const urlSearch = new URLSearchParams(search);
+            const puzzleString = urlSearch.get("0");
+            if (puzzleString) {
+                const puzzle = PuzzleManager.createSolvePuzzle(puzzleString);
+                if (puzzle) {
+                    setPuzzle(puzzle);
+                    return;
+                }
+            }
+            navigate("/edit", { replace: true });
         } else {
             // TODO
             console.error(`pageMode=${pageMode}`);

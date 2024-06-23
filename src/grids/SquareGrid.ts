@@ -10,16 +10,10 @@ import { notify } from "../utils/notifications";
 import { randomStringId, stringifyAnything } from "../utils/string";
 import styles from "./styles.module.css";
 
-export type SquareGridParams = {
-    type: "square";
-    width: number;
-    height: number;
-    minX: number;
-    minY: number;
-};
-
 // TODO: Remove GridPoint type or replace with a thin wrapper around the Vector class. Or just straight up use _SquareGridPoints. I need an array most of the time anyways.
 type GridPoint = { x: number; y: number; type: PointType };
+// TODO: Resolve this dichotomy where live square grids need minX/Y while encoded grids always adjust the origin to (0, 0)
+export type SquareGridParams = Record<"minX" | "minY" | "width" | "height", number>;
 
 // TODO: Eventually, there will be more generic types called GridTransformer and GridPoints that the _Square* variants will `implement`. But I don't know what their abstraction will be. I will wait until I add another grid type to decide on that (most likely hex grid).
 // interface GridPoints<PT extends PointType = PointType> {
@@ -559,15 +553,14 @@ export class SquareGrid implements Grid {
         this.setParams(params);
     }
 
-    getParams(): SquareGridParams {
+    getParams: Grid["getParams"] = () => {
         return {
-            type: "square",
             width: this.width,
             height: this.height,
             minX: this.x0,
             minY: this.y0,
         };
-    }
+    };
 
     setParams(params?: SquareGridParams) {
         this.width = params?.width ?? 1;

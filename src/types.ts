@@ -4,7 +4,6 @@ import type { PuzzleManager } from "./PuzzleManager";
 import type { StorageManager } from "./StorageManager";
 import type { EncodedLayer } from "./encoding/puzzleEncoder";
 import type { SquareGrid, SquareGridParams } from "./grids/SquareGrid";
-import type { availableLayers } from "./layers";
 import type { PutAtEnd } from "./utils/OrderedMap";
 import { Vec } from "./utils/math";
 
@@ -54,13 +53,17 @@ export type LayerUpdateSettings = {
 export type ObjectId = string;
 export type Point = string;
 export type Color = string;
+
 export type PointType = "cells" | "edges" | "corners";
 export type EditMode = "question" | "answer";
 export type StorageMode = EditMode | "ui";
 export type PageMode = "edit" | "play";
+
+export type ModalName = "blockly" | "import-export" | "resize-grid";
+export type FocusGroup = "layerList" | "controlSettings" | "constraintSettings" | "none" | "debug";
 // #endregion
 
-// #region - Misc
+// #region - Type magic
 export type TupleVector = [number, number];
 
 type _TupleOf<T, N extends number, R extends unknown[]> = R["length"] extends N
@@ -79,11 +82,11 @@ export type RecursivePartial<T> = {
           : T[P];
 };
 
+/** Used to enforce that a newly created type is a sub type of an existing type */
+export type CreateSubtypeOf<Super, Sub extends Super> = Sub;
+
 // Rename valtio refs to not confuse them with React refs
 export type ValtioRef<T extends object> = ReturnType<typeof ref<T>>;
-
-export type ModalName = "blockly" | "import-export" | "resize-grid";
-export type FocusGroup = "layerList" | "controlSettings" | "constraintSettings" | "none" | "debug";
 // #endregion
 
 // #region - Grids
@@ -99,7 +102,7 @@ export type Grid = {
         deltas: Delta[];
         previousPoint?: Point | null;
     }) => Point[];
-    getParams(): LocalStorageData["grid"];
+    getParams(): SquareGridParams;
     setParams(params?: SquareGridParams): void;
     getCanvasRequirements: (puzzle: Pick<PuzzleManager, "settings">) => {
         minX: number;
@@ -266,17 +269,6 @@ export type SVGGroup<Type extends keyof SVGElementTagNameMap = keyof SVGElementT
     elements: Map<ObjectId, React.SVGAttributes<SVGElement>>;
 };
 
-// #endregion
-
-// #region - Encoding
-export type LocalStorageData = {
-    grid: SquareGridParams;
-    layers: {
-        id: Layer["id"];
-        type: keyof typeof availableLayers;
-        rawSettings?: UnknownObject;
-    }[];
-};
 // #endregion
 
 // #region - Refactoring

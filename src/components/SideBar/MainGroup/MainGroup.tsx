@@ -27,7 +27,7 @@ export const MainGroup = React.memo(function MainGroup({ puzzle }: { puzzle: Puz
                                 tabIndex={0}
                                 color="red"
                                 onClick={() => {
-                                    puzzle.freshPuzzle();
+                                    puzzle.resetPuzzle();
                                     unfocus();
                                 }}
                             >

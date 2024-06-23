@@ -47,7 +47,7 @@ const ContiguousPoints = {
 } as const satisfies TopLevel<Scalar>;
 
 export type EncodedLayer = DescriptionToObject<typeof layers>[number];
-const layers = {
+export const layers = {
     index: 2,
     type: "enum",
     repeated: true,
