@@ -3,13 +3,14 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { useProxy } from "valtio/utils";
 import type { PuzzleManager } from "../../../PuzzleManager";
-import { useFocusElementHandler } from "../../../utils/focusManagement";
+import { openModal, useFocusElementHandler } from "../../../utils/focusManagement";
 import { ImportExportButton } from "../../ImportExportModal/ImportExportModal";
 import { Group as Collapse } from "../Group";
 import { ResizeGridButton } from "./ResizeModal";
 
 export const MainGroup = React.memo(function MainGroup({ puzzle }: { puzzle: PuzzleManager }) {
-    const { ref, unfocus } = useFocusElementHandler();
+    const resetButton = useFocusElementHandler();
+    const puzzlesListButton = useFocusElementHandler();
     const { pageMode } = useProxy(puzzle.settings);
 
     return (
@@ -18,15 +19,27 @@ export const MainGroup = React.memo(function MainGroup({ puzzle }: { puzzle: Puz
                 <Stack>
                     {pageMode === "edit" && (
                         <>
+                            <Button
+                                ref={puzzlesListButton.ref}
+                                tabIndex={0}
+                                onClick={() => {
+                                    openModal("my-puzzle-list");
+                                    puzzlesListButton.unfocus();
+                                }}
+                            >
+                                My Puzzles
+                            </Button>
+                            <hr />
                             <ResizeGridButton />
                             <ImportExportButton />
+                            <hr />
                             <Button
-                                ref={ref}
+                                ref={resetButton.ref}
                                 tabIndex={0}
                                 color="red"
                                 onClick={() => {
                                     puzzle.resetPuzzle();
-                                    unfocus();
+                                    resetButton.unfocus();
                                 }}
                             >
                                 Reset Puzzle

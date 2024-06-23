@@ -51,7 +51,7 @@ export class PuzzleManager {
         try {
             // loadSessionMetadata ensures there's at least one valid puzzle
             // TODO: I think want latgrid to always load the "newest" puzzle and to load an older one, I just change the metadata to make it the newest one and then edit it. This works for now, though; I'll just do both things.
-            puzzle.loadEditPuzzle(currentEditPuzzle);
+            puzzle._loadEditPuzzle(currentEditPuzzle);
         } catch {
             // TODO: Report errors that are not already reported
             puzzle.resetPuzzle();
@@ -183,7 +183,29 @@ export class PuzzleManager {
         return [result, timestamp];
     }
 
+    // TODO: Flesh out the details of what belongs in the external-facing vs internal private method for loading a puzzle
     loadEditPuzzle(timestamp: number) {
+        let index = -1;
+        for (const puzzle of this.sessionMetadata.myPuzzles) {
+            if (puzzle.id === timestamp) {
+                index = this.sessionMetadata.myPuzzles.indexOf(puzzle);
+                break;
+            }
+        }
+
+        // TODO: How to handle the error case?
+        if (index !== -1) {
+            const [switchingTo] = this.sessionMetadata.myPuzzles.splice(
+                index,
+                1,
+                this.sessionMetadata.myPuzzles[0],
+            );
+            this.sessionMetadata.myPuzzles.splice(0, 1, switchingTo);
+            this._loadEditPuzzle(timestamp);
+        }
+    }
+
+    _loadEditPuzzle(timestamp: number) {
         const puzzleString = localStorage.getItem(`user-edit:${timestamp}`);
 
         if (puzzleString === null) {
