@@ -37,6 +37,12 @@ import { notify } from "./utils/notifications";
 import { LatestTimeout } from "./utils/primitiveWrappers";
 import { base64, stringifyAnything } from "./utils/string";
 
+/** Date.getTime() returns time in miliseconds, but that overflows int32. */
+const timestampFromDate = (date: Date): number => {
+    // eslint-disable-next-line unicorn/prefer-math-trunc -- In this case, we do want to convert to int32 since it will happen during serialization anyways
+    return (date.getTime() / 1000) | 0;
+};
+
 // TODO: Rename to PuzzleContext
 export class PuzzleManager {
     // TODO
@@ -137,7 +143,7 @@ export class PuzzleManager {
 
         const myPuzzles: CleanedSessionMetadata["myPuzzles"] = [];
         if (!timestamp || !metadata) {
-            timestamp = now.getTime();
+            timestamp = timestampFromDate(now);
             myPuzzles.push({
                 author: metadata?.myAuthorName?.trim() || "anonymous",
                 title: "Untitled",
@@ -203,6 +209,8 @@ export class PuzzleManager {
             this.sessionMetadata.myPuzzles.splice(0, 1, switchingTo);
             this._loadEditPuzzle(timestamp);
         }
+
+        this.renderChange({ type: "draw", layerIds: "all" });
     }
 
     _loadEditPuzzle(timestamp: number) {
@@ -266,7 +274,7 @@ export class PuzzleManager {
 
         const now = new Date();
         const nowUTC = now.toUTCString();
-        const timestamp = now.getTime();
+        const timestamp = timestampFromDate(now);
 
         this.sessionMetadata.myPuzzles.splice(0, 0, {
             id: timestamp,
@@ -283,6 +291,29 @@ export class PuzzleManager {
 
         // this._loadEditPuzzle(timestamp);
         this.renderChange({ type: "draw", layerIds: "all" });
+    }
+
+    deletePuzzle(timestamp: number) {
+        if (timestamp === this.sessionMetadata.myPuzzles[0].id) {
+            throw notify.error(
+                `Trying to delete current puzzle=${timestamp} (not supported just yet)`,
+            );
+        }
+
+        let index = -1;
+        for (const puzzle of this.sessionMetadata.myPuzzles) {
+            if (puzzle.id === timestamp) {
+                index = this.sessionMetadata.myPuzzles.indexOf(puzzle);
+                break;
+            }
+        }
+        this.sessionMetadata.myPuzzles.splice(index, 1);
+
+        // TODO: You know, this isn't technically correct since I never remove puzzle itself from localStorage, but I kinda like it since it becomes more like /tmp. But I do need to eventually delete old puzzles otherwise the browser might delete ALL localStorage if it feels like it needs to (especially with mobile devices low on storage). A form of garbage collection deleting old puzzles could be cool. Or maybe I keep most metadata but just flip a "hidden" switch so I continue to know how old it is and even "recover from trash" if wanted.
+        localStorage.setItem(
+            "sessionMetadataV1",
+            base64.stringify(sessionsEncoder.encode(this.sessionMetadata)),
+        );
     }
 
     resetPuzzle() {
