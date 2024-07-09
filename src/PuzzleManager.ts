@@ -466,6 +466,15 @@ export class PuzzleManager {
             // TODO: I'm sure a race condition somewhere will run this code when metadata has changed but not the puzzle data or something like that.
             const puzzleId = this.sessionMetadata.myPuzzles[0].id;
             localStorage.setItem(`user-edit:${puzzleId}`, base64.stringify(bytes));
+
+            // TODO: Not perfect since "cancelAction" (clicking out of grid) actions can force render changes to ui. Maybe this belongs in the history.applyActions() areas?
+            if (change.type === "delete" || (change.type === "draw" && change.layerIds !== "all")) {
+                this.sessionMetadata.myPuzzles[0].edited = new Date().toUTCString();
+                localStorage.setItem(
+                    "sessionMetadataV1",
+                    base64.stringify(sessionsEncoder.encode(this.sessionMetadata)),
+                );
+            }
         }
     }
 
