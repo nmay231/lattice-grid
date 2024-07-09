@@ -14,6 +14,7 @@ export const MainGroup = React.memo(function MainGroup({ puzzle }: { puzzle: Puz
     const [resetOpened, setResetOpened] = useState(false);
 
     const puzzlesListButton = useFocusElementHandler();
+    const newPuzzleButton = useFocusElementHandler();
     const { pageMode } = useProxy(puzzle.settings);
 
     return (
@@ -31,6 +32,16 @@ export const MainGroup = React.memo(function MainGroup({ puzzle }: { puzzle: Puz
                                 }}
                             >
                                 My Puzzles
+                            </Button>
+                            <Button
+                                ref={newPuzzleButton.ref}
+                                tabIndex={0}
+                                onClick={() => {
+                                    newPuzzleButton.unfocus();
+                                    puzzle.freshPuzzle();
+                                }}
+                            >
+                                New Puzzle
                             </Button>
                             <hr />
                             <ResizeGridButton />

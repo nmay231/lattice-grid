@@ -139,7 +139,7 @@ export class PuzzleManager {
         if (!timestamp || !metadata) {
             timestamp = now.getTime();
             myPuzzles.push({
-                author: metadata?.myAuthorName || "anonymous",
+                author: metadata?.myAuthorName?.trim() || "anonymous",
                 title: "Untitled",
                 id: timestamp,
                 created: nowUTC,
@@ -209,6 +209,7 @@ export class PuzzleManager {
         const puzzleString = localStorage.getItem(`user-edit:${timestamp}`);
 
         if (puzzleString === null) {
+            // TODO: This is only acceptable for the very first puzzle, so in all other cases I need to handle this better than I do now.
             throw new Error(`localStorage puzzle id=${timestamp} is null`);
         }
         const currentPuzzle = editPuzzleEncoder.decode(base64.parse(puzzleString));
@@ -258,6 +259,30 @@ export class PuzzleManager {
         // TODO: Change editMode to an enum, maybe...
         this.settings.editMode =
             currentPuzzle.editMode === ("answer" satisfies EditMode) ? "answer" : "question";
+    }
+
+    freshPuzzle() {
+        this.resetPuzzle();
+
+        const now = new Date();
+        const nowUTC = now.toUTCString();
+        const timestamp = now.getTime();
+
+        this.sessionMetadata.myPuzzles.splice(0, 0, {
+            id: timestamp,
+            author: this.sessionMetadata.myAuthorName.trim() || "anonymous",
+            title: "Untitled",
+            created: nowUTC,
+            edited: nowUTC,
+        });
+
+        localStorage.setItem(
+            "sessionMetadataV1",
+            base64.stringify(sessionsEncoder.encode(this.sessionMetadata)),
+        );
+
+        // this._loadEditPuzzle(timestamp);
+        this.renderChange({ type: "draw", layerIds: "all" });
     }
 
     resetPuzzle() {
