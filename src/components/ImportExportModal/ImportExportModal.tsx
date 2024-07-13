@@ -17,6 +17,7 @@ import { importPuzzleData } from "../../encoding/importPuzzle";
 import { Layer } from "../../types";
 import { openModal, useFocusElementHandler, useModal } from "../../utils/focusManagement";
 import { notify } from "../../utils/notifications";
+import { losslessKebab } from "../../utils/string";
 import { mobileControlsProxy } from "../MobileControls";
 import { sidebarProxy } from "../SideBar/sidebarProxy";
 
@@ -73,8 +74,11 @@ export const ImportExportModal = React.memo(function ImportExportModal({
     const puzzleString = useMemo(() => {
         if (opened) {
             const string = exportPuzzleData(puzzle, answerCheck);
+            const currentPuzzle = puzzle.sessionMetadata.myPuzzles[0];
+            const author = encodeURIComponent(losslessKebab(currentPuzzle.author));
+            const title = encodeURIComponent(losslessKebab(currentPuzzle.title));
             // TODO: Make `/edit` urls actually work.
-            return `${window.location.origin}${exportPlay ? "" : "/edit"}?0=${string}`;
+            return `${window.location.origin}${exportPlay ? "" : "/edit"}?ath=${author}&ttl=${title}&0=${string}`;
         }
     }, [opened, puzzle, answerCheck, exportPlay]);
 

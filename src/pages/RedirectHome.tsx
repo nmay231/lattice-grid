@@ -9,7 +9,7 @@ export const RedirectHome = () => {
         const urlSearch = new URLSearchParams(search);
         const puzzleString = urlSearch.get("0");
         if (puzzleString) {
-            navigate(`/play?0=${puzzleString}`, { replace: true });
+            navigate(`/play?${urlSearch}`, { replace: true });
         } else {
             navigate("/edit", { replace: true });
         }

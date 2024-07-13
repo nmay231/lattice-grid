@@ -1,6 +1,7 @@
 import { usePageLeave } from "@mantine/hooks";
 import { clsx } from "clsx";
 import { useCallback, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { useProxy } from "valtio/utils";
 import { ControlsManager } from "../ControlsManager";
 import type { PuzzleManager } from "../PuzzleManager";
@@ -19,6 +20,8 @@ import { sidebarProxy } from "../components/SideBar/sidebarProxy";
 import { ModalEditPuzzleList } from "../components/modals/ModalEditPuzzleList";
 import { NeedsUpdating } from "../types";
 import { useGlobalFocusListeners } from "../utils/focusManagement";
+import { notify } from "../utils/notifications";
+import { losslessKebab } from "../utils/string";
 import styles from "./PuzzlePage.module.css";
 
 const useGlobalEventListeners = (controls: ControlsManager) => {
@@ -36,10 +39,26 @@ const useGlobalEventListeners = (controls: ControlsManager) => {
         };
     }, [controls]);
 };
+
 export const PuzzlePage = ({ puzzle }: { puzzle: PuzzleManager }) => {
     usePageLeave(puzzle.controls.onPageBlur.bind(puzzle.controls));
     useGlobalEventListeners(puzzle.controls);
     useResizeObserver();
+
+    const { search } = useLocation();
+    const { pageMode } = useProxy(puzzle.settings);
+    useEffect(() => {
+        if (pageMode === "play") {
+            const urlSearch = new URLSearchParams(search);
+            const author = losslessKebab(decodeURIComponent(urlSearch.get("ath") || "[Unknown]"));
+            const title = losslessKebab(decodeURIComponent(urlSearch.get("ttl") || "[Unknown]"));
+            notify.info({
+                title: `You are solving: ${title}`,
+                message: `by ${author}`,
+                timeout: 7500,
+            });
+        }
+    }, [search, pageMode]);
 
     const mobileControls = useProxy(mobileControlsProxy);
     const sidebar = useProxy(sidebarProxy);

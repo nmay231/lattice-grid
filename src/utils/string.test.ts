@@ -1,4 +1,6 @@
-import { keypressString, smartSort } from "./string";
+import fc from "fast-check";
+import { keypressString, losslessKebab, smartSort } from "./string";
+import { given } from "./testing/fcArbitraries";
 
 describe("keypressStringShorthand", () => {
     const call = (arg: Partial<Parameters<typeof keypressString>[0]>) => {
@@ -58,5 +60,18 @@ describe("smartSort", () => {
         const arr = ["asdf1", "1", "10", "2", "asdf", "z", "Z"];
         arr.sort(smartSort);
         expect(arr).toEqual(["1", "10", "2", "Z", "asdf", "asdf1", "z"]);
+    });
+});
+
+describe("losslessKebab", () => {
+    it("works on basic examples", () => {
+        expect(losslessKebab("anonymous")).toBe("anonymous");
+        expect(losslessKebab("Noah May--author")).toBe("Noah-May  author");
+    });
+
+    it("is its own inverse", () => {
+        given([fc.string()]).assertProperty((str) => {
+            expect(losslessKebab(losslessKebab(str))).toBe(str);
+        });
     });
 });
