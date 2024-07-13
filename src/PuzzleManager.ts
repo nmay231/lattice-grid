@@ -52,7 +52,7 @@ export class PuzzleManager {
         const [sessionMetadata, currentEditPuzzle] = this.loadSessionMetadata();
 
         const puzzle = new PuzzleManager();
-        puzzle.sessionMetadata = sessionMetadata;
+        puzzle.sessionMetadata = proxy(sessionMetadata);
 
         try {
             // loadSessionMetadata ensures there's at least one valid puzzle
@@ -71,7 +71,7 @@ export class PuzzleManager {
     static createSolvePuzzle(puzzleString: string): PuzzleManager {
         const [sessionMetadata] = this.loadSessionMetadata();
         const puzzle = new PuzzleManager();
-        puzzle.sessionMetadata = sessionMetadata;
+        puzzle.sessionMetadata = proxy(sessionMetadata);
 
         importPuzzleData(puzzle, puzzleString);
         puzzle.settings.pageMode = "play";
@@ -180,13 +180,21 @@ export class PuzzleManager {
         };
 
         if (needToSave) {
-            localStorage.setItem(
-                "sessionMetadataV1",
-                base64.stringify(sessionsEncoder.encode(result)),
-            );
+            this.writeMetadata(result);
         }
 
         return [result, timestamp];
+    }
+
+    static writeMetadata(metadata: CleanedSessionMetadata) {
+        localStorage.setItem(
+            "sessionMetadataV1",
+            base64.stringify(sessionsEncoder.encode(metadata)),
+        );
+    }
+
+    writeMetadata() {
+        PuzzleManager.writeMetadata(this.sessionMetadata);
     }
 
     // TODO: Flesh out the details of what belongs in the external-facing vs internal private method for loading a puzzle
@@ -284,10 +292,7 @@ export class PuzzleManager {
             edited: nowUTC,
         });
 
-        localStorage.setItem(
-            "sessionMetadataV1",
-            base64.stringify(sessionsEncoder.encode(this.sessionMetadata)),
-        );
+        this.writeMetadata();
 
         // this._loadEditPuzzle(timestamp);
         this.renderChange({ type: "draw", layerIds: "all" });
@@ -310,10 +315,7 @@ export class PuzzleManager {
         this.sessionMetadata.myPuzzles.splice(index, 1);
 
         // TODO: You know, this isn't technically correct since I never remove puzzle itself from localStorage, but I kinda like it since it becomes more like /tmp. But I do need to eventually delete old puzzles otherwise the browser might delete ALL localStorage if it feels like it needs to (especially with mobile devices low on storage). A form of garbage collection deleting old puzzles could be cool. Or maybe I keep most metadata but just flip a "hidden" switch so I continue to know how old it is and even "recover from trash" if wanted.
-        localStorage.setItem(
-            "sessionMetadataV1",
-            base64.stringify(sessionsEncoder.encode(this.sessionMetadata)),
-        );
+        this.writeMetadata();
     }
 
     resetPuzzle() {
@@ -470,10 +472,7 @@ export class PuzzleManager {
             // TODO: Not perfect since "cancelAction" (clicking out of grid) actions can force render changes to ui. Maybe this belongs in the history.applyActions() areas?
             if (change.type === "delete" || (change.type === "draw" && change.layerIds !== "all")) {
                 this.sessionMetadata.myPuzzles[0].edited = new Date().toUTCString();
-                localStorage.setItem(
-                    "sessionMetadataV1",
-                    base64.stringify(sessionsEncoder.encode(this.sessionMetadata)),
-                );
+                this.writeMetadata();
             }
         }
     }
