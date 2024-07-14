@@ -209,12 +209,8 @@ export class PuzzleManager {
 
         // TODO: How to handle the error case?
         if (index !== -1) {
-            const [switchingTo] = this.sessionMetadata.myPuzzles.splice(
-                index,
-                1,
-                this.sessionMetadata.myPuzzles[0],
-            );
-            this.sessionMetadata.myPuzzles.splice(0, 1, switchingTo);
+            const [switchingTo] = this.sessionMetadata.myPuzzles.splice(index, 1);
+            this.sessionMetadata.myPuzzles.splice(0, 0, switchingTo);
             this._loadEditPuzzle(timestamp);
         }
 

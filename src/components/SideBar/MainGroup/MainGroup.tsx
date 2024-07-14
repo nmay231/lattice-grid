@@ -25,7 +25,8 @@ const PuzzleNameStuff = ({ puzzle }: { puzzle: PuzzleManager }) => {
             setAuthor(currentPuzzle.author);
             setTitle(currentPuzzle.title);
         }
-    }, [currentPuzzle, title]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentPuzzle.title]);
 
     return (
         <div>
@@ -39,7 +40,6 @@ const PuzzleNameStuff = ({ puzzle }: { puzzle: PuzzleManager }) => {
                     setAuthor(event.target.value);
                 }}
                 onBlur={() => {
-                    authorInput.unfocus();
                     currentPuzzle.author = author;
                     puzzle.sessionMetadata.myAuthorName = author;
                     puzzle.writeMetadata();
@@ -51,11 +51,8 @@ const PuzzleNameStuff = ({ puzzle }: { puzzle: PuzzleManager }) => {
                 label="Puzzle Title"
                 placeholder="My best puzzle yet!"
                 value={title}
-                onChange={(event) => {
-                    setTitle(event.target.value);
-                }}
+                onChange={(event) => setTitle(event.target.value)}
                 onBlur={() => {
-                    titleInput.unfocus();
                     currentPuzzle.title = title;
                     puzzle.writeMetadata();
                 }}
