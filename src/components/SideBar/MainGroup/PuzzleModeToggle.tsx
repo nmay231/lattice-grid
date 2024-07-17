@@ -1,11 +1,11 @@
 import { SegmentedControl } from "@mantine/core";
-import { usePuzzle, useSettings } from "../../../state/puzzle";
+import { useProxy } from "valtio/utils";
+import { PuzzleManager } from "../../../PuzzleManager";
 import { EditMode } from "../../../types";
 import { useFocusElementHandler } from "../../../utils/focusManagement";
 
-export const PuzzleModeToggle = () => {
-    const puzzle = usePuzzle();
-    const { editMode } = useSettings();
+export const PuzzleModeToggle = ({ puzzle }: { puzzle: PuzzleManager }) => {
+    const { editMode } = useProxy(puzzle.settings);
     const { ref, unfocus } = useFocusElementHandler();
 
     return (
@@ -21,6 +21,8 @@ export const PuzzleModeToggle = () => {
                 value={editMode}
                 onChange={(value) => {
                     puzzle.settings.editMode = value satisfies string as EditMode;
+                    // TODO: Uses a hack. I need to extract the save to disk feature into its own method
+                    puzzle.renderChange({ type: "draw", layerIds: [] });
                 }}
                 onClick={() => {
                     unfocus();

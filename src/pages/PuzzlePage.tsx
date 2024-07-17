@@ -1,10 +1,10 @@
 import { usePageLeave } from "@mantine/hooks";
 import { clsx } from "clsx";
 import { useCallback, useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { useProxy } from "valtio/utils";
 import { ControlsManager } from "../ControlsManager";
-import { BlocklyModal } from "../components/Blockly/BlocklyModal";
+import type { PuzzleManager } from "../PuzzleManager";
 import { DebugPointers } from "../components/DebugPointers";
 import { ImportExportModal } from "../components/ImportExportModal";
 import {
@@ -17,10 +17,11 @@ import { SVGCanvas } from "../components/SVGCanvas/SVGCanvas";
 import { SideBar, UtilityBar } from "../components/SideBar";
 import { ResizeModal } from "../components/SideBar/MainGroup/ResizeModal";
 import { sidebarProxy } from "../components/SideBar/sidebarProxy";
-import { importPuzzleData } from "../encoding/importPuzzle";
-import { usePuzzle } from "../state/puzzle";
-import { NeedsUpdating, PageMode } from "../types";
+import { ModalEditPuzzleList } from "../components/modals/ModalEditPuzzleList";
+import { NeedsUpdating } from "../types";
 import { useGlobalFocusListeners } from "../utils/focusManagement";
+import { notify } from "../utils/notifications";
+import { losslessKebab } from "../utils/string";
 import styles from "./PuzzlePage.module.css";
 
 const useGlobalEventListeners = (controls: ControlsManager) => {
@@ -38,29 +39,26 @@ const useGlobalEventListeners = (controls: ControlsManager) => {
         };
     }, [controls]);
 };
-export const PuzzlePage = ({ pageMode }: { pageMode: PageMode }) => {
-    const puzzle = usePuzzle();
-    const navigate = useNavigate();
-    const { search } = useLocation();
 
+export const PuzzlePage = ({ puzzle }: { puzzle: PuzzleManager }) => {
     usePageLeave(puzzle.controls.onPageBlur.bind(puzzle.controls));
     useGlobalEventListeners(puzzle.controls);
     useResizeObserver();
 
+    const { search } = useLocation();
+    const { pageMode } = useProxy(puzzle.settings);
     useEffect(() => {
-        puzzle.settings.pageMode = pageMode;
-        const urlSearch = new URLSearchParams(search);
-        const puzzleString = urlSearch.get("0");
-        if (puzzleString) {
-            window.setTimeout(() => {
-                puzzle.settings.editMode = "answer";
-                importPuzzleData(puzzle, puzzleString);
-            }, 50);
-        } else {
-            navigate("/edit", { replace: true });
-            puzzle.startUp();
+        if (pageMode === "play") {
+            const urlSearch = new URLSearchParams(search);
+            const author = losslessKebab(decodeURIComponent(urlSearch.get("ath") || "[Unknown]"));
+            const title = losslessKebab(decodeURIComponent(urlSearch.get("ttl") || "[Unknown]"));
+            notify.info({
+                title: `You are solving: ${title}`,
+                message: `by ${author}`,
+                timeout: 7500,
+            });
         }
-    }, [puzzle, pageMode, navigate, search]);
+    }, [search, pageMode]);
 
     const mobileControls = useProxy(mobileControlsProxy);
     const sidebar = useProxy(sidebarProxy);
@@ -74,7 +72,7 @@ export const PuzzlePage = ({ pageMode }: { pageMode: PageMode }) => {
         >
             <div className={clsx(styles.sidebar)}>
                 <UtilityBar />
-                <SideBar />
+                <SideBar puzzle={puzzle} />
             </div>
             <div
                 className={clsx(
@@ -87,23 +85,23 @@ export const PuzzlePage = ({ pageMode }: { pageMode: PageMode }) => {
                         marginTop: mobileControls.opened ? "0%" : "-100%",
                     }}
                 >
-                    <MobileControlsMetaControls />
+                    <MobileControlsMetaControls puzzle={puzzle} />
                 </div>
-                <SVGCanvas />
+                <SVGCanvas puzzle={puzzle} />
                 <div
                     style={{
                         marginBottom: mobileControls.opened ? "0%" : "-100%",
                     }}
                 >
-                    <MobileControlsActual />
+                    <MobileControlsActual puzzle={puzzle} />
                 </div>
             </div>
 
-            <DebugPointers />
+            <DebugPointers puzzle={puzzle} />
 
-            <ResizeModal />
-            <BlocklyModal />
-            <ImportExportModal />
+            <ResizeModal puzzle={puzzle} />
+            <ImportExportModal puzzle={puzzle} />
+            <ModalEditPuzzleList puzzle={puzzle} />
         </div>
     );
 };

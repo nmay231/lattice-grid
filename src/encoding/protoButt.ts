@@ -15,8 +15,7 @@ export type ScalarMap = {
     sint32: number;
     // uint64: bigint;
     // sint64: bigint;
-    // TODO: I will only choose string over bytes for user text. All encoding should use bytes to get the full bit space.
-    // string: string;
+    string: string;
     bytes: Uint8Array;
     /** Since enums will be implemented as tagged unions, we provide a scalar that holds no data but still reserves a field index. */
     unit: true;
@@ -184,8 +183,9 @@ export class Encoder<E extends Encoding | Scalar> {
         switch (encoding.type) {
             case "sint32":
             case "uint32":
+            case "string":
             case "bytes": {
-                writer[encoding.type](value);
+                writer[encoding.type](value as never); // TODO: Why typescript?!
                 return;
             }
             case "unit": {
@@ -290,6 +290,7 @@ export class Encoder<E extends Encoding | Scalar> {
         switch (encoding.type) {
             case "sint32":
             case "uint32":
+            case "string":
             case "bytes": {
                 container[key] = reader[encoding.type]();
                 return;

@@ -1,10 +1,11 @@
 import { Button, Center, Code, Group, Stack, Text } from "@mantine/core";
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { PuzzleManager } from "../../../PuzzleManager";
 import { Group as Collapse } from "../Group";
 import { DummyFocusGroup } from "./DummyFocusGroup";
 
-export const DebugGroup = React.memo(function DebugGroup() {
+export const DebugGroup = React.memo(function DebugGroup({ puzzle }: { puzzle: PuzzleManager }) {
     const navigate = useNavigate();
 
     return (
@@ -17,7 +18,7 @@ export const DebugGroup = React.memo(function DebugGroup() {
                     </Text>
 
                     <Text>Focus group testing</Text>
-                    <DummyFocusGroup />
+                    <DummyFocusGroup puzzle={puzzle} />
 
                     <Button
                         m="lg"

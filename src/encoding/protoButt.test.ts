@@ -66,6 +66,7 @@ describe("protoButt", () => {
         { encoding: { type: "sint32" }, input: 420, output: [0b1100_1000, 0b0000_0110] },
         { encoding: { type: "bytes" }, input: bytesExample.slice(1), output: bytesExample },
         { encoding: { type: "bytes" }, input: stringExample.slice(1), output: stringExample },
+        { encoding: { type: "string" }, input: "hello world", output: stringExample },
 
         // Empty values
         { encoding: { type: "unit" }, input: true as const, output: [] },
@@ -237,6 +238,8 @@ describe("protoButt", () => {
 
         const FCBytes = fc.uint8Array({ maxLength: 40 });
         const FCBytesArray = fc.array(FCBytes, { maxLength: 20 });
+        const FCString = fc.string({ maxLength: 40 });
+        const FCStringArray = fc.array(FCString, { maxLength: 20 });
         const FCUInt32 = fc.integer({ min: 0 });
         const FCUInt32Array = fc.array(FCUInt32, { maxLength: 20 });
         const FCSInt32 = fc.integer();
@@ -248,6 +251,9 @@ describe("protoButt", () => {
             switch (encoding.type) {
                 case "bytes": {
                     return encoding.repeated ? FCBytesArray : FCBytes;
+                }
+                case "string": {
+                    return encoding.repeated ? FCStringArray : FCString;
                 }
                 case "sint32": {
                     return encoding.repeated ? FCSInt32Array : FCSInt32;

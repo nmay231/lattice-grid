@@ -180,11 +180,7 @@ export class KillerCagesLayer extends BaseLayer<KillerCagesProps> implements IKi
         return [{ id: "currentKillerCage", type: "polygon", elements }];
     };
 
-    encode: IKillerCagesLayer["encode"] = ({ grid, storage, settings, answerCheck }) => {
-        if (answerCheck) {
-            notify.error({ message: "Killer Cages should not be able to be answer checked" });
-        }
-
+    encode: IKillerCagesLayer["encode"] = ({ grid, storage, settings }) => {
         const stored = storage.getObjects<KillerCagesProps>(this.id);
         const objects = stored.entries("question");
 

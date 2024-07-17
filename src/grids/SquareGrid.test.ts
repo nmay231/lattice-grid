@@ -8,7 +8,7 @@ import { FCRepeat, given } from "../utils/testing/fcArbitraries";
 import { SquareGrid } from "./SquareGrid";
 
 describe("SquareGrid", () => {
-    const common = { minX: 0, minY: 0, type: "square" as const };
+    const common = { minX: 0, minY: 0 };
     const smallGrid = new SquareGrid({ ...common, width: 2, height: 2 });
     const mediumGrid = new SquareGrid({ ...common, width: 10, height: 10 });
 
@@ -196,7 +196,6 @@ describe("SquareGridEncoder", () => {
             height: params.height,
             minX: 0,
             minY: 0,
-            type: "square",
         });
         const settings = { cellSize: 2 };
         const encoder = grid.getEncoder(settings);
@@ -224,7 +223,6 @@ describe("SquareGridEncoder", () => {
                 height: params.height,
                 minX: transform.x,
                 minY: transform.y,
-                type: "square",
             });
             // TODO: cellSize is hardcoded to 2 in the code, for now
             const settings = { cellSize: 2 };
@@ -278,7 +276,7 @@ describe("SquareGridEncoder", () => {
     ])(
         "en/decodeAdjacentGridPointsInsideGrid",
         ({ pt, params, pairs, startingPoints, downRightBitmap }) => {
-            const grid = new SquareGrid({ ...params, minX: 0, minY: 0, type: "square" });
+            const grid = new SquareGrid({ ...params, minX: 0, minY: 0 });
             const settings = { cellSize: 2 };
             const encoder = grid.getEncoder(settings);
 

@@ -6,7 +6,6 @@ import { useProxy } from "valtio/utils";
 import { PuzzleManager } from "../../PuzzleManager";
 import layerStyles from "../../layers/layers.module.css";
 import { CANVAS_CONTAINER_ID, canvasSizeProxy } from "../../state/canvasSize";
-import { usePuzzle } from "../../state/puzzle";
 import { notify } from "../../utils/notifications";
 import styles from "./SVGCanvas.module.css";
 
@@ -55,8 +54,8 @@ const Inner = React.memo(function Inner(arg: Pick<PuzzleManager, "layers" | "SVG
 });
 
 // TODO: Add dependency injection so it can be used in color swatches, resize modal, etc.
-export const SVGCanvas = React.memo(function SVGCanvas() {
-    const { controls, layers, SVGGroups, settings } = usePuzzle();
+export const SVGCanvas = React.memo(function SVGCanvas({ puzzle }: { puzzle: PuzzleManager }) {
+    const { controls, layers, SVGGroups, settings } = puzzle;
     const { width } = useProxy(canvasSizeProxy);
     const { editMode } = useProxy(settings);
 

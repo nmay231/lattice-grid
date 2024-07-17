@@ -1,15 +1,15 @@
 import { Select } from "@mantine/core";
 import { useCallback, useMemo, useState } from "react";
+import { useProxy } from "valtio/utils";
+import { PuzzleManager } from "../../../PuzzleManager";
 import { availableLayers } from "../../../layers";
-import { usePuzzle, useSettings } from "../../../state/puzzle";
 import { useFocusElementHandler } from "../../../utils/focusManagement";
 import { smartSort } from "../../../utils/string";
 
 const DEFAULT_VALUE = "Add New Layer";
 
-export const AddNewLayerButton = () => {
-    const puzzle = usePuzzle();
-    const { debugging } = useSettings();
+export const AddNewLayerButton = ({ puzzle }: { puzzle: PuzzleManager }) => {
+    const { debugging } = useProxy(puzzle.settings);
     const [layerType, setLayerType] = useState(DEFAULT_VALUE);
     const { ref, unfocus } = useFocusElementHandler();
 
@@ -22,6 +22,16 @@ export const AddNewLayerButton = () => {
                 availableLayers[value as keyof typeof availableLayers],
                 null,
             );
+
+            // TODO: Temporary (TM) solution to put background colors in the background.
+            // TODO: Should remove after I get layer renderOrder figured out
+            if (value === ("BackgroundColorLayer" satisfies keyof typeof availableLayers)) {
+                const bottom = puzzle.layers.getFirstSelectableKey();
+                if (bottom && bottom !== newId) {
+                    puzzle.shuffleLayerOnto(newId, bottom);
+                }
+            }
+
             puzzle.renderChange({ type: "draw", layerIds: [newId] });
             // TODO: Mantine has a bug where the displayed value doesn't update even though the state does
             setLayerType(DEFAULT_VALUE);

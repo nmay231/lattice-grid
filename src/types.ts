@@ -4,58 +4,8 @@ import type { PuzzleManager } from "./PuzzleManager";
 import type { StorageManager } from "./StorageManager";
 import type { EncodedLayer } from "./encoding/puzzleEncoder";
 import type { SquareGrid, SquareGridParams } from "./grids/SquareGrid";
-import type { availableLayers } from "./layers";
-import type { UserCodeJSON } from "./userComputation/codeBlocks";
 import type { PutAtEnd } from "./utils/OrderedMap";
 import { Vec } from "./utils/math";
-
-// #region - Compilation
-export type PuzzleError = {
-    message: string;
-    objects?: {
-        layerId: Layer["id"];
-        gridId: Grid["id"];
-        objectIds: ObjectId[];
-    };
-};
-
-export type CompilerErrorDetails = {
-    message: string;
-    isInternal?: boolean;
-    codeBlockIds: UserCodeJSON["id"][];
-};
-
-export type ICodeBlock<T extends UserCodeJSON = UserCodeJSON> = {
-    json: T;
-
-    registerVariableNames?(): void;
-    expandVariables?(): void;
-    variableInfo?(): IVariableInfo | null;
-    validateInputs?(): void;
-
-    // TODO: Better name perhaps? But also figure out iterator/generator pattern and how rank translation will be handled.
-    getValue?(): any;
-
-    // TODO: Should runOnce be required? I think it should, but I'll do that all at once after blocks have been developed some more.
-    runOnce?(): void;
-
-    // validation: expression type+rank validation, variable scope checks, alias expansion ->
-    // optimization: unused code errors, optimization pattern matching, caching static values ->
-    // runtime: step-solver, puzzle solution validation ->
-    // stringify: compression (var name shorten, remove useless aliases), debug output (basically a memory dump)
-};
-
-export type VariableCodeBlock = Required<Pick<ICodeBlock, "variableInfo" | "getValue" | "json">>;
-
-export interface IVariableInfo {
-    // For now, I think I'll take after the MatLab style of every variable being a nested array of a scalar type.
-    scalarType: "boolean" | "integer" | "point" | "object";
-    rank: number;
-    effectiveRank?: number; // TODO: Is this what I need to handle iteration in for-each loops?
-    // TODO: Eventually, I want a convenient function that will return values in the specified rank
-    // getValue: () => any;
-}
-// #endregion
 
 // #region - Events
 export type PointerMoveOrDown = {
@@ -103,13 +53,17 @@ export type LayerUpdateSettings = {
 export type ObjectId = string;
 export type Point = string;
 export type Color = string;
+
 export type PointType = "cells" | "edges" | "corners";
 export type EditMode = "question" | "answer";
 export type StorageMode = EditMode | "ui";
 export type PageMode = "edit" | "play";
+
+export type ModalName = "blockly" | "import-export" | "resize-grid" | "my-puzzle-list";
+export type FocusGroup = "layerList" | "controlSettings" | "constraintSettings" | "none" | "debug";
 // #endregion
 
-// #region - Misc
+// #region - Type magic
 export type TupleVector = [number, number];
 
 type _TupleOf<T, N extends number, R extends unknown[]> = R["length"] extends N
@@ -128,11 +82,11 @@ export type RecursivePartial<T> = {
           : T[P];
 };
 
+/** Used to enforce that a newly created type is a sub type of an existing type */
+export type CreateSubtypeOf<Super, Sub extends Super> = Sub;
+
 // Rename valtio refs to not confuse them with React refs
 export type ValtioRef<T extends object> = ReturnType<typeof ref<T>>;
-
-export type ModalName = "blockly" | "import-export" | "resize-grid";
-export type FocusGroup = "layerList" | "controlSettings" | "constraintSettings" | "none" | "debug";
 // #endregion
 
 // #region - Grids
@@ -148,7 +102,7 @@ export type Grid = {
         deltas: Delta[];
         previousPoint?: Point | null;
     }) => Point[];
-    getParams(): LocalStorageData["grid"];
+    getParams(): SquareGridParams;
     setParams(params?: SquareGridParams): void;
     getCanvasRequirements: (puzzle: Pick<PuzzleManager, "settings">) => {
         minX: number;
@@ -315,17 +269,6 @@ export type SVGGroup<Type extends keyof SVGElementTagNameMap = keyof SVGElementT
     elements: Map<ObjectId, React.SVGAttributes<SVGElement>>;
 };
 
-// #endregion
-
-// #region - Encoding
-export type LocalStorageData = {
-    grid: SquareGridParams;
-    layers: {
-        id: Layer["id"];
-        type: keyof typeof availableLayers;
-        rawSettings?: UnknownObject;
-    }[];
-};
 // #endregion
 
 // #region - Refactoring

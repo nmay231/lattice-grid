@@ -1,17 +1,16 @@
 import { Text } from "@mantine/core";
 import { useProxy } from "valtio/utils";
+import type { PuzzleManager } from "../../../PuzzleManager";
 import { layerIsGOOFy } from "../../../layers/traits/gridOrObjectFirst";
-import { usePuzzle } from "../../../state/puzzle";
 import { FormSchema, Layer, LayerProps } from "../../../types";
 import { useFocusGroup } from "../../../utils/focusManagement";
 import { LayerForm, layerSettingsRerender } from "../../LayerForm";
 import { ToggleGridObjectFirst } from "../../LayerForm/ToggleGridObjectFirst";
 import { Numpad } from "./Numpad";
 
-type InnerProps = { layer: Layer; controls: FormSchema<LayerProps> };
+type InnerProps = { layer: Layer; controls: FormSchema<LayerProps>; puzzle: PuzzleManager };
 
-const _LayerControlSettings = ({ layer, controls }: InnerProps) => {
-    const puzzle = usePuzzle();
+const _LayerControlSettings = ({ layer, controls, puzzle }: InnerProps) => {
     const { ref, unfocus } = useFocusGroup({ puzzle, group: "controlSettings" });
     const rerender = useProxy(layerSettingsRerender);
 
@@ -52,9 +51,8 @@ const _LayerControlSettings = ({ layer, controls }: InnerProps) => {
     );
 };
 
-export const LayerControlSettings = () => {
-    const { layers: layersProxy } = usePuzzle();
-    const layers = useProxy(layersProxy);
+export const LayerControlSettings = ({ puzzle }: { puzzle: PuzzleManager }) => {
+    const layers = useProxy(puzzle.layers);
     const id = layers.currentKey;
     const layer = id && layers.get(id);
 
@@ -74,5 +72,12 @@ export const LayerControlSettings = () => {
         );
     }
 
-    return <_LayerControlSettings key={id} layer={layer} controls={layer.klass.controls} />;
+    return (
+        <_LayerControlSettings
+            key={id}
+            layer={layer}
+            controls={layer.klass.controls}
+            puzzle={puzzle}
+        />
+    );
 };

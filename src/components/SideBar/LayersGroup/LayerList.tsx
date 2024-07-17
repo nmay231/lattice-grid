@@ -1,14 +1,13 @@
 import { mergeRefs, useEventListener } from "@mantine/hooks";
 import { useProxy } from "valtio/utils";
-import { usePuzzle, useSettings } from "../../../state/puzzle";
+import { PuzzleManager } from "../../../PuzzleManager";
 import { useFocusGroup } from "../../../utils/focusManagement";
 import { LayerItem } from "./LayerItem";
 import { SortableList } from "./SortableList";
 
-export const LayerList = () => {
-    const puzzle = usePuzzle();
+export const LayerList = ({ puzzle }: { puzzle: PuzzleManager }) => {
     const layers = useProxy(puzzle.layers);
-    const { pageMode, debugging: debug } = useSettings();
+    const { pageMode, debugging: debug } = useProxy(puzzle.settings);
 
     const { ref: focusGroupRef } = useFocusGroup({ puzzle, group: "layerList" });
 

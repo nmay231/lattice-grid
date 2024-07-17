@@ -11,12 +11,13 @@ import {
 } from "@mantine/core";
 import { useClipboard } from "@mantine/hooks";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { PuzzleManager } from "../../PuzzleManager";
 import { exportPuzzleData } from "../../encoding/exportPuzzle";
 import { importPuzzleData } from "../../encoding/importPuzzle";
-import { usePuzzle } from "../../state/puzzle";
 import { Layer } from "../../types";
 import { openModal, useFocusElementHandler, useModal } from "../../utils/focusManagement";
 import { notify } from "../../utils/notifications";
+import { losslessKebab } from "../../utils/string";
 import { mobileControlsProxy } from "../MobileControls";
 import { sidebarProxy } from "../SideBar/sidebarProxy";
 
@@ -47,8 +48,11 @@ export const ImportExportButton = () => {
     );
 };
 
-export const ImportExportModal = React.memo(function ImportExportModal() {
-    const puzzle = usePuzzle();
+export const ImportExportModal = React.memo(function ImportExportModal({
+    puzzle,
+}: {
+    puzzle: PuzzleManager;
+}) {
     const [importAttempted, setImportAttempted] = useState(false);
     const textRef = useRef<HTMLTextAreaElement>(null);
     const [exportPlay, setExportPlay] = useState(true);
@@ -70,8 +74,11 @@ export const ImportExportModal = React.memo(function ImportExportModal() {
     const puzzleString = useMemo(() => {
         if (opened) {
             const string = exportPuzzleData(puzzle, answerCheck);
+            const currentPuzzle = puzzle.sessionMetadata.myPuzzles[0];
+            const author = encodeURIComponent(losslessKebab(currentPuzzle.author));
+            const title = encodeURIComponent(losslessKebab(currentPuzzle.title));
             // TODO: Make `/edit` urls actually work.
-            return `${window.location.origin}/${exportPlay ? "" : "edit"}?0=${string}`;
+            return `${window.location.origin}${exportPlay ? "" : "/edit"}?ath=${author}&ttl=${title}&0=${string}`;
         }
     }, [opened, puzzle, answerCheck, exportPlay]);
 
@@ -81,12 +88,13 @@ export const ImportExportModal = React.memo(function ImportExportModal() {
 
     const handleImport = () => {
         if (!textRef.current) return noRefSet();
-        let text = textRef.current.value.trim();
+        const text = textRef.current.value.trim();
         if (/^https?:\/\//.test(text)) {
-            text = text.split("?")[1];
+            window.location.assign(text);
+        } else {
+            importPuzzleData(puzzle, text);
+            close();
         }
-        importPuzzleData(puzzle, text);
-        close();
     };
 
     const handlePaste = () => {
@@ -106,7 +114,7 @@ export const ImportExportModal = React.memo(function ImportExportModal() {
                     error,
                     title: "Failed to paste",
                     message:
-                        "You have prevented us from pasting using this button. You can still manually paste into the text field above and click Load.",
+                        "You have prevented us from pasting using this button. You can still manually paste into the text field above and click Import.",
                     timeout: 5000,
                 });
             });

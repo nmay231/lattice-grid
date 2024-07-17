@@ -1,7 +1,7 @@
-import { fromUint8Array } from "js-base64";
 import { PuzzleManager } from "../PuzzleManager";
 import type { availableLayers } from "../layers";
 import type { Layer, NeedsUpdating } from "../types";
+import { base64 } from "../utils/string";
 import { PuzzleEncoder, type EncodedLayer } from "./puzzleEncoder";
 
 export const exportPuzzleData = (
@@ -32,5 +32,5 @@ export const exportPuzzleData = (
     const bytes = PuzzleEncoder.encode({
         uncompressedV1: { squareGridParams: { width, height }, layers },
     });
-    return fromUint8Array(bytes, true);
+    return base64.stringify(bytes);
 };

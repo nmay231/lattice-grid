@@ -1,8 +1,6 @@
 import { randomId } from "@mantine/hooks";
 import { Base64 } from "js-base64";
 import { inspect, type InspectOptions } from "node-inspect-extracted";
-import { deflate, inflate } from "pako";
-import { UnknownObject } from "../types";
 
 export const stringifyAnything = (obj: any, params: Partial<InspectOptions> = {}): string => {
     try {
@@ -43,18 +41,20 @@ export const randomStringId = (blacklist: string[]) => {
     return s;
 };
 
-// TODO: A temporary way to encode puzzle data as a string.
-// Consider setting windowBits on deflate and inflate.
-export const compressJSON = (object: UnknownObject) => {
-    const JSONString = JSON.stringify(object);
-    const compressedArray = deflate(JSONString);
-    const URLSafe = Base64.fromUint8Array(compressedArray);
-    return URLSafe;
+/** Mostly helpful for ensuring it's url safe */
+export const base64 = {
+    parse(input: string): Uint8Array {
+        return Base64.toUint8Array(input);
+    },
+    stringify(input: Uint8Array): string {
+        return Base64.fromUint8Array(input, true);
+    },
 };
 
-export const decompressJSON = (URLSafe: string) => {
-    const compressedArray = Base64.toUint8Array(URLSafe);
-    const JSONString = inflate(compressedArray, { to: "string" });
-    const object = JSON.parse(JSONString);
-    return object;
+/** Replace spaces with hyphens and vice versa */
+export const losslessKebab = (input: string): string => {
+    return input
+        .split(" ")
+        .map((part) => part.replaceAll("-", " "))
+        .join("-");
 };
