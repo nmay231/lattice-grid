@@ -446,7 +446,7 @@ export class PuzzleManager {
                         grid: grid as NeedsUpdating,
                         settings,
                         storage,
-                        answerCheck: true,
+                        exportMode: "editingSaveAll",
                     }),
                 );
             }

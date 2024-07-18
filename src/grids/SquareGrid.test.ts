@@ -294,6 +294,28 @@ describe("SquareGridEncoder", () => {
             expect(pairsResult).toEqual(pairs);
         },
     );
+
+    it.each([
+        { arr: [true], bitmap: 1 },
+        { arr: [false, true, false, true], bitmap: 5 },
+    ])("en/decodeBooleanArray basic examples", ({ arr, bitmap }) => {
+        const grid = new SquareGrid({ width: 10, height: 10, minX: 0, minY: 0 });
+        const settings = { cellSize: 2 };
+        const encoder = grid.getEncoder(settings);
+
+        expect(encoder.encodeBooleanArray(arr)).toBe(bitmap);
+        expect(encoder.decodeBooleanArray(bitmap, arr.length)).toEqual(arr);
+    });
+
+    it("en/decodeBooleanArray fuzzing", () => {
+        const grid = new SquareGrid({ width: 10, height: 10, minX: 0, minY: 0 });
+        const settings = { cellSize: 2 };
+        const encoder = grid.getEncoder(settings);
+
+        given([fc.integer({ min: 0, max: 2 ** 32 - 1 })]).assertProperty((bitmap) => {
+            expect(encoder.encodeBooleanArray(encoder.decodeBooleanArray(bitmap, 32))).toBe(bitmap);
+        });
+    });
 });
 
 describe("SquareGridTransformer", () => {

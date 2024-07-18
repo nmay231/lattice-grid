@@ -25,7 +25,14 @@ export const exportPuzzleData = (
             continue;
         }
         const answerCheck = layersInAnswerCheck.includes(layer.id);
-        layers.push(layer.encode({ grid: grid as NeedsUpdating, settings, storage, answerCheck }));
+        layers.push(
+            layer.encode({
+                grid: grid as NeedsUpdating,
+                settings,
+                storage,
+                exportMode: answerCheck ? "solvingExactAnswerCheck" : "solvingNoAnswerCheck",
+            }),
+        );
     }
 
     const { width, height } = puzzle.grid.getParams();

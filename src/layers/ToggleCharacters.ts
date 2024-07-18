@@ -341,9 +341,49 @@ export class ToggleCharactersLayer
 
     getOverlaySVG: IToggleCharactersLayer["getOverlaySVG"];
 
-    encode: IToggleCharactersLayer["encode"] = () => {
-        // TODO: Shouldn't even be an option to encode this layer yet
-        return { ToggleCharactersLayer: { whichSubClass: 42 } };
+    encode: IToggleCharactersLayer["encode"] = ({ storage, exportMode, grid, settings }) => {
+        if (this.klass.type === ToggleCharactersLayer.type) {
+            // TODO: Shouldn't even be an option to encode this layer yet
+            return { ToggleCharactersLayer: { whichSubClass: 42 } };
+        }
+
+        const whichSubClass = this.klass.type === "CenterMarksLayer" ? 1 : 2;
+        if (this.settings.characters !== "0123456789") {
+            throw notify.error(
+                "ToggleCharacters layer subclasses should only encode to numbers for now",
+            );
+        }
+
+        if (exportMode === "solvingExactAnswerCheck") {
+            throw notify.error("ToggleCharacters should not be answer checked yet");
+        } else if (exportMode === "solvingNoAnswerCheck") {
+            return { ToggleCharactersLayer: { whichSubClass } };
+        } else {
+            const stored = storage.getObjects<ToggleCharactersProps>(this.id);
+            const encoder = grid.getEncoder(settings);
+            const pt = grid.getPointTransformer(settings);
+            const [pointToVec, gp] = pt.fromPoints("cells", stored.keys("answer"));
+            const vecToNumber = encoder.encodeGridPointsInsideGrid(gp);
+
+            const charArray = [..."0123456789"];
+            const stateToNumber = {} as Record<string, number>;
+            for (const [, { state }] of stored.entries("answer")) {
+                if (state in stateToNumber) continue;
+
+                const arr = charArray.map((char) => state.includes(char));
+                stateToNumber[state] = encoder.encodeBooleanArray(arr);
+            }
+
+            return {
+                ToggleCharactersLayer: {
+                    whichSubClass,
+                    dataV1: stored.entries("answer").map(([point, { state }]) => ({
+                        point: vecToNumber.get(pointToVec.get(point))!,
+                        state: stateToNumber[state],
+                    })),
+                },
+            };
+        }
     };
 
     describeObject: IToggleCharactersLayer["describeObject"] = ({ id }) => {

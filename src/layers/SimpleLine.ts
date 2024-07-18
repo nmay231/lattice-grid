@@ -185,12 +185,12 @@ export class SimpleLineLayer extends BaseLayer<SimpleLineProps> implements ISimp
         return [{ id: "lines", type: "line", elements }];
     };
 
-    encode: ISimpleLineLayer["encode"] = ({ grid, storage, settings, answerCheck }) => {
+    encode: ISimpleLineLayer["encode"] = ({ grid, storage, settings, exportMode }) => {
         const stored = storage.getObjects<SimpleLineProps>(this.id);
         const objects = [...stored.entries("question")];
 
         let answersAtEnd = 0;
-        if (answerCheck) {
+        if (exportMode === "editingSaveAll" || exportMode == "solvingExactAnswerCheck") {
             const answers = stored.entries("answer");
             answersAtEnd = answers.length;
             objects.push(...answers);

@@ -129,22 +129,20 @@ export const layers = {
             index: 6,
             type: "message",
             fields: {
-                // TODO: For now, ToggleCharacters will be interacted with using a subclass
                 whichSubClass: { index: 1, type: "uint32" },
-                // TODO: data does not need to be stored yet since objects are forced to be answer mode anyways
-                // TODO: Also, no `answersAtEnd` because they can't be answer checked just yet.
-                // dataV1: {
-                //     index: 10,
-                //     type: "tuple",
-                //     repeated: true,
-                //     fields: {
-                //         point: { index: 0, ...PointScalar },
-                //         // TODO: It's a bitmap of allowed characters.
-                //         state: { index: 1, type: "uint32" },
-                //     },
-                // },
+                // TODO: No `answersAtEnd` because they can't be answer checked just yet.
+                dataV1: {
+                    index: 10,
+                    type: "tuple",
+                    repeated: true,
+                    fields: {
+                        point: { index: 0, ...PointScalar },
+                        /** A bitmap of which characters are toggled on */
+                        state: { index: 1, type: "uint32" },
+                    },
+                },
 
-                // // TODO: I don't know if I want to allow toggle characters to have custom characters yet. Maybe I should stick to numbers specifically for now.
+                // TODO: I don't know if I want to allow toggle characters to have custom characters yet. Maybe I should stick to numbers specifically for now.
                 // characters: { index: 1, type: "string" },
                 // // TODO: Custom enum
                 // displayStyle: { index: 2, type: "uint32" },

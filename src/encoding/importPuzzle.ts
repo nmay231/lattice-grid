@@ -405,14 +405,11 @@ export const extractLayersData = (
             });
         } else if (layerEnum.ToggleCharactersLayer) {
             const layer = layerEnum.ToggleCharactersLayer;
-            if (
-                // !layer.dataV1 ||
-                layer.whichSubClass === undefined
-            ) {
-                const missing = concatIfUndefinedThenMessage(
-                    // [layer.dataV1, "layer data"],
-                    [layer.whichSubClass, "center or top/bottom setting"],
-                );
+            if (layer.whichSubClass === undefined) {
+                const missing = concatIfUndefinedThenMessage([
+                    layer.whichSubClass,
+                    "center or top/bottom setting",
+                ]);
                 const message = `Message did not include: ${missing}, which is required for a valid puzzle.`;
                 nonfatalErrors.push(
                     parseError("Missing data", message, { layers, squareGridParams }),
@@ -427,37 +424,28 @@ export const extractLayersData = (
                 continue;
             }
 
-            // TODO: ToggleCharacters cannot have any question objects anyways, for now
-            // const pointMap = encoder.decodeGridPointsInsideGrid(
-            //     "cells",
-            //     layer.dataV1.map(({ point }) => point),
-            // );
+            const objects = new LayerStorage<ToggleCharactersV1>();
+            if (layer.dataV1) {
+                const pointMap = encoder.decodeGridPointsInsideGrid(
+                    "cells",
+                    layer.dataV1.map(({ point }) => point),
+                );
+
+                const charArr = [..."0123456789"];
+                objects.setEntries(
+                    "answer",
+                    layer.dataV1.map(({ state: bitmap, point }) => {
+                        const booleanArray = encoder.decodeBooleanArray(bitmap, charArr.length);
+                        const state = booleanArray
+                            .map((keep, i) => keep && charArr[i])
+                            .filter(Boolean)
+                            .join("");
+                        return [pointMap[point].string(), { state }];
+                    }),
+                );
+            }
 
             // const objects = new LayerStorage<ToggleCharactersV1>();
-            // objects.setEntries(
-            //     "question",
-            //     layer.dataV1.map(({ state: bitArray, point }) => {
-            //         // TODO: Make this a method of grid encoder? Probably. I just need to stop procrastinating on this.
-            //         // zero is less common, but still must be first in this string
-            //         const state = [
-            //             !!(bitArray & 0b10_0000_0000) && "0",
-            //             !!(bitArray & 0b00_0000_0001) && "1",
-            //             !!(bitArray & 0b00_0000_0010) && "2",
-            //             !!(bitArray & 0b00_0000_0100) && "3",
-            //             !!(bitArray & 0b00_0000_1000) && "4",
-            //             !!(bitArray & 0b00_0001_0000) && "5",
-            //             !!(bitArray & 0b00_0010_0000) && "6",
-            //             !!(bitArray & 0b00_0100_0000) && "7",
-            //             !!(bitArray & 0b00_1000_0000) && "8",
-            //             !!(bitArray & 0b01_0000_0000) && "9",
-            //         ]
-            //             .filter(Boolean)
-            //             .join("");
-            //         return [pointMap[point].string(), { state }];
-            //     }),
-            // );
-
-            const objects = new LayerStorage<ToggleCharactersV1>();
             outputLayers.push({
                 type: layer.whichSubClass === 1 ? "CenterMarksLayer" : "TopBottomMarksLayer",
                 objects,

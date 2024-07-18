@@ -182,7 +182,7 @@ export type Layer<LP extends LayerProps = LayerProps> = {
     encode: (
         context: Pick<PuzzleManager, "settings" | "storage"> & {
             grid: SquareGrid;
-            answerCheck: boolean;
+            exportMode: "solvingNoAnswerCheck" | "solvingExactAnswerCheck" | "editingSaveAll";
         },
     ) => EncodedLayer;
     // TODO: I am thinking I could somehow develop a schema so I can describe the data in an object declaratively, but I'm not gonna worry about that for now.

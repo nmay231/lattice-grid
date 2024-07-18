@@ -541,6 +541,29 @@ class _SquareGridEncoder {
             throw new Error(`Unknown color enum value: ${stringifyAnything(color)}`);
         }
     }
+
+    encodeBooleanArray(arr: boolean[]): number {
+        if (arr.length === 0 || arr.length > 32) {
+            throw new Error(`Cannot handle encoding boolean array of length ${arr.length}`);
+        }
+        return Number.parseInt(arr.map((bool) => (bool ? "1" : "0")).join(""), 2);
+    }
+
+    decodeBooleanArray(bitmap: number, expectedLength: number): boolean[] {
+        if (expectedLength === 0 || expectedLength > 32) {
+            throw new Error(
+                `Can only decode bitmaps into array with length >0, <=32 ${expectedLength}`,
+            );
+        }
+        const bitmapString = bitmap.toString(2);
+        if (bitmapString.length > expectedLength) {
+            throw new Error(
+                `Bitmap (${bitmap}==0b${bitmapString}) decoded into a longer than expected length (${expectedLength})`,
+            );
+        }
+
+        return [...bitmapString.padStart(expectedLength, "0")].map((digit) => digit === "1");
+    }
 }
 
 export class SquareGrid implements Grid {
