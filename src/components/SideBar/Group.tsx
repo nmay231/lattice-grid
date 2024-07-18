@@ -18,7 +18,7 @@ export const Group: React.FC<GroupProps> = ({ children, name, expanded = false }
                 <IoIosArrowForward className={expand ? styles.headerIconOpen : styles.headerIcon} />
                 <Text>{name}</Text>
             </div>
-            <Collapse p={3} in={expand}>
+            <Collapse p={3} in={expand} className={styles.collapse}>
                 {children}
             </Collapse>
         </Paper>
