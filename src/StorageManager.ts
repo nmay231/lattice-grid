@@ -9,7 +9,7 @@ import {
     type UnknownObject,
 } from "./types";
 import { PUT_AT_END } from "./utils/OrderedMap";
-import { reversed } from "./utils/data";
+import { filterUnique, reversed } from "./utils/data";
 import { notify } from "./utils/notifications";
 import { stringifyAnything } from "./utils/string";
 
@@ -193,15 +193,17 @@ export class StorageManager {
         this.history.splice(this.index, this.history.length - this.index);
     }
 
+    /** Returns layerIds of which layers to rerender; mostly needed for storage filters */
     addToHistory(arg: {
         puzzle: Parameters<StorageFilter>[0];
         layerId: Layer["id"];
         actions?: PartialHistoryAction[];
-    }) {
+    }): { layerIds: Layer["id"][] } {
         const { puzzle, layerId: defaultLayerId, actions: partialActions } = arg;
+        const changedLayerIds = [defaultLayerId];
 
         if (!partialActions?.length) {
-            return;
+            return { layerIds: changedLayerIds };
         }
         const currentEditMode = puzzle.settings.editMode;
 
@@ -220,6 +222,7 @@ export class StorageManager {
             };
 
             if (storageMode === "ui") {
+                // TODO: Layers that are not the current layer and only have ui actions will not be rerendered. Is that even a likely possibility? If so, I need to add layerid to changedLayerIds here, but exclude phantom layers like Selection.
                 if (partialAction.batchId !== "ignore") {
                     notify.error({ message: `Forgot to explicitly ignore UI input ${layerId}}` });
                 }
@@ -236,6 +239,8 @@ export class StorageManager {
             );
             const actions = extraActions ?? [];
             if (keep) actions.unshift(constructedAction);
+
+            changedLayerIds.push(...actions.map(({ layerId }) => layerId));
 
             if (partialAction.batchId === "ignore") {
                 // TODO: Do I really want to not track any extra actions provided by filters in history? I can't think of a valid instance where a filter needs to keep actions when the original one is ignored, I guess...
@@ -277,6 +282,8 @@ export class StorageManager {
                 }
             }
         }
+
+        return { layerIds: changedLayerIds.filter(filterUnique) };
     }
 
     _applyHistoryAction(arg: { stored: LayerStorage; action: HistoryAction }) {

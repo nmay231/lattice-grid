@@ -1,3 +1,4 @@
+import type { availableLayers } from ".";
 import {
     FormSchema,
     HistoryAction,
@@ -7,6 +8,7 @@ import {
     SVGGroup,
     StorageFilter,
 } from "../types";
+import { PUT_AT_END } from "../utils/OrderedMap";
 import { notify } from "../utils/notifications";
 import { BaseLayer } from "./BaseLayer";
 import { KeyDownEventHandler, SelectedProps, handleEventsSelection } from "./controls/selection";
@@ -50,6 +52,8 @@ const obj = <LP extends ToggleCharactersProps>({
     object,
     storageMode: "answer",
 });
+
+const NUMBER_LAYER_DEFAULT_ID = "NumberLayer" satisfies keyof typeof availableLayers;
 
 export class ToggleCharactersLayer
     extends BaseLayer<ToggleCharactersProps>
@@ -121,6 +125,8 @@ export class ToggleCharactersLayer
 
     updateSettings: IToggleCharactersLayer["updateSettings"] = ({ oldSettings }) => {
         const removeFilters = [] as StorageFilter[];
+        removeFilters.push(this.deleteWhenNumberPlaced);
+
         if (oldSettings?.characters !== this.settings.characters) {
             removeFilters.push(this.filterInvalidCharacters);
             // Remove duplicates
@@ -130,6 +136,7 @@ export class ToggleCharactersLayer
                 .join("");
             this.settings.caseSwap = this._generateCaseSwap(this.settings.characters);
         }
+
         if (!oldSettings || oldSettings.gridOrObjectFirst !== this.settings.gridOrObjectFirst) {
             const { gatherPoints, handleEvent, getOverlaySVG, eventPlaceSinglePointObjects } =
                 handleEventsSelection<ToggleCharactersProps>({});
@@ -140,9 +147,44 @@ export class ToggleCharactersLayer
             this.eventPlaceSinglePointObjects = eventPlaceSinglePointObjects;
         }
 
+        return {
+            filters: [
+                {
+                    filter: this.deleteWhenNumberPlaced,
+                    // TODO: Only will work with the first number layer, but that's better than nothing for now.
+                    layerIds: [this.id, NUMBER_LAYER_DEFAULT_ID],
+                },
+            ],
+            removeFilters,
+        };
         // TODO: This is only needed when characters change and that doesn't happen right now because ToggleCharacters is temporarily hidden in favor of CenterMarks and TopBottomMarks, and they don't allow changing settings.characters
-        return {};
         // return { filters: [{ filter: this.filterInvalidCharacters }], removeFilters };
+    };
+
+    deleteWhenNumberPlaced: StorageFilter = ({ storage }, action) => {
+        // Only relevant if there is a number layer
+        const theirs = storage.getObjects(NUMBER_LAYER_DEFAULT_ID);
+        if (!theirs) return { keep: true };
+
+        if (action.layerId === this.id) {
+            const placingOnNumber =
+                theirs.getObject("question", action.objectId) ||
+                theirs.getObject("answer", action.objectId);
+            return { keep: !placingOnNumber };
+        }
+
+        const ours = storage.getObjects(this.id);
+        const extraActions: ReturnType<StorageFilter>["extraActions"] = [];
+        if (ours.getObject("answer", action.objectId)) {
+            extraActions.push({
+                layerId: this.id,
+                objectId: action.objectId,
+                prevObjectId: PUT_AT_END,
+                object: null,
+                storageMode: "answer",
+            });
+        }
+        return { keep: true, extraActions };
     };
 
     // TODO: This filter only needs to run after updateSettings is called. Do I need another field to provide this behavior?
