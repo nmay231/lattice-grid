@@ -1,6 +1,6 @@
 import { ActionIcon, Burger, Tooltip } from "@mantine/core";
 import React from "react";
-import { IoMdSettings } from "react-icons/io";
+import { IoLogoGithub, IoMdSettings } from "react-icons/io";
 import { useProxy } from "valtio/utils";
 import { useFocusElementHandler } from "../../../utils/focusManagement";
 import { sidebarProxy } from "../sidebarProxy";
@@ -24,6 +24,21 @@ export const UtilityBar = React.memo(function UtilityBar() {
                     />
                 </Tooltip>
             )}
+            <Tooltip label="Source Code" events={{ hover: true, focus: true, touch: true }}>
+                <ActionIcon
+                    size="lg"
+                    className={styles.icon}
+                    variant="filled"
+                    color="black"
+                    component="a"
+                    href="https://github.com/nmay231/lattice-grid"
+                    referrerPolicy="no-referrer"
+                    target="_blank"
+                    tabIndex={-1}
+                >
+                    <IoLogoGithub />
+                </ActionIcon>
+            </Tooltip>
             <Tooltip label="Settings (Todo)" events={{ hover: true, focus: true, touch: true }}>
                 <ActionIcon
                     size="lg"
