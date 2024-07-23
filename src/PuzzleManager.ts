@@ -73,9 +73,10 @@ export class PuzzleManager {
         const puzzle = new PuzzleManager();
         puzzle.sessionMetadata = proxy(sessionMetadata);
 
-        importPuzzleData(puzzle, puzzleString);
+        // Must be before puzzle import (with the current implementation) otherwise play states will be saved as edit puzzles
         puzzle.settings.pageMode = "play";
         puzzle.settings.editMode = "answer";
+        importPuzzleData(puzzle, puzzleString);
 
         return puzzle;
     }
