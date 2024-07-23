@@ -76,6 +76,7 @@ test.describe(() => {
 
             await page.goto("/edit");
             await page.getByRole("button", { name: "Reset Puzzle" }).click();
+            await page.getByRole("button", { name: "Yes I'm sure" }).click();
 
             const removeLayer = page.getByTestId("remove-layer");
             await removeLayer.click(); // Remove the number layer that's there by default
