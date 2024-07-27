@@ -1,14 +1,7 @@
-import { Reader, Writer } from "protobufjs";
 import { filterUnique } from "../utils/data";
 import { notify } from "../utils/notifications";
 import { smartSort, stringifyAnything } from "../utils/string";
-
-if (window.process) {
-    // TODO: zero length bytes decode as Buffers on node (during test runs). This hack prevents that.
-    // eslint-disable-next-line @typescript-eslint/no-var-requires, unicorn/prefer-module
-    const util = require("protobufjs/src/util");
-    util.Buffer = null;
-}
+import { Reader, Writer } from "../vendored/protobufjs";
 
 export type ScalarMap = {
     uint32: number;
