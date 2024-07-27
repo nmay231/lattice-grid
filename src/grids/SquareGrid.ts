@@ -1,4 +1,4 @@
-import { chunk } from "lodash";
+import chunk from "lodash/chunk";
 import { PuzzleManager } from "../PuzzleManager";
 import { hopStraight } from "../algorithms/hopStraight";
 import type { EncodedColor, EncodedPointType } from "../encoding/puzzleEncoder";

@@ -1,5 +1,5 @@
 import { arrayMove } from "@dnd-kit/sortable";
-import { isEqual } from "lodash";
+import isEqual from "lodash/isEqual";
 import { proxy } from "valtio";
 import { ControlsManager } from "./ControlsManager";
 import { StorageManager } from "./StorageManager";

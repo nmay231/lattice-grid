@@ -1,4 +1,4 @@
-import { cloneDeep } from "lodash";
+import cloneDeep from "lodash/cloneDeep";
 import { PuzzleManager } from "../PuzzleManager";
 import { Layer, LayerClass, LayerProps } from "../types";
 import { notify } from "../utils/notifications";

@@ -1,5 +1,5 @@
 import { Box, Button, Checkbox, NumberInput, Select, SimpleGrid, TextInput } from "@mantine/core";
-import { isEqual } from "lodash";
+import isEqual from "lodash/isEqual";
 import { useCallback, useState } from "react";
 import { FormSchema, FormSchemaElement, LayerProps } from "../../types";
 import { notify } from "../../utils/notifications";

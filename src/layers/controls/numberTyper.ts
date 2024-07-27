@@ -1,4 +1,4 @@
-import { clamp as nClamp } from "lodash";
+import nClamp from "lodash/clamp";
 import { Keypress } from "../../types";
 
 /** Clamp the value to less than `max` and stringify it  */

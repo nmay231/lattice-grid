@@ -1,4 +1,4 @@
-import { clamp } from "lodash";
+import clamp from "lodash/clamp";
 import { proxy } from "valtio";
 import { PuzzleManager } from "./PuzzleManager";
 import { layerIsCurrentCharacterSetting } from "./layers/traits/currentCharacterSetting";
