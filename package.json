@@ -59,7 +59,7 @@
     "scripts": {
         "preinstall": "npx only-allow pnpm",
         "dev": "vite",
-        "build": "pnpm protobuf && vite build",
+        "build": "vite build",
         "checkdeps": "pnpm outdated; depcheck --ignores 'pre-commit,@emotion/react,prettier-plugin-organize-imports,@eslint/js'",
         "precommit": "pnpm typecheck; pnpm test:once; pnpm lint",
         "precommit:keep-exit-codes": "E=0; pnpm typecheck || E=$?; pnpm test:once || E=$?; pnpm lint || E=$?; exit $E",
