@@ -1,6 +1,6 @@
 import fc from "fast-check";
+import { given } from "../testing-utils/fcArbitraries";
 import { deepClone, isEqual } from "./recursive";
-import { given } from "./testing/fcArbitraries";
 
 describe("deepClone and isEqual", () => {
     it("they work in tandem", () => {

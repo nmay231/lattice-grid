@@ -1,7 +1,7 @@
 import fc from "fast-check";
+import { FCNormalFloat, FCRepeat, given } from "../testing-utils/fcArbitraries";
 import { TupleVector } from "../types";
-import { clamp, Vec } from "./math";
-import { FCNormalFloat, FCRepeat, given } from "./testing/fcArbitraries";
+import { Vec, clamp } from "./math";
 
 // Most of the simple tests are not really to test correctness as much as they are to check there are no unexpected errors
 describe("Vector", () => {

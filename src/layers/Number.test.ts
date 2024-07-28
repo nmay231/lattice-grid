@@ -1,7 +1,7 @@
 import { LayerStorage } from "../LayerStorage";
+import { layerEventEssentials } from "../testing-utils/layerEventEssentials";
 import { HistoryAction, LayerHandlerResult, StorageFilter } from "../types";
 import { IndexedOrderedMap } from "../utils/OrderedMap";
-import { layerEventEssentials } from "../utils/testing/layerEventEssentials";
 import { NumberLayer, NumberProps } from "./Number";
 
 describe("Number Layer", () => {

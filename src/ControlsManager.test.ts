@@ -1,10 +1,10 @@
 import fc from "fast-check";
 import { random, range, shuffle } from "lodash";
 import { PartialPointerEvent, _PointerState as PointerState } from "./ControlsManager";
+import { FCRepeat, given } from "./testing-utils/fcArbitraries";
+import { partialMock } from "./testing-utils/partialMock";
 import { TupleVector } from "./types";
 import { zipDefined } from "./utils/data";
-import { FCRepeat, given } from "./utils/testing/fcArbitraries";
-import { partialMock } from "./utils/testing/partialMock";
 
 // TODO: Move this definition and the corresponding test to a new file if used in other tests
 // TODO: This assumes pointerId's are always incremented and never reused within a short timeframe. This might be true, but it is still an assumption

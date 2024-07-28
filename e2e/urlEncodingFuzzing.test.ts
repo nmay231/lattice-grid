@@ -6,8 +6,8 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import type { PartialPointerEvent } from "../src/ControlsManager";
 import { availableLayers } from "../src/layers";
+import { FCRepeat, given } from "../src/testing-utils/fcArbitraries";
 import { stringifyAnything } from "../src/utils/string";
-import { FCRepeat, given } from "../src/utils/testing/fcArbitraries";
 
 test.describe(() => {
     // We let fast-check control the timeout, so it is 30 secs per example instead of 30 secs for the whole test

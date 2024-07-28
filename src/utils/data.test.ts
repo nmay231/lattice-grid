@@ -1,8 +1,8 @@
 /* eslint-disable unicorn/consistent-function-scoping */
 import fc from "fast-check";
 import { chunk as lodashChunk, zip as lodashZip, range } from "lodash";
+import { FCNormalFloat, FCRepeat, given } from "../testing-utils/fcArbitraries";
 import { chunk, concat, filterUnique, parseIntBase, reduceTo, reversed, zipDefined } from "./data";
-import { FCNormalFloat, FCRepeat, given } from "./testing/fcArbitraries";
 
 describe("filterUnique", () => {
     it("filters down to unique elements", () => {

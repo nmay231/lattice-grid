@@ -1,5 +1,5 @@
 import fc, { Arbitrary } from "fast-check";
-import { given } from "../utils/testing/fcArbitraries";
+import { given } from "../testing-utils/fcArbitraries";
 import { Encoder, Encoding, Scalar, ScalarMap, TopLevel } from "./protoButt";
 
 import { concat } from "../utils/data";

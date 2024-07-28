@@ -1,8 +1,8 @@
 import fc from "fast-check";
+import { given } from "../testing-utils/fcArbitraries";
 import { TupleVector } from "../types";
 import { parseIntBase, zipDefined } from "../utils/data";
 import { Vec } from "../utils/math";
-import { given } from "../utils/testing/fcArbitraries";
 import { hopStraight } from "./hopStraight";
 
 describe("hopStraight", () => {

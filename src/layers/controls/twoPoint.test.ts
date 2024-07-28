@@ -1,9 +1,9 @@
 import { vi } from "vitest";
 import { LayerStorage } from "../../LayerStorage";
+import { layerEventRunner } from "../../testing-utils/layerEventRunner";
+import { partialMock } from "../../testing-utils/partialMock";
 import { PartialHistoryAction, type Grid } from "../../types";
 import { smartSort } from "../../utils/string";
-import { layerEventRunner } from "../../utils/testing/layerEventRunner";
-import { partialMock } from "../../utils/testing/partialMock";
 import {
     TwoPointCurrentStateParameters,
     TwoPointProps,

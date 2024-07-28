@@ -1,10 +1,10 @@
 import fc from "fast-check";
 import { shuffle } from "lodash";
+import { FCRepeat, given } from "../testing-utils/fcArbitraries";
 import { TupleVector, type PointType } from "../types";
 import { parseIntBase, reduceTo } from "../utils/data";
 import { Vec } from "../utils/math";
 import { smartSort } from "../utils/string";
-import { FCRepeat, given } from "../utils/testing/fcArbitraries";
 import { SquareGrid } from "./SquareGrid";
 
 describe("SquareGrid", () => {
