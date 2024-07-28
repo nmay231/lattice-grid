@@ -1,10 +1,10 @@
 import fc from "fast-check";
 import { shuffle } from "lodash";
+import { FCRepeat, given } from "../testing-utils/fcArbitraries";
 import { TupleVector, type PointType } from "../types";
 import { parseIntBase, reduceTo } from "../utils/data";
 import { Vec } from "../utils/math";
 import { smartSort } from "../utils/string";
-import { FCRepeat, given } from "../utils/testing/fcArbitraries";
 import { SquareGrid } from "./SquareGrid";
 
 describe("SquareGrid", () => {
@@ -294,6 +294,28 @@ describe("SquareGridEncoder", () => {
             expect(pairsResult).toEqual(pairs);
         },
     );
+
+    it.each([
+        { arr: [true], bitmap: 1 },
+        { arr: [false, true, false, true], bitmap: 5 },
+    ])("en/decodeBooleanArray basic examples", ({ arr, bitmap }) => {
+        const grid = new SquareGrid({ width: 10, height: 10, minX: 0, minY: 0 });
+        const settings = { cellSize: 2 };
+        const encoder = grid.getEncoder(settings);
+
+        expect(encoder.encodeBooleanArray(arr)).toBe(bitmap);
+        expect(encoder.decodeBooleanArray(bitmap, arr.length)).toEqual(arr);
+    });
+
+    it("en/decodeBooleanArray fuzzing", () => {
+        const grid = new SquareGrid({ width: 10, height: 10, minX: 0, minY: 0 });
+        const settings = { cellSize: 2 };
+        const encoder = grid.getEncoder(settings);
+
+        given([fc.integer({ min: 0, max: 2 ** 32 - 1 })]).assertProperty((bitmap) => {
+            expect(encoder.encodeBooleanArray(encoder.decodeBooleanArray(bitmap, 32))).toBe(bitmap);
+        });
+    });
 });
 
 describe("SquareGridTransformer", () => {
@@ -492,7 +514,7 @@ describe("SquareGridTransformer.shrinkwrap", () => {
             .tuple(fc.integer({ min: minLength > 0 ? minLength : undefined, max }), fc.boolean())
             .map(([n, vert]) => {
                 n = 2 * n;
-                return Vec.from(vertical ?? vert ? [0, n] : [n, 0]);
+                return Vec.from((vertical ?? vert) ? [0, n] : [n, 0]);
             });
     };
 

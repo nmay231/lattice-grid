@@ -1,5 +1,4 @@
 import { arrayMove } from "@dnd-kit/sortable";
-import { isEqual } from "lodash";
 import { proxy } from "valtio";
 import { ControlsManager } from "./ControlsManager";
 import { StorageManager } from "./StorageManager";
@@ -35,6 +34,7 @@ import { IndexedOrderedMap } from "./utils/OrderedMap";
 import { valtioRef } from "./utils/imports/valtio";
 import { notify } from "./utils/notifications";
 import { LatestTimeout } from "./utils/primitiveWrappers";
+import { isEqual } from "./utils/recursive";
 import { base64, stringifyAnything } from "./utils/string";
 
 /** Date.getTime() returns time in miliseconds, but that overflows int32. */
@@ -73,9 +73,10 @@ export class PuzzleManager {
         const puzzle = new PuzzleManager();
         puzzle.sessionMetadata = proxy(sessionMetadata);
 
-        importPuzzleData(puzzle, puzzleString);
+        // Must be before puzzle import (with the current implementation) otherwise play states will be saved as edit puzzles
         puzzle.settings.pageMode = "play";
         puzzle.settings.editMode = "answer";
+        importPuzzleData(puzzle, puzzleString);
 
         return puzzle;
     }
@@ -446,7 +447,7 @@ export class PuzzleManager {
                         grid: grid as NeedsUpdating,
                         settings,
                         storage,
-                        answerCheck: true,
+                        exportMode: "editingSaveAll",
                     }),
                 );
             }

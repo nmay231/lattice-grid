@@ -1,7 +1,7 @@
 import { LayerStorage } from "../../LayerStorage";
+import { layerEventRunner } from "../../testing-utils/layerEventRunner";
 import { LayerProps, NeedsUpdating, ObjectId, PartialHistoryAction } from "../../types";
 import { zipDefined } from "../../utils/data";
-import { layerEventRunner } from "../../utils/testing/layerEventRunner";
 import {
     SELECTION_ID,
     SelectedProps,

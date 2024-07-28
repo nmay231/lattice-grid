@@ -1,10 +1,9 @@
-import { chunk } from "lodash";
 import { PuzzleManager } from "../PuzzleManager";
 import { hopStraight } from "../algorithms/hopStraight";
 import type { EncodedColor, EncodedPointType } from "../encoding/puzzleEncoder";
 import { Grid, Point, PointType, SVGGroup, TupleVector, type Color } from "../types";
 import { COLOR_VALUE_TO_NAME, DEFAULT_COLORS } from "../utils/colors";
-import { parseIntBase, zipDefined } from "../utils/data";
+import { chunk, parseIntBase, zipDefined } from "../utils/data";
 import { Vec } from "../utils/math";
 import { notify } from "../utils/notifications";
 import { randomStringId, stringifyAnything } from "../utils/string";
@@ -540,6 +539,29 @@ class _SquareGridEncoder {
         } else {
             throw new Error(`Unknown color enum value: ${stringifyAnything(color)}`);
         }
+    }
+
+    encodeBooleanArray(arr: boolean[]): number {
+        if (arr.length === 0 || arr.length > 32) {
+            throw new Error(`Cannot handle encoding boolean array of length ${arr.length}`);
+        }
+        return Number.parseInt(arr.map((bool) => (bool ? "1" : "0")).join(""), 2);
+    }
+
+    decodeBooleanArray(bitmap: number, expectedLength: number): boolean[] {
+        if (expectedLength === 0 || expectedLength > 32) {
+            throw new Error(
+                `Can only decode bitmaps into array with length >0, <=32 ${expectedLength}`,
+            );
+        }
+        const bitmapString = bitmap.toString(2);
+        if (bitmapString.length > expectedLength) {
+            throw new Error(
+                `Bitmap (${bitmap}==0b${bitmapString}) decoded into a longer than expected length (${expectedLength})`,
+            );
+        }
+
+        return [...bitmapString.padStart(expectedLength, "0")].map((digit) => digit === "1");
     }
 }
 

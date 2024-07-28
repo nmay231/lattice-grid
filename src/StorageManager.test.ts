@@ -1,5 +1,6 @@
 import { cloneDeep } from "lodash";
 import { StorageManager } from "./StorageManager";
+import { layerEventEssentials } from "./testing-utils/layerEventEssentials";
 import {
     EditMode,
     Grid,
@@ -10,7 +11,6 @@ import {
 } from "./types";
 import { PUT_AT_END } from "./utils/OrderedMap";
 import { notify } from "./utils/notifications";
-import { layerEventEssentials } from "./utils/testing/layerEventEssentials";
 
 interface FakeLayerProps extends LayerProps {
     ObjectState: { asdf: string };

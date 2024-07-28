@@ -1,6 +1,6 @@
 import fc from "fast-check";
+import { given } from "../testing-utils/fcArbitraries";
 import { keypressString, losslessKebab, smartSort } from "./string";
-import { given } from "./testing/fcArbitraries";
 
 describe("keypressStringShorthand", () => {
     const call = (arg: Partial<Parameters<typeof keypressString>[0]>) => {

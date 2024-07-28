@@ -1,8 +1,8 @@
 import { vi } from "vitest";
-import { LayerStorage } from "../../LayerStorage";
-import { PuzzleManager } from "../../PuzzleManager";
-import { StorageManager } from "../../StorageManager";
-import { Grid, LayerEventEssentials, LayerProps } from "../../types";
+import { LayerStorage } from "../LayerStorage";
+import { PuzzleManager } from "../PuzzleManager";
+import { StorageManager } from "../StorageManager";
+import { Grid, LayerEventEssentials, LayerProps } from "../types";
 import { partialMock } from "./partialMock";
 
 export type LayerEventEssentialsArg<LP extends LayerProps> = {

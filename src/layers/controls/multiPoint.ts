@@ -1,4 +1,3 @@
-import { cloneDeep } from "lodash";
 import {
     HistoryAction,
     Keypress,
@@ -12,6 +11,7 @@ import {
     StorageFilter,
 } from "../../types";
 import { notify } from "../../utils/notifications";
+import { deepClone } from "../../utils/recursive";
 import { smartSort } from "../../utils/string";
 
 export interface MultiPointLayerProps extends LayerProps {
@@ -199,7 +199,7 @@ export const handleEventsUnorderedSets = <LP extends MultiPointLayerProps>({
                 }
                 const batchId = tempStorage.batchId;
 
-                const objectCopy = cloneDeep(object) as LP["ObjectState"];
+                const objectCopy = deepClone(object) as LP["ObjectState"];
                 if (tempStorage.removeSingle) {
                     // Remove the one cell that was selected
                     objectCopy.points = objectCopy.points.filter(

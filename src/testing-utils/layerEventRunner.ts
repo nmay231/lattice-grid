@@ -1,5 +1,5 @@
 import { Mock } from "vitest";
-import { LayerStorage } from "../../LayerStorage";
+import { LayerStorage } from "../LayerStorage";
 import {
     HistoryAction,
     Layer,
@@ -9,8 +9,8 @@ import {
     PartialHistoryAction,
     Point,
     PointerMoveOrDown,
-} from "../../types";
-import { PUT_AT_END } from "../OrderedMap";
+} from "../types";
+import { PUT_AT_END } from "../utils/OrderedMap";
 import { layerEventEssentials } from "./layerEventEssentials";
 import { partialMock } from "./partialMock";
 

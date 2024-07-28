@@ -1,8 +1,8 @@
 /* eslint-disable unicorn/consistent-function-scoping */
 import fc from "fast-check";
-import { zip as lodashZip, range } from "lodash";
-import { concat, filterUnique, parseIntBase, reduceTo, reversed, zipDefined } from "./data";
-import { FCNormalFloat, FCRepeat, given } from "./testing/fcArbitraries";
+import { chunk as lodashChunk, zip as lodashZip, range } from "lodash";
+import { FCNormalFloat, FCRepeat, given } from "../testing-utils/fcArbitraries";
+import { chunk, concat, filterUnique, parseIntBase, reduceTo, reversed, zipDefined } from "./data";
 
 describe("filterUnique", () => {
     it("filters down to unique elements", () => {
@@ -102,5 +102,20 @@ describe("reversed", () => {
             yield* [1, 2, 3];
         }
         expect([...reversed(iterable())]).toEqual([3, 2, 1]);
+    });
+});
+
+describe("chunk", () => {
+    it("be chunky", () => {
+        // Inspiration: https://www.youtube.com/shorts/2qzyLik-RaI
+        given([fc.array(fc.anything()), fc.integer({ min: 1 })]).assertProperty(
+            (arr, chunk_size) => {
+                expect([...chunk(arr, chunk_size)]).toEqual(lodashChunk(arr, chunk_size));
+            },
+        );
+    });
+
+    it("errors with invalid chunk_sizes", () => {
+        expect(() => chunk([], 0).next()).toThrowError("chunk_size must be positive");
     });
 });

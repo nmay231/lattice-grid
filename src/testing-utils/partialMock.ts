@@ -1,6 +1,6 @@
 import { Proxy as InspectableProxy } from "node-inspect-extracted";
-import { RecursivePartial } from "../../types";
-import { stringifyAnything } from "../string";
+import { RecursivePartial } from "../types";
+import { stringifyAnything } from "../utils/string";
 
 export const partialMock = <T>(x: RecursivePartial<T>) => {
     return _defineAllUsedProperties(x, stringifyAnything(x), "") as T;

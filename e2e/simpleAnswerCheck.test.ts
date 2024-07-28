@@ -34,6 +34,7 @@ test.describe("Answer check for BackgroundColor, SimpleLine, and Number", () => 
         }) => {
             await page.goto("/edit");
             await page.getByRole("button", { name: "Reset Puzzle" }).click();
+            await page.getByRole("button", { name: "Yes I'm sure" }).click();
 
             const addLayer = page.locator(`input[value="Add New Layer"][aria-haspopup="listbox"]`);
             const layers = [BackgroundColorLayer.displayName, SimpleLineLayer.displayName];
@@ -153,6 +154,8 @@ test.describe("Answer check for BackgroundColor, SimpleLine, and Number", () => 
                 }
             }
 
+            // TODO: Only needed when all params are false, but also should the "you solved it!" message even show if there is no answer check?
+            await page.keyboard.press("Escape");
             // Expect "puzzle solved" notification (dev mode can give more than one)
             await expect(
                 page.getByText("your answer matches the setter's answer").first(),
@@ -182,6 +185,7 @@ test.describe("Answer check for BackgroundColor, SimpleLine, and Number", () => 
     test("should draw a diagonal line using debug point selector", async ({ page }) => {
         await page.goto("/edit");
         await page.getByRole("button", { name: "Reset Puzzle" }).click();
+        await page.getByRole("button", { name: "Yes I'm sure" }).click();
 
         const addLayer = page.locator(`input[value="Add New Layer"][aria-haspopup="listbox"]`);
 

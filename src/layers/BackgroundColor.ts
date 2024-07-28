@@ -119,12 +119,12 @@ export class BackgroundColorLayer
         return [{ id: "backgroundColor", type: "polygon", elements }];
     };
 
-    encode: IBackgroundColorLayer["encode"] = ({ grid, storage, settings, answerCheck }) => {
+    encode: IBackgroundColorLayer["encode"] = ({ grid, storage, settings, exportMode }) => {
         const stored = storage.getObjects<BackgroundColorProps>(this.id);
         const objects = [...stored.entries("question")];
 
         let answersAtEnd = 0;
-        if (answerCheck) {
+        if (exportMode === "editingSaveAll" || exportMode == "solvingExactAnswerCheck") {
             const answers = stored.entries("answer");
             answersAtEnd = answers.length;
             objects.push(...answers);

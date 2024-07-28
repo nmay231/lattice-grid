@@ -1,7 +1,7 @@
 import fc from "fast-check";
+import { FCNormalFloat, FCRepeat, given } from "../testing-utils/fcArbitraries";
 import { TupleVector } from "../types";
-import { Vec } from "./math";
-import { FCNormalFloat, FCRepeat, given } from "./testing/fcArbitraries";
+import { Vec, clamp } from "./math";
 
 // Most of the simple tests are not really to test correctness as much as they are to check there are no unexpected errors
 describe("Vector", () => {
@@ -231,5 +231,15 @@ describe("Vector", () => {
             expect(vec1.xy).toEqual(a);
             expect(vec2.xy).toEqual(b);
         });
+    });
+});
+
+describe("clamp", () => {
+    it("should clamp", () => {
+        expect(clamp(0, 0, 1)).toBe(0);
+        expect(clamp(0.5, 0, 1)).toBe(0.5);
+        expect(clamp(1, 0, 1)).toBe(1);
+        expect(clamp(-1, 0, 1)).toBe(0);
+        expect(clamp(2, 0, 1)).toBe(1);
     });
 });

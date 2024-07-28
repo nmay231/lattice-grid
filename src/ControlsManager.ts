@@ -1,4 +1,3 @@
-import { clamp } from "lodash";
 import { proxy } from "valtio";
 import { PuzzleManager } from "./PuzzleManager";
 import { layerIsCurrentCharacterSetting } from "./layers/traits/currentCharacterSetting";
@@ -14,7 +13,7 @@ import {
     UnknownObject,
 } from "./types";
 import { _focusState, focusProxy } from "./utils/focusManagement";
-import { Vec, euclidean } from "./utils/math";
+import { Vec, clamp, euclidean } from "./utils/math";
 import { notify } from "./utils/notifications";
 import { DelayedCallback } from "./utils/primitiveWrappers";
 import { keypressString } from "./utils/string";
@@ -268,13 +267,13 @@ export class ControlsManager {
 
         const { history } = layer.handleEvent(layerEvent);
 
-        this.puzzle.storage.addToHistory({
+        const { layerIds } = this.puzzle.storage.addToHistory({
             puzzle: this.puzzle,
             layerId: layer.id,
             actions: history,
         });
 
-        this.puzzle.renderChange({ type: "draw", layerIds: [layer.id] });
+        this.puzzle.renderChange({ type: "draw", layerIds });
     }
 
     _downCB = new DelayedCallback();
@@ -463,13 +462,13 @@ export class ControlsManager {
                     storage: this.puzzle.storage,
                 });
 
-                this.puzzle.storage.addToHistory({
+                const { layerIds } = this.puzzle.storage.addToHistory({
                     puzzle: this.puzzle,
                     layerId: layer.id,
                     actions: history,
                 });
 
-                this.puzzle.renderChange({ type: "draw", layerIds: [layer.id] });
+                this.puzzle.renderChange({ type: "draw", layerIds });
             }
 
             // TODO: Migrate the following to use the replacements for handleEvent

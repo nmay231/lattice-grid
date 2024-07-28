@@ -1,6 +1,6 @@
 import { LayerStorage } from "../LayerStorage";
+import { layerEventEssentials } from "../testing-utils/layerEventEssentials";
 import { IndexedOrderedMap } from "../utils/OrderedMap";
-import { layerEventEssentials } from "../utils/testing/layerEventEssentials";
 import { SimpleLineLayer, SimpleLineProps } from "./SimpleLine";
 
 describe("SimpleLine", () => {

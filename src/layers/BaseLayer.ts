@@ -1,7 +1,7 @@
-import { cloneDeep } from "lodash";
 import { PuzzleManager } from "../PuzzleManager";
 import { Layer, LayerClass, LayerProps } from "../types";
 import { notify } from "../utils/notifications";
+import { deepClone } from "../utils/recursive";
 
 const randomId = (blacklist: Layer["id"][], suggested: Layer["id"]) => {
     let id: Layer["id"] = suggested;
@@ -29,7 +29,7 @@ export class BaseLayer<LP extends LayerProps>
         this.klass = klass;
         this.id = randomId(puzzle.layers.keys(), klass.type);
         this.displayName = klass.displayName;
-        this.settings = cloneDeep(klass.defaultSettings);
+        this.settings = deepClone(klass.defaultSettings);
     }
 
     gatherPoints: Layer<LP>["gatherPoints"] = () => {

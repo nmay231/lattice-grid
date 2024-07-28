@@ -1,5 +1,5 @@
-import { clamp as nClamp } from "lodash";
 import { Keypress } from "../../types";
+import { clamp } from "../../utils/math";
 
 /** Clamp the value to less than `max` and stringify it  */
 const getCleaner = (max: number) => {
@@ -8,7 +8,7 @@ const getCleaner = (max: number) => {
     } else {
         return (next: number) => {
             next = Math.abs(next) <= max ? next : next % 10;
-            return nClamp(next, -max, max).toString();
+            return clamp(next, -max, max).toString();
         };
     }
 };

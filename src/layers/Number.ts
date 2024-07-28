@@ -228,12 +228,12 @@ export class NumberLayer extends BaseLayer<NumberProps> implements INumberLayer 
 
     getOverlaySVG: INumberLayer["getOverlaySVG"];
 
-    encode: INumberLayer["encode"] = ({ grid, storage, settings, answerCheck }) => {
+    encode: INumberLayer["encode"] = ({ grid, storage, settings, exportMode }) => {
         const stored = storage.getObjects<NumberProps>(this.id);
         const objects = [...stored.entries("question")];
 
         let answersAtEnd = 0;
-        if (answerCheck) {
+        if (exportMode === "editingSaveAll" || exportMode == "solvingExactAnswerCheck") {
             const answers = stored.entries("answer");
             answersAtEnd = answers.length;
             objects.push(...answers);

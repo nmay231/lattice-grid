@@ -24,7 +24,7 @@ module.exports = {
         project: ["./tsconfig.json"],
         ecmaFeatures: { jsx: true },
     },
-    plugins: ["react", "react-refresh", "sonarjs", "testing-library", "unicorn"],
+    plugins: ["react", "react-refresh", "sonarjs", "testing-library", "unicorn", "import"],
     settings: {
         react: { version: "detect" },
     },
@@ -55,16 +55,16 @@ module.exports = {
         "sonarjs/no-duplicate-string": "off",
         "sonarjs/no-inverted-boolean-check": "error",
         "sonarjs/prefer-immediate-return": "off",
-        "unicorn/prevent-abbreviations": "off",
-        "unicorn/filename-case": ["error", { cases: { camelCase: true, pascalCase: true } }],
-        "unicorn/no-null": "off",
-        "unicorn/consistent-function-scoping": ["error", { checkArrowFunctions: false }],
         "unicorn/catch-error-name": "off",
-        "unicorn/prefer-switch": "off",
-        "unicorn/prefer-ternary": ["error", "only-single-line"],
-        "unicorn/prefer-set-has": "off",
+        "unicorn/consistent-function-scoping": ["error", { checkArrowFunctions: false }],
+        "unicorn/filename-case": ["error", { cases: { camelCase: true, pascalCase: true } }],
         "unicorn/no-array-callback-reference": "warn",
         "unicorn/no-array-reduce": "warn",
+        "unicorn/no-null": "off",
+        "unicorn/prefer-set-has": "off",
+        "unicorn/prefer-switch": "off",
+        "unicorn/prefer-ternary": ["error", "only-single-line"],
+        "unicorn/prevent-abbreviations": "off",
         "vitest/max-expects": "off",
         "vitest/no-alias-methods": "off",
         "vitest/no-conditional-expect": "off", // ditto
@@ -77,6 +77,18 @@ module.exports = {
         "vitest/prefer-strict-equal": "off",
         "vitest/prefer-to-be-falsy": "off",
         "vitest/prefer-to-be-truthy": "off",
+
+        // Multiline rules to make sorting lines easier
+        "import/no-extraneous-dependencies": [
+            "error",
+            {
+                devDependencies: [
+                    "**/*.test.[tj]s",
+                    "src/testing-utils/*.ts",
+                    "playwright.config.ts",
+                ],
+            },
+        ],
         "@typescript-eslint/no-use-before-define": [
             "error",
             // Setting these to false allow functions of a module or closure to use values that are defined later in the file.

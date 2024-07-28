@@ -2,7 +2,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { ActionIcon } from "@mantine/core";
 import { clsx } from "clsx";
-import { IoIosArrowRoundForward, IoMdClose, IoMdMenu } from "react-icons/io";
+import { IoIosArrowRoundForward, IoMdMenu, IoMdTrash } from "react-icons/io";
 import styles from "./LayersItem.module.css";
 
 type LayerItemProps = {
@@ -64,7 +64,7 @@ export const LayerItem = ({
                         tabIndex={editing ? 0 : -1}
                         variant="subtle"
                     >
-                        <IoMdClose />
+                        <IoMdTrash color="red" />
                     </ActionIcon>
                 )}
             </div>

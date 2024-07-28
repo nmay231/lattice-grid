@@ -1,6 +1,7 @@
 import { ActionIcon, Burger, Tooltip } from "@mantine/core";
 import React from "react";
-import { IoMdSettings } from "react-icons/io";
+import { IoLogoGithub, IoMdSettings } from "react-icons/io";
+import { IoLogoDiscord } from "react-icons/io5";
 import { useProxy } from "valtio/utils";
 import { useFocusElementHandler } from "../../../utils/focusManagement";
 import { sidebarProxy } from "../sidebarProxy";
@@ -24,6 +25,36 @@ export const UtilityBar = React.memo(function UtilityBar() {
                     />
                 </Tooltip>
             )}
+            <Tooltip label="Discord Server" events={{ hover: true, focus: true, touch: true }}>
+                <ActionIcon
+                    size="lg"
+                    className={styles.icon}
+                    variant="filled"
+                    color="#7289da"
+                    component="a"
+                    href="https://discord.gg/zt7mQQvS8V"
+                    referrerPolicy="no-referrer"
+                    target="_blank"
+                    tabIndex={-1}
+                >
+                    <IoLogoDiscord />
+                </ActionIcon>
+            </Tooltip>
+            <Tooltip label="Source Code" events={{ hover: true, focus: true, touch: true }}>
+                <ActionIcon
+                    size="lg"
+                    className={styles.icon}
+                    variant="filled"
+                    color="black"
+                    component="a"
+                    href="https://github.com/nmay231/lattice-grid"
+                    referrerPolicy="no-referrer"
+                    target="_blank"
+                    tabIndex={-1}
+                >
+                    <IoLogoGithub />
+                </ActionIcon>
+            </Tooltip>
             <Tooltip label="Settings (Todo)" events={{ hover: true, focus: true, touch: true }}>
                 <ActionIcon
                     size="lg"
