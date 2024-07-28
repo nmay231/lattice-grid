@@ -1,10 +1,9 @@
-import chunk from "lodash/chunk";
 import { PuzzleManager } from "../PuzzleManager";
 import { hopStraight } from "../algorithms/hopStraight";
 import type { EncodedColor, EncodedPointType } from "../encoding/puzzleEncoder";
 import { Grid, Point, PointType, SVGGroup, TupleVector, type Color } from "../types";
 import { COLOR_VALUE_TO_NAME, DEFAULT_COLORS } from "../utils/colors";
-import { parseIntBase, zipDefined } from "../utils/data";
+import { chunk, parseIntBase, zipDefined } from "../utils/data";
 import { Vec } from "../utils/math";
 import { notify } from "../utils/notifications";
 import { randomStringId, stringifyAnything } from "../utils/string";

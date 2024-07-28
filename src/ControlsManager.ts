@@ -1,4 +1,3 @@
-import clamp from "lodash/clamp";
 import { proxy } from "valtio";
 import { PuzzleManager } from "./PuzzleManager";
 import { layerIsCurrentCharacterSetting } from "./layers/traits/currentCharacterSetting";
@@ -14,7 +13,7 @@ import {
     UnknownObject,
 } from "./types";
 import { _focusState, focusProxy } from "./utils/focusManagement";
-import { Vec, euclidean } from "./utils/math";
+import { Vec, clamp, euclidean } from "./utils/math";
 import { notify } from "./utils/notifications";
 import { DelayedCallback } from "./utils/primitiveWrappers";
 import { keypressString } from "./utils/string";

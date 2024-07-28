@@ -86,3 +86,12 @@ export const sortByKey = <Obj, Key extends number | string>(
 ): ((a: Obj, b: Obj) => number) => {
     return (a, b) => smartSort(keyFunc(a), keyFunc(b));
 };
+
+export function* chunk<T>(toChunk: T[], chunk_size: number) {
+    if (chunk_size <= 0) {
+        throw new Error(`chunk_size must be positive and not: ${chunk_size}`);
+    }
+    for (let start = 0; start < toChunk.length; start += chunk_size) {
+        yield toChunk.slice(start, start + chunk_size);
+    }
+}

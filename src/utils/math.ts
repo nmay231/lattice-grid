@@ -107,3 +107,7 @@ export class Vec {
 export const euclidean = (x1: number, y1: number, x2: number, y2: number) => {
     return ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5;
 };
+
+export const clamp = (toClamp: number, min: number, max: number): number => {
+    return Math.min(max, Math.max(min, toClamp));
+};

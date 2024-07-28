@@ -1,5 +1,4 @@
 import { arrayMove } from "@dnd-kit/sortable";
-import isEqual from "lodash/isEqual";
 import { proxy } from "valtio";
 import { ControlsManager } from "./ControlsManager";
 import { StorageManager } from "./StorageManager";
@@ -35,6 +34,7 @@ import { IndexedOrderedMap } from "./utils/OrderedMap";
 import { valtioRef } from "./utils/imports/valtio";
 import { notify } from "./utils/notifications";
 import { LatestTimeout } from "./utils/primitiveWrappers";
+import { isEqual } from "./utils/recursive";
 import { base64, stringifyAnything } from "./utils/string";
 
 /** Date.getTime() returns time in miliseconds, but that overflows int32. */
