@@ -514,7 +514,7 @@ describe("SquareGridTransformer.shrinkwrap", () => {
             .tuple(fc.integer({ min: minLength > 0 ? minLength : undefined, max }), fc.boolean())
             .map(([n, vert]) => {
                 n = 2 * n;
-                return Vec.from(vertical ?? vert ? [0, n] : [n, 0]);
+                return Vec.from((vertical ?? vert) ? [0, n] : [n, 0]);
             });
     };
 
