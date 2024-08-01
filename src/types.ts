@@ -59,7 +59,7 @@ export type EditMode = "question" | "answer";
 export type StorageMode = EditMode | "ui";
 export type PageMode = "edit" | "play";
 
-export type ModalName = "blockly" | "import-export" | "resize-grid" | "my-puzzle-list";
+export type ModalName = "blockly" | "import-export" | "resize-grid" | "my-puzzle-list" | "about";
 export type FocusGroup = "layerList" | "controlSettings" | "constraintSettings" | "none" | "debug";
 // #endregion
 

@@ -17,6 +17,7 @@ import { SVGCanvas } from "../components/SVGCanvas/SVGCanvas";
 import { SideBar, UtilityBar } from "../components/SideBar";
 import { ResizeModal } from "../components/SideBar/MainGroup/ResizeModal";
 import { sidebarProxy } from "../components/SideBar/sidebarProxy";
+import { ModalAbout } from "../components/modals/ModalAbout";
 import { ModalEditPuzzleList } from "../components/modals/ModalEditPuzzleList";
 import { NeedsUpdating } from "../types";
 import { useGlobalFocusListeners } from "../utils/focusManagement";
@@ -102,6 +103,7 @@ export const PuzzlePage = ({ puzzle }: { puzzle: PuzzleManager }) => {
             <ResizeModal puzzle={puzzle} />
             <ImportExportModal puzzle={puzzle} />
             <ModalEditPuzzleList puzzle={puzzle} />
+            <ModalAbout />
         </div>
     );
 };

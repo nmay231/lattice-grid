@@ -1,6 +1,5 @@
 import { Button, Center, Group, Popover, Stack, Text, TextInput } from "@mantine/core";
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import { useSnapshot } from "valtio";
 import { useProxy } from "valtio/utils";
 import type { PuzzleManager } from "../../../PuzzleManager";
@@ -73,7 +72,7 @@ export const MainGroup = React.memo(function MainGroup({ puzzle }: { puzzle: Puz
     return (
         <Collapse name="Puzzle" expanded>
             <Center style={{ width: "100%" }} my="sm" component={Group}>
-                <Stack>
+                <Stack style={{ textAlign: "center" }}>
                     {pageMode === "edit" && (
                         <>
                             <Group style={{ justifyContent: "center" }}>
@@ -140,7 +139,14 @@ export const MainGroup = React.memo(function MainGroup({ puzzle }: { puzzle: Puz
                             </Group>
                         </>
                     )}
-                    <Link to="/about">About this site</Link>
+                    {pageMode !== "edit" && (
+                        <Button component="a" target="_blank" href="/edit" color="cyan">
+                            Create your own puzzles
+                        </Button>
+                    )}
+                    <Button onClick={() => openModal("about")} color="cyan">
+                        About this site
+                    </Button>
                 </Stack>
             </Center>
         </Collapse>
