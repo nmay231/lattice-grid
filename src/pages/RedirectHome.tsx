@@ -1,19 +1,19 @@
 import { useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useSearch } from "wouter";
 
 export const RedirectHome = () => {
-    const navigate = useNavigate();
-    const { search } = useLocation();
+    const search = useSearch();
+    const [, setLocation] = useLocation();
 
     useEffect(() => {
         const urlSearch = new URLSearchParams(search);
         const puzzleString = urlSearch.get("0");
         if (puzzleString) {
-            navigate(`/play?${urlSearch}`, { replace: true });
+            setLocation(`/play?${urlSearch}`, { replace: true });
         } else {
-            navigate("/edit", { replace: true });
+            setLocation("/edit", { replace: true });
         }
-    }, [navigate, search]);
+    }, [search, setLocation]);
 
     return <>Redirecting</>;
 };

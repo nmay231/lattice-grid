@@ -1,5 +1,5 @@
 import { Center, Stack, Title } from "@mantine/core";
-import { Link } from "react-router-dom";
+import { Link } from "wouter";
 
 export const _404Page = () => {
     return (

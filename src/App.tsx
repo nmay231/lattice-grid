@@ -2,7 +2,7 @@ import { MantineProvider, MantineThemeOverride } from "@mantine/core";
 import "@mantine/core/styles.css";
 import { Notifications } from "@mantine/notifications";
 import "@mantine/notifications/styles.css";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { Route, Switch } from "wouter";
 import { LoadPuzzle } from "./pages/LoadPuzzle";
 import { RedirectHome } from "./pages/RedirectHome";
 import { _404Page } from "./pages/_404Page";
@@ -20,14 +20,20 @@ export const App = () => {
     return (
         <MantineProvider theme={theme}>
             <Notifications />
-            <BrowserRouter>
-                <Routes>
-                    <Route path="/" element={<RedirectHome />} />
-                    <Route path="edit" element={<LoadPuzzle key="edit" pageMode="edit" />} />
-                    <Route path="play" element={<LoadPuzzle key="play" pageMode="play" />} />
-                    <Route path="*" element={<_404Page />} />
-                </Routes>
-            </BrowserRouter>
+            <Switch>
+                <Route path="/">
+                    <RedirectHome />
+                </Route>
+                <Route path="edit">
+                    <LoadPuzzle key="edit" pageMode="edit" />
+                </Route>
+                <Route path="play">
+                    <LoadPuzzle key="play" pageMode="play" />
+                </Route>
+                <Route path="*">
+                    <_404Page />
+                </Route>
+            </Switch>
         </MantineProvider>
     );
 };

@@ -1,5 +1,5 @@
 import { Button, Container, Paper, Stack, Text, Title } from "@mantine/core";
-import { Link } from "react-router-dom";
+import { Link } from "wouter";
 
 export const AboutPageContent = () => {
     return (

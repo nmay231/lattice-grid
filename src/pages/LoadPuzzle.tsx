@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useSearch } from "wouter";
 import { PuzzleManager } from "../PuzzleManager";
 import type { PageMode } from "../types";
 import { PuzzlePage } from "./PuzzlePage";
@@ -7,8 +7,8 @@ import { PuzzlePage } from "./PuzzlePage";
 export const LoadPuzzle = ({ pageMode }: { pageMode: PageMode }) => {
     const [puzzle, setPuzzle] = useState<PuzzleManager>();
     const [prevPageMode, setPrevPageMode] = useState<PageMode>();
-    const { search } = useLocation();
-    const navigate = useNavigate();
+    const search = useSearch();
+    const [, setLocation] = useLocation();
 
     useEffect(() => {
         if (pageMode === prevPageMode) return;
@@ -26,12 +26,12 @@ export const LoadPuzzle = ({ pageMode }: { pageMode: PageMode }) => {
                     return;
                 }
             }
-            navigate("/edit", { replace: true });
+            setLocation("/edit", { replace: true });
         } else {
             // TODO
             console.error(`pageMode=${pageMode}`);
         }
-    }, [pageMode, prevPageMode, search]);
+    }, [pageMode, prevPageMode, search, setLocation]);
 
     if (!puzzle) return <></>;
 

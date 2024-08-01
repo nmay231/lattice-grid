@@ -1,8 +1,8 @@
 import { usePageLeave } from "@mantine/hooks";
 import { clsx } from "clsx";
 import { useCallback, useEffect } from "react";
-import { useLocation } from "react-router-dom";
 import { useProxy } from "valtio/utils";
+import { useSearch } from "wouter";
 import { ControlsManager } from "../ControlsManager";
 import type { PuzzleManager } from "../PuzzleManager";
 import { DebugPointers } from "../components/DebugPointers";
@@ -46,7 +46,7 @@ export const PuzzlePage = ({ puzzle }: { puzzle: PuzzleManager }) => {
     useGlobalEventListeners(puzzle.controls);
     useResizeObserver();
 
-    const { search } = useLocation();
+    const search = useSearch();
     const { pageMode } = useProxy(puzzle.settings);
     useEffect(() => {
         if (pageMode === "play") {

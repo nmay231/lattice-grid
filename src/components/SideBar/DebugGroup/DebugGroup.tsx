@@ -1,12 +1,12 @@
 import { Button, Center, Code, Group, Stack, Text } from "@mantine/core";
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation } from "wouter";
 import { PuzzleManager } from "../../../PuzzleManager";
 import { Group as Collapse } from "../Group";
 import { DummyFocusGroup } from "./DummyFocusGroup";
 
 export const DebugGroup = React.memo(function DebugGroup({ puzzle }: { puzzle: PuzzleManager }) {
-    const navigate = useNavigate();
+    const [location, setLocation] = useLocation();
 
     return (
         <Collapse name="Debug" expanded>
@@ -26,7 +26,7 @@ export const DebugGroup = React.memo(function DebugGroup({ puzzle }: { puzzle: P
                         onClick={() => {
                             // TODO: I might want to be less aggressive when I have things like keybinds.
                             localStorage.clear();
-                            navigate(0);
+                            setLocation(location);
                         }}
                     >
                         Delete all puzzles and refresh page
