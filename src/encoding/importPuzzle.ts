@@ -4,8 +4,9 @@ import { SquareGrid } from "../grids/SquareGrid";
 import { availableLayers } from "../layers";
 import { Color, ObjectId, Point, PointType } from "../types";
 import { zipDefined } from "../utils/data";
+import { debugFormat } from "../utils/debugFormat";
 import { notify } from "../utils/notifications";
-import { base64, stringifyAnything } from "../utils/string";
+import { base64 } from "../utils/string";
 import { PuzzleEncoder, type EncodedLayer } from "./puzzleEncoder";
 
 interface BackgroundColorV1 {
@@ -130,7 +131,7 @@ export const importPuzzleData = (
         throw notify.error({
             title: `Error: ${data.title}`,
             // TODO: Put data.context into a expandable section of the notification
-            message: `${data.internalMessage}; ${stringifyAnything(data.context)}`,
+            message: debugFormat`${data.internalMessage}; ${data.context}`,
         });
     }
 
@@ -138,7 +139,7 @@ export const importPuzzleData = (
         notify.error({
             title: `Error: ${error.title}`,
             // TODO: Put error.context into a expandable section of the notification
-            message: `${error.internalMessage}; ${stringifyAnything(error.context)}`,
+            message: debugFormat`${error.internalMessage}; ${error.context}`,
         });
     }
 

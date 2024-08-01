@@ -1,6 +1,7 @@
 import { filterUnique } from "../utils/data";
+import { debugFormat } from "../utils/debugFormat";
 import { notify } from "../utils/notifications";
-import { smartSort, stringifyAnything } from "../utils/string";
+import { smartSort } from "../utils/string";
 import { Reader, Writer } from "../vendored/protobufjs";
 
 export type ScalarMap = {
@@ -116,11 +117,11 @@ export class Encoder<E extends Encoding | Scalar> {
         encoding._fieldIndexes.sort(smartSort);
 
         if (encoding._fieldIndexes.length !== fields.length) {
-            throw new Error(`Some indexes overlap: ${stringifyAnything(encoding)}`);
+            throw new Error(debugFormat`Some indexes overlap: ${encoding}`);
         }
         if (encoding.type === "tuple" && encoding._fieldIndexes.some((v, i) => v !== i)) {
             throw new Error(
-                `Tuple fields must not have gaps and start at zero: ${stringifyAnything(encoding)}`,
+                debugFormat`Tuple fields must not have gaps and start at zero: ${encoding}`,
             );
         }
 
@@ -189,9 +190,9 @@ export class Encoder<E extends Encoding | Scalar> {
                     const key = encoding._indexToField![index];
                     if (!(key in value)) {
                         throw notify.error(
-                            `tuple missing key=${key}: encoding=${stringifyAnything(
-                                encoding,
-                            )}; value=${stringifyAnything(value)}`,
+                            debugFormat`tuple missing key=${key}: encoding=${
+                                encoding
+                            }; value=${value}`,
                         );
                     }
                     this._encode(encoding.fields[key], value[key], writer, false);
@@ -222,11 +223,11 @@ export class Encoder<E extends Encoding | Scalar> {
 
                 if (encoding.type === "enum" && encodedFields !== 1) {
                     throw notify.error(
-                        `enum has ${encodedFields} value(s) set: value=${stringifyAnything(value)}`,
+                        debugFormat`enum has ${encodedFields} value(s) set: value=${value}`,
                     );
                 } else if (encoding.type === "message" && definedAttrs !== encodedFields) {
                     throw notify.error(
-                        `message includes fields not in set "${stringifyAnything(Object.values(encoding._indexToField!))}": message=${stringifyAnything(value)}`,
+                        debugFormat`message includes fields not in set "${Object.values(encoding._indexToField!)}": message=${value}`,
                     );
                 }
 
@@ -248,11 +249,9 @@ export class Encoder<E extends Encoding | Scalar> {
 
         if (reader.pos !== encoded.length) {
             throw notify.error(
-                `Message not fully consumed: encoding=${stringifyAnything(
-                    this.encoding,
-                )}; toDecode=${stringifyAnything(encoded)}; result=${stringifyAnything(
-                    result.key,
-                )}`,
+                debugFormat`Message not fully consumed: encoding=${
+                    this.encoding
+                }; toDecode=${encoded}; result=${result.key}`,
             );
         }
         return result.key;

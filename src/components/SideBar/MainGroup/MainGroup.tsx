@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useSnapshot } from "valtio";
 import { useProxy } from "valtio/utils";
 import type { PuzzleManager } from "../../../PuzzleManager";
+import { debugFormat } from "../../../utils/debugFormat";
 import { openModal, useFocusElementHandler } from "../../../utils/focusManagement";
 import { ImportExportButton } from "../../ImportExportModal/ImportExportModal";
 import { Group as Collapse } from "../Group";
@@ -146,6 +147,9 @@ export const MainGroup = React.memo(function MainGroup({ puzzle }: { puzzle: Puz
                     )}
                     <Button onClick={() => openModal("about")} color="cyan">
                         About this site
+                    </Button>
+                    <Button onClick={() => console.log(debugFormat`your ${{ face: "ugly" }}`)}>
+                        Test debug
                     </Button>
                 </Stack>
             </Center>

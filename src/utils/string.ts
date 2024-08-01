@@ -1,15 +1,5 @@
 import { randomId } from "@mantine/hooks";
 import { Base64 } from "js-base64";
-import { inspect, type InspectOptions } from "node-inspect-extracted";
-
-export const stringifyAnything = (obj: any, params: Partial<InspectOptions> = {}): string => {
-    try {
-        return inspect(obj, { ...params, showProxy: true });
-    } catch (err) {
-        console.error(err);
-        return `[COULD_NOT_STRINGIFY_OBJECT]`;
-    }
-};
 
 export const keypressString = (
     event: Pick<KeyboardEvent, "key" | "ctrlKey" | "shiftKey">,

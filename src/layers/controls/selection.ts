@@ -7,8 +7,8 @@ import {
     Point,
     SVGGroup,
 } from "../../types";
+import { debugFormat } from "../../utils/debugFormat";
 import { notify } from "../../utils/notifications";
-import { stringifyAnything } from "../../utils/string";
 import styles from "../layers.module.css";
 import { LayerGOOFy, layerIsGOOFy } from "../traits/gridOrObjectFirst";
 
@@ -223,9 +223,9 @@ export const handleEventsSelection = <LP extends SelectedProps>(
             }
             default: {
                 throw notify.error({
-                    message: `Unknown event in selected layer ${
+                    message: debugFormat`Unknown event in selected layer ${
                         this.displayName
-                    }: ${stringifyAnything(event)}`,
+                    }: ${event}`,
                 });
             }
         }

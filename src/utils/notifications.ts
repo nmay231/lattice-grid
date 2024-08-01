@@ -1,5 +1,5 @@
 import { showNotification } from "@mantine/notifications";
-import { stringifyAnything } from "./string";
+import { debugFormat } from "./debugFormat";
 
 export const notify = {
     error(
@@ -27,7 +27,7 @@ export const notify = {
             ...rest,
         });
 
-        return new Error(stringifyAnything(rest));
+        return new Error(debugFormat`${rest}`);
     },
     info(
         props:

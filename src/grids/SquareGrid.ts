@@ -4,9 +4,10 @@ import type { EncodedColor, EncodedPointType } from "../encoding/puzzleEncoder";
 import { Grid, Point, PointType, SVGGroup, TupleVector, type Color } from "../types";
 import { COLOR_VALUE_TO_NAME, DEFAULT_COLORS } from "../utils/colors";
 import { chunk, parseIntBase, zipDefined } from "../utils/data";
+import { debugFormat } from "../utils/debugFormat";
 import { Vec } from "../utils/math";
 import { notify } from "../utils/notifications";
-import { randomStringId, stringifyAnything } from "../utils/string";
+import { randomStringId } from "../utils/string";
 import styles from "./styles.module.css";
 
 // TODO: Remove GridPoint type or replace with a thin wrapper around the Vector class. Or just straight up use _SquareGridPoints. I need an array most of the time anyways.
@@ -378,9 +379,10 @@ class _SquareGridEncoder {
                     bitmap |= 1;
                 } else if (!start.plus(right).equals(end)) {
                     throw notify.error(
-                        `Encoding adjacent points failed. Ending point not down or right of start: ${stringifyAnything(
-                            [start, end],
-                        )}`,
+                        debugFormat`Encoding adjacent points failed. Ending point not down or right of start: ${[
+                            start,
+                            end,
+                        ]}`,
                     );
                 }
             }
@@ -537,7 +539,7 @@ class _SquareGridEncoder {
         if (enumVariant in DEFAULT_COLORS) {
             return DEFAULT_COLORS[enumVariant as keyof typeof DEFAULT_COLORS];
         } else {
-            throw new Error(`Unknown color enum value: ${stringifyAnything(color)}`);
+            throw new Error(debugFormat`Unknown color enum value: ${color}`);
         }
     }
 

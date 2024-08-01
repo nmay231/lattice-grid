@@ -10,8 +10,8 @@ import {
 } from "./types";
 import { PUT_AT_END } from "./utils/OrderedMap";
 import { filterUnique, reversed } from "./utils/data";
+import { debugFormat } from "./utils/debugFormat";
 import { notify } from "./utils/notifications";
-import { stringifyAnything } from "./utils/string";
 
 export class StorageManager {
     objects: Record<Layer["id"], LayerStorage> = {};
@@ -116,9 +116,9 @@ export class StorageManager {
             const result = this.layersByFilters.get(filter);
             if (!result) {
                 throw notify.error({
-                    message: `Storage: Failed to remove a filter ${stringifyAnything(
-                        filter,
-                    )}. Reducer was never added or already removed!`,
+                    message: debugFormat`Storage: Failed to remove a filter ${
+                        filter
+                    }. Reducer was never added or already removed!`,
                 });
             }
             this.layersByFilters.delete(filter);

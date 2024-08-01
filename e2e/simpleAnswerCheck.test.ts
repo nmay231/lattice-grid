@@ -4,7 +4,7 @@ import { PartialPointerEvent } from "../src/ControlsManager";
 import { availableLayers } from "../src/layers";
 import { BackgroundColorLayer } from "../src/layers/BackgroundColor";
 import { SimpleLineLayer } from "../src/layers/SimpleLine";
-import { stringifyAnything } from "../src/utils/string";
+import { debugFormat } from "../src/utils/debugFormat";
 
 test.describe("Answer check for BackgroundColor, SimpleLine, and Number", () => {
     const parameters = [
@@ -29,9 +29,7 @@ test.describe("Answer check for BackgroundColor, SimpleLine, and Number", () => 
         };
 
     for (const param of parameters) {
-        test(`should answer check for combination: ${stringifyAnything(param)}`, async ({
-            page,
-        }) => {
+        test(debugFormat`should answer check for combination: ${param}`, async ({ page }) => {
             await page.goto("/edit");
             await page.getByRole("button", { name: "Reset Puzzle" }).click();
             await page.getByRole("button", { name: "Yes I'm sure" }).click();

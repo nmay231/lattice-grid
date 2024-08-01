@@ -79,6 +79,17 @@ module.exports = {
         "vitest/prefer-to-be-truthy": "off",
 
         // Multiline rules to make sorting lines easier
+        "no-restricted-imports": [
+            "error",
+            {
+                paths: [
+                    {
+                        name: "node-inspect-extracted",
+                        message: "Use `debugFormat` instead to keep lazy-loading",
+                    },
+                ],
+            },
+        ],
         "import/no-extraneous-dependencies": [
             "error",
             {

@@ -31,11 +31,12 @@ import {
     ValtioRef,
 } from "./types";
 import { IndexedOrderedMap } from "./utils/OrderedMap";
+import { debugFormat } from "./utils/debugFormat";
 import { valtioRef } from "./utils/imports/valtio";
 import { notify } from "./utils/notifications";
 import { LatestTimeout } from "./utils/primitiveWrappers";
 import { isEqual } from "./utils/recursive";
-import { base64, stringifyAnything } from "./utils/string";
+import { base64 } from "./utils/string";
 
 /** Date.getTime() returns time in miliseconds, but that overflows int32. */
 const timestampFromDate = (date: Date): number => {
@@ -132,7 +133,7 @@ export class PuzzleManager {
                     solvingPuzzles.push({ author, firstSolved, searchParams, title });
                 } else {
                     // TODO: handle invalid data without dropping it
-                    notify.error(`A solving puzzle had invalid data: ${stringifyAnything(puzzle)}`);
+                    notify.error(debugFormat`A solving puzzle had invalid data: ${puzzle}`);
                     needToSave = true;
                 }
             }
@@ -161,9 +162,7 @@ export class PuzzleManager {
                 } else {
                     // TODO: handle invalid data without dropping it
                     // TODO: Also, these are terrible errors messages rn...
-                    notify.error(
-                        `An editing puzzle had invalid data: ${stringifyAnything(puzzle)}`,
-                    );
+                    notify.error(debugFormat`An editing puzzle had invalid data: ${puzzle}`);
                     needToSave = true;
                 }
             }
@@ -233,9 +232,7 @@ export class PuzzleManager {
             !currentPuzzle.editMode ||
             currentPuzzle.currentLayerIndex === undefined
         ) {
-            throw notify.error(
-                `Missing data in puzzle information: ${stringifyAnything(currentPuzzle)}`,
-            );
+            throw notify.error(debugFormat`Missing data in puzzle information: ${currentPuzzle}`);
         }
         const gridParams = { ...currentPuzzle.grid.square, type: "square" as const };
         const data = extractLayersData(currentPuzzle.layers, gridParams);
@@ -244,12 +241,12 @@ export class PuzzleManager {
             throw notify.error({
                 title: `Error: ${data.title}`,
                 // TODO: Put data.context into a expandable section of the notification
-                message: `${data.internalMessage}; ${stringifyAnything(data.context)}`,
+                message: debugFormat`${data.internalMessage}; ${data.context}`,
             });
         } else if (data.nonfatalErrors.length > 0) {
             notify.error({
                 title: "Had some errors when loading data from localStorage",
-                message: `errors: ${stringifyAnything(data.nonfatalErrors)}`,
+                message: debugFormat`errors: ${data.nonfatalErrors}`,
             });
         }
 
@@ -413,7 +410,7 @@ export class PuzzleManager {
             }
         } else {
             throw notify.error({
-                message: `Failed to render to canvas: ${stringifyAnything(change)}`,
+                message: debugFormat`Failed to render to canvas: ${change}`,
                 timeout: 4000,
             });
         }

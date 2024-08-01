@@ -7,7 +7,7 @@ import path from "node:path";
 import type { PartialPointerEvent } from "../src/ControlsManager";
 import { availableLayers } from "../src/layers";
 import { FCRepeat, given } from "../src/testing-utils/fcArbitraries";
-import { stringifyAnything } from "../src/utils/string";
+import { debugFormat } from "../src/utils/debugFormat";
 
 test.describe(() => {
     // We let fast-check control the timeout, so it is 30 secs per example instead of 30 secs for the whole test
@@ -63,17 +63,6 @@ test.describe(() => {
             { minLength: 1 },
         );
         await given([actions, layers], { numRuns }).assertAsyncProperty(async (actions, layers) => {
-            // page.on("console", async (msg) => {
-            //     const values = [];
-            //     for (const arg of msg.args())
-            //         values.push(
-            //             stringifyAnything(await arg.jsonValue(), { depth: 5, colors: true }),
-            //         );
-            //     console.log(...values);
-            // });
-
-            // console.log(stringifyAnything(layers), stringifyAnything(actions));
-
             await page.goto("/edit");
             await page.getByRole("button", { name: "Reset Puzzle" }).click();
             await page.getByRole("button", { name: "Yes I'm sure" }).click();
@@ -174,7 +163,7 @@ test.describe(() => {
                 }
                 writeFileSync(
                     path.join(tmp, `${time}-instructions.txt`),
-                    stringifyAnything({ layers, actions }),
+                    debugFormat`layers=${layers} actions=${actions}`,
                     { flag: "w" },
                 );
                 diff.image.write(path.join(tmp, "diff.png"));

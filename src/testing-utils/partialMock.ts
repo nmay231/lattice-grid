@@ -1,9 +1,10 @@
+// eslint-disable-next-line no-restricted-imports -- This is fine since this is really just a test file
 import { Proxy as InspectableProxy } from "node-inspect-extracted";
 import { RecursivePartial } from "../types";
-import { stringifyAnything } from "../utils/string";
+import { debugFormat } from "../utils/debugFormat";
 
 export const partialMock = <T>(x: RecursivePartial<T>) => {
-    return _defineAllUsedProperties(x, stringifyAnything(x), "") as T;
+    return _defineAllUsedProperties(x, debugFormat`${x}`, "") as T;
 };
 
 type PartialMockError = Error & { attributeChain: string };
