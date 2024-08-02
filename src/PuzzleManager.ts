@@ -37,6 +37,7 @@ import { notify } from "./utils/notifications";
 import { LatestTimeout } from "./utils/primitiveWrappers";
 import { isEqual } from "./utils/recursive";
 import { base64 } from "./utils/string";
+import { showSolvedPopup } from "./utils/tsxForTsFiles";
 
 /** Date.getTime() returns time in miliseconds, but that overflows int32. */
 const timestampFromDate = (date: Date): number => {
@@ -399,11 +400,7 @@ export class PuzzleManager {
                 }
 
                 if (correct) {
-                    notify.info({
-                        title: "Yay! You solved it",
-                        message: "your answer matches the setter's answer",
-                        timeout: 0,
-                    });
+                    showSolvedPopup();
                     // Clear to reset checking and only display one notification
                     this.answers = new Map();
                 }
