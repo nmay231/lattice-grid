@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2024-08-03
+
+## Fixed
+
+-   Fix author and title fields messing with puzzle undo/redo
+-   You can now change layer settings again.
+
 ## [0.2.0] - 2024-08-02
 
 ### Added
@@ -17,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 -   Changed the URL encoding to be a variant of protobuf instead of json (both are/were base64 encoded). This should make URLs shorter in general. Unfortunately, it means that older puzzles will not work anymore, but I'm pretty sure I'm the only one who made a puzzle anyways :)
 -   Reduced the main JS bundle size by 33% (went from 273 Kb gzipped to 185 Kb gzipped). In other words, the app loads faster.
+-   Changed the about page into a modal.
 
 ## [0.1.0-alpha-4] - 2023-11-22
 
