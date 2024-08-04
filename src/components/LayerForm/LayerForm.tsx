@@ -7,7 +7,7 @@ import { LayerColorPicker } from "./LayerColorPicker";
 
 export interface LayerFormArgs<LP extends LayerProps> extends FormSchema<LP> {
     initialValues: LP["Settings"];
-    onSubmit?: (newSettings: LP["Settings"]) => void;
+    submitCancel?: { submit: (newSettings: LP["Settings"]) => void; cancel: () => void };
     onChange?: (key: string, value: unknown) => void;
     submitLabel?: string;
     resetLabel?: string;
@@ -17,7 +17,7 @@ export const LayerForm = <LP extends LayerProps = LayerProps>({
     elements,
     initialValues: initialData,
     onChange,
-    onSubmit,
+    submitCancel,
     submitLabel,
     resetLabel,
 }: LayerFormArgs<LP>) => {
@@ -38,7 +38,7 @@ export const LayerForm = <LP extends LayerProps = LayerProps>({
         <form
             onSubmit={(event) => {
                 event.preventDefault();
-                onSubmit?.(data);
+                submitCancel?.submit(data);
             }}
         >
             {Object.entries(elements).map(([key, element_]) => {
@@ -109,7 +109,7 @@ export const LayerForm = <LP extends LayerProps = LayerProps>({
                     }
                 }
             })}
-            {onSubmit && (
+            {submitCancel && (
                 <SimpleGrid cols={2} m="sm">
                     <Button type="submit" disabled={!dirty}>
                         {submitLabel ?? "Submit"}
@@ -118,6 +118,7 @@ export const LayerForm = <LP extends LayerProps = LayerProps>({
                         type="reset"
                         disabled={!dirty}
                         onClick={() => {
+                            submitCancel.cancel();
                             setData(initialData);
                             setDirty(false);
                         }}

@@ -22,15 +22,18 @@ const _LayerConstraintSettings = ({ layer, constraints, puzzle }: InnerProps) =>
                 elements={constraints.elements}
                 submitLabel="Save"
                 resetLabel="Cancel"
-                onSubmit={(newSettings) => {
-                    rerender.key += 1;
-                    for (const [key, value] of Object.entries(newSettings)) {
-                        if (layer.settings[key as never] !== value) {
-                            puzzle.changeLayerSetting(layer.id, key, value);
+                submitCancel={{
+                    submit: (newSettings) => {
+                        rerender.key += 1;
+                        for (const [key, value] of Object.entries(newSettings)) {
+                            if (layer.settings[key as never] !== value) {
+                                puzzle.changeLayerSetting(layer.id, key, value);
+                            }
                         }
-                    }
-                    puzzle.renderChange({ type: "draw", layerIds: [layer.id] });
-                    unfocus();
+                        puzzle.renderChange({ type: "draw", layerIds: [layer.id] });
+                        unfocus();
+                    },
+                    cancel: () => unfocus(),
                 }}
             />
         </div>
