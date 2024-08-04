@@ -37,10 +37,8 @@ export const isEqual = <T>(a: T, b: T): boolean => {
         return false;
     } else if (Object.keys(a).length === Object.keys(b).length) {
         for (const key of Object.keys(a)) {
-            if (!(key in (b as any))) {
+            if (!(key in (b as any)) || !isEqual(a[key as never], b[key as never])) {
                 return false;
-            } else if (!isEqual(a[key as never], b[key as never])) {
-                false;
             }
         }
         return true;

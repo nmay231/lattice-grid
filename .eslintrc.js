@@ -45,6 +45,7 @@ module.exports = {
         "@typescript-eslint/restrict-template-expressions": "off",
         "no-trailing-spaces": "error",
         "no-unreachable": "error",
+        "no-unused-expressions": "error",
         "no-use-before-define": "off",
         "no-useless-rename": "error",
         "prefer-const": "warn",

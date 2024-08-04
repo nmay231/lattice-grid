@@ -119,6 +119,7 @@ export const LayerForm = <LP extends LayerProps = LayerProps>({
                         disabled={!dirty}
                         onClick={() => {
                             setData(initialData);
+                            setDirty(false);
                         }}
                     >
                         {resetLabel ?? "Reset"}
