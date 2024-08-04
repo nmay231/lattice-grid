@@ -397,7 +397,7 @@ export class ControlsManager {
         const keypress = keypressString(rawEvent);
 
         // This should be a very small whitelist for which key-strokes are allowed to be blocked
-        if (["ctrl-a", "ctrl-i"].includes(keypress) || keypress.length === 1) {
+        if (["ctrl-a", "ctrl-i", "ctrl-z", "ctrl-y"].includes(keypress) || keypress.length === 1) {
             // Keyboard shortcuts should still be preventDefault'ed even if we are handling pointer events
             rawEvent.preventDefault();
         }
