@@ -4,7 +4,14 @@ import { PartialPointerEvent } from "../src/ControlsManager";
 import { availableLayers } from "../src/layers";
 import { BackgroundColorLayer } from "../src/layers/BackgroundColor";
 import { SimpleLineLayer } from "../src/layers/SimpleLine";
-import { debugFormat } from "../src/utils/debugFormat";
+
+const coordToPointerEventFromCanvasParams =
+    (canvasParams: Record<"x" | "y" | "width" | "height", number>) =>
+    (x: number, y: number): PartialPointerEvent => {
+        const clientX = ((x + 0.5) * canvasParams.width) / 12 + canvasParams.x;
+        const clientY = ((y + 0.5) * canvasParams.height) / 12 + canvasParams.y;
+        return { clientX, clientY, buttons: 1, pointerId: 0 };
+    };
 
 test.describe("Answer check for BackgroundColor, SimpleLine, and Number", () => {
     const parameters = [
@@ -20,16 +27,10 @@ test.describe("Answer check for BackgroundColor, SimpleLine, and Number", () => 
         { color: false, line: false, number: false },
     ];
 
-    const coordToPointerEventFromCanvasParams =
-        (canvasParams: Record<"x" | "y" | "width" | "height", number>) =>
-        (x: number, y: number): PartialPointerEvent => {
-            const clientX = ((x + 0.5) * canvasParams.width) / 12 + canvasParams.x;
-            const clientY = ((y + 0.5) * canvasParams.height) / 12 + canvasParams.y;
-            return { clientX, clientY, buttons: 1, pointerId: 0 };
-        };
-
     for (const param of parameters) {
-        test(debugFormat`should answer check for combination: ${param}`, async ({ page }) => {
+        test(`should answer check for combination: color-${param.color}, line-${param.line}, number-${param.number}`, async ({
+            page,
+        }) => {
             await page.goto("/edit");
             await page.getByRole("button", { name: "Reset Puzzle" }).click();
             await page.getByRole("button", { name: "Yes I'm sure" }).click();
@@ -178,7 +179,9 @@ test.describe("Answer check for BackgroundColor, SimpleLine, and Number", () => 
             await expect(page).toHaveScreenshot({ clip: canvasParams, scale: "css" });
         });
     }
+});
 
+test.describe("Miscellaneous controls tests", () => {
     // TODO: Not really an answer check thing, but I don't feel like making a whole new file for just this
     test("should draw a diagonal line using debug point selector", async ({ page }) => {
         await page.goto("/edit");
