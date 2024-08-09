@@ -1,4 +1,4 @@
-import type { availableLayers } from ".";
+import type { AvailableLayerType } from ".";
 import {
     FormSchema,
     HistoryAction,
@@ -53,7 +53,7 @@ const obj = <LP extends ToggleCharactersProps>({
     storageMode: "answer",
 });
 
-const NUMBER_LAYER_DEFAULT_ID = "NumberLayer" satisfies keyof typeof availableLayers;
+const NUMBER_LAYER_DEFAULT_ID = "NumberLayer" satisfies AvailableLayerType;
 
 export class ToggleCharactersLayer
     extends BaseLayer<ToggleCharactersProps>

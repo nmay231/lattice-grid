@@ -89,6 +89,14 @@ module.exports = {
                         message: "Use `debugFormat` instead to keep lazy-loading",
                     },
                 ],
+                patterns: [
+                    {
+                        group: ["**/layers"],
+                        importNames: ["availableLayers"],
+                        message:
+                            "Only import this from top-level tsx files to enable dependency injection.",
+                    },
+                ],
             },
         ],
         "import/no-extraneous-dependencies": [

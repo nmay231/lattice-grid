@@ -10,7 +10,7 @@ import {
     type CleanedSessionMetadata,
 } from "./encoding/sessionsEncoder";
 import { SquareGrid } from "./grids/SquareGrid";
-import { availableLayers } from "./layers";
+import { type AvailableLayers, type AvailableLayerType } from "./layers";
 import { CellOutlineLayer } from "./layers/CellOutline";
 import { NumberLayer } from "./layers/Number";
 import { OverlayLayer } from "./layers/Overlay";
@@ -47,13 +47,41 @@ const timestampFromDate = (date: Date): number => {
 
 // TODO: Rename to PuzzleContext
 export class PuzzleManager {
-    // TODO
+    /** Initialized in factory methods */
     sessionMetadata: CleanedSessionMetadata = null!;
-    private constructor() {}
-    static createEditPuzzle(): PuzzleManager {
+
+    layers = proxy(new IndexedOrderedMap<ValtioRef<Layer>>((layer) => !layer.klass.ethereal));
+    UILayer: OverlayLayer;
+    CellOutlineLayer: CellOutlineLayer;
+    SVGGroups = proxy({} as Record<Layer["id"], ValtioRef<SVGGroup[]>>);
+
+    grid: Grid = new SquareGrid();
+    // TODO: stratify storage by the different grids. I guess it's the same problem of multiple grids.
+    storage = new StorageManager();
+    controls = new ControlsManager(this);
+    answers = new Map<Layer["id"], Record<ObjectId, UnknownObject>>();
+
+    settings = proxy({
+        editMode: "question" as EditMode,
+        pageMode: "edit" as PageMode,
+        debugging: false,
+        borderPadding: 60,
+        cellSize: 60,
+    });
+
+    private constructor(public availableLayers: AvailableLayers) {
+        this.UILayer = this.availableLayers["OverlayLayer"].create(this);
+        this.CellOutlineLayer = this.availableLayers["CellOutlineLayer"].create(this);
+    }
+
+    static createEditPuzzle({
+        availableLayers,
+    }: {
+        availableLayers: AvailableLayers;
+    }): PuzzleManager {
         const [sessionMetadata, currentEditPuzzle] = this.loadSessionMetadata();
 
-        const puzzle = new PuzzleManager();
+        const puzzle = new PuzzleManager(availableLayers);
         puzzle.sessionMetadata = proxy(sessionMetadata);
 
         try {
@@ -70,37 +98,24 @@ export class PuzzleManager {
         return puzzle;
     }
 
-    static createSolvePuzzle(puzzleString: string): PuzzleManager {
+    static createSolvePuzzle({
+        availableLayers,
+        puzzleString,
+    }: {
+        availableLayers: AvailableLayers;
+        puzzleString: string;
+    }): PuzzleManager {
         const [sessionMetadata] = this.loadSessionMetadata();
-        const puzzle = new PuzzleManager();
+        const puzzle = new PuzzleManager(availableLayers);
         puzzle.sessionMetadata = proxy(sessionMetadata);
 
         // Must be before puzzle import (with the current implementation) otherwise play states will be saved as edit puzzles
         puzzle.settings.pageMode = "play";
         puzzle.settings.editMode = "answer";
-        importPuzzleData(puzzle, puzzleString);
+        importPuzzleData({ puzzle, text: puzzleString, availableLayers });
 
         return puzzle;
     }
-
-    layers = proxy(new IndexedOrderedMap<ValtioRef<Layer>>((layer) => !layer.klass.ethereal));
-    UILayer = availableLayers["OverlayLayer"].create(this);
-    CellOutlineLayer = availableLayers["CellOutlineLayer"].create(this);
-    SVGGroups = proxy({} as Record<Layer["id"], ValtioRef<SVGGroup[]>>);
-
-    grid: Grid = new SquareGrid();
-    // TODO: stratify storage by the different grids. I guess it's the same problem of multiple grids.
-    storage = new StorageManager();
-    controls = new ControlsManager(this);
-    answers = new Map<Layer["id"], Record<ObjectId, UnknownObject>>();
-
-    settings = proxy({
-        editMode: "question" as EditMode,
-        pageMode: "edit" as PageMode,
-        debugging: false,
-        borderPadding: 60,
-        cellSize: 60,
-    });
 
     resetLayers() {
         this.layers.clear();
@@ -257,7 +272,7 @@ export class PuzzleManager {
         let toFocus: Layer["id"] = "Expected at least one layer...";
         for (let index = 0; index < data.layers.length; index++) {
             const layer = data.layers[index];
-            const layerId = this.addLayer(availableLayers[layer.type], null, layer.settings);
+            const layerId = this.addLayer(this.availableLayers[layer.type], null, layer.settings);
             this.storage.objects[layerId] = layer.objects;
 
             if (index === currentPuzzle.currentLayerIndex) {
@@ -330,7 +345,7 @@ export class PuzzleManager {
     /** Basically, delete objects outside the grid when the resize modal is closed */
     finalizeResizedCanvas() {
         const layers = this.layers.entries().filter(([, layer]) => {
-            const type = layer.klass.type as keyof typeof availableLayers;
+            const type = layer.klass.type as AvailableLayerType;
             return type !== "CellOutlineLayer" && type !== "OverlayLayer";
         });
 
@@ -426,7 +441,7 @@ export class PuzzleManager {
                             "DebugSelectPointsLayer",
                             "OverlayLayer",
                             "ToggleCharactersLayer",
-                        ] satisfies Array<keyof typeof availableLayers>
+                        ] satisfies Array<AvailableLayerType>
                     ).includes(layer.id)
                 ) {
                     continue;

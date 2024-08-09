@@ -1,9 +1,11 @@
 import { expect, test } from "@playwright/test";
 import Jimp from "jimp";
 import { PartialPointerEvent } from "../src/ControlsManager";
-import { availableLayers } from "../src/layers";
+// eslint-disable-next-line no-restricted-imports
+import { availableLayers, type AvailableLayerType } from "../src/layers";
 import { BackgroundColorLayer } from "../src/layers/BackgroundColor";
 import { SimpleLineLayer } from "../src/layers/SimpleLine";
+import type { CreateSubtypeOf } from "../src/types";
 
 const coordToPointerEventFromCanvasParams =
     (canvasParams: Record<"x" | "y" | "width" | "height", number>) =>
@@ -42,12 +44,11 @@ test.describe("Answer check for BackgroundColor, SimpleLine, and Number", () => 
                 await page.getByRole("option", { name: layerDisplayName }).click();
             }
 
-            const selectLayer = async (
-                layer: keyof Pick<
-                    typeof availableLayers,
-                    "NumberLayer" | "BackgroundColorLayer" | "SimpleLineLayer"
-                >,
-            ) => {
+            type UsedLayers = CreateSubtypeOf<
+                AvailableLayerType,
+                "NumberLayer" | "BackgroundColorLayer" | "SimpleLineLayer"
+            >;
+            const selectLayer = async (layer: UsedLayers) => {
                 const displayName = availableLayers[layer].displayName;
                 await page.getByRole("button", { name: displayName }).click();
             };

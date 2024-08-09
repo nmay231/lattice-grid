@@ -1,5 +1,5 @@
 import { PuzzleManager } from "../PuzzleManager";
-import type { availableLayers } from "../layers";
+import type { AvailableLayerType } from "../layers";
 import type { Layer, NeedsUpdating } from "../types";
 import { base64 } from "../utils/string";
 import { PuzzleEncoder, type EncodedLayer } from "./puzzleEncoder";
@@ -19,7 +19,7 @@ export const exportPuzzleData = (
                     "DebugSelectPointsLayer",
                     "OverlayLayer",
                     "ToggleCharactersLayer",
-                ] satisfies Array<keyof typeof availableLayers>
+                ] satisfies Array<AvailableLayerType>
             ).includes(layer.id)
         ) {
             continue;

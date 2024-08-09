@@ -5,6 +5,7 @@ import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import type { PartialPointerEvent } from "../src/ControlsManager";
+// eslint-disable-next-line no-restricted-imports
 import { availableLayers } from "../src/layers";
 import { FCRepeat, given } from "../src/testing-utils/fcArbitraries";
 import { debugFormat } from "../src/utils/debugFormat";

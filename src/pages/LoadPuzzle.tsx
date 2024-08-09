@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
 import { useLocation, useSearch } from "wouter";
+import {
+    // eslint-disable-next-line no-restricted-imports
+    availableLayers,
+} from "../layers";
 import { PuzzleManager } from "../PuzzleManager";
 import type { PageMode } from "../types";
 import { PuzzlePage } from "./PuzzlePage";
@@ -15,12 +19,12 @@ export const LoadPuzzle = ({ pageMode }: { pageMode: PageMode }) => {
         setPrevPageMode(pageMode);
 
         if (pageMode === "edit") {
-            setPuzzle(PuzzleManager.createEditPuzzle());
+            setPuzzle(PuzzleManager.createEditPuzzle({ availableLayers }));
         } else if (pageMode === "play") {
             const urlSearch = new URLSearchParams(search);
             const puzzleString = urlSearch.get("0");
             if (puzzleString) {
-                const puzzle = PuzzleManager.createSolvePuzzle(puzzleString);
+                const puzzle = PuzzleManager.createSolvePuzzle({ puzzleString, availableLayers });
                 if (puzzle) {
                     setPuzzle(puzzle);
                     return;

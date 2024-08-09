@@ -22,3 +22,6 @@ export const availableLayers = {
     CenterMarksLayer,
     TopBottomMarksLayer,
 } as const satisfies Record<string, LayerClass<any>>;
+
+export type AvailableLayers = typeof availableLayers;
+export type AvailableLayerType = keyof typeof availableLayers;

@@ -2,7 +2,7 @@ import { Select } from "@mantine/core";
 import { useCallback, useMemo, useState } from "react";
 import { useProxy } from "valtio/utils";
 import { PuzzleManager } from "../../../PuzzleManager";
-import { availableLayers } from "../../../layers";
+import { type AvailableLayerType } from "../../../layers";
 import { useFocusElementHandler } from "../../../utils/focusManagement";
 import { smartSort } from "../../../utils/string";
 
@@ -19,13 +19,13 @@ export const AddNewLayerButton = ({ puzzle }: { puzzle: PuzzleManager }) => {
                 return;
             }
             const newId = puzzle.addLayer(
-                availableLayers[value as keyof typeof availableLayers],
+                puzzle.availableLayers[value as AvailableLayerType],
                 null,
             );
 
             // TODO: Temporary (TM) solution to put background colors in the background.
             // TODO: Should remove after I get layer renderOrder figured out
-            if (value === ("BackgroundColorLayer" satisfies keyof typeof availableLayers)) {
+            if (value === ("BackgroundColorLayer" satisfies AvailableLayerType)) {
                 const bottom = puzzle.layers.getFirstSelectableKey();
                 if (bottom && bottom !== newId) {
                     puzzle.shuffleLayerOnto(newId, bottom);
@@ -41,13 +41,13 @@ export const AddNewLayerButton = ({ puzzle }: { puzzle: PuzzleManager }) => {
     );
 
     const nonEthereal = useMemo(() => {
-        const arr = Object.values(availableLayers)
+        const arr = Object.values(puzzle.availableLayers)
             .filter(({ ethereal }) => debugging || !ethereal)
             .sort((a, b) => smartSort(a.displayName, b.displayName))
             .map(({ type, displayName }) => ({ label: displayName, value: type }));
         arr.unshift({ value: DEFAULT_VALUE, label: DEFAULT_VALUE });
         return arr;
-    }, [debugging]);
+    }, [debugging, puzzle.availableLayers]);
 
     return (
         <Select

@@ -1,7 +1,7 @@
 import { LayerStorage } from "../LayerStorage";
 import { PuzzleManager } from "../PuzzleManager";
 import { SquareGrid } from "../grids/SquareGrid";
-import { availableLayers } from "../layers";
+import { type AvailableLayers } from "../layers";
 import { Color, ObjectId, Point, PointType } from "../types";
 import { zipDefined } from "../utils/data";
 import { debugFormat } from "../utils/debugFormat";
@@ -113,7 +113,11 @@ const parseError = (title: string, internalMessage: string, context?: any): Pars
     context,
 });
 
-export const importPuzzleData = (
+export const importPuzzleData = ({
+    puzzle,
+    text,
+    availableLayers,
+}: {
     puzzle: Pick<
         PuzzleManager,
         | "grid"
@@ -123,9 +127,10 @@ export const importPuzzleData = (
         | "renderChange"
         | "resizeCanvas"
         | "answers"
-    >,
-    text: string,
-): void => {
+    >;
+    text: string;
+    availableLayers: AvailableLayers;
+}): void => {
     const data = extractPuzzleData(text);
     if ("internalMessage" in data) {
         throw notify.error({

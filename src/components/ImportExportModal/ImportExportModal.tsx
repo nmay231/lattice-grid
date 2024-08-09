@@ -92,7 +92,7 @@ export const ImportExportModal = React.memo(function ImportExportModal({
         if (/^https?:\/\//.test(text)) {
             window.location.assign(text);
         } else {
-            importPuzzleData(puzzle, text);
+            importPuzzleData({ puzzle, text, availableLayers: puzzle.availableLayers });
             close();
         }
     };
